@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Financiero Bancario Chile — CMF</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080c10;
+  --bg2:     #0d1219;
+  --bg3:     #131a24;
+  --bg4:     #192030;
+  --border:  #1c2a3a;
+  --border2: #243548;
+  --accent:  #38bdf8;
+  --accent2: #0ea5e9;
+  --green:   #34d399;
+  --red:     #f87171;
+  --yellow:  #fbbf24;
+  --purple:  #a78bfa;
+  --text:    #e2eaf4;
+  --text2:   #94a8be;
+  --text3:   #5a7a96;
+  --white:   #f8fafc;
+  --mono:    'DM Mono', monospace;
+  --sans:    'DM Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; overflow:hidden; }
+
+/* LAYOUT */
+.app { display:grid; grid-template-rows:48px 1fr; height:100vh; }
+
+/* TOPBAR */
+.topbar {
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:0;
+  padding:0 16px;
+  position:relative;
+  z-index:50;
+}
+.brand {
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:500;
+  color:var(--accent);
+  letter-spacing:3px;
+  text-transform:uppercase;
+  margin-right:24px;
+  white-space:nowrap;
+}
+.brand em { color:var(--text3); font-style:normal; }
+.tabs { display:flex; gap:1px; flex:1; overflow-x:auto; }
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  padding:0 16px;
+  height:48px;
+  display:flex; align-items:center;
+  font-size:12px; font-weight:500;
+  color:var(--text2);
+  cursor:pointer;
+  border:none; background:none;
+  font-family:var(--sans);
+  white-space:nowrap;
+  border-bottom:2px solid transparent;
+  transition:all 0.15s;
+}
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--white); border-bottom-color:var(--accent); }
+.topbar-right {
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--text3);
+  white-space:nowrap;
+  margin-left:16px;
+}
+.status-pill {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--text2);
+}
+.status-dot { width:6px; height:6px; border-radius:50%; }
+.status-dot.idle   { background:var(--text3); }
+.status-dot.loading{ background:var(--yellow); animation:blink 1s infinite; }
+.status-dot.ok     { background:var(--green); }
+.status-dot.error  { background:var(--red); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* BODY */
+.body { display:flex; overflow:hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width:230px;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow:hidden; flex-shrink:0;
+}
+.sidebar-block { padding:12px; border-bottom:1px solid var(--border); }
+.sidebar-label {
+  font-family:var(--mono); font-size:9px;
+  letter-spacing:2px; color:var(--text3);
+  text-transform:uppercase; margin-bottom:8px;
+}
+.range-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+select, input {
+  width:100%; background:var(--bg3);
+  border:1px solid var(--border);
+  color:var(--text); padding:6px 8px;
+  border-radius:4px; font-family:var(--sans);
+  font-size:11px; outline:none; cursor:pointer;
+  transition:border-color 0.15s;
+}
+select:focus, input:focus { border-color:var(--accent2); }
+select option { background:var(--bg3); }
+.bank-scroll { flex:1; overflow-y:auto; padding:6px; }
+.bank-scroll::-webkit-scrollbar { width:3px; }
+.bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+.bank-item {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px; border-radius:4px;
+  cursor:pointer; transition:background 0.1s;
+  user-select:none;
+}
+.bank-item:hover { background:var(--bg3); }
+.bank-item.on { background:rgba(56,189,248,0.06); }
+.bank-item input[type=checkbox] {
+  width:13px; height:13px; flex-shrink:0;
+  accent-color:var(--accent); cursor:pointer;
+}
+.bank-name { font-size:11px; color:var(--text); line-height:1.3; flex:1; }
+.bank-code { font-family:var(--mono); font-size:9px; color:var(--text3); }
+.btn-primary {
+  margin:10px; padding:9px;
+  background:var(--accent); color:#000;
+  border:none; border-radius:4px;
+  font-family:var(--mono); font-size:11px;
+  font-weight:500; letter-spacing:1px;
+  cursor:pointer; text-transform:uppercase;
+  transition:opacity 0.15s;
+}
+.btn-primary:hover { opacity:0.85; }
+.btn-primary:disabled { opacity:0.3; cursor:not-allowed; }
+.btn-sm {
+  flex:1; padding:4px 0;
+  background:var(--bg3); border:1px solid var(--border);
+  color:var(--text2); border-radius:3px;
+  font-size:10px; cursor:pointer;
+  font-family:var(--sans); transition:all 0.1s;
+}
+.btn-sm:hover { color:var(--text); border-color:var(--border2); }
+
+/* MAIN */
+.main { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+.main::-webkit-scrollbar { width:5px; }
+.main::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+/* LOADING SCREEN */
+.loading-screen {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+  color:var(--text3);
+}
+.loading-screen .big { font-size:32px; opacity:0.3; }
+.loading-screen p { font-size:12px; }
+
+/* CARDS */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:10px; }
+.kpi {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:6px; padding:12px 14px;
+  position:relative; overflow:hidden;
+}
+.kpi::after {
+  content:''; position:absolute;
+  top:0; left:0; right:0; height:2px;
+}
+.kpi.blue::after  { background:var(--accent); }
+.kpi.green::after { background:var(--green); }
+.kpi.red::after   { background:var(--red); }
+.kpi.yellow::after{ background:var(--yellow); }
+.kpi.purple::after{ background:var(--purple); }
+.kpi-label { font-size:10px; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-val { font-family:var(--mono); font-size:19px; font-weight:500; color:var(--white); line-height:1; }
+.kpi-sub { font-size:10px; color:var(--text3); margin-top:4px; font-family:var(--mono); }
+
+/* PANEL */
+.panel { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.panel-head {
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.panel-title { font-size:11px; font-weight:600; color:var(--white); text-transform:uppercase; letter-spacing:1px; }
+.panel-sub { font-size:10px; color:var(--text2); }
+.panel-body { padding:14px; }
+.period-pill {
+  padding:3px 8px;
+  background:rgba(56,189,248,0.08);
+  border:1px solid rgba(56,189,248,0.2);
+  border-radius:3px;
+  font-family:var(--mono); font-size:10px; color:var(--accent);
+  white-space:nowrap;
+}
+
+/* INNER TABS */
+.itabs { display:flex; gap:2px; margin-bottom:12px; }
+.itab {
+  padding:4px 10px; border-radius:3px;
+  font-size:11px; color:var(--text2);
+  cursor:pointer; border:none; background:none;
+  font-family:var(--sans); transition:all 0.1s;
+}
+.itab:hover { color:var(--text); background:var(--bg3); }
+.itab.active { color:var(--accent); background:rgba(56,189,248,0.08); }
+
+/* TABLE */
+.tbl { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+.tbl th {
+  text-align:left; padding:5px 8px;
+  color:var(--text3); font-size:9px; letter-spacing:1px;
+  text-transform:uppercase; border-bottom:1px solid var(--border);
+  font-weight:400;
+}
+.tbl td { padding:6px 8px; color:var(--text); border-bottom:1px solid rgba(28,42,58,0.6); }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:rgba(255,255,255,0.015); }
+.tbl .r { text-align:right; }
+.tbl .neg { color:var(--red); }
+.tbl .pos { color:var(--green); }
+.tbl .hl  { color:var(--white); font-weight:500; }
+.tbl .i1  { padding-left:20px; color:var(--text2); }
+.tbl .i2  { padding-left:34px; color:var(--text3); }
+.tbl .i3  { padding-left:46px; color:var(--text3); font-size:10px; }
+.tbl .cod { font-size:9px; color:var(--text3); }
+
+/* CHART */
+.chart-wrap { position:relative; }
+.chart-canvas { width:100% !important; display:block; max-height:320px; }
+
+/* BAR CHART */
+.bars { display:flex; flex-direction:column; gap:7px; }
+.bar-row { display:flex; align-items:center; gap:8px; }
+.bar-lbl { width:130px; font-size:11px; color:var(--text2); text-align:right; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bar-track { flex:1; height:13px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:2px; transition:width 0.5s ease; }
+.bar-val { font-family:var(--mono); font-size:10px; color:var(--text2); width:65px; text-align:right; flex-shrink:0; }
+
+/* GRID */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:800px){ .g2{grid-template-columns:1fr;} }
+
+/* EMPTY */
+.empty { text-align:center; padding:40px; color:var(--text3); }
+.empty-icon { font-size:28px; opacity:0.3; margin-bottom:8px; }
+
+/* EXPLORER */
+.exp-node {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:4px;
+  cursor:pointer; border:none; background:none;
+  width:100%; text-align:left; font-family:var(--sans);
+  transition:background 0.1s;
+}
+.exp-node:hover { background:var(--bg3); }
+.exp-node.active { background:rgba(56,189,248,0.07); }
+.exp-cod { font-family:var(--mono); font-size:9px; color:var(--text3); width:78px; flex-shrink:0; }
+.exp-lbl { font-size:12px; flex:1; color:var(--text); }
+.exp-val { font-family:var(--mono); font-size:10px; color:var(--text2); flex-shrink:0; }
+.exp-arr { font-size:11px; color:var(--text3); flex-shrink:0; margin-left:4px; }
+.breadcrumb { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:12px; }
+.bc-item {
+  padding:2px 8px; background:var(--bg3);
+  border:1px solid var(--border); border-radius:3px;
+  font-size:11px; color:var(--text2); cursor:pointer;
+  transition:all 0.1s;
+}
+.bc-item:hover { color:var(--accent); border-color:var(--border2); }
+.bc-item.cur { color:var(--white); cursor:default; }
+.bc-sep { color:var(--text3); font-size:10px; }
+
+/* CHART LEGEND */
+.legend { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+.leg-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
+.leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* TOOLTIP */
+.chart-tooltip {
+  position: fixed;
+  display: none;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  line-height: 1.6;
+}
+/* ERROR */
+.err-box {
+  background:rgba(248,113,113,0.07);
+  border:1px solid rgba(248,113,113,0.25);
+  border-radius:5px; padding:10px 14px;
+  font-family:var(--mono); font-size:11px;
+  color:var(--red); display:none;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">CMF <em>//</em> Bancos</div>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('resumen')">Resumen</button>
+      <button class="tab" onclick="showTab('balance')">Balance</button>
+      <button class="tab" onclick="showTab('resultados')">Resultados</button>
+      <button class="tab" onclick="showTab('calidad')">Calidad Cartera</button>
+      <button class="tab" onclick="showTab('comparativo')">Comparativo</button>
+      <button class="tab" onclick="showTab('explorador')">Explorador</button>
+    </div>
+    <div class="topbar-right">
+      <span class="status-pill">
+        <span class="status-dot idle" id="sDot"></span>
+        <span id="sTxt">Cargando períodos...</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sidebar-label">Rango de períodos</div>
+        <div class="range-row">
+          <select id="selDesde"></select>
+          <select id="selHasta"></select>
+        </div>
+      </div>
+      <div class="sidebar-block">
+        <div class="sidebar-label">Bancos</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <button class="btn-sm" onclick="selAll(true)">Todos</button>
+          <button class="btn-sm" onclick="selAll(false)">Ninguno</button>
+        </div>
+      </div>
+      <div class="bank-scroll" id="bankList">
+        <div class="empty"><div class="empty-icon">🏦</div><p>Cargando bancos...</p></div>
+      </div>
+      <button class="btn-primary" id="btnRun" onclick="run()" disabled>▶ Analizar</button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main" id="main">
+      <div class="loading-screen" id="loadingScreen">
+        <div class="big">📊</div>
+        <p>Conectando con la base de datos...</p>
+      </div>
+      <div class="err-box" id="errBox"></div>
+
+      <!-- TABS -->
+      <div id="dashContent" style="display:none;flex-direction:column;gap:14px;">
+
+        <!-- RESUMEN -->
+        <div id="tab-resumen">
+          <div class="kpi-grid" id="kpiResumen"></div>
+          <br>
+          <div class="panel">
+            <div class="panel-head">
+              <div><div class="panel-title">Evolución Sistema Bancario</div><div class="panel-sub">Indicadores clave en el rango seleccionado</div></div>
+              <div class="period-pill" id="rangePill"></div>
+            </div>
+            <div class="panel-body">
+              <div class="itabs">
+                <button class="itab active" onclick="showResChart('activos')">Activos</button>
+                <button class="itab" onclick="showResChart('coloc')">Colocaciones</button>
+                <button class="itab" onclick="showResChart('pasivos')">Pasivos</button>
+                <button class="itab" onclick="showResChart('patrimonio')">Patrimonio</button>
+                <button class="itab" onclick="showResChart('utilidad')">Utilidad</button>
+                <button class="itab" onclick="showResChart('mora')">Morosidad</button>
+              </div>
+              <div class="chart-wrap"><canvas class="chart-canvas" id="chartResumen" height="320"></canvas></div>
+              <div class="legend" id="resumenLegend" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BALANCE -->
+        <div id="tab-balance" style="display:none;">
+          <div class="kpi-grid" id="kpiBalance"></div>
+          <br>
+          <div class="panel">
+            <div class="panel-head">
+              <div><div class="panel-title">Estado de Situación Financiera</div><div class="panel-sub">Último período seleccionado — MM$ CLP</div></div>
+            </div>
+            <div class="panel-body">
+              <div class="itabs">
+                <button class="itab active" onclick="showBalTab('activos')">Activos</button>
+                <button class="itab" onclick="showBalTab('pasivos')">Pasivos</button>
+                <button class="itab" onclick="showBalTab('patrimonio')">Patrimonio</button>
+              </div>
+              <div style="overflow-x:auto" id="balTable"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="tab-resultados" style="display:none;">
+          <div class="kpi-grid" id="kpiResultados"></div>
+          <br>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Estado de Resultados</div><div class="panel-sub">Último período — MM$ CLP</div></div>
+            <div class="panel-body" id="resTable"></div>
+          </div>
+        </div>
+
+        <!-- CALIDAD -->
+        <div id="tab-calidad" style="display:none;">
+          <div class="kpi-grid" id="kpiCalidad"></div>
+          <br>
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Cartera por Calidad</div></div>
+              <div class="panel-body" id="calBars"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Morosidad +90 días</div></div>
+              <div class="panel-body" id="calMora"></div>
+            </div>
+          </div>
+          <br>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Evolución Morosidad +90d</div></div>
+            <div class="panel-body"><canvas class="chart-canvas" id="chartMora" height="160"></canvas></div>
+          </div>
+        </div>
+
+        <!-- COMPARATIVO -->
+        <div id="tab-comparativo" style="display:none;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Comparativo entre Bancos</div><div class="panel-sub">Último período seleccionado</div></div>
+            <div class="panel-body" id="compTable"></div>
+          </div>
+        </div>
+
+        <!-- EXPLORADOR -->
+        <div id="tab-explorador" style="display:none;">
+          <div class="panel">
+            <div class="panel-head">
+              <div><div class="panel-title">Explorador de Cuentas</div><div class="panel-sub">Navega el plan de cuentas y compara bancos en el tiempo</div></div>
+            </div>
+            <div class="panel-body">
+              <div class="breadcrumb" id="expBC"></div>
+              <div id="expTree"></div>
+              <div id="expResult" style="display:none;margin-top:16px;">
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 14px;margin-bottom:14px;">
+                  <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px;" id="expCode"></div>
+                  <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px;" id="expName"></div>
+                  <div style="font-size:11px;color:var(--text2);" id="expType"></div>
+                </div>
+                <div class="legend" id="expLegend"></div>
+                <div class="chart-wrap" style="margin-bottom:16px;"><canvas class="chart-canvas" id="chartExp" height="160"></canvas></div>
+                <div style="overflow-x:auto" id="expTable"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — CAMBIAR SOLO ESTAS DOS LÍNEAS SI CAMBIA SUPABASE
+// ============================================================
+const SUPA_URL = "https://iudzjmggqvbezbekzmhz.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1ZHpqbWdncXZiZXpiZWt6bWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjg3MTgsImV4cCI6MjA5MTk0NDcxOH0.e30w9841v4K6J9JekaSlZQMUUvQt8L8VMJIfDyPIVds";
+
+// ============================================================
+// STATE
+// ============================================================
+const ST = {
+  periodos: [],
+  bancos: {},
+  selected: new Set(),
+  desde: null,
+  hasta: null,
+  data: {},        // cache: { "202502_b1_1": [{cuenta,monto_total,...}] }
+  planCuentas: {}, // { cuenta: descripcion }
+  lastPeriodo: null,
+  exp: { hierarchy: null, path: [], selected: null }
+};
+
+// Chart instances
+const CHARTS = {};
+
+// ============================================================
+// SUPABASE FETCH
+// ============================================================
+async function supa(table, params = {}) {
+  let url = `${SUPA_URL}/rest/v1/${table}?`;
+  const parts = [];
+  if (params.select)  parts.push(`select=${params.select}`);
+  if (params.eq)      Object.entries(params.eq).forEach(([k,v]) => parts.push(`${k}=eq.${v}`));
+  if (params.in)      Object.entries(params.in).forEach(([k,v]) => parts.push(`${k}=in.(${v.join(',')})`));
+  if (params.gte)     Object.entries(params.gte).forEach(([k,v]) => parts.push(`${k}=gte.${v}`));
+  if (params.lte)     Object.entries(params.lte).forEach(([k,v]) => parts.push(`${k}=lte.${v}`));
+  if (params.order)   parts.push(`order=${params.order}`);
+  if (params.limit)   parts.push(`limit=${params.limit}`);
+  url += parts.join('&');
+
+  const resp = await fetch(url, {
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Range': '0-9999',
+      'Prefer': 'count=none'
+    }
+  });
+  if (!resp.ok) throw new Error(`Supabase error ${resp.status}: ${await resp.text()}`);
+  return resp.json();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  try {
+    setStatus('loading', 'Conectando...');
+
+    // Load periods
+    const logs = await supa('carga_log', {
+      select: 'periodo',
+      eq: { estado: 'ok' },
+      order: 'periodo.asc'
+    });
+    ST.periodos = logs.map(r => r.periodo);
+
+    if (!ST.periodos.length) throw new Error('No hay datos en la base de datos');
+
+    // Load institutions
+    const insts = await supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' });
+    insts.forEach(r => ST.bancos[r.codigo] = r.razon_social);
+
+    // Load plan de cuentas - fetch all rows removing default limit
+    const plan = await supa('plan_cuentas', { select: 'cuenta,descripcion', limit: 10000 });
+    plan.forEach(r => ST.planCuentas[r.cuenta] = r.descripcion);
+
+    // Fill period selectors
+    fillPeriodSelectors();
+
+    // Fill bank list
+    fillBankList();
+
+    ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('btnRun').disabled = false;
+    setStatus('ok', `${ST.periodos.length} períodos disponibles`);
+
+  } catch(e) {
+    setStatus('error', 'Error de conexión');
+    showErr(e.message);
+    console.error(e);
+  }
+}
+
+// ============================================================
+// PERIOD & BANK SELECTORS
+// ============================================================
+const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function periodLabel(p) {
+  return MESES[parseInt(p.slice(4,6))] + ' ' + p.slice(0,4);
+}
+
+function fillPeriodSelectors() {
+  const desde = document.getElementById('selDesde');
+  const hasta = document.getElementById('selHasta');
+  desde.innerHTML = '';
+  hasta.innerHTML = '';
+  ST.periodos.forEach(p => {
+    desde.innerHTML += `<option value="${p}">${periodLabel(p)}</option>`;
+    hasta.innerHTML += `<option value="${p}">${periodLabel(p)}</option>`;
+  });
+  // Default: last 12 months
+  const n = ST.periodos.length;
+  desde.selectedIndex = Math.max(0, n - 12);
+  hasta.selectedIndex = n - 1;
+  ST.desde = ST.periodos[desde.selectedIndex];
+  ST.hasta = ST.periodos[hasta.selectedIndex];
+
+  desde.onchange = () => { ST.desde = desde.value; };
+  hasta.onchange = () => { ST.hasta = hasta.value; };
+}
+
+function fillBankList() {
+  const list = document.getElementById('bankList');
+  list.innerHTML = '';
+  const codes = Object.keys(ST.bancos).map(Number).sort((a,b) => {
+    if (a===999) return 1; if (b===999) return -1; return a-b;
+  });
+  codes.forEach(c => {
+    const name = ST.bancos[c].replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,'');
+    const item = document.createElement('div');
+    item.className = 'bank-item' + (ST.selected.has(c) ? ' on' : '');
+    item.innerHTML = `
+      <input type="checkbox" ${ST.selected.has(c)?'checked':''} onclick="event.stopPropagation();toggleBank(${c},this.checked)">
+      <span class="bank-name">${name}</span>
+      <span class="bank-code">${String(c).padStart(3,'0')}</span>
+    `;
+    item.onclick = () => { const cb=item.querySelector('input'); cb.checked=!cb.checked; toggleBank(c,cb.checked); };
+    list.appendChild(item);
+  });
+  // Default: select BTG Pactual if available, otherwise first bank
+  if (ST.selected.size === 0) {
+    const def = codes.includes(59) ? 59 : codes[0];
+    toggleBank(def, true); fillBankList();
+  }
+}
+
+function toggleBank(c, on) {
+  if (on) ST.selected.add(c); else ST.selected.delete(c);
+  document.querySelectorAll('.bank-item').forEach(el => {
+    const cb = el.querySelector('input[type=checkbox]');
+    if (cb) el.classList.toggle('on', cb.checked);
+  });
+}
+
+function selAll(on) {
+  ST.selected.clear();
+  if (on) Object.keys(ST.bancos).map(Number).filter(c=>c!==999).forEach(c=>ST.selected.add(c));
+  fillBankList();
+}
+
+// ============================================================
+// DATA FETCHING
+// ============================================================
+async function fetchData(tipo, cuentas, periodos, bancos) {
+  const key = `${tipo}_${periodos.join(',')}_${[...bancos].sort().join(',')}_${cuentas.join(',')}`;
+  if (ST.data[key]) return ST.data[key];
+
+  // Fetch in batches of periods to avoid row limit
+  const PERIOD_BATCH = 6; // 6 months at a time
+  let allRows = [];
+
+  for (let i = 0; i < periodos.length; i += PERIOD_BATCH) {
+    const batchPeriodos = periodos.slice(i, i + PERIOD_BATCH);
+    const rows = await supa('datos_financieros', {
+      select: 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext',
+      eq: { tipo },
+      in: {
+        periodo: batchPeriodos,
+        ins_cod: [...bancos],
+        cuenta: cuentas
+      },
+      limit: 10000
+    });
+    allRows = allRows.concat(rows);
+  }
+
+  ST.data[key] = allRows;
+  return allRows;
+}
+
+function sumRows(rows, cuenta, periodo) {
+  return rows
+    .filter(r => r.cuenta === cuenta && (!periodo || r.periodo === periodo))
+    .reduce((s,r) => s + (r.monto_total || 0), 0);
+}
+
+function sumB1Cols(rows, cuenta, periodo) {
+  const filtered = rows.filter(r => r.cuenta === cuenta && (!periodo || r.periodo === periodo));
+  return [
+    filtered.reduce((s,r)=>s+(r.monto_clp||0),0),
+    filtered.reduce((s,r)=>s+(r.monto_uf||0),0),
+    filtered.reduce((s,r)=>s+(r.monto_tc||0),0),
+    filtered.reduce((s,r)=>s+(r.monto_ext||0),0),
+  ];
+}
+
+function getSeriesForCuenta(rows, cuenta, periodos) {
+  return periodos.map(p => sumRows(rows, cuenta, p));
+}
+
+// ============================================================
+// FORMATTERS
+// ============================================================
+const fmtM = n => Math.round(n/1e6).toLocaleString('es-CL');
+const fmtB = n => (n/1e9).toFixed(1).replace('.',',');
+const fmtP = (n,d) => d ? (n/d*100).toFixed(2)+'%' : '—';
+
+// ============================================================
+// MAIN RUN
+// ============================================================
+async function run() {
+  if (!ST.selected.size) { showErr('Selecciona al menos un banco'); return; }
+  showErr('');
+  setStatus('loading', 'Consultando datos...');
+  ST.data = {}; // clear cache
+
+  const selDesde = document.getElementById('selDesde').value;
+  const selHasta = document.getElementById('selHasta').value;
+  ST.desde = selDesde;
+  ST.hasta = selHasta;
+
+  const periodos = ST.periodos.filter(p => p >= ST.desde && p <= ST.hasta);
+  const lastP = periodos[periodos.length - 1];
+  ST.lastPeriodo = lastP;
+  ST.exp.hierarchy = null; // reset explorer
+
+  const rangeLabel = periodLabel(periodos[0]) + ' — ' + periodLabel(lastP);
+  document.getElementById('rangePill').textContent = rangeLabel;
+
+  const banks = [...ST.selected];
+
+  try {
+    // Fetch all needed data
+    const B1_CUENTAS = ['100000000','105000000','107000000','110000000','120000000','130000000',
+      '140000000','144000000','145000000','146000000','148000000','149000000',
+      '150000000','160000000','170000000','175000000','185000000','190000000','195000000',
+      '200000000','207000000','210000000','230000000','240000000','241000000','242000000',
+      '243000000','244000000','245000000','246000000','250000000','255000000','260000000',
+      '270000000','285000000','290000000','300000000','310000000','311000000','312000000',
+      '320000000','330000000','340000000','350000000','380000000','390000000','500000000','505000000','510000000'];
+
+    const R1_CUENTAS = ['520000000','525000000','530000000','540000000','550000000',
+      '560000000','570000000','580000000','590000000','462000000','464000000',
+      '466000000','468000000','469000000','470000000','480000000'];
+
+    const C1_CUENTAS = ['851000000','852000000','853000000','854000000','855000000',
+      '857000000','857100000','857200000','857300000','857400000',
+      '813000000','814000000'];
+
+    const [b1, r1, c1] = await Promise.all([
+      fetchData('b1', B1_CUENTAS, periodos, banks),
+      fetchData('r1', R1_CUENTAS, periodos, banks),
+      fetchData('c1', C1_CUENTAS, periodos, banks),
+    ]);
+
+    // Build helper functions for last period
+    const b1v = c => sumRows(b1, c, lastP);
+    const r1v = c => sumRows(r1, c, lastP);
+    const c1v = c => sumRows(c1, c, lastP);
+    const b1s = c => getSeriesForCuenta(b1, c, periodos);
+    const r1s = c => getSeriesForCuenta(r1, c, periodos);
+    const c1s = c => getSeriesForCuenta(c1, c, periodos);
+
+    // For total activos, use 510000000 (Total Pasivos y Patrimonio) as fallback
+    const totalActivos  = b1v('100000000');
+    const colocaciones  = b1v('500000000');
+    const depositos     = b1v('241000000') + b1v('242000000');
+    const patrimonio    = b1v('300000000');
+    const utilidad      = r1v('590000000');
+    const mora90        = c1v('857000000');
+
+    // ---- RESUMEN ----
+
+    document.getElementById('kpiResumen').innerHTML = `
+      <div class="kpi blue"><div class="kpi-label">Total Activos</div><div class="kpi-val">$${fmtB(totalActivos)}B</div><div class="kpi-sub">MM$ ${fmtM(totalActivos)}</div></div>
+      <div class="kpi green"><div class="kpi-label">Colocaciones</div><div class="kpi-val">$${fmtB(colocaciones)}B</div><div class="kpi-sub">${fmtP(colocaciones,totalActivos)} activos</div></div>
+      <div class="kpi yellow"><div class="kpi-label">Depósitos</div><div class="kpi-val">$${fmtB(depositos)}B</div><div class="kpi-sub">Vista + Plazo</div></div>
+      <div class="kpi red"><div class="kpi-label">Total Pasivos</div><div class="kpi-val">$${fmtB(b1v('200000000'))}B</div><div class="kpi-sub">${fmtP(b1v('200000000'),totalActivos)} activos</div></div>
+      <div class="kpi purple"><div class="kpi-label">Patrimonio</div><div class="kpi-val">$${fmtB(patrimonio)}B</div><div class="kpi-sub">${fmtP(patrimonio,totalActivos)} activos</div></div>
+      <div class="kpi blue"><div class="kpi-label">Utilidad</div><div class="kpi-val ${utilidad<0?'neg':''}">$${fmtB(utilidad)}B</div><div class="kpi-sub">ROA ${fmtP(utilidad,totalActivos)}</div></div>
+      <div class="kpi green"><div class="kpi-label">ROE Anual</div><div class="kpi-val ${utilidad<0?'neg':''}">${patrimonio ? (utilidad/patrimonio*100).toFixed(2)+'%' : '—'}</div><div class="kpi-sub">Utilidad / Patrimonio</div></div>
+      <div class="kpi red"><div class="kpi-label">Morosidad +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90,colocaciones)} coloc.</div></div>
+    `;
+
+    // Store series for resumen chart
+    ST._series = { periodos, b1s, r1s, c1s, b1, r1, c1 };
+    showResChart('activos');
+
+    // ---- BALANCE ----
+    document.getElementById('kpiBalance').innerHTML = `
+      <div class="kpi blue"><div class="kpi-label">Total Activos</div><div class="kpi-val">$${fmtB(totalActivos)}B</div><div class="kpi-sub">MM$ ${fmtM(totalActivos)}</div></div>
+      <div class="kpi green"><div class="kpi-label">Colocaciones Netas</div><div class="kpi-val">$${fmtB(colocaciones)}B</div><div class="kpi-sub">${fmtP(colocaciones,totalActivos)} activos</div></div>
+      <div class="kpi yellow"><div class="kpi-label">Depósitos Totales</div><div class="kpi-val">$${fmtB(depositos)}B</div></div>
+      <div class="kpi red"><div class="kpi-label">Patrimonio</div><div class="kpi-val">$${fmtB(patrimonio)}B</div><div class="kpi-sub">Apal. ${patrimonio?(totalActivos/patrimonio).toFixed(1)+'x':'—'}</div></div>
+    `;
+    ST._b1 = b1; ST._lastP = lastP;
+    showBalTab('activos');
+
+    // ---- RESULTADOS ----
+    const ingresoNeto = r1v('520000000');
+    const ingresoReaj = r1v('525000000');
+    const ingComis    = r1v('530000000');
+    const resFin      = r1v('540000000');
+    const totalIng    = r1v('550000000');
+    const totalGas    = r1v('560000000');
+    const resOpA      = r1v('570000000');
+    const perdCred    = r1v('470000000');
+    const resOp       = r1v('580000000');
+    const impuesto    = r1v('480000000');
+
+    document.getElementById('kpiResultados').innerHTML = `
+      <div class="kpi blue"><div class="kpi-label">Utilidad del Ejercicio</div><div class="kpi-val ${utilidad<0?'neg':''}">$${fmtB(utilidad)}B</div><div class="kpi-sub">ROA ${fmtP(utilidad,totalActivos)}</div></div>
+      <div class="kpi green"><div class="kpi-label">Ingreso Neto Intereses</div><div class="kpi-val">$${fmtB(ingresoNeto)}B</div></div>
+      <div class="kpi yellow"><div class="kpi-label">Total Ingresos Op.</div><div class="kpi-val">$${fmtB(totalIng)}B</div><div class="kpi-sub">Comisiones $${fmtB(ingComis)}B</div></div>
+      <div class="kpi red"><div class="kpi-label">Pérdidas Crediticias</div><div class="kpi-val">$${fmtB(Math.abs(perdCred))}B</div><div class="kpi-sub">${fmtP(Math.abs(perdCred),totalIng)} ingresos</div></div>
+    `;
+
+    renderResTable({ingresoNeto,ingresoReaj,ingComis,resFin,totalIng,gastosP:r1v('462000000'),gastosA:r1v('464000000'),totalGas,resOpA,perdCred,resOp,impuesto,utilidad});
+
+    // ---- CALIDAD ----
+    const carNorm = c1v('854000000') + c1v('851000000');
+    const carSub  = c1v('852000000');
+    const carInc  = c1v('853000000') + c1v('855000000');
+    const castigos = c1v('813000000');
+    const recup    = c1v('814000000');
+
+    document.getElementById('kpiCalidad').innerHTML = `
+      <div class="kpi green"><div class="kpi-label">Cartera Normal</div><div class="kpi-val">$${fmtB(carNorm)}B</div><div class="kpi-sub">${fmtP(carNorm,carNorm+carSub+carInc)}</div></div>
+      <div class="kpi yellow"><div class="kpi-label">Cartera Subestándar</div><div class="kpi-val">$${fmtB(carSub)}B</div><div class="kpi-sub">${fmtP(carSub,carNorm+carSub+carInc)}</div></div>
+      <div class="kpi red"><div class="kpi-label">Cartera Incumplimiento</div><div class="kpi-val">$${fmtB(carInc)}B</div><div class="kpi-sub">${fmtP(carInc,carNorm+carSub+carInc)}</div></div>
+      <div class="kpi blue"><div class="kpi-label">Morosidad +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90,colocaciones)} coloc.</div></div>
+    `;
+    renderCalidad({carNorm,carSub,carInc,mora90,castigos,recup});
+
+    // Mora evolution chart
+    const moraSeries = c1s('857000000');
+    drawLineChart('chartMora', periodos, [{ label:'Morosidad +90d', data:moraSeries.map(v=>v/1e9), color:'var(--red)' }]);
+
+    // ---- COMPARATIVO ----
+    renderComparativo(b1, r1, c1, lastP);
+
+    // Show dashboard
+    document.getElementById('dashContent').style.display = 'flex';
+    setStatus('ok', `${periodos.length} períodos · ${ST.selected.size} entidad(es) · ${periodLabel(periodos[0])} → ${periodLabel(lastP)}`);
+    document.getElementById('headerInfo') && (document.getElementById('headerInfo').textContent = rangeLabel);
+
+  } catch(e) {
+    setStatus('error', 'Error al consultar datos');
+    showErr('Error: ' + e.message);
+    console.error(e);
+  }
+}
+
+// ============================================================
+// RESUMEN CHART
+// ============================================================
+function sparseData(rawData) {
+  const firstNonZero = rawData.findIndex(v => v !== 0);
+  if (firstNonZero === -1) return rawData;
+  return rawData.map((v, i) => i < firstNonZero ? null : v);
+}
+
+function showResChart(tipo) {
+  ST._lastResChart = tipo;
+  const map = { activos:'Activos', coloc:'Colocaciones', pasivos:'Pasivos', patrimonio:'Patrimonio', utilidad:'Utilidad', mora:'Morosidad' };
+  document.querySelectorAll('#tab-resumen .itab').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === map[tipo]);
+  });
+  if (!ST._series) return;
+  const { periodos, b1, r1, c1 } = ST._series;
+
+  const CHART_COLORS = ['#38bdf8','#34d399','#f87171','#fbbf24','#a78bfa','#fb923c','#e879f9','#4ade80'];
+  const banks = [...ST.selected];
+
+  const cuentaMap = {
+    activos: { rows: b1, cuenta: '100000000' },
+    coloc:   { rows: b1, cuenta: '500000000' },
+    pasivos: { rows: b1, cuenta: '200000000' },
+    patrimonio: { rows: b1, cuenta: '300000000' },
+    utilidad: { rows: r1, cuenta: '590000000' },
+    mora:    { rows: c1, cuenta: '857000000' },
+  };
+  const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
+
+  const series = banks.map((code, i) => {
+    const name = (ST.bancos[code] || `Banco ${code}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,'');
+    const data = sparseData(periodos.map(p =>
+      rows.filter(r => r.ins_cod === code && r.cuenta === cuenta && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9
+    ));
+    return { label: name, data, color: CHART_COLORS[i % CHART_COLORS.length] };
+  });
+
+  drawLineChart('chartResumen', periodos, series);
+  setupChartTooltip('chartResumen', 'chartTooltip');
+
+  // Legend
+  document.getElementById('resumenLegend').innerHTML = series.map(s =>
+    `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
+  ).join('');
+}
+
+// ============================================================
+// BAR CHART (Canvas) — with tooltip
+// ============================================================
+const CHART_STATE = {}; // store bar positions for tooltip
+
+function fmtAxis(v) {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1000) return sign + Math.round(abs/1000).toLocaleString('es-CL') + ' bi';
+  if (abs >= 1)    return sign + abs.toFixed(1).replace('.',',') + ' B';
+  if (abs >= 0.001) return sign + (abs*1000).toFixed(0) + ' M';
+  return v === 0 ? '0' : sign + abs.toFixed(2);
+}
+
+function niceScale(lo, hi) {
+  // If all values positive and min > 20% of max, start from near the min (not zero)
+  const forceZero = lo < 0 || (hi > 0 && lo < hi * 0.2);
+  const scaleLo = forceZero ? Math.min(0, lo) : lo;
+
+  const range = hi - scaleLo || 1;
+  const roughStep = range / 4;
+  const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const steps = [1, 2, 2.5, 5, 10];
+  let step = mag;
+  for (const s of steps) {
+    if (s * mag >= roughStep) { step = s * mag; break; }
+  }
+  const nLo = forceZero ? Math.floor(scaleLo / step) * step : Math.floor(lo / step) * step;
+  const nHi = Math.ceil(hi / step) * step;
+  const ticks = [];
+  for (let t = nLo; t <= nHi + step * 0.01; t += step) ticks.push(parseFloat(t.toPrecision(10)));
+  return { ticks, lo: ticks[0], hi: ticks[ticks.length - 1] };
+}
+
+function drawLineChart(canvasId, periodos, series) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const rawW = canvas.parentElement.clientWidth || canvas.parentElement.offsetWidth;
+  if (!rawW || rawW < 10) {
+    requestAnimationFrame(() => drawLineChart(canvasId, periodos, series));
+    return;
+  }
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = rawW;
+  const isResumen = canvasId === 'chartResumen';
+  const H = isResumen ? 320 : 160;
+
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD = { t:16, r:16, b:44, l:72 };
+  const cW = W - PAD.l - PAD.r;
+  const cH = H - PAD.t - PAD.b;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const COLORS = {
+    'var(--accent)': '#38bdf8',
+    'var(--green)':  '#34d399',
+    'var(--red)':    '#f87171',
+    'var(--purple)': '#a78bfa',
+    'var(--yellow)': '#fbbf24',
+  };
+
+  const allVals = series.flatMap(s => s.data).filter(v => v !== null && isFinite(v));
+  if (!allVals.length) return;
+
+  const rawLo = Math.min(...allVals);
+  const rawHi = Math.max(...allVals);
+  const scale = niceScale(rawLo, rawHi);
+  const lo = scale.lo, hi = scale.hi;
+
+  const toY = v => PAD.t + cH - ((v - lo) / (hi - lo)) * cH;
+  const zeroY = toY(0);
+
+  // Grid lines + Y labels
+  ctx.strokeStyle = '#1e2d3d';
+  ctx.lineWidth = 1;
+  scale.ticks.forEach(tick => {
+    const y = toY(tick);
+    if (y < PAD.t - 2 || y > PAD.t + cH + 2) return;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cW, y); ctx.stroke();
+    ctx.fillStyle = '#94a8be';
+    ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtAxis(tick), PAD.l - 5, y + 3);
+  });
+
+  // Zero line emphasis
+  if (rawLo < 0) {
+    ctx.strokeStyle = '#3a5068';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(PAD.l, zeroY); ctx.lineTo(PAD.l + cW, zeroY); ctx.stroke();
+  }
+
+  // Bars
+  const n = periodos.length;
+  const nSeries = series.filter(s => s.data.some(v => v !== null)).length;
+  const groupW = cW / n;
+  const barPad = Math.max(groupW * 0.1, 2);
+  const barW = Math.max((groupW - barPad * 2) / nSeries, 2);
+
+  // Store bar rects for tooltip
+  CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr };
+
+  series.forEach((s, si) => {
+    const color = COLORS[s.color] || s.color;
+    s.data.forEach((v, i) => {
+      if (v === null) return;
+      const x = PAD.l + i * groupW + barPad + si * barW;
+      const barTop = Math.max(PAD.t, toY(Math.max(0, v)));
+      const barBottom = Math.min(PAD.t + cH, zeroY);
+      const h = Math.max(1, barBottom - barTop);
+      if (h < 1) return;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.roundRect(x, barTop, barW, h, 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
+    });
+  });
+
+  // X axis labels — below chart area, never overlapping bars
+  const step = Math.ceil(n / 10);
+  periodos.forEach((p, i) => {
+    if (i % step !== 0 && i !== n - 1) return;
+    const x = PAD.l + i * groupW + groupW / 2;
+    ctx.fillStyle = '#94a8be';
+    ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(periodLabel(p), x, PAD.t + cH + 36);
+  });
+}
+
+// Tooltip handler
+function setupChartTooltip(canvasId, tooltipId) {
+  const canvas = document.getElementById(canvasId);
+  const tooltip = document.getElementById(tooltipId);
+  if (!canvas || !tooltip) return;
+
+  canvas.addEventListener('mousemove', e => {
+    const state = CHART_STATE[canvasId];
+    if (!state) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    let found = null;
+    for (const bar of state.bars) {
+      if (mx >= bar.x && mx <= bar.x + bar.w && my >= bar.y && my <= bar.y + bar.h) {
+        found = bar; break;
+      }
+    }
+    if (found) {
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = `<span style="color:${found.color}">${found.label}</span><br><strong>${periodLabel(found.periodo)}</strong>: ${fmtAxis(found.val)}`;
+      // Position: prefer right of cursor, flip left if near right edge
+      const ttW = tooltip.offsetWidth || 160;
+      const ttH = tooltip.offsetHeight || 48;
+      const spaceRight = window.innerWidth - e.clientX;
+      const left = spaceRight < ttW + 20 ? e.clientX - ttW - 12 : e.clientX + 12;
+      const top = Math.max(8, e.clientY - ttH / 2);
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    } else {
+      tooltip.style.display = 'none';
+    }
+  });
+  canvas.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+}
+
+// ============================================================
+// BALANCE TABLE
+// ============================================================
+const BAL_SECTIONS = {
+  activos: [
+    {c:'100000000',l:'TOTAL ACTIVOS',cls:'hl'},
+    {c:'105000000',l:'Efectivo y Depósitos en Bancos',cls:'i1'},
+    {c:'107000000',l:'Operaciones Liquidación en Curso',cls:'i1'},
+    {c:'110000000',l:'Activos Fin. para Negociar (VR)',cls:'i1'},
+    {c:'120000000',l:'Activos Fin. a VR otro Resultado Integral',cls:'i1'},
+    {c:'130000000',l:'Derivados para Cobertura Contable',cls:'i1'},
+    {c:'140000000',l:'Activos Financieros a Costo Amortizado',cls:'i1'},
+    {c:'144000000',l:'Créditos y Cuentas por Cobrar Clientes',cls:'i2'},
+    {c:'145000000',l:'Colocaciones Comerciales',cls:'i3'},
+    {c:'146000000',l:'Colocaciones para Vivienda',cls:'i3'},
+    {c:'148000000',l:'Colocaciones de Consumo',cls:'i3'},
+    {c:'149000000',l:'Provisiones por Riesgo Crédito',cls:'i3'},
+    {c:'500000000',l:'TOTAL COLOCACIONES',cls:'hl'},
+    {c:'150000000',l:'Inversiones en Sociedades',cls:'i1'},
+    {c:'160000000',l:'Activos Intangibles',cls:'i1'},
+    {c:'170000000',l:'Activos Fijos',cls:'i1'},
+    {c:'185000000',l:'Impuestos Diferidos',cls:'i1'},
+    {c:'190000000',l:'Otros Activos',cls:'i1'},
+  ],
+  pasivos: [
+    {c:'200000000',l:'TOTAL PASIVOS',cls:'hl'},
+    {c:'207000000',l:'Operaciones Liquidación en Curso',cls:'i1'},
+    {c:'210000000',l:'Pasivos Fin. para Negociar (VR)',cls:'i1'},
+    {c:'230000000',l:'Derivados para Cobertura Contable',cls:'i1'},
+    {c:'240000000',l:'Pasivos Financieros a Costo Amortizado',cls:'i1'},
+    {c:'241000000',l:'Depósitos a la Vista',cls:'i2'},
+    {c:'242000000',l:'Depósitos y Captaciones a Plazo',cls:'i2'},
+    {c:'243000000',l:'Obligaciones por Retrocompra',cls:'i2'},
+    {c:'244000000',l:'Obligaciones con Bancos',cls:'i2'},
+    {c:'245000000',l:'Instrumentos de Deuda Emitidos',cls:'i2'},
+    {c:'250000000',l:'Obligaciones por Arrendamiento',cls:'i1'},
+    {c:'255000000',l:'Capital Regulatorio Emitido',cls:'i1'},
+    {c:'260000000',l:'Provisiones por Contingencias',cls:'i1'},
+    {c:'270000000',l:'Provisiones Especiales Riesgo Crédito',cls:'i1'},
+    {c:'290000000',l:'Otros Pasivos',cls:'i1'},
+  ],
+  patrimonio: [
+    {c:'300000000',l:'TOTAL PATRIMONIO',cls:'hl'},
+    {c:'310000000',l:'Capital',cls:'i1'},
+    {c:'311000000',l:'Capital Pagado',cls:'i2'},
+    {c:'320000000',l:'Reservas',cls:'i1'},
+    {c:'330000000',l:'Otro Resultado Integral Acumulado',cls:'i1'},
+    {c:'340000000',l:'Utilidades Acumuladas Anteriores',cls:'i1'},
+    {c:'350000000',l:'Utilidad (Pérdida) del Ejercicio',cls:'i1'},
+    {c:'380000000',l:'Patrimonio de los Propietarios',cls:'hl'},
+  ]
+};
+
+function showBalTab(sec) {
+  document.querySelectorAll('#tab-balance .itab').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim().toLowerCase()===sec));
+  if (!ST._b1) return;
+  const rows = BAL_SECTIONS[sec];
+  let html = `<table class="tbl"><thead><tr>
+    <th class="cod">Cuenta</th><th>Descripción</th>
+    <th class="r">CLP no Reaj.</th><th class="r">Reaj. UF/IVP</th>
+    <th class="r">Reaj. TC</th><th class="r">Mon. Extr.</th>
+    <th class="r">TOTAL MM$</th>
+  </tr></thead><tbody>`;
+  rows.forEach(row => {
+    const cols = sumB1Cols(ST._b1, row.c, ST._lastP);
+    const tot = cols.reduce((a,b)=>a+b,0);
+    const neg = tot < 0 ? 'neg' : '';
+    html += `<tr>
+      <td class="cod">${row.c}</td>
+      <td class="${row.cls}">${row.l}</td>
+      <td class="r ${neg}">${fmtM(cols[0])}</td>
+      <td class="r ${neg}">${fmtM(cols[1])}</td>
+      <td class="r ${neg}">${fmtM(cols[2])}</td>
+      <td class="r ${neg}">${fmtM(cols[3])}</td>
+      <td class="r ${row.cls==='hl'?'hl':''} ${neg}">${fmtM(tot)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('balTable').innerHTML = html;
+}
+
+// ============================================================
+// RESULTADOS TABLE
+// ============================================================
+function renderResTable(m) {
+  const rows = [
+    {l:'Ingreso Neto por Intereses',       v:m.ingresoNeto, cls:''},
+    {l:'Ingreso Neto por Reajustes UF/IVP',v:m.ingresoReaj, cls:''},
+    {l:'Ingreso Neto por Comisiones',       v:m.ingComis,    cls:''},
+    {l:'Resultado Financiero Neto',         v:m.resFin,      cls:''},
+    {l:'TOTAL INGRESOS OPERACIONALES',      v:m.totalIng,    cls:'hl'},
+    {l:'Gastos Personal',                   v:m.gastosP,     cls:'i1'},
+    {l:'Gastos Administración',             v:m.gastosA,     cls:'i1'},
+    {l:'TOTAL GASTOS OPERACIONALES',        v:m.totalGas,    cls:'hl'},
+    {l:'Res. Op. antes Pérd. Crediticias',  v:m.resOpA,      cls:''},
+    {l:'Gasto por Pérdidas Crediticias',    v:m.perdCred,    cls:'i1'},
+    {l:'RESULTADO OPERACIONAL',             v:m.resOp,       cls:'hl'},
+    {l:'Impuesto a la Renta',               v:m.impuesto,    cls:'i1'},
+    {l:'UTILIDAD (PÉRDIDA) DEL EJERCICIO',  v:m.utilidad,    cls:'hl'},
+  ];
+  let html = `<table class="tbl"><thead><tr><th>Concepto</th><th class="r">MM$ CLP</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += `<tr><td class="${r.cls}">${r.l}</td><td class="r ${r.v<0?'neg':'pos'} ${r.cls==='hl'?'hl':''}">${fmtM(r.v)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('resTable').innerHTML = html;
+}
+
+// ============================================================
+// CALIDAD
+// ============================================================
+function renderCalidad({carNorm,carSub,carInc,mora90,castigos,recup}) {
+  const tot = carNorm+carSub+carInc;
+  const bars = [
+    {l:'Normal',       v:carNorm, color:'#34d399', pct:tot?carNorm/tot:0},
+    {l:'Subestándar',  v:carSub,  color:'#fbbf24', pct:tot?carSub/tot:0},
+    {l:'Incumplimiento',v:carInc, color:'#f87171', pct:tot?carInc/tot:0},
+  ];
+  let bHtml = '<div class="bars">';
+  bars.forEach(b => {
+    bHtml += `<div class="bar-row">
+      <div class="bar-lbl">${b.l}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(b.pct*100).toFixed(1)}%;background:${b.color}"></div></div>
+      <div class="bar-val">$${fmtB(b.v)}B</div>
+    </div>`;
+  });
+  bHtml += '</div>';
+  document.getElementById('calBars').innerHTML = bHtml;
+
+  const mRows = [
+    {l:'Adeudado Bancos',     c:'857100000'},
+    {l:'Col. Comerciales',    c:'857200000'},
+    {l:'Col. Vivienda',       c:'857300000'},
+    {l:'Col. Consumo',        c:'857400000'},
+  ];
+  let mHtml = `<table class="tbl"><thead><tr><th>Cartera</th><th class="r">MM$</th></tr></thead><tbody>`;
+  let mTot = 0;
+  mRows.forEach(r => {
+    // We need c1 data here - use c1v approximation from already fetched data
+    const v = sumRows(ST._c1||[], r.c, ST._lastP);
+    mTot += v;
+    mHtml += `<tr><td class="i1">${r.l}</td><td class="r">${fmtM(v)}</td></tr>`;
+  });
+  mHtml += `<tr><td class="hl">TOTAL +90d</td><td class="r hl">${fmtM(mora90)}</td></tr>`;
+  mHtml += `<tr><td style="padding-top:8px;color:var(--text3)">Castigos</td><td class="r neg">${fmtM(castigos)}</td></tr>`;
+  mHtml += `<tr><td>Recuperaciones</td><td class="r pos">${fmtM(recup)}</td></tr>`;
+  mHtml += `<tr><td class="hl">Castigos Netos</td><td class="r hl neg">${fmtM(castigos-recup)}</td></tr>`;
+  mHtml += '</tbody></table>';
+  document.getElementById('calMora').innerHTML = mHtml;
+}
+
+// ============================================================
+// COMPARATIVO
+// ============================================================
+function renderComparativo(b1, r1, c1, lastP) {
+  ST._c1 = c1; // save for calidad
+  const codes = [...ST.selected].filter(c => c !== 999);
+  if (codes.length < 2) {
+    document.getElementById('compTable').innerHTML = '<div class="empty"><div class="empty-icon">📊</div><p>Selecciona 2 o más bancos individuales para comparar</p></div>';
+    return;
+  }
+
+  const getV = (rows, cuenta, bank) => rows.filter(r=>r.cuenta===cuenta&&r.ins_cod===bank).reduce((s,r)=>s+(r.monto_total||0),0);
+  const getB1V = (cuenta, bank) => {
+    const r = b1.filter(r=>r.cuenta===cuenta&&r.ins_cod===bank&&r.periodo===lastP);
+    return r.reduce((s,row)=>s+(row.monto_total||0),0);
+  };
+
+  const metrics = [
+    {l:'Total Activos',   fn:c=>getB1V('100000000',c)},
+    {l:'Colocaciones',    fn:c=>getB1V('500000000',c)},
+    {l:'Dep. Vista',      fn:c=>getB1V('241000000',c)},
+    {l:'Dep. Plazo',      fn:c=>getB1V('242000000',c)},
+    {l:'Patrimonio',      fn:c=>getB1V('300000000',c)},
+    {l:'Utilidad',        fn:c=>r1.filter(r=>r.cuenta==='590000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)},
+    {l:'Mora +90d',       fn:c=>c1.filter(r=>r.cuenta==='857000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)},
+  ];
+
+  let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Indicador</th>`;
+  codes.forEach(c => {
+    const name = (ST.bancos[c]||`Banco ${c}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,'');
+    html += `<th class="r">${name}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  metrics.forEach(m => {
+    const vals = codes.map(m.fn);
+    const maxA = Math.max(...vals.map(Math.abs));
+    html += `<tr><td>${m.l}</td>`;
+    vals.forEach(v => {
+      html += `<td class="r ${v<0?'neg':''} ${Math.abs(v)===maxA&&maxA>0?'hl':''}">${fmtM(v)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  // Ratios
+  html += `<tr><td style="color:var(--text3);padding-top:10px;font-size:10px">Ratios</td>${codes.map(()=>'<td></td>').join('')}</tr>`;
+  html += `<tr><td class="i1">ROA</td>`;
+  codes.forEach(c => {
+    const act = getB1V('100000000',c);
+    const ut = r1.filter(r=>r.cuenta==='590000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0);
+    html += `<td class="r">${act?(ut/act*100).toFixed(2)+'%':'—'}</td>`;
+  });
+  html += '</tr>';
+  html += `<tr><td class="i1">Apalancamiento</td>`;
+  codes.forEach(c => {
+    const act = getB1V('100000000',c);
+    const pat = getB1V('300000000',c);
+    html += `<td class="r">${pat?(act/pat).toFixed(1)+'x':'—'}</td>`;
+  });
+  html += '</tr>';
+  html += `<tr><td class="i1">Mora / Coloc.</td>`;
+  codes.forEach(c => {
+    const col = getB1V('500000000',c);
+    const mor = c1.filter(r=>r.cuenta==='857000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0);
+    html += `<td class="r">${col?(mor/col*100).toFixed(2)+'%':'—'}</td>`;
+  });
+  html += '</tr></tbody></table></div>';
+  document.getElementById('compTable').innerHTML = html;
+}
+
+// ============================================================
+// EXPLORADOR
+// ============================================================
+function initExplorer() {
+  if (!ST.exp.hierarchy) buildExpHierarchy();
+  ST.exp.path = []; ST.exp.selected = null;
+  renderExpLevel();
+}
+
+function buildExpHierarchy() {
+  const codes = Object.keys(ST.planCuentas).sort();
+  const tree = {};
+  codes.forEach(c => tree[c] = { code:c, label:ST.planCuentas[c]||c, children:[], parent:null });
+
+  function isParent(p, c) {
+    if (p===c) return false;
+    const pnz = p.replace(/0+$/,'');
+    const cnz = c.replace(/0+$/,'');
+    return cnz.startsWith(pnz) && cnz.length > pnz.length;
+  }
+
+  codes.forEach(child => {
+    let bestParent = null, bestLen = 0;
+    codes.forEach(parent => {
+      if (isParent(parent, child)) {
+        const pnz = parent.replace(/0+$/,'').length;
+        if (pnz > bestLen) { bestLen=pnz; bestParent=parent; }
+      }
+    });
+    if (bestParent) { tree[child].parent=bestParent; tree[bestParent].children.push(child); }
+  });
+
+  const roots = codes.filter(c => !tree[c].parent);
+  ST.exp.hierarchy = { tree, roots };
+}
+
+function getTipo(code) {
+  const p = code[0];
+  if (p==='1'||p==='2'||p==='3') return 'b1';
+  if (p==='4'||p==='5'||p==='6') return 'r1';
+  return 'c1';
+}
+
+function renderExpLevel() {
+  const {tree, roots} = ST.exp.hierarchy;
+  const codes = ST.exp.path.length===0 ? roots : tree[ST.exp.path[ST.exp.path.length-1].code].children;
+
+  // Breadcrumb
+  let bcHtml = `<span class="bc-item" onclick="expGoTo(-1)">Inicio</span>`;
+  ST.exp.path.forEach((p,i) => {
+    bcHtml += `<span class="bc-sep">›</span>`;
+    const lbl = p.label.length>22 ? p.label.slice(0,20)+'…' : p.label;
+    bcHtml += `<span class="bc-item ${i===ST.exp.path.length-1?'cur':''}" onclick="expGoTo(${i})">${lbl}</span>`;
+  });
+  document.getElementById('expBC').innerHTML = bcHtml;
+
+  // Tree
+  let tHtml = '';
+  codes.forEach(c => {
+    const node = tree[c];
+    const hasKids = node.children.length > 0;
+    tHtml += `<button class="exp-node ${ST.exp.selected===c?'active':''}"
+      onclick="${hasKids?`expDrill('${c}')`:`expSelect('${c}')`}">
+      <span class="exp-cod">${c}</span>
+      <span class="exp-lbl">${node.label}</span>
+      <span class="exp-arr">${hasKids?'›':'●'}</span>
+    </button>`;
+  });
+  document.getElementById('expTree').innerHTML = tHtml || '<div class="empty"><p>Sin subcuentas</p></div>';
+  if (!ST.exp.selected) document.getElementById('expResult').style.display='none';
+}
+
+function expDrill(code) {
+  ST.exp.path.push({code, label:ST.exp.hierarchy.tree[code].label});
+  ST.exp.selected=null;
+  renderExpLevel();
+}
+
+function expGoTo(idx) {
+  ST.exp.path = idx===-1 ? [] : ST.exp.path.slice(0,idx+1);
+  ST.exp.selected=null;
+  renderExpLevel();
+}
+
+async function expSelect(code) {
+  ST.exp.selected = code;
+  document.querySelectorAll('.exp-node').forEach(el=>el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const tipo = getTipo(code);
+  const node = ST.exp.hierarchy.tree[code];
+  document.getElementById('expCode').textContent = code;
+  document.getElementById('expName').textContent = node.label;
+  const tipoLabels = {b1:'Balance consolidado',r1:'Estado de resultados',c1:'Información complementaria'};
+  document.getElementById('expType').textContent = tipoLabels[tipo]||'';
+  document.getElementById('expResult').style.display='block';
+
+  setStatus('loading','Consultando cuenta...');
+  try {
+    const selDesde = document.getElementById('selDesde').value;
+    const selHasta = document.getElementById('selHasta').value;
+    const periodos = ST.periodos.filter(p=>p>=selDesde&&p<=selHasta);
+    const banks = [...ST.selected];
+
+    const rows = await supa('datos_financieros',{
+      select:'periodo,ins_cod,cuenta,monto_total',
+      eq:{tipo,cuenta:code},
+      in:{periodo:periodos,ins_cod:banks},
+      order:'periodo.asc'
+    });
+
+    // Series per bank
+    const bankCodes = banks.filter(c=>c!==999);
+    const CHART_COLORS = ['#38bdf8','#34d399','#f87171','#fbbf24','#a78bfa','#fb923c','#e879f9','#4ade80'];
+
+    const series = bankCodes.map((c,i) => ({
+      label: (ST.bancos[c]||`Banco ${c}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,''),
+      color: CHART_COLORS[i % CHART_COLORS.length],
+      data: periodos.map(p => rows.filter(r=>r.ins_cod===c&&r.periodo===p).reduce((s,r)=>s+(r.monto_total||0),0) / 1e9)
+    }));
+
+    // Also add total if 999 selected
+    if (ST.selected.has(999)) {
+      series.unshift({
+        label:'Sistema Bancario',
+        color:'#ffffff',
+        data: periodos.map(p => rows.filter(r=>r.ins_cod===999&&r.periodo===p).reduce((s,r)=>s+(r.monto_total||0),0)/1e9)
+      });
+    }
+
+    // Legend
+    document.getElementById('expLegend').innerHTML = series.map(s=>
+      `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
+    ).join('');
+
+    drawLineChart('chartExp', periodos, series);
+
+    // Table
+    const lastP = periodos[periodos.length-1];
+    const tableRows = bankCodes.map(c => ({
+      name:(ST.bancos[c]||`Banco ${c}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,''),
+      val: rows.filter(r=>r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)
+    })).sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
+
+    const maxA = Math.max(...tableRows.map(r=>Math.abs(r.val)));
+    let tHtml = `<table class="tbl"><thead><tr><th>Banco</th><th class="r">Último período MM$</th><th class="r">% del máximo</th></tr></thead><tbody>`;
+    tableRows.forEach(r => {
+      const pct = maxA ? (Math.abs(r.val)/maxA*100).toFixed(1)+'%' : '—';
+      tHtml += `<tr><td>${r.name}</td><td class="r ${r.val<0?'neg':''}">${fmtM(r.val)}</td><td class="r" style="color:var(--text3)">${pct}</td></tr>`;
+    });
+    tHtml += '</tbody></table>';
+    document.getElementById('expTable').innerHTML = tHtml;
+
+    setStatus('ok', `Cuenta ${code} — ${node.label}`);
+  } catch(e) {
+    setStatus('error','Error al consultar cuenta');
+    console.error(e);
+  }
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function showTab(tab) {
+  ['resumen','balance','resultados','calidad','comparativo','explorador'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => {
+    const map={resumen:'Resumen',balance:'Balance',resultados:'Resultados',calidad:'Calidad Cartera',comparativo:'Comparativo',explorador:'Explorador'};
+    b.classList.toggle('active', b.textContent.trim()===map[tab]);
+  });
+  // Redraw charts after tab is visible
+  if (tab==='resumen' && ST._series) {
+    requestAnimationFrame(() => showResChart(ST._lastResChart || 'activos'));
+  }
+  if (tab==='calidad' && ST._series) {
+    const {periodos, c1s} = ST._series;
+    requestAnimationFrame(() => drawLineChart('chartMora', periodos, [{label:'Morosidad +90d', data:c1s('857000000').map(v=>v/1e9), color:'var(--red)'}]));
+  }
+  if (tab==='explorador' && ST.exp.hierarchy===null && Object.keys(ST.planCuentas).length>0) initExplorer();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function setStatus(type, msg) {
+  document.getElementById('sDot').className='status-dot '+type;
+  document.getElementById('sTxt').textContent=msg;
+}
+function showErr(msg) {
+  const b=document.getElementById('errBox');
+  b.style.display=msg?'block':'none';
+  b.textContent=msg;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+init();
+</script>
+<div id="chartTooltip" class="chart-tooltip"></div>
+</body>
+</html>
