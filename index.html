@@ -261,6 +261,16 @@ select option { background:var(--bg3); }
 .tbl .i3  { padding-left:46px; color:var(--text3); font-size:10px; }
 .tbl .cod { font-size:9px; color:var(--text3); }
 
+/* RESUMEN CHART BUTTONS */
+.rcbtn {
+  padding:6px 14px; border-radius:20px;
+  border:1.5px solid var(--border2); background:var(--bg3);
+  color:var(--text2); font-size:12px; font-weight:500;
+  font-family:var(--sans); cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.rcbtn:hover { border-color:var(--accent); color:var(--accent); background:rgba(56,189,248,0.06); }
+.rcbtn.active { border-color:var(--accent); background:var(--accent); color:#000; font-weight:600; }
+
 /* CHART */
 .chart-wrap { position:relative; }
 .chart-canvas { width:100% !important; display:block; max-height:360px; }
@@ -421,20 +431,21 @@ select option { background:var(--bg3); }
             </div>
             <div class="panel-body">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <div class="itabs" style="margin-bottom:0;flex-wrap:wrap;">
-                  <button class="itab active" onclick="showResChart('activos')">Activos</button>
-                  <button class="itab" onclick="showResChart('coloc')">Colocaciones</button>
-                  <button class="itab" onclick="showResChart('pasivos')">Pasivos</button>
-                  <button class="itab" onclick="showResChart('patrimonio')">Patrimonio</button>
-                  <button class="itab" onclick="showResChart('utilidad')">Utilidad</button>
-                  <button class="itab" onclick="showResChart('mora')">Morosidad</button>
-                  <button class="itab" onclick="showResChart('dep_vista')">Dep. Vista</button>
-                  <button class="itab" onclick="showResChart('dep_plazo')">Dep. Plazo</button>
-                  <button class="itab" onclick="showResChart('bonos')">Bonos</button>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0;" id="resChartBtns">
+                  <button class="rcbtn active" onclick="showResChart('activos')">📊 Activos</button>
+                  <button class="rcbtn" onclick="showResChart('coloc')">💳 Colocaciones</button>
+                  <button class="rcbtn" onclick="showResChart('pasivos')">📉 Pasivos</button>
+                  <button class="rcbtn" onclick="showResChart('patrimonio')">🏛 Patrimonio</button>
+                  <button class="rcbtn" onclick="showResChart('utilidad')">💰 Utilidad</button>
+                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ Morosidad</button>
+                  <button class="rcbtn" onclick="showResChart('dep_vista')">👁 Dep. Vista</button>
+                  <button class="rcbtn" onclick="showResChart('dep_plazo')">⏱ Dep. Plazo</button>
+                  <button class="rcbtn" onclick="showResChart('bonos')">📄 Bonos</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
                   <button id="btnBars" onclick="setChartType('bars')" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);">▌▌</button>
                   <button id="btnLine" onclick="setChartType('line')" style="padding:3px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;font-size:10px;color:var(--text2);cursor:pointer;font-family:var(--mono);">╱</button>
+                  <button id="btnLabels" onclick="toggleBarLabels()" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);" title="Mostrar/ocultar valores">123</button>
                 </div>
               </div>
               <div class="chart-wrap"><canvas class="chart-canvas" id="chartResumen" height="360"></canvas></div>
@@ -507,24 +518,56 @@ select option { background:var(--bg3); }
 
         <!-- EXPLORADOR -->
         <div id="tab-explorador" style="display:none;">
-          <div class="panel">
-            <div class="panel-head">
-              <div><div class="panel-title">Explorador de Cuentas</div><div class="panel-sub">Navega el plan de cuentas y compara bancos en el tiempo</div></div>
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;min-height:500px;">
+
+            <!-- Left: account list -->
+            <div class="panel" style="overflow:hidden;">
+              <div class="panel-head"><div class="panel-title">Cuentas</div></div>
+              <div style="overflow-y:auto;max-height:calc(100vh - 180px);" id="expTree"></div>
             </div>
-            <div class="panel-body">
-              <div class="breadcrumb" id="expBC"></div>
-              <div id="expTree"></div>
-              <div id="expResult" style="display:none;margin-top:16px;">
-                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px 14px;margin-bottom:14px;">
-                  <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px;" id="expCode"></div>
-                  <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px;" id="expName"></div>
-                  <div style="font-size:11px;color:var(--text2);" id="expType"></div>
+
+            <!-- Right: chart + sub-accounts -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div id="expResult" style="display:none;">
+                <div class="panel">
+                  <div class="panel-head">
+                    <div>
+                      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);" id="expCode"></div>
+                      <div style="font-size:15px;font-weight:600;color:var(--white);" id="expName"></div>
+                      <div style="font-size:11px;color:var(--text2);" id="expType"></div>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                      <button id="btnExpLabels" onclick="toggleBarLabels()" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);" title="Mostrar/ocultar valores">123</button>
+                      <button id="expBackBtn" onclick="expGoBack()" style="display:none;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans);">← Volver</button>
+                    </div>
+                  </div>
+                  <div class="panel-body">
+                    <div class="legend" id="expLegend"></div>
+                    <div class="chart-wrap"><canvas class="chart-canvas" id="chartExp" height="200"></canvas></div>
+                  </div>
                 </div>
-                <div class="legend" id="expLegend"></div>
-                <div class="chart-wrap" style="margin-bottom:16px;"><canvas class="chart-canvas" id="chartExp" height="160"></canvas></div>
-                <div style="overflow-x:auto" id="expTable"></div>
+
+                <!-- Sub-accounts -->
+                <div class="panel" id="expSubPanel" style="display:none;">
+                  <div class="panel-head">
+                    <div><div class="panel-title" id="expSubTitle">Sub-cuentas</div><div class="panel-sub">Selecciona para ver detalle</div></div>
+                  </div>
+                  <div id="expSubList"></div>
+                </div>
+
+                <!-- Table -->
+                <div class="panel">
+                  <div class="panel-head"><div class="panel-title">Valores último período</div></div>
+                  <div class="panel-body" id="expTable"></div>
+                </div>
+              </div>
+
+              <!-- Placeholder when nothing selected -->
+              <div id="expPlaceholder" class="panel" style="display:flex;align-items:center;justify-content:center;min-height:300px;">
+                <div class="empty"><div class="empty-icon">👈</div><p>Selecciona una cuenta de la lista</p></div>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -622,7 +665,7 @@ const ST = {
   data: {},
   planCuentas: {},
   lastPeriodo: null,
-  exp: { hierarchy: null, path: [], selected: null }
+  exp: { hierarchy: null, path: [], selected: null, history: [] }
 };
 
 // Chart instances
@@ -769,6 +812,7 @@ function toggleTheme() {
   if (ST._lastResChart) showResChart(ST._lastResChart);
 }
 ST.chartType = 'bars';
+ST.showBarLabels = true;
 
 function setChartType(type) {
   ST.chartType = type;
@@ -781,21 +825,40 @@ function setChartType(type) {
   if (ST._lastResChart) showResChart(ST._lastResChart);
 }
 
+function toggleBarLabels() {
+  ST.showBarLabels = !ST.showBarLabels;
+  ['btnLabels','btnExpLabels'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.style.background = ST.showBarLabels ? 'rgba(56,189,248,0.12)' : 'var(--bg3)';
+      btn.style.borderColor = ST.showBarLabels ? 'var(--accent)' : 'var(--border)';
+      btn.style.color = ST.showBarLabels ? 'var(--accent)' : 'var(--text2)';
+    }
+  });
+  if (ST._lastResChart) showResChart(ST._lastResChart);
+  if (ST.exp.selected) expSelect(ST.exp.selected);
+}
+
 // ============================================================
 // CURRENCY (CLP / USD)
 // ============================================================
-ST.currency = 'CLP';
+ST.currency = 'USD';
 ST.usdRate = null;
 ST.usdDate = null;
 
 async function fetchUSDRate() {
   try {
-    // Use mindicador.cl API for CLP/USD rate
     const resp = await fetch('https://mindicador.cl/api/dolar');
     const data = await resp.json();
     if (data.serie && data.serie.length > 0) {
       ST.usdRate = data.serie[0].valor;
       ST.usdDate = data.serie[0].fecha.slice(0,10);
+      // Update rate label since USD is default
+      const label = document.getElementById('usdRateLabel');
+      if (label) {
+        label.style.display = 'inline';
+        label.textContent = `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')} · ${ST.usdDate}`;
+      }
     }
   } catch(e) {
     console.warn('No se pudo obtener tasa USD:', e);
@@ -842,6 +905,19 @@ function fmtKPI(clpRaw) {
   if (abs >= 1e9)  return `${sign}${sym}${(abs/1e9).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}B`;
   if (abs >= 1e6)  return `${sign}${sym}${Math.round(abs/1e6).toLocaleString('es-CL')}M`;
   if (abs >= 1e3)  return `${sign}${sym}${Math.round(abs/1e3).toLocaleString('es-CL')}K`;
+  return `${sign}${sym}${Math.round(abs).toLocaleString('es-CL')}`;
+}
+
+function fmtKPIDecimal(clpRaw) {
+  // Same as fmtKPI but always shows 1 decimal place
+  const val = ST.currency === 'USD' && ST.usdRate ? clpRaw / ST.usdRate : clpRaw;
+  const sym = ST.currency === 'USD' ? 'USD ' : '$';
+  const abs = Math.abs(val);
+  const sign = val < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}${sym}${(abs/1e12).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}T`;
+  if (abs >= 1e9)  return `${sign}${sym}${(abs/1e9).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}B`;
+  if (abs >= 1e6)  return `${sign}${sym}${(abs/1e6).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}M`;
+  if (abs >= 1e3)  return `${sign}${sym}${(abs/1e3).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}K`;
   return `${sign}${sym}${Math.round(abs).toLocaleString('es-CL')}`;
 }
 const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1060,7 +1136,7 @@ async function run() {
   // Si el rango es mayor a 25 meses, usar solo datos trimestrales
   // Siempre incluir el último mes, luego meses 3, 6, 9, 12 hacia atrás
   let periodos;
-  const UMBRAL_TRIMESTRAL = 25;
+  const UMBRAL_TRIMESTRAL = 26;
   if (todosLosPeriodos.length > UMBRAL_TRIMESTRAL) {
     // Construir lista trimestral: partir del último mes e ir hacia atrás de 3 en 3
     const trimSet = new Set();
@@ -1183,6 +1259,11 @@ async function run() {
     // Show dashboard
     document.getElementById('dashContent').style.display = 'flex';
     setStatus('ok', `${periodos.length} períodos${isTrimestral?' (trimestral)':''} · ${ST.selected.size} entidad(es) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
+
+    // If explorer has a selected account, refresh it with new banks/range
+    if (ST.exp.selected) {
+      expSelect(ST.exp.selected);
+    }
     document.getElementById('headerInfo') && (document.getElementById('headerInfo').textContent = rangeLabel);
 
   } catch(e) {
@@ -1203,8 +1284,8 @@ function sparseData(rawData) {
 
 function showResChart(tipo) {
   ST._lastResChart = tipo;
-  const map = { activos:'Activos', coloc:'Colocaciones', pasivos:'Pasivos', patrimonio:'Patrimonio', utilidad:'Utilidad', mora:'Morosidad', dep_vista:'Dep. Vista', dep_plazo:'Dep. Plazo', bonos:'Bonos' };
-  document.querySelectorAll('#tab-resumen .itab').forEach(b => {
+  const map = { activos:'📊 Activos', coloc:'💳 Colocaciones', pasivos:'📉 Pasivos', patrimonio:'🏛 Patrimonio', utilidad:'💰 Utilidad', mora:'⚠️ Morosidad', dep_vista:'👁 Dep. Vista', dep_plazo:'⏱ Dep. Plazo', bonos:'📄 Bonos' };
+  document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === map[tipo]);
   });
   if (!ST._series) return;
@@ -1390,8 +1471,10 @@ function drawLineChart(canvasId, periodos, series, chartType) {
       }
     });
   } else {
-    // Bar chart mode
-    const showLabels = series.length === 1;
+    // Bar chart mode — draw bars first, then labels on top
+    const showLabels = ST.showBarLabels;
+    const labelsToDraw = [];
+
     series.forEach((s, si) => {
       const color = COLORS[s.color] || s.color;
       s.data.forEach((v, i) => {
@@ -1408,18 +1491,26 @@ function drawLineChart(canvasId, periodos, series, chartType) {
         ctx.globalAlpha = 1;
         CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
 
-        // Value label above bar (only for 1-2 banks and if bar is tall enough)
         if (showLabels && h > 16) {
-          ctx.fillStyle = color;
-          ctx.font = `bold 9px DM Mono, monospace`;
-          ctx.textAlign = 'center';
           const labelX = x + barW / 2;
-          const labelY = barTop - 4;
+          const labelY = barTop - 5;
           if (labelY > PAD.t + 10) {
-            ctx.fillText(fmtAxis(v), labelX, labelY);
+            labelsToDraw.push({ labelX, labelY, v });
           }
         }
       });
+    });
+
+    // Second pass: draw all labels on top of all bars
+    ctx.font = `bold 10px DM Mono, monospace`;
+    ctx.textAlign = 'center';
+    labelsToDraw.forEach(({ labelX, labelY, v }) => {
+      const txt = fmtAxis(v);
+      const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,35,0.85)';
+      ctx.fillRect(labelX - tw/2 - 3, labelY - 11, tw + 6, 14);
+      ctx.fillStyle = ST.theme === 'light' ? '#1e293b' : '#f1f5f9';
+      ctx.fillText(txt, labelX, labelY);
     });
   }
 
@@ -1809,46 +1900,40 @@ function renderComparativo(b1, r1, c1, lastP) {
 // EXPLORADOR
 // ============================================================
 function initExplorer() {
-  if (!ST.exp.hierarchy) buildExpHierarchy();
-  ST.exp.path = []; ST.exp.selected = null;
-  renderExpLevel();
+  renderExpGrid();
 }
 
-function buildExpHierarchy() {
-  const codes = Object.keys(ST.planCuentas).sort();
-  const tree = {};
-  codes.forEach(c => tree[c] = { code:c, label:ST.planCuentas[c]||c, children:[], parent:null });
+// Cuentas principales fijas
+const CUENTAS_PRINCIPALES = {
+  '100000000': 'Total activos',
+  '200000000': 'Total pasivos',
+  '300000000': 'Patrimonio neto',
+  '400000000': 'Cuentas de resultado acreedoras',
+  '500000000': 'Total colocaciones',
+  '600000000': 'Cuentas de orden',
+  '800000000': 'Información complementaria',
+};
 
-  // A account is "top level" if it ends in 7 or more zeros
-  function isTopLevel(c) {
-    return /^[1-9][0-9]0{7}$/.test(c);
-  }
-
-  // Find the best parent: longest matching prefix with fewer significant digits
-  function isParent(p, c) {
-    if (p === c) return false;
-    const pSig = p.replace(/0+$/, '');
-    const cSig = c.replace(/0+$/, '');
-    return cSig.startsWith(pSig) && cSig.length > pSig.length;
-  }
-
-  codes.forEach(child => {
-    let bestParent = null, bestLen = 0;
-    codes.forEach(parent => {
-      if (isParent(parent, child)) {
-        const pLen = parent.replace(/0+$/, '').length;
-        if (pLen > bestLen) { bestLen = pLen; bestParent = parent; }
-      }
-    });
-    if (bestParent) {
-      tree[child].parent = bestParent;
-      tree[bestParent].children.push(child);
-    }
+function getExpAccounts() {
+  // Fixed main accounts + any additional from plan_cuentas ending in 8 zeros
+  const all = { ...CUENTAS_PRINCIPALES };
+  Object.keys(ST.planCuentas).filter(c => /^[1-9]0{8}$/.test(c))
+    .forEach(c => { if (!all[c]) all[c] = ST.planCuentas[c]; });
+  // Use plan_cuentas description if available (more accurate)
+  Object.keys(CUENTAS_PRINCIPALES).forEach(c => {
+    if (ST.planCuentas[c]) all[c] = ST.planCuentas[c];
   });
+  return Object.keys(all).sort();
+}
 
-  // Roots: only top-level accounts (##0000000)
-  const roots = codes.filter(c => isTopLevel(c) && !tree[c].parent);
-  ST.exp.hierarchy = { tree, roots };
+function toSentenceCase(str) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function getExpLabel(c) {
+  const raw = ST.planCuentas[c] || CUENTAS_PRINCIPALES[c] || c;
+  return toSentenceCase(raw);
 }
 
 function getTipo(code) {
@@ -1858,120 +1943,180 @@ function getTipo(code) {
   return 'c1';
 }
 
-function renderExpLevel() {
-  const {tree, roots} = ST.exp.hierarchy;
-  const codes = ST.exp.path.length===0 ? roots : tree[ST.exp.path[ST.exp.path.length-1].code].children;
+function renderExpGrid() {
+  const accounts = getExpAccounts();
+  const SECTION_COLORS = {
+    '1':'#38bdf8','2':'#f87171','3':'#a78bfa',
+    '4':'#f59e0b','5':'#34d399','6':'#fb923c','8':'#e879f9'
+  };
 
-  // Breadcrumb
-  let bcHtml = `<span class="bc-item" onclick="expGoTo(-1)">Inicio</span>`;
-  ST.exp.path.forEach((p,i) => {
-    bcHtml += `<span class="bc-sep">›</span>`;
-    const lbl = p.label.length>22 ? p.label.slice(0,20)+'…' : p.label;
-    bcHtml += `<span class="bc-item ${i===ST.exp.path.length-1?'cur':''}" onclick="expGoTo(${i})">${lbl}</span>`;
+  let html = '';
+  accounts.forEach(c => {
+    const label = getExpLabel(c);
+    const color = SECTION_COLORS[c[0]] || 'var(--text2)';
+    const active = ST.exp.selected === c;
+    html += `<div onclick="expSelect('${c}')" style="
+      display:flex;align-items:center;gap:12px;
+      padding:10px 16px;cursor:pointer;border-left:3px solid ${active ? color : 'transparent'};
+      background:${active ? 'rgba(56,189,248,0.06)' : 'transparent'};
+      border-bottom:1px solid var(--border);transition:all 0.15s;">
+      <span style="font-family:var(--mono);font-size:10px;color:${color};min-width:78px;flex-shrink:0;">${c}</span>
+      <span style="font-size:13px;color:${active ? 'var(--white)' : 'var(--text)'};font-weight:${active ? '600' : '400'};line-height:1.3;">${label}</span>
+    </div>`;
   });
-  document.getElementById('expBC').innerHTML = bcHtml;
-
-  // Tree
-  let tHtml = '';
-  codes.forEach(c => {
-    const node = tree[c];
-    const hasKids = node.children.length > 0;
-    tHtml += `<button class="exp-node ${ST.exp.selected===c?'active':''}"
-      onclick="${hasKids?`expDrill('${c}')`:`expSelect('${c}')`}">
-      <span class="exp-cod">${c}</span>
-      <span class="exp-lbl">${node.label}</span>
-      <span class="exp-arr">${hasKids?'›':'●'}</span>
-    </button>`;
-  });
-  document.getElementById('expTree').innerHTML = tHtml || '<div class="empty"><p>Sin subcuentas</p></div>';
-  if (!ST.exp.selected) document.getElementById('expResult').style.display='none';
-}
-
-function expDrill(code) {
-  ST.exp.path.push({code, label:ST.exp.hierarchy.tree[code].label});
-  ST.exp.selected=null;
-  renderExpLevel();
-}
-
-function expGoTo(idx) {
-  ST.exp.path = idx===-1 ? [] : ST.exp.path.slice(0,idx+1);
-  ST.exp.selected=null;
-  renderExpLevel();
+  document.getElementById('expTree').innerHTML = html;
 }
 
 async function expSelect(code) {
+  // Track navigation history
+  if (ST.exp.selected && ST.exp.selected !== code) {
+    ST.exp.history.push(ST.exp.selected);
+  }
   ST.exp.selected = code;
-  document.querySelectorAll('.exp-node').forEach(el=>el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  renderExpGrid();
+
+  // Show/hide back button
+  const backBtn = document.getElementById('expBackBtn');
+  if (backBtn) backBtn.style.display = ST.exp.history.length > 0 ? 'block' : 'none';
+
+  document.getElementById('expResult').style.display = 'block';
+  document.getElementById('expPlaceholder').style.display = 'none';
 
   const tipo = getTipo(code);
-  const node = ST.exp.hierarchy.tree[code];
+  const label = getExpLabel(code);
   document.getElementById('expCode').textContent = code;
-  document.getElementById('expName').textContent = node.label;
-  const tipoLabels = {b1:'Balance consolidado',r1:'Estado de resultados',c1:'Información complementaria'};
-  document.getElementById('expType').textContent = tipoLabels[tipo]||'';
-  document.getElementById('expResult').style.display='block';
+  document.getElementById('expName').textContent = label;
+  const tipoLabels = {b1:'Balance consolidado', r1:'Estado de resultados', c1:'Información complementaria'};
+  document.getElementById('expType').textContent = tipoLabels[tipo] || '';
 
-  setStatus('loading','Consultando cuenta...');
+  // For top-level accounts (x00000000), show all sub-accounts starting with same digit
+  // For deeper accounts, use the significant prefix
+  const isTopLevel = /^[1-9]0{8}$/.test(code);
+  const sigPrefix = code.replace(/0+$/, '');
+  const searchPrefix = isTopLevel ? code[0] : sigPrefix;
+
+  const subAccounts = Object.keys(ST.planCuentas)
+    .filter(c => c !== code && c.startsWith(searchPrefix) && !/^[1-9]0{8}$/.test(c))
+    .sort();
+
+  setStatus('loading', 'Consultando cuenta...');
   try {
     const selDesde = document.getElementById('selDesde').value;
     const selHasta = document.getElementById('selHasta').value;
-    const periodos = ST.periodos.filter(p=>p>=selDesde&&p<=selHasta);
+    const periodos = ST.periodos.filter(p => p >= selDesde && p <= selHasta);
     const banks = [...ST.selected];
+    const lastP = periodos[periodos.length - 1];
 
-    const rows = await supa('datos_financieros',{
-      select:'periodo,ins_cod,cuenta,monto_total',
-      eq:{tipo,cuenta:code},
-      in:{periodo:periodos,ins_cod:banks},
-      order:'periodo.asc'
+    // Fetch main account data
+    const rows = await supa('datos_financieros', {
+      select: 'periodo,ins_cod,cuenta,monto_total',
+      eq: { tipo, cuenta: code },
+      in: { periodo: periodos, ins_cod: banks },
+      order: 'periodo.asc'
     });
 
-    // Series per bank
-    const bankCodes = banks.filter(c=>c!==999);
-    const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
+    const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
+    const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa'];
+    const BANK_COLORS = { 59: '#2563eb' };
+    const bankCodes = banks.filter(c => c !== 999);
 
-    const series = bankCodes.map((c,i) => ({
-      label: (ST.bancos[c]||`Banco ${c}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,''),
-      color: CHART_COLORS[i % CHART_COLORS.length],
-      data: periodos.map(p => rows.filter(r=>r.ins_cod===c&&r.periodo===p).reduce((s,r)=>s+(r.monto_total||0),0) / 1e9)
+    const series = bankCodes.map((c, i) => ({
+      label: bankName(c),
+      color: BANK_COLORS[c] || CHART_COLORS[i % CHART_COLORS.length],
+      data: periodos.map(p =>
+        rows.filter(r => r.ins_cod === c && r.periodo === p)
+            .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
+      )
     }));
 
-    // Also add total if 999 selected
     if (ST.selected.has(999)) {
       series.unshift({
-        label:'Sistema Bancario',
-        color:'#ffffff',
-        data: periodos.map(p => rows.filter(r=>r.ins_cod===999&&r.periodo===p).reduce((s,r)=>s+(r.monto_total||0),0)/1e9)
+        label: 'Sistema Bancario', color: '#94a8be',
+        data: periodos.map(p =>
+          rows.filter(r => r.ins_cod === 999 && r.periodo === p)
+              .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
+        )
       });
     }
 
-    // Legend
-    document.getElementById('expLegend').innerHTML = series.map(s=>
+    document.getElementById('expLegend').innerHTML = series.map(s =>
       `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
     ).join('');
 
-    drawLineChart('chartExp', periodos, series);
+    drawLineChart('chartExp', periodos, series, ST.chartType);
 
-    // Table
-    const lastP = periodos[periodos.length-1];
+    // Table — fix: show 1 decimal, remove % column
     const tableRows = bankCodes.map(c => ({
-      name:(ST.bancos[c]||`Banco ${c}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,''),
-      val: rows.filter(r=>r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)
-    })).sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
+      name: bankName(c),
+      val: rows.filter(r => r.ins_cod === c && r.periodo === lastP)
+               .reduce((s, r) => s + (r.monto_total || 0), 0)
+    })).sort((a, b) => Math.abs(b.val) - Math.abs(a.val));
 
-    const maxA = Math.max(...tableRows.map(r=>Math.abs(r.val)));
-    let tHtml = `<table class="tbl"><thead><tr><th>Banco</th><th class="r">Último período MM$</th><th class="r">% del máximo</th></tr></thead><tbody>`;
+    let tHtml = `<table class="tbl"><thead><tr><th>Banco</th><th class="r">Último período</th></tr></thead><tbody>`;
     tableRows.forEach(r => {
-      const pct = maxA ? (Math.abs(r.val)/maxA*100).toFixed(1)+'%' : '—';
-      tHtml += `<tr><td>${r.name}</td><td class="r ${r.val<0?'neg':''}">${fmtM(r.val)}</td><td class="r" style="color:var(--text3)">${pct}</td></tr>`;
+      tHtml += `<tr><td>${r.name}</td><td class="r ${r.val < 0 ? 'neg' : ''}">${fmtKPIDecimal(r.val)}</td></tr>`;
     });
     tHtml += '</tbody></table>';
     document.getElementById('expTable').innerHTML = tHtml;
 
-    setStatus('ok', `Cuenta ${code} — ${node.label}`);
+    // Sub-accounts with values
+    const subPanel = document.getElementById('expSubPanel');
+    const subList = document.getElementById('expSubList');
+    if (subAccounts.length > 0) {
+      subPanel.style.display = 'block';
+      document.getElementById('expSubTitle').textContent = `Sub-cuentas de ${label}`;
+
+      // Fetch last period values for all sub-accounts at once
+      const subRows = subAccounts.length > 0 ? await supa('datos_financieros', {
+        select: 'cuenta,ins_cod,monto_total',
+        eq: { tipo, periodo: lastP },
+        in: { cuenta: subAccounts, ins_cod: banks }
+      }) : [];
+
+      // Sum across selected banks for each sub-account
+      const subVals = {};
+      subAccounts.forEach(c => {
+        subVals[c] = subRows
+          .filter(r => r.cuenta === c && banks.includes(r.ins_cod))
+          .reduce((s, r) => s + (r.monto_total || 0), 0);
+      });
+
+      let subHtml = `<table class="tbl"><thead><tr><th>Código</th><th>Descripción</th><th class="r">Último período</th></tr></thead><tbody>`;
+      subAccounts.forEach(c => {
+        const subLabel = toSentenceCase(ST.planCuentas[c] || c);
+        const val = subVals[c] || 0;
+        subHtml += `<tr style="cursor:pointer;" onclick="expSelect('${c}')"
+          onmouseover="this.style.background='rgba(56,189,248,0.04)'"
+          onmouseout="this.style.background='transparent'">
+          <td class="cod" style="color:var(--accent)">${c}</td>
+          <td style="color:var(--text)">${subLabel}</td>
+          <td class="r ${val < 0 ? 'neg' : ''}">${fmtKPIDecimal(val)}</td>
+        </tr>`;
+      });
+      subHtml += '</tbody></table>';
+      subList.innerHTML = subHtml;
+    } else {
+      subPanel.style.display = 'none';
+    }
+
+    setStatus('ok', `Cuenta ${code}`);
   } catch(e) {
-    setStatus('error','Error al consultar cuenta');
+    setStatus('error', 'Error al consultar cuenta');
     console.error(e);
+  }
+}
+
+function expGoBack() {
+  if (ST.exp.history.length === 0) return;
+  const prev = ST.exp.history.pop();
+  const currentSelected = ST.exp.selected;
+  ST.exp.selected = prev; // set directly to avoid adding to history
+  // Call expSelect but without pushing to history
+  ST.exp.history = ST.exp.history.filter(h => h !== prev); // clean up
+  expSelect(prev);
+  // Remove the entry that expSelect just added
+  if (ST.exp.history[ST.exp.history.length-1] === currentSelected) {
+    ST.exp.history.pop();
   }
 }
 
@@ -2059,7 +2204,7 @@ function showTab(tab) {
     const {periodos, c1s} = ST._series;
     requestAnimationFrame(() => drawLineChart('chartMora', periodos, [{label:'Morosidad +90d', data:c1s('857000000').map(v=>v/1e9), color:'var(--red)'}]));
   }
-  if (tab==='explorador' && ST.exp.hierarchy===null && Object.keys(ST.planCuentas).length>0) initExplorer();
+  if (tab==='explorador' && Object.keys(ST.planCuentas).length > 0) initExplorer();
   if (tab==='config') populateConfig();
 }
 
@@ -2128,6 +2273,15 @@ if (_darkBtn && _lightBtn) {
   _darkBtn.style.color = 'var(--text3)';
   _lightBtn.style.background = 'var(--accent)';
   _lightBtn.style.color = '#fff';
+}
+// Default: USD
+const _clpBtn = document.getElementById('switchCLP');
+const _usdBtn = document.getElementById('switchUSD');
+if (_clpBtn && _usdBtn) {
+  _clpBtn.style.background = 'transparent';
+  _clpBtn.style.color = 'var(--text3)';
+  _usdBtn.style.background = 'var(--yellow)';
+  _usdBtn.style.color = '#000';
 }
 init();
 fetchUSDRate();
