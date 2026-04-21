@@ -355,10 +355,11 @@ select option { background:var(--bg3); }
   <div class="topbar">
     <div class="brand" style="line-height:1.2;letter-spacing:2px;">ALM BTG<br>BANKS MONITOR</div>
     <div class="tabs">
-      <button class="tab active" onclick="showTab('resumen')">Resumen</button>
-      <button class="tab" onclick="showTab('balance')">Balance</button>
-      <button class="tab" onclick="showTab('resultados')">Resultados</button>
-      <button class="tab" onclick="showTab('explorador')">Explorador</button>
+      <button class="tab active" onclick="showTab('resumen')">Bank Monitor</button>
+      <button class="tab" onclick="showTab('chileanbanks')">Chilean Banks</button>
+      <button class="tab" onclick="showTab('balance')">Balance Sheet</button>
+      <button class="tab" onclick="showTab('resultados')">Income Statement</button>
+      <button class="tab" onclick="showTab('explorador')">Account Explorer</button>
       <button class="tab" onclick="showTab('config')" style="margin-left:auto;">⚙ Config</button>
     </div>
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
@@ -384,32 +385,32 @@ select option { background:var(--bg3); }
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-block">
-        <div class="sidebar-label">Rango de períodos</div>
+        <div class="sidebar-label">Period range</div>
         <div class="range-row">
           <select id="selDesde"></select>
           <select id="selHasta"></select>
         </div>
       </div>
       <div class="sidebar-block">
-        <div class="sidebar-label">Bancos <span style="color:var(--text3);font-size:9px;font-weight:normal;">(máx. 3)</span></div>
+        <div class="sidebar-label">Banks <span style="color:var(--text3);font-size:9px;font-weight:normal;">(máx. 3)</span></div>
         <div style="display:flex;gap:4px;margin-bottom:6px">
-          <button class="btn-sm" onclick="selAll(false)">Limpiar selección</button>
+          <button class="btn-sm" onclick="selAll(false)">Clear selection</button>
         </div>
         <div id="bankLimitMsg" style="display:none;font-size:10px;color:var(--yellow);font-family:var(--mono);padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:3px;margin-bottom:6px;">
-          Máximo 3 bancos simultáneos
+          Maximum 3 banks at a time
         </div>
       </div>
       <div class="bank-scroll" id="bankList">
-        <div class="empty"><div class="empty-icon">🏦</div><p>Cargando bancos...</p></div>
+        <div class="empty"><div class="empty-icon">🏦</div><p>Loading banks...</p></div>
       </div>
-      <button class="btn-primary" id="btnRun" onclick="run()" disabled>▶ Analizar</button>
+      <button class="btn-primary" id="btnRun" onclick="run()" disabled>▶ Load selected banks</button>
     </aside>
 
     <!-- MAIN -->
     <main class="main" id="main">
       <div class="loading-screen" id="loadingScreen">
         <div class="big">📊</div>
-        <p>Conectando con la base de datos...</p>
+        <p>Connecting to database...</p>
       </div>
       <div class="err-box" id="errBox"></div>
 
@@ -426,21 +427,21 @@ select option { background:var(--bg3); }
           </div>
           <div class="panel">
             <div class="panel-head">
-              <div><div class="panel-title">Evolución Sistema Bancario</div><div class="panel-sub">Indicadores clave en el rango seleccionado</div></div>
+              <div><div class="panel-title">Banking System Evolution</div><div class="panel-sub">Key indicators for selected period range</div></div>
               <div class="period-pill" id="rangePill"></div>
             </div>
             <div class="panel-body">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0;" id="resChartBtns">
-                  <button class="rcbtn active" onclick="showResChart('activos')">📊 Activos</button>
-                  <button class="rcbtn" onclick="showResChart('coloc')">💳 Colocaciones</button>
-                  <button class="rcbtn" onclick="showResChart('pasivos')">📉 Pasivos</button>
-                  <button class="rcbtn" onclick="showResChart('patrimonio')">🏛 Patrimonio</button>
-                  <button class="rcbtn" onclick="showResChart('utilidad')">💰 Utilidad</button>
-                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ Morosidad</button>
-                  <button class="rcbtn" onclick="showResChart('dep_vista')">👁 Dep. Vista</button>
-                  <button class="rcbtn" onclick="showResChart('dep_plazo')">⏱ Dep. Plazo</button>
-                  <button class="rcbtn" onclick="showResChart('bonos')">📄 Bonos</button>
+                  <button class="rcbtn active" onclick="showResChart('assets')">📊 Assets</button>
+                  <button class="rcbtn" onclick="showResChart('coloc')">💳 Loans</button>
+                  <button class="rcbtn" onclick="showResChart('pasivos')">📉 Liabilities</button>
+                  <button class="rcbtn" onclick="showResChart('patrimonio')">🏛 Equity</button>
+                  <button class="rcbtn" onclick="showResChart('utilidad')">💰 Net Income</button>
+                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ NPL</button>
+                  <button class="rcbtn" onclick="showResChart('dep_vista')">👁 Demand Dep.</button>
+                  <button class="rcbtn" onclick="showResChart('dep_plazo')">⏱ Time Dep.</button>
+                  <button class="rcbtn" onclick="showResChart('bonos')">📄 Bonds</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
                   <button id="btnBars" onclick="setChartType('bars')" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);">▌▌</button>
@@ -452,6 +453,13 @@ select option { background:var(--bg3); }
               <div class="legend" id="resumenLegend" style="margin-top:10px;"></div>
             </div>
           </div>
+          <!-- Chart data table -->
+          <div class="panel" id="resChartTablePanel" style="display:none;margin-top:0;">
+            <div class="panel-head">
+              <div class="panel-title" id="resChartTableTitle">Chart Data</div>
+            </div>
+            <div class="panel-body" style="overflow-x:auto;" id="resChartTable"></div>
+          </div>
         </div>
 
         <!-- BALANCE -->
@@ -460,14 +468,14 @@ select option { background:var(--bg3); }
           <br>
           <div class="panel">
             <div class="panel-head">
-              <div><div class="panel-title">Estado de Situación Financiera</div><div class="panel-sub">Último período seleccionado — MM$ CLP</div></div>
+              <div><div class="panel-title">Balance Sheet</div><div class="panel-sub">Last selected period — MM$ CLP</div></div>
               <div id="balBankTabs" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
             </div>
             <div class="panel-body">
               <div class="itabs">
-                <button class="itab active" onclick="showBalTab('activos')">Activos</button>
-                <button class="itab" onclick="showBalTab('pasivos')">Pasivos</button>
-                <button class="itab" onclick="showBalTab('patrimonio')">Patrimonio</button>
+                <button class="itab active" onclick="showBalTab('assets')">Assets</button>
+                <button class="itab" onclick="showBalTab('liabilities')">Liabilities</button>
+                <button class="itab" onclick="showBalTab('equity')">Equity</button>
               </div>
               <div style="overflow-x:auto" id="balTable"></div>
             </div>
@@ -480,7 +488,7 @@ select option { background:var(--bg3); }
           <br>
           <div class="panel">
             <div class="panel-head">
-              <div><div class="panel-title">Estado de Resultados</div><div class="panel-sub">Último período — MM$ CLP</div></div>
+              <div><div class="panel-title">Income Statement</div><div class="panel-sub">Last period — MM$ CLP</div></div>
               <div id="resBankTabs" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
             </div>
             <div class="panel-body" id="resTable"></div>
@@ -503,15 +511,32 @@ select option { background:var(--bg3); }
           </div>
           <br>
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Evolución Morosidad +90d</div></div>
+            <div class="panel-head"><div class="panel-title">Evolución NPL +90d</div></div>
             <div class="panel-body"><canvas class="chart-canvas" id="chartMora" height="160"></canvas></div>
           </div>
         </div>
 
-        <!-- COMPARATIVO -->
+        <!-- CHILEAN BANKS -->
+        <div id="tab-chileanbanks" style="display:none;">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Chilean Banking System</div>
+                <div class="panel-sub" id="cbPeriodLabel">Ranked by equity — last available period</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="cbCurrencyLabel"></span>
+              </div>
+            </div>
+            <div class="panel-body" id="cbTable">
+              <div class="empty"><div class="empty-icon">🏦</div><p>Click Analyze to load data</p></div>
+            </div>
+          </div>
+        </div>
+        <!-- COMPARATIVO (hidden, kept for data rendering) -->
         <div id="tab-comparativo" style="display:none;">
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Comparativo entre Bancos</div><div class="panel-sub">Último período seleccionado</div></div>
+            <div class="panel-head"><div class="panel-title">Comparativo</div><div class="panel-sub">Last selected period</div></div>
             <div class="panel-body" id="compTable"></div>
           </div>
         </div>
@@ -522,7 +547,7 @@ select option { background:var(--bg3); }
 
             <!-- Left: account list -->
             <div class="panel" style="overflow:hidden;">
-              <div class="panel-head"><div class="panel-title">Cuentas</div></div>
+              <div class="panel-head"><div class="panel-title">Accounts</div></div>
               <div style="overflow-y:auto;max-height:calc(100vh - 180px);" id="expTree"></div>
             </div>
 
@@ -538,7 +563,7 @@ select option { background:var(--bg3); }
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;">
                       <button id="btnExpLabels" onclick="toggleBarLabels()" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);" title="Mostrar/ocultar valores">123</button>
-                      <button id="expBackBtn" onclick="expGoBack()" style="display:none;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans);">← Volver</button>
+                      <button id="expBackBtn" onclick="expGoBack()" style="display:none;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans);">← Back</button>
                     </div>
                   </div>
                   <div class="panel-body">
@@ -550,21 +575,21 @@ select option { background:var(--bg3); }
                 <!-- Sub-accounts -->
                 <div class="panel" id="expSubPanel" style="display:none;">
                   <div class="panel-head">
-                    <div><div class="panel-title" id="expSubTitle">Sub-cuentas</div><div class="panel-sub">Selecciona para ver detalle</div></div>
+                    <div><div class="panel-title" id="expSubTitle">Sub-accounts</div><div class="panel-sub">Select to view detail</div></div>
                   </div>
                   <div id="expSubList"></div>
                 </div>
 
                 <!-- Table -->
                 <div class="panel">
-                  <div class="panel-head"><div class="panel-title">Valores último período</div></div>
+                  <div class="panel-head"><div class="panel-title">Last period values</div></div>
                   <div class="panel-body" id="expTable"></div>
                 </div>
               </div>
 
               <!-- Placeholder when nothing selected -->
               <div id="expPlaceholder" class="panel" style="display:flex;align-items:center;justify-content:center;min-height:300px;">
-                <div class="empty"><div class="empty-icon">👈</div><p>Selecciona una cuenta de la lista</p></div>
+                <div class="empty"><div class="empty-icon">👈</div><p>Select an account from the list</p></div>
               </div>
             </div>
 
@@ -575,9 +600,9 @@ select option { background:var(--bg3); }
         <div id="tab-config" style="display:none;">
           <div class="g2">
             <div class="panel">
-              <div class="panel-head"><div class="panel-title">Tipografía</div></div>
+              <div class="panel-head"><div class="panel-title">Typography</div></div>
               <div class="panel-body">
-                <div class="sidebar-label" style="margin-bottom:12px;">Fuente del dashboard</div>
+                <div class="sidebar-label" style="margin-bottom:12px;">Dashboard font</div>
                 <div style="display:flex;flex-direction:column;gap:6px;" id="fontOptList">
                   <div class="font-opt" id="fontOpt1" onclick="setFont('\'Plus Jakarta Sans\', sans-serif','fontOpt1')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-radius:6px;border:2px solid var(--accent);cursor:pointer;background:rgba(56,189,248,0.05);">
                     <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:500;color:var(--white);">Plus Jakarta Sans</span>
@@ -585,7 +610,7 @@ select option { background:var(--bg3); }
                   </div>
                   <div class="font-opt" id="fontOpt2" onclick="setFont('\'Inter\', sans-serif','fontOpt2')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
                     <span style="font-family:'Inter',sans-serif;font-size:15px;font-weight:500;color:var(--text);">Inter</span>
-                    <span style="font-size:11px;color:var(--text2);">Dashboards financieros</span>
+                    <span style="font-size:11px;color:var(--text2);">Financial dashboards</span>
                   </div>
                   <div class="font-opt" id="fontOpt3" onclick="setFont('\'DM Sans\', sans-serif','fontOpt3')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
                     <span style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:var(--text);">DM Sans</span>
@@ -593,7 +618,7 @@ select option { background:var(--bg3); }
                   </div>
                   <div class="font-opt" id="fontOpt4" onclick="setFont('Calibri, \'Gill Sans\', sans-serif','fontOpt4')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
                     <span style="font-family:Calibri,'Gill Sans',sans-serif;font-size:15px;font-weight:500;color:var(--text);">Calibri</span>
-                    <span style="font-size:11px;color:var(--text2);">Familiar y legible</span>
+                    <span style="font-size:11px;color:var(--text2);">Familiar & readable</span>
                   </div>
                 </div>
 
@@ -602,37 +627,37 @@ select option { background:var(--bg3); }
             </div>
 
             <div class="panel">
-              <div class="panel-head"><div class="panel-title">Acerca del Dashboard</div></div>
+              <div class="panel-head"><div class="panel-title">About this Dashboard</div></div>
               <div class="panel-body" style="display:flex;flex-direction:column;gap:16px;">
                 <div>
-                  <div class="sidebar-label">Construido por</div>
+                  <div class="sidebar-label">Built by</div>
                   <div style="font-size:16px;font-weight:600;color:var(--white);margin-top:4px;">Alejandro Arango Ochoa</div>
                   <div style="font-size:12px;color:var(--text2);margin-top:2px;">ALM — BTG Pactual Chile</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Fuente de datos</div>
-                  <div style="font-size:13px;color:var(--text);margin-top:4px;">CMF — Comisión para el Mercado Financiero</div>
-                  <div style="font-size:12px;color:var(--text2);margin-top:2px;">Balance y Estado de Situación Bancos (Circular N° 2.243)</div>
+                  <div class="sidebar-label">Data source</div>
+                  <div style="font-size:13px;color:var(--text);margin-top:4px;">CMF — Financial Market Commission (Chile)</div>
+                  <div style="font-size:12px;color:var(--text2);margin-top:2px;">Balance y Estado de Situación Banks (Circular N° 2.243)</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Normativa contable</div>
-                  <div style="font-size:13px;color:var(--text);margin-top:4px;">IFRS — vigente desde enero 2022</div>
+                  <div class="sidebar-label">Accounting standard</div>
+                  <div style="font-size:13px;color:var(--text);margin-top:4px;">IFRS — effective January 2022</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Estado actual de la consulta</div>
+                  <div class="sidebar-label">Current query status</div>
                   <div style="font-size:13px;color:var(--text);margin-top:6px;font-family:var(--mono);" id="configStatus">—</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Última actualización de datos</div>
+                  <div class="sidebar-label">Last data update</div>
                   <div style="font-size:16px;font-weight:600;color:var(--white);margin-top:4px;" id="configLastUpdate">—</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Períodos en la base de datos</div>
+                  <div class="sidebar-label">Periods in database</div>
                   <div style="font-size:12px;color:var(--text2);margin-top:6px;font-family:var(--mono);line-height:2;" id="configPeriodos">—</div>
                 </div>
                 <div>
-                  <div class="sidebar-label">Bancos disponibles</div>
-                  <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:2;" id="configBancos">—</div>
+                  <div class="sidebar-label">Available banks</div>
+                  <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:2;" id="configBanks">—</div>
                 </div>
               </div>
             </div>
@@ -704,7 +729,7 @@ async function supa(table, params = {}) {
 // ============================================================
 async function init() {
   try {
-    setStatus('loading', 'Conectando...');
+    setStatus('loading', 'Connecting...');
 
     // Load periods
     const logs = await supa('carga_log', {
@@ -714,7 +739,7 @@ async function init() {
     });
     ST.periodos = logs.map(r => r.periodo);
 
-    if (!ST.periodos.length) throw new Error('No hay datos en la base de datos');
+    if (!ST.periodos.length) throw new Error('No data found in database');
 
     // Load institutions
     const insts = await supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' });
@@ -723,6 +748,25 @@ async function init() {
     // Load plan de cuentas - fetch all rows removing default limit
     const plan = await supa('plan_cuentas', { select: 'cuenta,descripcion', limit: 10000 });
     plan.forEach(r => ST.planCuentas[r.cuenta] = r.descripcion);
+
+    // Fetch patrimonio ranking for bank list sorting
+    const lastP = ST.periodos[ST.periodos.length - 1];
+    try {
+      const patRows = await supa('datos_financieros', {
+        select: 'ins_cod,monto_total',
+        eq: { tipo: 'b1', cuenta: '300000000', periodo: lastP }
+      });
+      const patMap = {};
+      patRows.forEach(r => { patMap[r.ins_cod] = (patMap[r.ins_cod] || 0) + r.monto_total; });
+      ST._patrimonioMap = patMap;
+      // Sort codes by patrimonio descending (exclude 999)
+      ST._patrimonioRanking = Object.keys(patMap)
+        .map(Number)
+        .filter(c => c !== 999)
+        .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
+    } catch(e) {
+      console.warn('No se pudo cargar ranking de patrimonio:', e);
+    }
 
     // Fill period selectors
     fillPeriodSelectors();
@@ -733,10 +777,10 @@ async function init() {
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('btnRun').disabled = false;
-    setStatus('ok', `${ST.periodos.length} períodos disponibles`);
+    setStatus('ok', `${ST.periodos.length} periods available`);
 
   } catch(e) {
-    setStatus('error', 'Error de conexión');
+    setStatus('error', 'Connection error');
     showErr(e.message);
     console.error(e);
   }
@@ -746,20 +790,20 @@ async function init() {
 // BANK NAME OVERRIDES
 // ============================================================
 const BANK_NAMES = {
-  1:   'Banco de Chile',
-  9:   'Banco Internacional',
-  12:  'Banco Estado',
+  1:   'Bank de Chile',
+  9:   'Bank Internacional',
+  12:  'Bank Estado',
   14:  'Scotiabank',
   16:  'BCI',
-  28:  'Banco BICE',
+  28:  'Bank BICE',
   31:  'HSBC Bank',
   37:  'Santander',
   39:  'Itaú',
   41:  'JP Morgan',
-  49:  'Banco Security',
-  51:  'Banco Falabella',
-  53:  'Banco Ripley',
-  55:  'Banco Consorcio',
+  49:  'Bank Security',
+  51:  'Bank Falabella',
+  53:  'Bank Ripley',
+  55:  'Bank Consorcio',
   59:  'BTG Pactual',
   60:  'China Construction Bank',
   61:  'Bank of China',
@@ -768,7 +812,7 @@ const BANK_NAMES = {
 };
 
 function bankName(code) {
-  return BANK_NAMES[code] || (ST.bancos[code] || `Banco ${code}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,'');
+  return BANK_NAMES[code] || (ST.bancos[code] || `Bank ${code}`).replace('BANCO ','').replace(/ CHILE$/,'').replace(/-CHILE$/,'');
 }
 
 const BANK_LOGOS = {
@@ -884,8 +928,8 @@ function toggleCurrency() {
     document.getElementById('usdRateLabel').style.display = 'none';
   }
   refreshKPIs();
-  if (ST._series) showResChart(ST._lastResChart || 'activos');
-  if (ST._b1) showBalTab(ST._lastBalTab || 'activos');
+  if (ST._series) showResChart(ST._lastResChart || 'assets');
+  if (ST._b1) showBalTab(ST._lastBalTab || 'assets');
   if (ST._resTableData) renderResTable(ST._resTableData);
 }
 
@@ -920,7 +964,7 @@ function fmtKPIDecimal(clpRaw) {
   if (abs >= 1e3)  return `${sign}${sym}${(abs/1e3).toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})}K`;
   return `${sign}${sym}${Math.round(abs).toLocaleString('es-CL')}`;
 }
-const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function periodLabel(p) {
   return MESES[parseInt(p.slice(4,6))] + ' ' + p.slice(0,4);
@@ -949,17 +993,29 @@ function fillPeriodSelectors() {
 function fillBankList() {
   const list = document.getElementById('bankList');
   list.innerHTML = '';
-  const codes = Object.keys(ST.bancos).map(Number).sort((a,b) => {
-    if (a===999) return 1; if (b===999) return -1; return a-b;
-  });
-  codes.forEach(c => {
+  const codes = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
+
+  // Sort by patrimonio (300000000) of last available period, descending
+  if (ST._patrimonioRanking && ST._patrimonioRanking.length > 0) {
+    const rankMap = {};
+    ST._patrimonioRanking.forEach((r, i) => rankMap[r] = i);
+    codes.sort((a, b) => (rankMap[a] ?? 999) - (rankMap[b] ?? 999));
+  } else {
+    codes.sort((a, b) => a - b);
+  }
+  // Always put Total Sistema at the end
+  const allCodes = [...codes, 999].filter(c => ST.bancos[c] !== undefined);
+
+  allCodes.forEach(c => {
     const name = bankName(c);
+    const patrimonio = ST._patrimonioMap?.[c];
+    const patLabel = patrimonio ? `<span class="bank-code" style="font-size:9px;">${fmtKPI(patrimonio)}</span>` : `<span class="bank-code">${String(c).padStart(3,'0')}</span>`;
     const item = document.createElement('div');
     item.className = 'bank-item' + (ST.selected.has(c) ? ' on' : '');
     item.innerHTML = `
       <input type="checkbox" ${ST.selected.has(c)?'checked':''} onclick="event.stopPropagation();toggleBank(${c},this.checked)">
       <span class="bank-name">${name}</span>
-      <span class="bank-code">${String(c).padStart(3,'0')}</span>
+      ${patLabel}
     `;
     item.onclick = () => { const cb=item.querySelector('input'); cb.checked=!cb.checked; toggleBank(c,cb.checked); };
     list.appendChild(item);
@@ -1069,7 +1125,7 @@ function refreshKPIs() {
   const lastMonth = parseInt(m.lastP.slice(4,6));
   const utilAnualizada = m.utilidad * (12 / lastMonth);
   const roe = m.patrimonio ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
-  const roeSubLabel = `Mes ${lastMonth} × ${(12/lastMonth).toFixed(2)}`;
+  const roeSubLabel = `Month ${lastMonth} × ${(12/lastMonth).toFixed(2)}`;
 
   // Label showing which bank the KPIs correspond to
   const firstBank = ST.selectedOrder[0];
@@ -1089,28 +1145,28 @@ function refreshKPIs() {
   }
 
   document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi blue"><div class="kpi-label">Total Activos ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalActivos)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalActivos)} coloc.</div></div>
-    <div class="kpi green"><div class="kpi-label">Colocaciones</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalActivos)} activos</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Depósitos</div><div class="kpi-val">${fmtKPI(m.depositos)}</div><div class="kpi-sub">Vista + Plazo</div></div>
-    <div class="kpi red"><div class="kpi-label">Total Pasivos</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos,m.totalActivos)} activos</div></div>
-    <div class="kpi purple"><div class="kpi-label">Patrimonio</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio,m.totalActivos)} activos</div></div>
-    <div class="kpi blue"><div class="kpi-label">Utilidad</div><div class="kpi-val ${m.utilidad<0?'neg':''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad,m.totalActivos)}</div></div>
-    <div class="kpi green"><div class="kpi-label">ROE Anual</div><div class="kpi-val ${utilAnualizada<0?'neg':''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red"><div class="kpi-label">Morosidad +90d</div><div class="kpi-val">${fmtKPI(m.mora90)}</div><div class="kpi-sub">${fmtP(m.mora90,m.colocaciones)} coloc.</div></div>
+    <div class="kpi blue"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalAssets)} of loans</div></div>
+    <div class="kpi green"><div class="kpi-label">Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalAssets)} of assets</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Deposits</div><div class="kpi-val">${fmtKPI(m.depositos)}</div><div class="kpi-sub">Demand + Time</div></div>
+    <div class="kpi red"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos,m.totalAssets)} of assets</div></div>
+    <div class="kpi purple"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio,m.totalAssets)} of assets</div></div>
+    <div class="kpi blue"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad<0?'neg':''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad,m.totalAssets)}</div></div>
+    <div class="kpi green"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada<0?'neg':''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
+    <div class="kpi red"><div class="kpi-label">NPL +90d</div><div class="kpi-val">${fmtKPI(m.mora90)}</div><div class="kpi-sub">${fmtP(m.mora90,m.colocaciones)} of loans</div></div>
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
-    <div class="kpi blue"><div class="kpi-label">Total Activos</div><div class="kpi-val">${fmtKPI(m.totalActivos)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalActivos)} coloc.</div></div>
-    <div class="kpi green"><div class="kpi-label">Colocaciones Netas</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalActivos)} activos</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Depósitos Totales</div><div class="kpi-val">${fmtKPI(m.depositos)}</div></div>
-    <div class="kpi red"><div class="kpi-label">Patrimonio</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Apal. ${m.patrimonio?(m.totalActivos/m.patrimonio).toFixed(1)+'x':'—'}</div></div>
+    <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalAssets)} of loans</div></div>
+    <div class="kpi green"><div class="kpi-label">Net Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones,m.totalAssets)} of assets</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Total Deposits</div><div class="kpi-val">${fmtKPI(m.depositos)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Leverage ${m.patrimonio?(m.totalAssets/m.patrimonio).toFixed(1)+'x':'—'}</div></div>
   `;
 
   document.getElementById('kpiResultados').innerHTML = `
-    <div class="kpi blue"><div class="kpi-label">Utilidad del Ejercicio</div><div class="kpi-val ${m.utilidad<0?'neg':''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad,m.totalActivos)}</div></div>
-    <div class="kpi green"><div class="kpi-label">Ingreso Neto Intereses</div><div class="kpi-val">${fmtKPI(m.ingresoNeto)}</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Total Ingresos Op.</div><div class="kpi-val">${fmtKPI(m.totalIng)}</div><div class="kpi-sub">Comisiones ${fmtKPI(m.ingComis)}</div></div>
-    <div class="kpi red"><div class="kpi-label">Pérdidas Crediticias</div><div class="kpi-val">${fmtKPI(Math.abs(m.perdCred))}</div><div class="kpi-sub">${fmtP(Math.abs(m.perdCred),m.totalIng)} ingresos</div></div>
+    <div class="kpi blue"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad<0?'neg':''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad,m.totalAssets)}</div></div>
+    <div class="kpi green"><div class="kpi-label">Net Interest Income</div><div class="kpi-val">${fmtKPI(m.ingresoNeto)}</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Total Operating Income</div><div class="kpi-val">${fmtKPI(m.totalIng)}</div><div class="kpi-sub">Fees ${fmtKPI(m.ingComis)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Credit Losses</div><div class="kpi-val">${fmtKPI(Math.abs(m.perdCred))}</div><div class="kpi-sub">${fmtP(Math.abs(m.perdCred),m.totalIng)} of income</div></div>
   `;
 }
 
@@ -1118,9 +1174,9 @@ function refreshKPIs() {
 // MAIN RUN
 // ============================================================
 async function run() {
-  if (!ST.selected.size) { showErr('Selecciona al menos un banco'); return; }
+  if (!ST.selected.size) { showErr('Please select at least one bank'); return; }
   showErr('');
-  setStatus('loading', 'Consultando datos...');
+  setStatus('loading', 'Fetching data...');
   ST.data = {}; // clear cache
   ST._activeBalBank = null;
   ST._activeResBank = null;
@@ -1191,8 +1247,8 @@ async function run() {
     const r1s = c => getSeriesForCuenta(r1, c, periodos);
     const c1s = c => getSeriesForCuenta(c1, c, periodos);
 
-    // For total activos, use 510000000 (Total Pasivos y Patrimonio) as fallback
-    const totalActivos  = b1v('100000000');
+    // For total activos, use 510000000 (Total Liabilities y Equity) as fallback
+    const totalAssets  = b1v('100000000');
     const colocaciones  = b1v('500000000');
     const depositos     = b1v('241000000') + b1v('242000000');
     const patrimonio    = b1v('300000000');
@@ -1215,7 +1271,7 @@ async function run() {
     const lastMonth = parseInt(lastP.slice(4,6));
 
     // Store raw values for currency refresh
-    ST._kpiRaw = { totalActivos, colocaciones, depositos, patrimonio, utilidad, mora90,
+    ST._kpiRaw = { totalAssets, colocaciones, depositos, patrimonio, utilidad, mora90,
       pasivos: b1v('200000000'), ingresoNeto, totalIng, lastP,
       perdCred, impuesto, resOp, totalGas, resOpA, ingComis, ingresoReaj, resFin };
 
@@ -1223,11 +1279,11 @@ async function run() {
 
     // Store series for resumen chart
     ST._series = { periodos, b1s, r1s, c1s, b1, r1, c1 };
-    showResChart(ST._lastResChart || 'activos');
+    showResChart(ST._lastResChart || 'assets');
 
     // ---- BALANCE ----
     ST._b1 = b1; ST._lastP = lastP;
-    showBalTab(ST._lastBalTab || 'activos');
+    showBalTab(ST._lastBalTab || 'assets');
 
     // ---- RESULTADOS TABLE ----
     const resData = {ingresoNeto,ingresoReaj,ingComis,resFin,totalIng,gastosP:r1v('462000000'),gastosA:r1v('464000000'),totalGas,resOpA,perdCred,resOp,impuesto,utilidad};
@@ -1245,20 +1301,20 @@ async function run() {
       <div class="kpi green"><div class="kpi-label">Cartera Normal</div><div class="kpi-val">$${fmtB(carNorm)}B</div><div class="kpi-sub">${fmtP(carNorm,carNorm+carSub+carInc)}</div></div>
       <div class="kpi yellow"><div class="kpi-label">Cartera Subestándar</div><div class="kpi-val">$${fmtB(carSub)}B</div><div class="kpi-sub">${fmtP(carSub,carNorm+carSub+carInc)}</div></div>
       <div class="kpi red"><div class="kpi-label">Cartera Incumplimiento</div><div class="kpi-val">$${fmtB(carInc)}B</div><div class="kpi-sub">${fmtP(carInc,carNorm+carSub+carInc)}</div></div>
-      <div class="kpi blue"><div class="kpi-label">Morosidad +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90,colocaciones)} coloc.</div></div>
+      <div class="kpi blue"><div class="kpi-label">NPL +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90,colocaciones)} of loans</div></div>
     `;
     renderCalidad({carNorm,carSub,carInc,mora90,castigos,recup});
 
     // Mora evolution chart
     const moraSeries = c1s('857000000');
-    drawLineChart('chartMora', periodos, [{ label:'Morosidad +90d', data:moraSeries.map(v=>v/1e9), color:'var(--red)' }]);
+    drawLineChart('chartMora', periodos, [{ label:'NPL +90d', data:moraSeries.map(v=>v/1e9), color:'var(--red)' }]);
 
     // ---- COMPARATIVO ----
     renderComparativo(b1, r1, c1, lastP);
 
     // Show dashboard
     document.getElementById('dashContent').style.display = 'flex';
-    setStatus('ok', `${periodos.length} períodos${isTrimestral?' (trimestral)':''} · ${ST.selected.size} entidad(es) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
+    setStatus('ok', `${periodos.length} periods${isTrimestral?' (quarterly)':''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
 
     // If explorer has a selected account, refresh it with new banks/range
     if (ST.exp.selected) {
@@ -1284,7 +1340,7 @@ function sparseData(rawData) {
 
 function showResChart(tipo) {
   ST._lastResChart = tipo;
-  const map = { activos:'📊 Activos', coloc:'💳 Colocaciones', pasivos:'📉 Pasivos', patrimonio:'🏛 Patrimonio', utilidad:'💰 Utilidad', mora:'⚠️ Morosidad', dep_vista:'👁 Dep. Vista', dep_plazo:'⏱ Dep. Plazo', bonos:'📄 Bonos' };
+  const map = { activos:'📊 Assets', coloc:'💳 Loans', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds' };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === map[tipo]);
   });
@@ -1327,6 +1383,37 @@ function showResChart(tipo) {
   document.getElementById('resumenLegend').innerHTML = series.map(s =>
     `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
   ).join('');
+
+  // Chart data table — banks as rows, periods as columns
+  const panel = document.getElementById('resChartTablePanel');
+  const tableEl = document.getElementById('resChartTable');
+  const titleEl = document.getElementById('resChartTableTitle');
+  if (panel && tableEl) {
+    const metricLabels = { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL +90d', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
+    titleEl.textContent = metricLabels[tipo] || tipo;
+    panel.style.display = 'block';
+
+    // Header: Bank | Period1 | Period2 ...
+    let html = `<table class="tbl"><thead><tr>
+      <th>Bank</th>
+      ${periodos.map(p => `<th class="r" style="font-size:10px;white-space:nowrap;">${periodLabel(p)}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+    series.forEach(s => {
+      html += `<tr>
+        <td style="font-weight:600;color:${s.color};white-space:nowrap;">${s.label}</td>
+        ${s.data.map(v => {
+          if (v === null || v === undefined) return `<td class="r" style="color:var(--text3)">—</td>`;
+          // v is already in the display unit (billions or millions after usdFactor)
+          const neg = v < 0;
+          return `<td class="r ${neg ? 'neg' : ''}">${fmtAxis(v)}</td>`;
+        }).join('')}
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    tableEl.innerHTML = html;
+  }
 }
 
 // ============================================================
@@ -1491,12 +1578,14 @@ function drawLineChart(canvasId, periodos, series, chartType) {
         ctx.globalAlpha = 1;
         CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
 
-        if (showLabels && h > 16) {
+        if (showLabels) {
           const labelX = x + barW / 2;
-          const labelY = barTop - 5;
-          if (labelY > PAD.t + 10) {
-            labelsToDraw.push({ labelX, labelY, v });
-          }
+          const txt = fmtAxis(v);
+          // Try above bar first, fall back to inside if too close to top
+          const aboveY = barTop - 5;
+          const insideY = barTop + 11;
+          const labelY = aboveY > PAD.t + 12 ? aboveY : insideY;
+          labelsToDraw.push({ labelX, labelY, v: txt, inside: aboveY <= PAD.t + 12 });
         }
       });
     });
@@ -1504,11 +1593,13 @@ function drawLineChart(canvasId, periodos, series, chartType) {
     // Second pass: draw all labels on top of all bars
     ctx.font = `bold 10px DM Mono, monospace`;
     ctx.textAlign = 'center';
-    labelsToDraw.forEach(({ labelX, labelY, v }) => {
-      const txt = fmtAxis(v);
+    labelsToDraw.forEach(({ labelX, labelY, v, inside }) => {
+      const txt = typeof v === 'string' ? v : fmtAxis(v);
       const tw = ctx.measureText(txt).width;
+      // Background pill
       ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,35,0.85)';
       ctx.fillRect(labelX - tw/2 - 3, labelY - 11, tw + 6, 14);
+      // Text
       ctx.fillStyle = ST.theme === 'light' ? '#1e293b' : '#f1f5f9';
       ctx.fillText(txt, labelX, labelY);
     });
@@ -1570,53 +1661,57 @@ function setupChartTooltip(canvasId, tooltipId) {
 // ============================================================
 const BAL_SECTIONS = {
   activos: [
-    {c:'100000000',l:'TOTAL ACTIVOS',cls:'hl'},
-    {c:'105000000',l:'Efectivo y Depósitos en Bancos',cls:'i1'},
+    {c:'100000000',l:'TOTAL ASSETS',cls:'hl'},
+    {c:'105000000',l:'Efectivo y Depósitos en Banks',cls:'i1'},
     {c:'107000000',l:'Operaciones Liquidación en Curso',cls:'i1'},
-    {c:'110000000',l:'Activos Fin. para Negociar (VR)',cls:'i1'},
-    {c:'120000000',l:'Activos Fin. a VR otro Resultado Integral',cls:'i1'},
+    {c:'110000000',l:'Assets Fin. para Negociar (VR)',cls:'i1'},
+    {c:'120000000',l:'Assets Fin. a VR otro Resultado Integral',cls:'i1'},
     {c:'130000000',l:'Derivados para Cobertura Contable',cls:'i1'},
-    {c:'140000000',l:'Activos Financieros a Costo Amortizado',cls:'i1'},
-    {c:'144000000',l:'Créditos y Cuentas por Cobrar Clientes',cls:'i2'},
+    {c:'140000000',l:'Assets Financieros a Costo Amortizado',cls:'i1'},
+    {c:'144000000',l:'Créditos y Accounts por Cobrar Clientes',cls:'i2'},
     {c:'145000000',l:'Colocaciones Comerciales',cls:'i3'},
     {c:'146000000',l:'Colocaciones para Vivienda',cls:'i3'},
     {c:'148000000',l:'Colocaciones de Consumo',cls:'i3'},
     {c:'149000000',l:'Provisiones por Riesgo Crédito',cls:'i3'},
-    {c:'500000000',l:'TOTAL COLOCACIONES',cls:'hl'},
+    {c:'500000000',l:'TOTAL LOANS',cls:'hl'},
     {c:'150000000',l:'Inversiones en Sociedades',cls:'i1'},
-    {c:'160000000',l:'Activos Intangibles',cls:'i1'},
-    {c:'170000000',l:'Activos Fijos',cls:'i1'},
+    {c:'160000000',l:'Assets Intangibles',cls:'i1'},
+    {c:'170000000',l:'Assets Fijos',cls:'i1'},
     {c:'185000000',l:'Impuestos Diferidos',cls:'i1'},
-    {c:'190000000',l:'Otros Activos',cls:'i1'},
+    {c:'190000000',l:'Otros Assets',cls:'i1'},
   ],
   pasivos: [
-    {c:'200000000',l:'TOTAL PASIVOS',cls:'hl'},
+    {c:'200000000',l:'TOTAL LIABILITIES',cls:'hl'},
     {c:'207000000',l:'Operaciones Liquidación en Curso',cls:'i1'},
-    {c:'210000000',l:'Pasivos Fin. para Negociar (VR)',cls:'i1'},
+    {c:'210000000',l:'Liabilities Fin. para Negociar (VR)',cls:'i1'},
     {c:'230000000',l:'Derivados para Cobertura Contable',cls:'i1'},
-    {c:'240000000',l:'Pasivos Financieros a Costo Amortizado',cls:'i1'},
+    {c:'240000000',l:'Liabilities Financieros a Costo Amortizado',cls:'i1'},
     {c:'241000000',l:'Depósitos a la Vista',cls:'i2'},
     {c:'242000000',l:'Depósitos y Captaciones a Plazo',cls:'i2'},
     {c:'243000000',l:'Obligaciones por Retrocompra',cls:'i2'},
-    {c:'244000000',l:'Obligaciones con Bancos',cls:'i2'},
+    {c:'244000000',l:'Obligaciones con Banks',cls:'i2'},
     {c:'245000000',l:'Instrumentos de Deuda Emitidos',cls:'i2'},
     {c:'250000000',l:'Obligaciones por Arrendamiento',cls:'i1'},
     {c:'255000000',l:'Capital Regulatorio Emitido',cls:'i1'},
     {c:'260000000',l:'Provisiones por Contingencias',cls:'i1'},
     {c:'270000000',l:'Provisiones Especiales Riesgo Crédito',cls:'i1'},
-    {c:'290000000',l:'Otros Pasivos',cls:'i1'},
+    {c:'290000000',l:'Otros Liabilities',cls:'i1'},
   ],
   patrimonio: [
-    {c:'300000000',l:'TOTAL PATRIMONIO',cls:'hl'},
+    {c:'300000000',l:'TOTAL EQUITY',cls:'hl'},
     {c:'310000000',l:'Capital',cls:'i1'},
     {c:'311000000',l:'Capital Pagado',cls:'i2'},
     {c:'320000000',l:'Reservas',cls:'i1'},
     {c:'330000000',l:'Otro Resultado Integral Acumulado',cls:'i1'},
     {c:'340000000',l:'Utilidades Acumuladas Anteriores',cls:'i1'},
     {c:'350000000',l:'Utilidad (Pérdida) del Ejercicio',cls:'i1'},
-    {c:'380000000',l:'Patrimonio de los Propietarios',cls:'hl'},
+    {c:'380000000',l:'Equity de los Propietarios',cls:'hl'},
   ]
 };
+// English key aliases
+BAL_SECTIONS.assets = BAL_SECTIONS.activos;
+BAL_SECTIONS.liabilities = BAL_SECTIONS.pasivos;
+BAL_SECTIONS.equity = BAL_SECTIONS.patrimonio;
 
 function renderBankTabs(containerId, activeCode, onSelect) {
   const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa'];
@@ -1657,8 +1752,8 @@ function showBalTab(sec, bankCode) {
     const code = banks[0];
     let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
       <th class="cod">Cuenta</th><th>Descripción</th>
-      <th class="r">CLP no Reaj.</th><th class="r">Reaj. UF/IVP</th>
-      <th class="r">Reaj. TC</th><th class="r">Mon. Extr.</th>
+      <th class="r">CLP Non-adj.</th><th class="r">Adj. UF/IVP</th>
+      <th class="r">Adj. FX Rate</th><th class="r">Foreign Curr.</th>
       <th class="r">TOTAL</th>
     </tr></thead><tbody>`;
     rows.forEach(row => {
@@ -1712,7 +1807,7 @@ function showBalTab(sec, bankCode) {
 
 function selectBalBank(code) {
   ST._activeBalBank = code;
-  showBalTab(ST._lastBalTab || 'activos', code);
+  showBalTab(ST._lastBalTab || 'assets', code);
 }
 
 // ============================================================
@@ -1730,19 +1825,19 @@ function renderResTable(m) {
   const bankColor = (code, i) => BANK_COLORS[code] || CHART_COLORS[i % 4];
 
   const R1_ROWS = [
-    {l:'Ingreso Neto por Intereses',       c:'520000000', cls:''},
-    {l:'Ingreso Neto por Reajustes UF/IVP',c:'525000000', cls:''},
-    {l:'Ingreso Neto por Comisiones',       c:'530000000', cls:''},
-    {l:'Resultado Financiero Neto',         c:'540000000', cls:''},
-    {l:'TOTAL INGRESOS OPERACIONALES',      c:'550000000', cls:'hl'},
-    {l:'Gastos Personal',                   c:'462000000', cls:'i1'},
-    {l:'Gastos Administración',             c:'464000000', cls:'i1'},
-    {l:'TOTAL GASTOS OPERACIONALES',        c:'560000000', cls:'hl'},
-    {l:'Res. Op. antes Pérd. Crediticias',  c:'570000000', cls:''},
-    {l:'Gasto por Pérdidas Crediticias',    c:'470000000', cls:'i1'},
-    {l:'RESULTADO OPERACIONAL',             c:'580000000', cls:'hl'},
-    {l:'Impuesto a la Renta',               c:'480000000', cls:'i1'},
-    {l:'UTILIDAD (PÉRDIDA) DEL EJERCICIO',  c:'590000000', cls:'hl'},
+    {l:'Net Interest Income',       c:'520000000', cls:''},
+    {l:'Net UF/IVP Adjustment Income',c:'525000000', cls:''},
+    {l:'Net Fee Income',       c:'530000000', cls:''},
+    {l:'Net Financial Result',         c:'540000000', cls:''},
+    {l:'TOTAL OPERATING INCOME',      c:'550000000', cls:'hl'},
+    {l:'Personnel Expenses',                   c:'462000000', cls:'i1'},
+    {l:'Administrative Expenses',             c:'464000000', cls:'i1'},
+    {l:'TOTAL OPERATING EXPENSES',        c:'560000000', cls:'hl'},
+    {l:'Op. Result before Credit Losses',  c:'570000000', cls:''},
+    {l:'Credit Loss Expense',    c:'470000000', cls:'i1'},
+    {l:'OPERATING RESULT',             c:'580000000', cls:'hl'},
+    {l:'Income Tax',               c:'480000000', cls:'i1'},
+    {l:'NET INCOME (PÉRDIDA) DEL EJERCICIO',  c:'590000000', cls:'hl'},
   ];
 
   // Always show one column per bank
@@ -1805,7 +1900,7 @@ function renderCalidad({carNorm,carSub,carInc,mora90,castigos,recup}) {
   document.getElementById('calBars').innerHTML = bHtml;
 
   const mRows = [
-    {l:'Adeudado Bancos',     c:'857100000'},
+    {l:'Adeudado Banks',     c:'857100000'},
     {l:'Col. Comerciales',    c:'857200000'},
     {l:'Col. Vivienda',       c:'857300000'},
     {l:'Col. Consumo',        c:'857400000'},
@@ -1844,11 +1939,11 @@ function renderComparativo(b1, r1, c1, lastP) {
   };
 
   const metrics = [
-    {l:'Total Activos',   fn:c=>getB1V('100000000',c)},
+    {l:'Total Assets',   fn:c=>getB1V('100000000',c)},
     {l:'Colocaciones',    fn:c=>getB1V('500000000',c)},
     {l:'Dep. Vista',      fn:c=>getB1V('241000000',c)},
     {l:'Dep. Plazo',      fn:c=>getB1V('242000000',c)},
-    {l:'Patrimonio',      fn:c=>getB1V('300000000',c)},
+    {l:'Equity',      fn:c=>getB1V('300000000',c)},
     {l:'Utilidad',        fn:c=>r1.filter(r=>r.cuenta==='590000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)},
     {l:'Mora +90d',       fn:c=>c1.filter(r=>r.cuenta==='857000000'&&r.ins_cod===c&&r.periodo===lastP).reduce((s,r)=>s+(r.monto_total||0),0)},
   ];
@@ -1903,15 +1998,15 @@ function initExplorer() {
   renderExpGrid();
 }
 
-// Cuentas principales fijas
+// Accounts principales fijas
 const CUENTAS_PRINCIPALES = {
-  '100000000': 'Total activos',
-  '200000000': 'Total pasivos',
-  '300000000': 'Patrimonio neto',
-  '400000000': 'Cuentas de resultado acreedoras',
-  '500000000': 'Total colocaciones',
-  '600000000': 'Cuentas de orden',
-  '800000000': 'Información complementaria',
+  '100000000': 'Assets',
+  '200000000': 'Liabilities',
+  '300000000': 'Equity accounts',
+  '400000000': 'Income statement',
+  '500000000': 'IS - Summary',
+  '600000000': 'Off-balance',
+  '800000000': 'Supplementary information',
 };
 
 function getExpAccounts() {
@@ -1932,7 +2027,9 @@ function toSentenceCase(str) {
 }
 
 function getExpLabel(c) {
-  const raw = ST.planCuentas[c] || CUENTAS_PRINCIPALES[c] || c;
+  // For root accounts, always use our English names
+  if (CUENTAS_PRINCIPALES[c]) return CUENTAS_PRINCIPALES[c];
+  const raw = ST.planCuentas[c] || c;
   return toSentenceCase(raw);
 }
 
@@ -1986,7 +2083,7 @@ async function expSelect(code) {
   const label = getExpLabel(code);
   document.getElementById('expCode').textContent = code;
   document.getElementById('expName').textContent = label;
-  const tipoLabels = {b1:'Balance consolidado', r1:'Estado de resultados', c1:'Información complementaria'};
+  const tipoLabels = {b1:'Consolidated balance', r1:'Income statement', c1:'Supplementary information'};
   document.getElementById('expType').textContent = tipoLabels[tipo] || '';
 
   // For top-level accounts (x00000000), show all sub-accounts starting with same digit
@@ -1999,7 +2096,7 @@ async function expSelect(code) {
     .filter(c => c !== code && c.startsWith(searchPrefix) && !/^[1-9]0{8}$/.test(c))
     .sort();
 
-  setStatus('loading', 'Consultando cuenta...');
+  setStatus('loading', 'Loading account...');
   try {
     const selDesde = document.getElementById('selDesde').value;
     const selHasta = document.getElementById('selHasta').value;
@@ -2052,7 +2149,7 @@ async function expSelect(code) {
                .reduce((s, r) => s + (r.monto_total || 0), 0)
     })).sort((a, b) => Math.abs(b.val) - Math.abs(a.val));
 
-    let tHtml = `<table class="tbl"><thead><tr><th>Banco</th><th class="r">Último período</th></tr></thead><tbody>`;
+    let tHtml = `<table class="tbl"><thead><tr><th>Bank</th><th class="r">Last period</th></tr></thead><tbody>`;
     tableRows.forEach(r => {
       tHtml += `<tr><td>${r.name}</td><td class="r ${r.val < 0 ? 'neg' : ''}">${fmtKPIDecimal(r.val)}</td></tr>`;
     });
@@ -2064,7 +2161,7 @@ async function expSelect(code) {
     const subList = document.getElementById('expSubList');
     if (subAccounts.length > 0) {
       subPanel.style.display = 'block';
-      document.getElementById('expSubTitle').textContent = `Sub-cuentas de ${label}`;
+      document.getElementById('expSubTitle').textContent = `Sub-accounts de ${label}`;
 
       // Fetch last period values for all sub-accounts at once
       const subRows = subAccounts.length > 0 ? await supa('datos_financieros', {
@@ -2081,7 +2178,7 @@ async function expSelect(code) {
           .reduce((s, r) => s + (r.monto_total || 0), 0);
       });
 
-      let subHtml = `<table class="tbl"><thead><tr><th>Código</th><th>Descripción</th><th class="r">Último período</th></tr></thead><tbody>`;
+      let subHtml = `<table class="tbl"><thead><tr><th>Código</th><th>Descripción</th><th class="r">Last period</th></tr></thead><tbody>`;
       subAccounts.forEach(c => {
         const subLabel = toSentenceCase(ST.planCuentas[c] || c);
         const val = subVals[c] || 0;
@@ -2101,7 +2198,7 @@ async function expSelect(code) {
 
     setStatus('ok', `Cuenta ${code}`);
   } catch(e) {
-    setStatus('error', 'Error al consultar cuenta');
+    setStatus('error', 'Error loading account');
     console.error(e);
   }
 }
@@ -2189,23 +2286,110 @@ function applyFontSize() {
   if (ST._lastResChart) showResChart(ST._lastResChart);
 }
 function showTab(tab) {
-  ['resumen','balance','resultados','comparativo','explorador','config'].forEach(t => {
+  ['resumen','chileanbanks','balance','resultados','comparativo','explorador','config'].forEach(t => {
     const el = document.getElementById('tab-'+t);
     if (el) el.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('.tab').forEach(b => {
-    const map={resumen:'Resumen',balance:'Balance',resultados:'Resultados',comparativo:'Comparativo',explorador:'Explorador'};
+    const map = {resumen:'Bank Monitor',chileanbanks:'Chilean Banks',balance:'Balance Sheet',resultados:'Income Statement',explorador:'Account Explorer'};
     b.classList.toggle('active', b.textContent.trim()===map[tab]);
   });
   if (tab==='resumen' && ST._series) {
-    requestAnimationFrame(() => showResChart(ST._lastResChart || 'activos'));
-  }
-  if (tab==='calidad' && ST._series) {
-    const {periodos, c1s} = ST._series;
-    requestAnimationFrame(() => drawLineChart('chartMora', periodos, [{label:'Morosidad +90d', data:c1s('857000000').map(v=>v/1e9), color:'var(--red)'}]));
+    requestAnimationFrame(() => showResChart(ST._lastResChart || 'assets'));
   }
   if (tab==='explorador' && Object.keys(ST.planCuentas).length > 0) initExplorer();
   if (tab==='config') populateConfig();
+  if (tab==='chileanbanks') renderChileanBanks();
+}
+
+async function renderChileanBanks() {
+  const el = document.getElementById('cbTable');
+  if (!el) return;
+  if (!ST.periodos.length) { el.innerHTML = '<div class="empty"><p>Load data first by clicking Analyze</p></div>'; return; }
+
+  el.innerHTML = '<div class="empty"><p>Loading...</p></div>';
+
+  const lastP = ST.periodos[ST.periodos.length - 1];
+  document.getElementById('cbPeriodLabel').textContent = `Ranked by equity — ${periodLabel(lastP)}`;
+  document.getElementById('cbCurrencyLabel').textContent = ST.currency === 'USD' && ST.usdRate ? `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')}` : '';
+
+  try {
+    const allBanks = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
+    const cuentas = ['100000000','144000000','145000000','200000000','300000000'];
+
+    const rows = await supa('datos_financieros', {
+      select: 'ins_cod,cuenta,monto_total',
+      eq: { tipo: 'b1', periodo: lastP },
+      in: { ins_cod: allBanks, cuenta: cuentas }
+    });
+
+    const getVal = (bank, cuenta) =>
+      rows.filter(r => r.ins_cod === bank && r.cuenta === cuenta)
+          .reduce((s, r) => s + (r.monto_total || 0), 0);
+
+    const bankData = allBanks.map(c => ({
+      code: c,
+      name: bankName(c),
+      assets:      getVal(c, '100000000'),
+      loans:       getVal(c, '144000000'),
+      commLoans:   getVal(c, '145000000'),
+      liabilities: getVal(c, '200000000'),
+      equity:      getVal(c, '300000000'),
+    })).filter(b => b.assets > 0)
+       .sort((a, b) => b.equity - a.equity);
+
+    const COLS = [
+      { label: 'Bank', key: 'name', align: 'left', fmt: v => v },
+      { label: 'Total Assets', key: 'assets', align: 'right', fmt: fmtKPIDecimal },
+      { label: 'Total Loans', key: 'loans', align: 'right', fmt: fmtKPIDecimal },
+      { label: 'Commercial Loans', key: 'commLoans', align: 'right', fmt: fmtKPIDecimal },
+      { label: 'Total Liabilities', key: 'liabilities', align: 'right', fmt: fmtKPIDecimal },
+      { label: 'Equity', key: 'equity', align: 'right', fmt: fmtKPIDecimal },
+      { label: 'Equity / Assets', key: null, align: 'right', fmt: null },
+    ];
+
+    let html = `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr>${COLS.map(c => `<th class="${c.align==='right'?'r':''}">${c.label}</th>`).join('')}</tr></thead>
+      <tbody>`;
+
+    bankData.forEach((b, i) => {
+      const eqRatio = b.assets ? (b.equity / b.assets * 100).toFixed(1) + '%' : '—';
+      const rowBg = i % 2 === 0 ? '' : 'background:rgba(0,0,0,0.02)';
+      html += `<tr style="${rowBg}">
+        <td style="font-weight:500">${b.name}</td>
+        <td class="r">${fmtKPIDecimal(b.assets)}</td>
+        <td class="r">${fmtKPIDecimal(b.loans)}</td>
+        <td class="r">${fmtKPIDecimal(b.commLoans)}</td>
+        <td class="r">${fmtKPIDecimal(b.liabilities)}</td>
+        <td class="r" style="font-weight:600">${fmtKPIDecimal(b.equity)}</td>
+        <td class="r" style="color:var(--text2)">${eqRatio}</td>
+      </tr>`;
+    });
+
+    // Totals row
+    const tot = bankData.reduce((acc, b) => {
+      acc.assets += b.assets; acc.loans += b.loans;
+      acc.commLoans += b.commLoans; acc.liabilities += b.liabilities;
+      acc.equity += b.equity; return acc;
+    }, {assets:0,loans:0,commLoans:0,liabilities:0,equity:0});
+    const totEqRatio = tot.assets ? (tot.equity / tot.assets * 100).toFixed(1) + '%' : '—';
+
+    html += `<tr style="border-top:2px solid var(--border2);font-weight:700;color:var(--white)">
+      <td>SYSTEM TOTAL</td>
+      <td class="r">${fmtKPIDecimal(tot.assets)}</td>
+      <td class="r">${fmtKPIDecimal(tot.loans)}</td>
+      <td class="r">${fmtKPIDecimal(tot.commLoans)}</td>
+      <td class="r">${fmtKPIDecimal(tot.liabilities)}</td>
+      <td class="r">${fmtKPIDecimal(tot.equity)}</td>
+      <td class="r">${totEqRatio}</td>
+    </tr>`;
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><p>Error loading data: ${e.message}</p></div>`;
+  }
 }
 
 function populateConfig() {
@@ -2217,7 +2401,7 @@ function populateConfig() {
     const hasta = ST.hasta ? periodLabel(ST.hasta) : '—';
     statusEl.textContent = banks
       ? `${banks} · ${desde} → ${hasta}`
-      : 'Sin consulta activa';
+      : 'No active query';
   }
   // Last update
   if (ST.periodos.length) {
@@ -2238,7 +2422,7 @@ function populateConfig() {
   }
   // Banks
   if (Object.keys(ST.bancos).length) {
-    document.getElementById('configBancos').innerHTML = Object.entries(ST.bancos)
+    document.getElementById('configBanks').innerHTML = Object.entries(ST.bancos)
       .filter(([c]) => parseInt(c) !== 999)
       .map(([c,n]) => `<span style="color:var(--text)">${String(c).padStart(3,'0')}</span> ${bankName(parseInt(c))}`)
       .join(' &nbsp;·&nbsp; ');
