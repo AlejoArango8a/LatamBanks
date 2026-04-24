@@ -496,8 +496,8 @@ select option { background:var(--bg3); }
         <div class="sidebar-block">
           <div class="sidebar-label">Period range</div>
           <div class="range-row">
-            <select id="selDesde"></select>
-            <select id="selHasta"></select>
+            <select id="selDesde" onchange="onPeriodChange()"></select>
+            <select id="selHasta" onchange="onPeriodChange()"></select>
           </div>
         </div>
         <div class="sidebar-block">
@@ -1277,8 +1277,8 @@ function fillPeriodSelectors() {
   ST.desde = ST.periodos[desde.selectedIndex];
   ST.hasta = ST.periodos[hasta.selectedIndex];
 
-  desde.onchange = () => { ST.desde = desde.value; };
-  hasta.onchange = () => { ST.hasta = hasta.value; };
+  desde.onchange = () => { ST.desde = desde.value; onPeriodChange(); };
+  hasta.onchange = () => { ST.hasta = hasta.value; onPeriodChange(); };
 }
 
 function fillBankList() {
@@ -1317,6 +1317,13 @@ function fillBankList() {
   if (ST.selected.size === 0) {
     const def = codes.includes(59) ? 59 : codes[0];
     toggleBank(def, true); fillBankList();
+  }
+}
+
+function onPeriodChange() {
+  if (ST.selected.size > 0 && ST.periodos.length > 0) {
+    clearTimeout(ST._autoRunTimer);
+    ST._autoRunTimer = setTimeout(() => run(), 300);
   }
 }
 
@@ -3157,27 +3164,37 @@ async function runAccountView() {
 }
 // ============================================================
 // ============================================================
-// VISIT COUNTER
+// VISIT COUNTER (CountAPI + localStorage)
 // ============================================================
+const VISIT_NAMESPACE = 'btg-alm-banks-monitor';
+const VISIT_KEY = 'pageviews';
+
 async function trackVisit() {
   try {
+    // Detect country via free API
     let country = 'Unknown', countryCode = '??';
     try {
       const geo = await fetch('https://ipapi.co/json/');
-      if (geo.ok) { const d = await geo.json(); country = d.country_name || 'Unknown'; countryCode = d.country_code || '??'; }
+      if (geo.ok) {
+        const d = await geo.json();
+        country = d.country_name || 'Unknown';
+        countryCode = d.country_code || '??';
+      }
     } catch {}
 
     // My visits — localStorage
     const myCount = (parseInt(localStorage.getItem('btg_my_visits') || '0') + 1);
     localStorage.setItem('btg_my_visits', myCount);
 
-    // Log this visit to Supabase
-    await fetch(`${SUPA_URL}/rest/v1/carga_log`, {
-      method: 'POST',
-      headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`,
-        'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ periodo: 'visit', estado: country, archivo: countryCode })
-    });
+    // Track country in localStorage
+    const byCountryKey = 'btg_visits_by_country';
+    let byCountry = {};
+    try { byCountry = JSON.parse(localStorage.getItem(byCountryKey) || '{}'); } catch {}
+    byCountry[country] = { count: (byCountry[country]?.count || 0) + 1, code: countryCode };
+    localStorage.setItem(byCountryKey, JSON.stringify(byCountry));
+
+    // Increment global counter via CountAPI
+    await fetch(`https://api.countapi.xyz/hit/${VISIT_NAMESPACE}/${VISIT_KEY}`);
 
     ST._myVisits = myCount;
     ST._myCountry = country;
@@ -3187,34 +3204,31 @@ async function trackVisit() {
 
 async function loadVisitStats() {
   try {
-    const rows = await supa('carga_log', { select: 'estado,archivo', eq: { periodo: 'visit' } });
+    // Total visits from CountAPI
+    const resp = await fetch(`https://api.countapi.xyz/get/${VISIT_NAMESPACE}/${VISIT_KEY}`);
+    const data = resp.ok ? await resp.json() : {};
+    const total = data.value || '—';
 
-    const total = rows.length;
-    const countryEl = document.getElementById('visitCount');
-    if (countryEl) countryEl.textContent = total.toLocaleString();
+    const countEl = document.getElementById('visitCount');
+    if (countEl) countEl.textContent = typeof total === 'number' ? total.toLocaleString() : total;
 
     const myEl = document.getElementById('myVisitCount');
-    if (myEl) myEl.textContent = (ST._myVisits || parseInt(localStorage.getItem('btg_my_visits') || '0')).toLocaleString();
+    if (myEl) myEl.textContent = (parseInt(localStorage.getItem('btg_my_visits') || '0')).toLocaleString();
 
-    const myCode = ST._myCountryCode || '??';
-    const myCountry = ST._myCountry || '—';
+    // Location from ST
     const flagEmoji = code => code?.length === 2
       ? String.fromCodePoint(...[...code].map(c => 0x1F1E6 + c.charCodeAt(0) - 65))
       : '🌐';
     const locEl = document.getElementById('visitCountry');
-    if (locEl) locEl.textContent = `${flagEmoji(myCode)} ${myCountry}`;
+    if (locEl && ST._myCountry) locEl.textContent = `${flagEmoji(ST._myCountryCode)} ${ST._myCountry}`;
 
-    // By country
-    const byC = {};
-    rows.forEach(r => {
-      const k = r.estado || 'Unknown';
-      if (!byC[k]) byC[k] = { count: 0, code: r.archivo };
-      byC[k].count++;
-    });
-    const sorted = Object.entries(byC).sort((a,b) => b[1].count - a[1].count);
+    // By country from localStorage
+    let byCountry = {};
+    try { byCountry = JSON.parse(localStorage.getItem('btg_visits_by_country') || '{}'); } catch {}
+    const sorted = Object.entries(byCountry).sort((a,b) => b[1].count - a[1].count);
     const maxV = sorted[0]?.[1].count || 1;
     const el = document.getElementById('visitsByCountry');
-    if (el) {
+    if (el && sorted.length) {
       el.innerHTML = sorted.map(([c, d]) => {
         const pct = (d.count / maxV * 100).toFixed(0);
         return `<div style="display:flex;align-items:center;gap:10px;">
@@ -3226,6 +3240,8 @@ async function loadVisitStats() {
           <div style="width:30px;font-family:var(--mono);font-size:11px;color:var(--text2);text-align:right;">${d.count}</div>
         </div>`;
       }).join('');
+    } else if (el) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text3);">Only your visits are tracked locally. Share the dashboard to see more countries.</div>';
     }
   } catch(e) { console.warn('loadVisitStats:', e.message); }
 }
