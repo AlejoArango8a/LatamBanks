@@ -54,7 +54,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
    RESPONSIVE BREAKPOINTS
    ============================================================ */
 @media (max-width: 1200px) {
-  #usdRateLabel { display:none !important; }
   #topbarUsdArea { display:none !important; }
 }
 @media (max-width: 900px) {
@@ -134,6 +133,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   white-space:nowrap;
 }
 .brand em { color:var(--text3); font-style:normal; }
+body.light .brand > span:last-child { color:#0d2b5e !important; }
+body:not(.light) .brand > span:last-child { color:#ffffff !important; }
 .tabs { display:flex; gap:1px; flex:1; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
 .tabs::-webkit-scrollbar { display:none; }
 .tabs .tab { scroll-snap-align:start; }
@@ -231,9 +232,10 @@ select, input {
 select:focus, input:focus { border-color:var(--accent2); }
 select option { background:var(--bg3); }
 #sidebarContent { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
-.bank-scroll { flex:1; overflow-y:auto; padding:6px; }
-.bank-scroll::-webkit-scrollbar { width:3px; }
-.bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+#sidebarBankControls { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+.bank-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:6px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+.bank-scroll::-webkit-scrollbar { width:5px; }
+.bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 .bank-item {
   display:flex; align-items:center; gap:8px;
   padding:6px 8px; border-radius:4px;
@@ -465,7 +467,6 @@ select option { background:var(--bg3); }
     </div>
 
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
-      <span id="usdRateLabel" style="font-family:var(--mono);font-size:10px;color:var(--text3);display:none;"></span>
       <div onclick="toggleCurrency()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
@@ -1154,6 +1155,29 @@ const BANK_LOGOS = {
   62:  'https://www.tanner.cl/favicon.ico',
 };
 ST.theme = 'light'; // default; boot block sets light mode
+const BTG_LOGO_DARK_SRC = 'assets/btg-logo-dark.png';
+function syncBrandLogoByTheme() {
+  const logo = document.querySelector('.brand img');
+  if (!logo) return;
+  if (!logo.dataset.lightSrc) {
+    logo.dataset.lightSrc = logo.getAttribute('src') || '';
+    const rect = logo.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      logo.dataset.lockWidth = String(Math.round(rect.width));
+      logo.dataset.lockHeight = String(Math.round(rect.height));
+    }
+    logo.onerror = () => {
+      if (logo.dataset.lightSrc) logo.src = logo.dataset.lightSrc;
+    };
+  }
+  if (logo.dataset.lockWidth && logo.dataset.lockHeight) {
+    logo.style.width = `${logo.dataset.lockWidth}px`;
+    logo.style.height = `${logo.dataset.lockHeight}px`;
+    logo.style.objectFit = 'contain';
+    logo.style.objectPosition = 'left center';
+  }
+  logo.src = ST.theme === 'dark' ? BTG_LOGO_DARK_SRC : logo.dataset.lightSrc;
+}
 function toggleTheme() {
   ST.theme = ST.theme === 'dark' ? 'light' : 'dark';
   document.body.classList.toggle('light', ST.theme === 'light');
@@ -1170,6 +1194,7 @@ function toggleTheme() {
     lightBtn.style.background = 'transparent';
     lightBtn.style.color = 'var(--text3)';
   }
+  syncBrandLogoByTheme();
   // Redraw charts
   if (ST._lastResChart) showResChart(ST._lastResChart);
 }
@@ -1219,9 +1244,6 @@ async function fetchUSDRate() {
       ST.usdRate = data.serie[0].valor;
       ST.usdDate = data.serie[0].fecha.slice(0,10);
       const txt = `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')} · ${ST.usdDate}`;
-      // Topbar label (kept for CLP/USD toggle)
-      const label = document.getElementById('usdRateLabel');
-      if (label) { label.style.display = 'inline'; label.textContent = txt; }
       // Sidebar label — always visible
       const sbl = document.getElementById('usdSidebarLabel');
       if (sbl) sbl.textContent = txt;
@@ -1239,15 +1261,12 @@ function toggleCurrency() {
     document.getElementById('switchCLP').style.color = 'var(--text3)';
     document.getElementById('switchUSD').style.background = 'var(--yellow)';
     document.getElementById('switchUSD').style.color = '#000';
-    document.getElementById('usdRateLabel').style.display = 'inline';
-    document.getElementById('usdRateLabel').textContent = `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')} · ${ST.usdDate}`;
   } else {
     ST.currency = 'CLP';
     document.getElementById('switchCLP').style.background = 'var(--accent)';
     document.getElementById('switchCLP').style.color = '#000';
     document.getElementById('switchUSD').style.background = 'transparent';
     document.getElementById('switchUSD').style.color = 'var(--text3)';
-    document.getElementById('usdRateLabel').style.display = 'none';
   }
   refreshKPIs();
   if (ST._series) showResChart(ST._lastResChart || 'patrimonio');
@@ -3889,6 +3908,7 @@ if (_darkBtn && _lightBtn) {
   _lightBtn.style.background = 'var(--accent)';
   _lightBtn.style.color = '#fff';
 }
+syncBrandLogoByTheme();
 // Default: USD
 const _clpBtn = document.getElementById('switchCLP');
 const _usdBtn = document.getElementById('switchUSD');
