@@ -956,7 +956,18 @@ const CHARTS = {};
 // ============================================================
 // GLOBAL COLOR CONSTANTS (single source of truth)
 // ============================================================
-const BANK_COLORS  = { 51: '#C4D201', 59: '#2563eb' };
+const BANK_COLORS  = {
+  1:  '#0A1464', // Banco de Chile
+  14: '#6E0308', // Scotiabank
+  16: '#0C9145', // BCI
+  37: '#F70000', // Santander
+  39: '#F75F01', // Itaú
+  41: '#382106', // JP Morgan
+  51: '#C4D201', // Banco Falabella
+  53: '#5E2C8B', // Banco Ripley
+  59: '#2563eb', // BTG Pactual
+  62: '#00A9E4', // Tanner
+};
 const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
 const bankColor = (code, i) => BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
 
