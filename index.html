@@ -937,6 +937,7 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 // Backend (Render): primera fase — periodos + bancos vía /api/bootstrap. Vacío = solo Supabase desde el navegador.
 const API_BASE_URL = 'https://latambanks-api.onrender.com';
+const API_BASE = API_BASE_URL ? API_BASE_URL.replace(/\/$/, '') : '';
 
 // ============================================================
 // STATE
@@ -1035,13 +1036,11 @@ async function supaAll(table, params = {}, pageSize = 1000) {
   return all;
 }
 
-// ============================================================
-// INIT
 // Helper: llama a /api/datos con fallback silencioso (devuelve null si falla)
 async function apiDatos(params) {
   if (!API_BASE_URL) return null;
   try {
-    const r = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/datos`, {
+    const r = await fetch(`${API_BASE}/api/datos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
@@ -1056,6 +1055,8 @@ async function apiDatos(params) {
 }
 
 // ============================================================
+// INIT
+// ============================================================
 async function init() {
   try {
     setStatus('loading', 'Connecting...');
@@ -1065,7 +1066,7 @@ async function init() {
     let bootstrapPatrimonio = false;
     if (API_BASE_URL) {
       try {
-        const r = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/bootstrap`);
+        const r = await fetch(`${API_BASE}/api/bootstrap`);
         const j = await r.json();
         if (r.ok && j.ok && Array.isArray(j.periodos) && j.periodos.length && Array.isArray(j.instituciones)) {
           ST.periodos = j.periodos;
@@ -1099,18 +1100,12 @@ async function init() {
     }
 
     if (!bootstrapFromApi) {
-      // Load periods
-      const logs = await supa('carga_log', {
-        select: 'periodo',
-        eq: { estado: 'ok' },
-        order: 'periodo.asc'
-      });
+      const [logs, insts] = await Promise.all([
+        supa('carga_log', { select: 'periodo', eq: { estado: 'ok' }, order: 'periodo.asc' }),
+        supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' }),
+      ]);
       ST.periodos = logs.map(r => r.periodo);
-
       if (!ST.periodos.length) throw new Error('No data found in database');
-
-      // Load institutions
-      const insts = await supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' });
       insts.forEach(r => ST.bancos[r.codigo] = r.razon_social);
     }
 
@@ -1526,7 +1521,7 @@ async function fetchData(tipo, cuentas, periodos, bancos) {
   // Intentar backend primero (una sola llamada; el servidor hace el batching interno)
   if (API_BASE_URL) {
     try {
-      const r = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/datos`, {
+      const r = await fetch(`${API_BASE}/api/datos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo, periodos, bancos: [...bancos], cuentas })

@@ -120,30 +120,28 @@ app.get('/api/bootstrap', async (req, res) => {
       return res.status(502).json({ ok: false, error: 'No data found in database (no periods)' });
     }
 
-    const instituciones = await supabaseRest('instituciones', [
-      'select=codigo,razon_social',
-      'order=codigo.asc',
-    ]);
-
-    // plan_cuentas: puede tener muchas filas, usamos paginación
-    const planCuentas = await supabaseRestAll('plan_cuentas', [
-      'select=cuenta,descripcion',
-      'order=cuenta.asc',
-    ]);
-
-    // Patrimonio (cuenta 300000000) del último periodo, para ranking de bancos
+    // Las tres queries siguientes son independientes entre sí — se lanzan en paralelo.
+    // patrimonioRows usa .catch() para no romper Promise.all si falla (es no-fatal).
     const lastPeriodo = periodos[periodos.length - 1];
-    let patrimonioRows = [];
-    try {
-      patrimonioRows = await supabaseRest('datos_financieros', [
+    const [instituciones, planCuentas, patrimonioRows] = await Promise.all([
+      supabaseRest('instituciones', [
+        'select=codigo,razon_social',
+        'order=codigo.asc',
+      ]),
+      supabaseRestAll('plan_cuentas', [
+        'select=cuenta,descripcion',
+        'order=cuenta.asc',
+      ]),
+      supabaseRest('datos_financieros', [
         'select=ins_cod,monto_total',
         'tipo=eq.b1',
         'cuenta=eq.300000000',
         `periodo=eq.${lastPeriodo}`,
-      ]);
-    } catch (e) {
-      console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
-    }
+      ]).catch(e => {
+        console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
+        return [];
+      }),
+    ]);
 
     res.json({ ok: true, periodos, instituciones, planCuentas, patrimonioRows });
   } catch (e) {
@@ -176,7 +174,12 @@ app.post('/api/datos', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Requerido: cuentas[]' });
     }
 
-    const selectStr = selectCols || 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext';
+    const ALLOWED_COLS = new Set([
+      'periodo','ins_cod','cuenta','monto_total','monto_clp','monto_uf','monto_tc','monto_ext','tipo',
+    ]);
+    const selectStr = selectCols && selectCols.split(',').every(c => ALLOWED_COLS.has(c.trim()))
+      ? selectCols
+      : 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext';
     const BATCH = 6;
 
     // Para cada tipo: lanzar todos los batches de periodos en paralelo
