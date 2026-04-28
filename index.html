@@ -935,6 +935,9 @@ select option { background:var(--bg3); }
 const SUPA_URL = "https://iudzjmggqvbezbekzmhz.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1ZHpqbWdncXZiZXpiZWt6bWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjg3MTgsImV4cCI6MjA5MTk0NDcxOH0.e30w9841v4K6J9JekaSlZQMUUvQt8L8VMJIfDyPIVds";
 
+// Backend (Render): primera fase — periodos + bancos vía /api/bootstrap. Vacío = solo Supabase desde el navegador.
+const API_BASE_URL = 'https://latambanks-api.onrender.com';
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1039,19 +1042,40 @@ async function init() {
   try {
     setStatus('loading', 'Connecting...');
 
-    // Load periods
-    const logs = await supa('carga_log', {
-      select: 'periodo',
-      eq: { estado: 'ok' },
-      order: 'periodo.asc'
-    });
-    ST.periodos = logs.map(r => r.periodo);
+    let bootstrapFromApi = false;
+    if (API_BASE_URL) {
+      try {
+        const r = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/bootstrap`);
+        const j = await r.json();
+        if (r.ok && j.ok && Array.isArray(j.periodos) && j.periodos.length && Array.isArray(j.instituciones)) {
+          ST.periodos = j.periodos;
+          j.instituciones.forEach(row => { ST.bancos[row.codigo] = row.razon_social; });
+          bootstrapFromApi = true;
+        } else {
+          console.warn('API bootstrap no OK, usando Supabase directo:', j.error || r.status);
+        }
+      } catch (e) {
+        console.warn('API bootstrap falló, usando Supabase directo:', e);
+      }
+    }
+
+    if (!bootstrapFromApi) {
+      // Load periods
+      const logs = await supa('carga_log', {
+        select: 'periodo',
+        eq: { estado: 'ok' },
+        order: 'periodo.asc'
+      });
+      ST.periodos = logs.map(r => r.periodo);
+
+      if (!ST.periodos.length) throw new Error('No data found in database');
+
+      // Load institutions
+      const insts = await supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' });
+      insts.forEach(r => ST.bancos[r.codigo] = r.razon_social);
+    }
 
     if (!ST.periodos.length) throw new Error('No data found in database');
-
-    // Load institutions
-    const insts = await supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' });
-    insts.forEach(r => ST.bancos[r.codigo] = r.razon_social);
 
     // Load plan de cuentas — paginated to guarantee all rows
     const plan = await supaAll('plan_cuentas', { select: 'cuenta,descripcion', order: 'cuenta.asc' });
@@ -3762,7 +3786,6 @@ function renderCBTable() {
       <td style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);">${rowIdx + 1}</td>
       <td style="${nameStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${isBTG ? '★ ' : ''}${b.name}
-        <span style="font-size:10px;color:var(--accent);margin-left:6px;opacity:0.7;">→</span>
       </td>
       <td style="text-align:center;">
         <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};">${rating}</span>
