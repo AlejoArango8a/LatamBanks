@@ -1036,20 +1036,33 @@ async function supaAll(table, params = {}, pageSize = 1000) {
   return all;
 }
 
-// Helper: llama a /api/datos con fallback silencioso (devuelve null si falla)
+// Fetch con timeout: cancela la petición si no responde en `ms` milisegundos.
+// Usa AbortController para cancelar realmente la conexión (no solo ignorar la respuesta).
+function fetchWithTimeout(url, options, ms) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...options, signal: ctrl.signal })
+    .finally(() => clearTimeout(id));
+}
+
+// Helper: llama a /api/datos con timeout y fallback silencioso (devuelve null si falla/timeout)
 async function apiDatos(params) {
-  if (!API_BASE_URL) return null;
+  if (!API_BASE) return null;
   try {
-    const r = await fetch(`${API_BASE}/api/datos`, {
+    const r = await fetchWithTimeout(`${API_BASE}/api/datos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
-    });
+    }, 5000); // 5s: si Render está dormido no esperamos 60s
     const j = await r.json();
     if (r.ok && j.ok && Array.isArray(j.rows)) return j.rows;
     console.warn('API /datos no OK:', j.error || r.status);
   } catch (e) {
-    console.warn('API /datos falló:', e);
+    if (e.name === 'AbortError') {
+      console.warn('API /datos timeout — Render despertando, usando Supabase directo');
+    } else {
+      console.warn('API /datos falló:', e);
+    }
   }
   return null;
 }
@@ -1066,7 +1079,7 @@ async function init() {
     let bootstrapPatrimonio = false;
     if (API_BASE_URL) {
       try {
-        const r = await fetch(`${API_BASE}/api/bootstrap`);
+        const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 6000); // 6s timeout
         const j = await r.json();
         if (r.ok && j.ok && Array.isArray(j.periodos) && j.periodos.length && Array.isArray(j.instituciones)) {
           ST.periodos = j.periodos;
@@ -1095,7 +1108,11 @@ async function init() {
           console.warn('API bootstrap no OK, usando Supabase directo:', j.error || r.status);
         }
       } catch (e) {
-        console.warn('API bootstrap falló, usando Supabase directo:', e);
+        if (e.name === 'AbortError') {
+          console.warn('API bootstrap timeout — Render despertando, usando Supabase directo');
+        } else {
+          console.warn('API bootstrap falló, usando Supabase directo:', e);
+        }
       }
     }
 
@@ -1158,6 +1175,11 @@ async function init() {
     await run();
     showTab('resumen');
     trackVisit(); // fire and forget
+
+    // Mantener Render despierto mientras el tab está abierto (ping cada 14 min)
+    if (API_BASE) {
+      setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);
+    }
 
   } catch(e) {
     setStatus('error', 'Connection error');
