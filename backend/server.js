@@ -152,6 +152,42 @@ app.get('/api/bootstrap', async (req, res) => {
   }
 });
 
+/** Grupo 2: datos financieros principales — equivalente a fetchData() en index.html */
+app.post('/api/datos', async (req, res) => {
+  try {
+    const { tipo, periodos, bancos, cuentas } = req.body || {};
+    if (
+      !tipo ||
+      !Array.isArray(periodos) || !periodos.length ||
+      !Array.isArray(bancos)   || !bancos.length   ||
+      !Array.isArray(cuentas)  || !cuentas.length
+    ) {
+      return res.status(400).json({ ok: false, error: 'Params requeridos: tipo, periodos[], bancos[], cuentas[]' });
+    }
+
+    // Batching interno: Supabase tiene límite de ~50 000 filas por request.
+    // Con 50 cuentas × 20 bancos × 6 periodos = 6 000 filas max por batch → seguro.
+    const BATCH = 6;
+    let allRows = [];
+    for (let i = 0; i < periodos.length; i += BATCH) {
+      const batch = periodos.slice(i, i + BATCH);
+      const rows = await supabaseRest('datos_financieros', [
+        'select=periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext',
+        `tipo=eq.${tipo}`,
+        `periodo=in.(${batch.join(',')})`,
+        `ins_cod=in.(${bancos.join(',')})`,
+        `cuenta=in.(${cuentas.join(',')})`,
+      ]);
+      allRows = allRows.concat(rows);
+    }
+
+    res.json({ ok: true, rows: allRows });
+  } catch (e) {
+    const status = e.status || 500;
+    res.status(status).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`API running on port ${PORT}`);

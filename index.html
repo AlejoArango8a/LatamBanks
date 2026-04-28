@@ -1505,24 +1505,38 @@ async function fetchData(tipo, cuentas, periodos, bancos) {
   const key = `${tipo}_${periodos.join(',')}_${[...bancos].sort().join(',')}_${cuentas.join(',')}`;
   if (ST.data[key]) return ST.data[key];
 
+  // Intentar backend primero (una sola llamada; el servidor hace el batching interno)
+  if (API_BASE_URL) {
+    try {
+      const r = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/datos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, periodos, bancos: [...bancos], cuentas })
+      });
+      const j = await r.json();
+      if (r.ok && j.ok && Array.isArray(j.rows)) {
+        ST.data[key] = j.rows;
+        return j.rows;
+      }
+      console.warn('API /datos no OK, usando Supabase directo:', j.error || r.status);
+    } catch (e) {
+      console.warn('API /datos falló, usando Supabase directo:', e);
+    }
+  }
+
+  // Fallback: Supabase directo con batching por períodos
   const PERIOD_BATCH = 6;
   let allRows = [];
-
   for (let i = 0; i < periodos.length; i += PERIOD_BATCH) {
     const batchPeriodos = periodos.slice(i, i + PERIOD_BATCH);
     const rows = await supa('datos_financieros', {
       select: 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext',
       eq: { tipo },
-      in: {
-        periodo: batchPeriodos,
-        ins_cod: [...bancos],
-        cuenta: cuentas
-      },
+      in: { periodo: batchPeriodos, ins_cod: [...bancos], cuenta: cuentas },
       limit: 10000
     });
     allRows = allRows.concat(rows);
   }
-
   ST.data[key] = allRows;
   return allRows;
 }
