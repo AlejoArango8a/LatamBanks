@@ -272,18 +272,44 @@ select option { background:var(--bg3); }
 .btn-sm:hover { color:var(--text); border-color:var(--border2); }
 
 /* MAIN */
-.main { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:20px; min-height:0; min-width:0; }
+.main { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:20px; min-height:0; min-width:0; position:relative; }
 .main::-webkit-scrollbar { width:5px; }
 .main::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
 /* LOADING SCREEN */
 .loading-screen {
-  flex:1; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:16px;
-  color:var(--text3);
+  position:absolute; inset:0; z-index:50;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg);
 }
-.loading-screen .big { font-size:32px; opacity:0.3; }
-.loading-screen p { font-size:12px; }
+.ls-inner {
+  display:flex; flex-direction:column;
+  align-items:center; gap:32px;
+}
+.ls-title {
+  font-family:var(--sans); font-size:11px; font-weight:500;
+  letter-spacing:3.5px; text-transform:uppercase; color:var(--text3);
+}
+.ls-title span { color:var(--accent); margin:0 6px; }
+.ls-bars {
+  display:flex; align-items:flex-end; gap:5px; height:52px;
+}
+.ls-bar {
+  width:7px; border-radius:3px 3px 1px 1px;
+  background:var(--accent);
+  animation:ls-wave 1.5s ease-in-out infinite;
+  animation-delay:calc(var(--i) * 0.11s);
+  opacity:0.75;
+}
+@keyframes ls-wave {
+  0%, 100% { height:7px;  opacity:0.25; }
+  50%       { height:48px; opacity:0.85; }
+}
+.ls-msg {
+  font-family:var(--mono); font-size:11px;
+  color:var(--text3); letter-spacing:0.5px;
+  min-height:1.4em; text-align:center;
+}
 
 /* CARDS */
 .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:10px; }
@@ -537,8 +563,26 @@ select option { background:var(--bg3); }
     <!-- MAIN -->
     <main class="main" id="main">
       <div class="loading-screen" id="loadingScreen">
-        <div class="big">📊</div>
-        <p>Connecting to database...</p>
+        <div class="ls-inner">
+          <div class="ls-title">ALM BTG <span>·</span> Banks Monitor</div>
+          <div class="ls-bars">
+            <div class="ls-bar" style="--i:0"></div>
+            <div class="ls-bar" style="--i:1"></div>
+            <div class="ls-bar" style="--i:2"></div>
+            <div class="ls-bar" style="--i:3"></div>
+            <div class="ls-bar" style="--i:4"></div>
+            <div class="ls-bar" style="--i:5"></div>
+            <div class="ls-bar" style="--i:6"></div>
+            <div class="ls-bar" style="--i:7"></div>
+            <div class="ls-bar" style="--i:8"></div>
+            <div class="ls-bar" style="--i:9"></div>
+            <div class="ls-bar" style="--i:10"></div>
+            <div class="ls-bar" style="--i:11"></div>
+            <div class="ls-bar" style="--i:12"></div>
+            <div class="ls-bar" style="--i:13"></div>
+          </div>
+          <div class="ls-msg" id="lsMsg">Conectando al servidor...</div>
+        </div>
       </div>
       <div class="err-box" id="errBox"></div>
 
@@ -1070,6 +1114,11 @@ async function apiDatos(params) {
 // ============================================================
 // INIT
 // ============================================================
+function setLsMsg(text) {
+  const el = document.getElementById('lsMsg');
+  if (el) el.textContent = text;
+}
+
 async function init() {
   try {
     setStatus('loading', 'Connecting...');
@@ -1079,6 +1128,7 @@ async function init() {
     let bootstrapPatrimonio = false;
     if (API_BASE_URL) {
       try {
+        setLsMsg('Conectando al servidor...');
         const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 6000); // 6s timeout
         const j = await r.json();
         if (r.ok && j.ok && Array.isArray(j.periodos) && j.periodos.length && Array.isArray(j.instituciones)) {
@@ -1117,6 +1167,7 @@ async function init() {
     }
 
     if (!bootstrapFromApi) {
+      setLsMsg('Cargando períodos disponibles...');
       const [logs, insts] = await Promise.all([
         supa('carga_log', { select: 'periodo', eq: { estado: 'ok' }, order: 'periodo.asc' }),
         supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' }),
@@ -1130,6 +1181,7 @@ async function init() {
 
     // Load plan de cuentas — paginated to guarantee all rows (fallback si no vino en bootstrap)
     if (!bootstrapPlanCuentas) {
+      setLsMsg('Cargando plan de cuentas...');
       const plan = await supaAll('plan_cuentas', { select: 'cuenta,descripcion', order: 'cuenta.asc' });
       plan.forEach(r => ST.planCuentas[r.cuenta] = r.descripcion);
       console.log(`Plan de cuentas (Supabase directo): ${plan.length} accounts loaded`);
@@ -1137,6 +1189,7 @@ async function init() {
 
     // Fetch patrimonio ranking for bank list sorting (fallback si no vino en bootstrap)
     if (!bootstrapPatrimonio) {
+      setLsMsg('Preparando ranking de bancos...');
       const lastP = ST.periodos[ST.periodos.length - 1];
       try {
         const patRows = await supa('datos_financieros', {
@@ -1162,6 +1215,7 @@ async function init() {
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
+    setLsMsg('Listo');
     document.getElementById('loadingScreen').style.display = 'none';
     setStatus('ok', `${ST.periodos.length} periods available`);
 
