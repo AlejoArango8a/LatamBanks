@@ -1,15 +1,16 @@
 const express = require('express');
-const cors = require('cors');
+const cors    = require('cors');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
-// CORS: GitHub Pages y otros frontends necesitan que el servidor devuelva
-// Access-Control-Allow-Origin igual al header "Origin" del navegador.
-// `origin: true` hace exactamente eso (refleja el origen). Es lo más fiable para evitar errores CORS en esta fase.
-// Más adelante puedes restringir con lista fija si lo necesitas.
-const useOpenCors = (process.env.CORS_OPEN || '1') !== '0';
+// ============================================================
+// CORS — cerrado por defecto; abre solo los orígenes en FRONTEND_URLS.
+// Para debug puntual en Render: CORS_OPEN=1 (nunca dejar en producción).
+// ============================================================
+const useOpenCors = (process.env.CORS_OPEN || '0') !== '0';
 if (useOpenCors) {
   app.use(cors({ origin: true, maxAge: 3600 }));
 } else {
@@ -18,202 +19,140 @@ if (useOpenCors) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  function originAllowed(requestOrigin, allowedList) {
-    if (!requestOrigin) return true;
-    if (allowedList.includes('*')) return true;
-    return allowedList.some((entry) => {
-      if (entry === '*') return true;
-      try {
-        return requestOrigin === new URL(entry).origin;
-      } catch {
-        return requestOrigin === entry;
-      }
-    });
-  }
-  app.use(
-    cors({
-      origin(origin, cb) {
-        if (!origin) return cb(null, true);
-        if (originAllowed(origin, origins)) return cb(null, origin);
-        cb(new Error('Not allowed by CORS'));
-      },
-    })
-  );
-}
 
-async function supabaseRest(table, queryParts) {
-  const base = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY;
-  if (!base || !key) {
-    const err = new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
-    err.status = 503;
-    throw err;
-  }
-  const url = `${base.replace(/\/$/, '')}/rest/v1/${table}?${queryParts.join('&')}`;
-  const resp = await fetch(url, {
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      Range: '0-49999',
-      Prefer: 'count=none',
+  app.use(cors({
+    origin(origin, cb) {
+      if (!origin) return cb(null, true);
+      const allowed = origins.some(entry => {
+        try { return origin === new URL(entry).origin; } catch { return origin === entry; }
+      });
+      allowed ? cb(null, origin) : cb(new Error('Not allowed by CORS'));
     },
-  });
-  if (!resp.ok) {
-    const err = new Error(`Supabase ${resp.status}: ${await resp.text()}`);
-    err.status = 502;
-    throw err;
-  }
-  return resp.json();
+  }));
 }
 
-// Paginated version: loops with offset until Supabase returns an empty page
-async function supabaseRestAll(table, queryParts, pageSize = 1000) {
-  const base = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY;
-  if (!base || !key) {
-    const err = new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
-    err.status = 503;
-    throw err;
-  }
-  let all = [];
-  let offset = 0;
-  while (true) {
-    const parts = [...queryParts, `limit=${pageSize}`, `offset=${offset}`];
-    const url = `${base.replace(/\/$/, '')}/rest/v1/${table}?${parts.join('&')}`;
-    const resp = await fetch(url, {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        Prefer: 'count=none',
-      },
-    });
-    if (!resp.ok) {
-      const err = new Error(`Supabase ${resp.status}: ${await resp.text()}`);
-      err.status = 502;
-      throw err;
-    }
-    const page = await resp.json();
-    if (!page.length) break;
-    all = all.concat(page);
-    if (page.length < pageSize) break;
-    offset += pageSize;
-  }
-  return all;
+// ============================================================
+// BASE DE DATOS — CockroachDB vía driver pg
+// ============================================================
+if (!process.env.COCKROACH_URL) {
+  console.error('ERROR: falta COCKROACH_URL en las variables de entorno');
+  process.exit(1);
 }
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'latambanks-api' });
+const pool = new Pool({
+  connectionString: process.env.COCKROACH_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
-/** Grupo 1: periodos + instituciones + plan_cuentas + patrimonio ranking */
+pool.on('error', (err) => console.error('DB pool error:', err));
+
+// Helper: ejecuta una query y devuelve las filas
+async function query(sql, params = []) {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(sql, params);
+    return res.rows;
+  } finally {
+    client.release();
+  }
+}
+
+// ============================================================
+// HEALTH
+// ============================================================
+app.get('/health', async (req, res) => {
+  try {
+    await query('SELECT 1');
+    res.json({ ok: true, service: 'latambanks-api', db: 'cockroachdb' });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
+// GET /api/bootstrap — períodos + instituciones + plan_cuentas + patrimonio
+// ============================================================
 app.get('/api/bootstrap', async (req, res) => {
   try {
-    const logs = await supabaseRest('carga_log', [
-      'select=periodo',
-      'estado=eq.ok',
-      'order=periodo.asc',
+    const [periodosRows, instituciones, planCuentas] = await Promise.all([
+      query("SELECT periodo FROM carga_log WHERE estado = 'ok' ORDER BY periodo ASC"),
+      query('SELECT codigo, razon_social FROM instituciones ORDER BY codigo ASC'),
+      query('SELECT cuenta, descripcion FROM plan_cuentas ORDER BY cuenta ASC'),
     ]);
-    const periodos = logs.map((r) => r.periodo);
+
+    const periodos = periodosRows.map(r => r.periodo);
     if (!periodos.length) {
-      return res.status(502).json({ ok: false, error: 'No data found in database (no periods)' });
+      return res.status(502).json({ ok: false, error: 'No hay períodos en la base de datos' });
     }
 
-    // Las tres queries siguientes son independientes entre sí — se lanzan en paralelo.
-    // patrimonioRows usa .catch() para no romper Promise.all si falla (es no-fatal).
     const lastPeriodo = periodos[periodos.length - 1];
-    const [instituciones, planCuentas, patrimonioRows] = await Promise.all([
-      supabaseRest('instituciones', [
-        'select=codigo,razon_social',
-        'order=codigo.asc',
-      ]),
-      supabaseRestAll('plan_cuentas', [
-        'select=cuenta,descripcion',
-        'order=cuenta.asc',
-      ]),
-      supabaseRest('datos_financieros', [
-        'select=ins_cod,monto_total',
-        'tipo=eq.b1',
-        'cuenta=eq.300000000',
-        `periodo=eq.${lastPeriodo}`,
-      ]).catch(e => {
-        console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
-        return [];
-      }),
-    ]);
+    const patrimonioRows = await query(
+      "SELECT ins_cod, monto_total FROM datos_financieros WHERE tipo = 'b1' AND cuenta = '300000000' AND periodo = $1",
+      [lastPeriodo]
+    ).catch(e => {
+      console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
+      return [];
+    });
 
     res.json({ ok: true, periodos, instituciones, planCuentas, patrimonioRows });
   } catch (e) {
-    const status = e.status || 500;
-    res.status(status).json({ ok: false, error: String(e.message || e) });
+    console.error('/api/bootstrap error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
   }
 });
 
-/** Grupo 2+: datos financieros — cubre fetchData() y todas las vistas del dashboard.
- *  Body: { tipo|tipos[], periodos[], cuentas[], bancos[]?, select? }
- *  - tipos[] permite consultar b1+r1+c1 en paralelo en una sola llamada.
- *  - bancos  es opcional; si se omite, no se filtra por institución.
- *  - select  es opcional; por defecto devuelve todas las columnas relevantes.
- */
+// ============================================================
+// POST /api/datos — datos financieros filtrados
+// Body: { tipo|tipos[], periodos[], cuentas[], bancos[]?, select? }
+// ============================================================
+const ALLOWED_COLS = new Set([
+  'periodo','ins_cod','cuenta','monto_total','monto_clp','monto_uf','monto_tc','monto_ext','tipo',
+]);
+
 app.post('/api/datos', async (req, res) => {
   try {
     const { tipo, tipos: tiposArr, periodos, bancos, cuentas, select: selectCols } = req.body || {};
 
-    // Normalizar tipos a array (acepta tipo:'b1' o tipos:['b1','r1','c1'])
     const tiposList = Array.isArray(tiposArr) && tiposArr.length ? tiposArr
                     : tipo ? [tipo]
                     : null;
-    if (!tiposList) {
-      return res.status(400).json({ ok: false, error: 'Requerido: tipo (string) o tipos (array)' });
-    }
-    if (!Array.isArray(periodos) || !periodos.length) {
-      return res.status(400).json({ ok: false, error: 'Requerido: periodos[]' });
-    }
-    if (!Array.isArray(cuentas) || !cuentas.length) {
-      return res.status(400).json({ ok: false, error: 'Requerido: cuentas[]' });
-    }
+    if (!tiposList)                                return res.status(400).json({ ok: false, error: 'Requerido: tipo o tipos[]' });
+    if (!Array.isArray(periodos) || !periodos.length) return res.status(400).json({ ok: false, error: 'Requerido: periodos[]' });
+    if (!Array.isArray(cuentas)  || !cuentas.length)  return res.status(400).json({ ok: false, error: 'Requerido: cuentas[]' });
 
-    const ALLOWED_COLS = new Set([
-      'periodo','ins_cod','cuenta','monto_total','monto_clp','monto_uf','monto_tc','monto_ext','tipo',
-    ]);
-    const selectStr = selectCols && selectCols.split(',').every(c => ALLOWED_COLS.has(c.trim()))
-      ? selectCols
-      : 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext';
-    const BATCH = 6;
+    const cols = selectCols
+      ? selectCols.split(',').map(c => c.trim()).filter(c => ALLOWED_COLS.has(c))
+      : ['periodo','ins_cod','cuenta','monto_total','monto_clp','monto_uf','monto_tc','monto_ext'];
 
-    // Para cada tipo: lanzar todos los batches de periodos en paralelo
-    // Luego lanzar todos los tipos en paralelo → mínima latencia total
+    const selectStr = cols.join(', ');
+
+    // Una query por tipo — en paralelo
     const tipoPromises = tiposList.map(t => {
-      const batches = [];
-      for (let i = 0; i < periodos.length; i += BATCH) {
-        batches.push(periodos.slice(i, i + BATCH));
+      const params = [t, periodos, cuentas];
+      let sql = `SELECT ${selectStr} FROM datos_financieros
+                 WHERE tipo = $1
+                   AND periodo = ANY($2)
+                   AND cuenta  = ANY($3)`;
+      if (Array.isArray(bancos) && bancos.length) {
+        params.push(bancos);
+        sql += ` AND ins_cod = ANY($${params.length})`;
       }
-      return Promise.all(
-        batches.map(batch => {
-          const parts = [
-            `select=${selectStr}`,
-            `tipo=eq.${t}`,
-            `periodo=in.(${batch.join(',')})`,
-            `cuenta=in.(${cuentas.join(',')})`,
-          ];
-          if (Array.isArray(bancos) && bancos.length) {
-            parts.push(`ins_cod=in.(${bancos.join(',')})`);
-          }
-          return supabaseRest('datos_financieros', parts);
-        })
-      ).then(r => r.flat());
+      return query(sql, params);
     });
 
     const allRows = (await Promise.all(tipoPromises)).flat();
     res.json({ ok: true, rows: allRows });
   } catch (e) {
-    const status = e.status || 500;
-    res.status(status).json({ ok: false, error: String(e.message || e) });
+    console.error('/api/datos error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
   }
 });
 
+// ============================================================
+// START
+// ============================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`API running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`API running on port ${PORT} — db: CockroachDB`));
