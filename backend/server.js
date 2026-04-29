@@ -77,11 +77,13 @@ app.get('/health', async (req, res) => {
 // ============================================================
 app.get('/api/bootstrap', async (req, res) => {
   try {
-    const [periodosRows, instituciones, planCuentas] = await Promise.all([
+    const [periodosRows, institucionesRaw, planCuentas] = await Promise.all([
       query("SELECT periodo FROM carga_log WHERE estado = 'ok' ORDER BY periodo ASC"),
-      query('SELECT codigo, razon_social FROM instituciones ORDER BY codigo ASC'),
+      query('SELECT codigo::int, razon_social FROM instituciones ORDER BY codigo ASC'),
       query('SELECT cuenta, descripcion FROM plan_cuentas ORDER BY cuenta ASC'),
     ]);
+    // Asegurar que codigo sea número (CockroachDB devuelve bigint como string)
+    const instituciones = institucionesRaw.map(r => ({ ...r, codigo: Number(r.codigo) }));
 
     const periodos = periodosRows.map(r => r.periodo);
     if (!periodos.length) {
@@ -90,9 +92,10 @@ app.get('/api/bootstrap', async (req, res) => {
 
     const lastPeriodo = periodos[periodos.length - 1];
     const patrimonioRows = await query(
-      "SELECT ins_cod, monto_total FROM datos_financieros WHERE tipo = 'b1' AND cuenta = '300000000' AND periodo = $1",
+      "SELECT ins_cod::int, monto_total::bigint FROM datos_financieros WHERE tipo = 'b1' AND cuenta = '300000000' AND periodo = $1",
       [lastPeriodo]
-    ).catch(e => {
+    ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })))
+    .catch(e => {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
       return [];
     });
@@ -123,11 +126,13 @@ app.post('/api/datos', async (req, res) => {
     if (!Array.isArray(periodos) || !periodos.length) return res.status(400).json({ ok: false, error: 'Requerido: periodos[]' });
     if (!Array.isArray(cuentas)  || !cuentas.length)  return res.status(400).json({ ok: false, error: 'Requerido: cuentas[]' });
 
+    const NUMERIC_COLS = new Set(['ins_cod','monto_total','monto_clp','monto_uf','monto_tc','monto_ext']);
     const cols = selectCols
       ? selectCols.split(',').map(c => c.trim()).filter(c => ALLOWED_COLS.has(c))
       : ['periodo','ins_cod','cuenta','monto_total','monto_clp','monto_uf','monto_tc','monto_ext'];
 
-    const selectStr = cols.join(', ');
+    // Castear columnas numéricas para que pg las devuelva como números, no strings
+    const selectStr = cols.map(c => NUMERIC_COLS.has(c) ? `${c}::bigint AS ${c}` : c).join(', ');
 
     // Una query por tipo — en paralelo
     const tipoPromises = tiposList.map(t => {
@@ -143,7 +148,15 @@ app.post('/api/datos', async (req, res) => {
       return query(sql, params);
     });
 
-    const allRows = (await Promise.all(tipoPromises)).flat();
+    const rawRows = (await Promise.all(tipoPromises)).flat();
+    // Convertir bigint strings a números JS
+    const allRows = rawRows.map(r => {
+      const out = { ...r };
+      for (const col of NUMERIC_COLS) {
+        if (col in out) out[col] = Number(out[col]);
+      }
+      return out;
+    });
     res.json({ ok: true, rows: allRows });
   } catch (e) {
     console.error('/api/datos error:', e);
