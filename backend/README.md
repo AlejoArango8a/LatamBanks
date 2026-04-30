@@ -1,29 +1,41 @@
 # LatamBanks API (backend)
 
-Primera fase: endpoint **`GET /api/bootstrap`** que devuelve periodos e instituciones (misma lógica que antes hacía el `index.html` directo contra Supabase).
+API Express que sirve los datos financieros desde CockroachDB al dashboard.
 
-## Variables en Render
+## Endpoints
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/health` | GET | Estado del servicio y conexión a DB |
+| `/api/bootstrap` | GET | Períodos, instituciones, plan de cuentas y ranking patrimonial |
+| `/api/datos` | POST | Datos financieros filtrados por tipo, períodos, cuentas y bancos |
+| `/api/visits` | GET | Total de visitas globales y desglose por país |
+| `/api/visits` | POST | Registra una visita con código y nombre de país |
+
+## Variables de entorno en Render
 
 En el servicio Web → **Environment**:
 
 | Variable | Valor |
 |----------|--------|
-| `SUPABASE_URL` | URL de tu proyecto Supabase (igual que en el dashboard) |
-| `SUPABASE_ANON_KEY` | Clave anónima (anon public) de Supabase |
-| `FRONTEND_URLS` | Opcional. Ej: `https://TU_USUARIO.github.io` (varias separadas por coma). Por defecto puedes dejar `*`. |
+| `COCKROACH_URL` | Connection string de CockroachDB Serverless (formato postgresql://...) |
+| `FRONTEND_URLS` | Orígenes CORS permitidos. Ej: `https://alejoarango8a.github.io` (separados por coma) |
 
 ## Despliegue
 
-1. Sube esta carpeta (o el repo que contenga estos archivos) a GitHub.
-2. En Render: **Web Service** → conecta el repo → **Start Command**: `node server.js` → **Build Command**: `npm install`.
+El deploy es automático: cada `git push` a `main` dispara un nuevo deploy en Render.
+
+- **Start Command:** `node server.js`
+- **Build Command:** `npm install`
+- **Root Directory:** `backend`
 
 ## Probar local
 
 ```bash
 cp .env.example .env
-# Edita .env con tus valores reales
+# Edita .env con tu COCKROACH_URL real
 npm install
 npm start
 ```
 
-Abre `http://localhost:3000/health` y `http://localhost:3000/api/bootstrap`.
+Abre `http://localhost:3000/health` para verificar la conexión a CockroachDB.
