@@ -114,8 +114,8 @@ def _label(periodo: str) -> str:
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     from cmf_loader import (
-        get_supabase, get_loaded_periods, process_zip, detect_periodo,
-        SUPABASE_URL, SUPABASE_KEY,
+        get_connection, get_loaded_periods, process_zip, detect_periodo,
+        COCKROACH_URL,
     )
 
     # Argumentos
@@ -137,9 +137,9 @@ def main():
     if zip_path.suffix.lower() != '.zip':
         print(f'  {RD}Error:{RS} El archivo debe ser un .zip\n')
         sys.exit(1)
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        print(f'  {RD}Error:{RS} Faltan credenciales.')
-        print(f'  Copia {BD}.env.example{RS} → {BD}.env{RS} y pega tu SUPABASE_URL y SUPABASE_KEY.\n')
+    if not COCKROACH_URL:
+        print(f'  {RD}Error:{RS} Falta la variable COCKROACH_URL.')
+        print(f'  Copia {BD}.env.example{RS} → {BD}.env{RS} y pega tu COCKROACH_URL.\n')
         sys.exit(1)
 
     # Leer ZIP y detectar período
@@ -165,10 +165,10 @@ def main():
 
     # Conexión y verificación (rápidas, antes de la animación)
     try:
-        supabase = get_supabase()
-        loaded   = get_loaded_periods(supabase)
+        conn   = get_connection()
+        loaded = get_loaded_periods(conn)
     except Exception as e:
-        print(f'  {RD}Error al conectar con Supabase:{RS}\n  {e}\n')
+        print(f'  {RD}Error al conectar con CockroachDB:{RS}\n  {e}\n')
         sys.exit(1)
 
     if periodo in loaded:
@@ -177,6 +177,7 @@ def main():
         print()
         if resp != 's':
             print('  Operación cancelada.\n')
+            conn.close()
             sys.exit(0)
 
     # ── Animación + carga ────────────────────────────────────────────────────
@@ -187,11 +188,12 @@ def main():
     error   = None
     n_files = 0
     try:
-        n_files = process_zip(zip_bytes, periodo, supabase)
+        n_files = process_zip(zip_bytes, periodo, conn)
     except Exception as e:
         error = str(e)
     finally:
         _stop_anim(anim)
+        conn.close()
 
     # ── Resultado ─────────────────────────────────────────────────────────────
     if error:

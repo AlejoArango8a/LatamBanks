@@ -2,7 +2,7 @@
 """
 cmf_loader.py
 Librería de procesamiento: parsea los TXT dentro de un ZIP de la CMF
-y carga los datos en Supabase.
+y carga los datos en CockroachDB.
 
 Uso directo: ver cargar_zip.py
 """
@@ -14,7 +14,8 @@ import zipfile
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
-from supabase import create_client, Client
+import psycopg2
+import psycopg2.extras
 
 # Carga automáticamente el archivo .env si existe en la raíz del proyecto
 load_dotenv(Path(__file__).parent / ".env")
@@ -22,8 +23,7 @@ load_dotenv(Path(__file__).parent / ".env")
 # ============================================================
 # CONFIGURACIÓN
 # ============================================================
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")  # service_role key (no la anon)
+COCKROACH_URL = os.environ.get("COCKROACH_URL", "")
 
 BATCH_SIZE = 500  # filas por insert
 
@@ -34,10 +34,10 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ============================================================
-# SUPABASE CLIENT
+# COCKROACHDB CONNECTION
 # ============================================================
-def get_supabase() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_connection():
+    return psycopg2.connect(COCKROACH_URL)
 
 # ============================================================
 # PARSERS
@@ -132,15 +132,17 @@ def detect_periodo(zf: zipfile.ZipFile) -> str | None:
 # ============================================================
 # PROCESAR UN ZIP
 # ============================================================
-def process_zip(zip_bytes: bytes, periodo: str, supabase: Client) -> int:
-    """Procesa un ZIP y carga los datos en Supabase. Retorna número de archivos."""
+def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
+    """Procesa un ZIP y carga los datos en CockroachDB. Retorna número de archivos."""
     log.info(f"Procesando ZIP período {periodo}...")
+
+    cur = conn.cursor()
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         names = zf.namelist()
 
         instituciones = {}
-        plan_cuentas = {}
+        plan_cuentas  = {}
 
         for name in names:
             fname = name.split('/')[-1].lower()
@@ -152,19 +154,31 @@ def process_zip(zip_bytes: bytes, periodo: str, supabase: Client) -> int:
                 plan_cuentas = parse_plan_cuentas(text)
 
         if instituciones:
-            rows = [{"codigo": k, "razon_social": v} for k, v in instituciones.items()]
-            supabase.table("instituciones").upsert(rows).execute()
-            log.info(f"  Instituciones: {len(rows)} registros")
+            rows_t = [(k, v) for k, v in instituciones.items()]
+            psycopg2.extras.execute_values(
+                cur,
+                "INSERT INTO instituciones (codigo, razon_social) VALUES %s "
+                "ON CONFLICT (codigo) DO UPDATE SET razon_social = EXCLUDED.razon_social",
+                rows_t,
+            )
+            conn.commit()
+            log.info(f"  Instituciones: {len(rows_t)} registros")
 
         if plan_cuentas:
-            rows = [{"cuenta": k, "descripcion": v} for k, v in plan_cuentas.items()]
-            for i in range(0, len(rows), BATCH_SIZE):
-                supabase.table("plan_cuentas").upsert(rows[i:i+BATCH_SIZE]).execute()
-            log.info(f"  Plan de cuentas: {len(rows)} registros")
+            rows_t = [(k, v) for k, v in plan_cuentas.items()]
+            for i in range(0, len(rows_t), BATCH_SIZE):
+                psycopg2.extras.execute_values(
+                    cur,
+                    "INSERT INTO plan_cuentas (cuenta, descripcion) VALUES %s "
+                    "ON CONFLICT (cuenta) DO UPDATE SET descripcion = EXCLUDED.descripcion",
+                    rows_t[i:i+BATCH_SIZE],
+                )
+            conn.commit()
+            log.info(f"  Plan de cuentas: {len(rows_t)} registros")
 
         data_pattern = re.compile(r'^(b1|b2|r1|c1|c2)(\d{6})(\d{3})\.txt$', re.IGNORECASE)
         file_count = 0
-        all_rows = []
+        all_tuples = []
 
         for name in names:
             fname = name.split('/')[-1]
@@ -185,52 +199,55 @@ def process_zip(zip_bytes: bytes, periodo: str, supabase: Client) -> int:
 
             for cuenta, vals in data.items():
                 if is_multi:
-                    row = {
-                        "periodo": periodo,
-                        "tipo": tipo,
-                        "ins_cod": ins_code,
-                        "cuenta": cuenta,
-                        "monto_clp":   vals[0] if len(vals) > 0 else 0,
-                        "monto_uf":    vals[1] if len(vals) > 1 else 0,
-                        "monto_tc":    vals[2] if len(vals) > 2 else 0,
-                        "monto_ext":   vals[3] if len(vals) > 3 else 0,
-                        "monto_total": sum(vals),
-                    }
+                    all_tuples.append((
+                        periodo, tipo, ins_code, cuenta,
+                        vals[0] if len(vals) > 0 else 0,
+                        vals[1] if len(vals) > 1 else 0,
+                        vals[2] if len(vals) > 2 else 0,
+                        vals[3] if len(vals) > 3 else 0,
+                        sum(vals),
+                    ))
                 else:
-                    row = {
-                        "periodo": periodo,
-                        "tipo": tipo,
-                        "ins_cod": ins_code,
-                        "cuenta": cuenta,
-                        "monto_clp": 0,
-                        "monto_uf": 0,
-                        "monto_tc": 0,
-                        "monto_ext": 0,
-                        "monto_total": vals,
-                    }
-                all_rows.append(row)
+                    all_tuples.append((
+                        periodo, tipo, ins_code, cuenta,
+                        0, 0, 0, 0, vals,
+                    ))
 
             file_count += 1
 
-        log.info(f"  Insertando {len(all_rows)} filas ({file_count} archivos)...")
-        for i in range(0, len(all_rows), BATCH_SIZE):
-            supabase.table("datos_financieros").upsert(
-                all_rows[i:i+BATCH_SIZE],
-                on_conflict="periodo,tipo,ins_cod,cuenta"
-            ).execute()
+        log.info(f"  Insertando {len(all_tuples)} filas ({file_count} archivos)...")
 
-        supabase.table("carga_log").upsert({
-            "periodo": periodo,
-            "archivos_procesados": file_count,
-            "estado": "ok"
-        }, on_conflict="periodo").execute()
+        INSERT_SQL = (
+            "INSERT INTO datos_financieros "
+            "(periodo, tipo, ins_cod, cuenta, monto_clp, monto_uf, monto_tc, monto_ext, monto_total) "
+            "VALUES %s "
+            "ON CONFLICT (periodo, tipo, ins_cod, cuenta) DO UPDATE SET "
+            "monto_clp   = EXCLUDED.monto_clp, "
+            "monto_uf    = EXCLUDED.monto_uf, "
+            "monto_tc    = EXCLUDED.monto_tc, "
+            "monto_ext   = EXCLUDED.monto_ext, "
+            "monto_total = EXCLUDED.monto_total"
+        )
+        for i in range(0, len(all_tuples), BATCH_SIZE):
+            psycopg2.extras.execute_values(cur, INSERT_SQL, all_tuples[i:i+BATCH_SIZE])
+        conn.commit()
 
-        log.info(f"  ✓ Período {periodo} completado — {file_count} archivos, {len(all_rows)} filas")
+        cur.execute(
+            "INSERT INTO carga_log (periodo, archivos_procesados, estado) VALUES (%s, %s, %s) "
+            "ON CONFLICT (periodo) DO UPDATE SET "
+            "archivos_procesados = EXCLUDED.archivos_procesados, "
+            "estado = EXCLUDED.estado",
+            (periodo, file_count, "ok"),
+        )
+        conn.commit()
+
+        log.info(f"  ✓ Período {periodo} completado — {file_count} archivos, {len(all_tuples)} filas")
         return file_count
 
 # ============================================================
 # PERÍODOS YA CARGADOS
 # ============================================================
-def get_loaded_periods(supabase: Client) -> set:
-    resp = supabase.table("carga_log").select("periodo").eq("estado", "ok").execute()
-    return {r["periodo"] for r in resp.data}
+def get_loaded_periods(conn) -> set:
+    cur = conn.cursor()
+    cur.execute("SELECT periodo FROM carga_log WHERE estado = 'ok'")
+    return {row[0] for row in cur.fetchall()}

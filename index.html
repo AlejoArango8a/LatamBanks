@@ -974,14 +974,9 @@ select option { background:var(--bg3); }
 
 <script>
 // ============================================================
-// CONFIG — CAMBIAR SOLO ESTAS DOS LÍNEAS SI CAMBIA SUPABASE
+// CONFIG
 // ============================================================
-const SUPA_URL = "https://iudzjmggqvbezbekzmhz.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1ZHpqbWdncXZiZXpiZWt6bWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjg3MTgsImV4cCI6MjA5MTk0NDcxOH0.e30w9841v4K6J9JekaSlZQMUUvQt8L8VMJIfDyPIVds";
-
-// Backend (Render): primera fase — periodos + bancos vía /api/bootstrap. Vacío = solo Supabase desde el navegador.
-const API_BASE_URL = 'https://latambanks-api.onrender.com';
-const API_BASE = API_BASE_URL ? API_BASE_URL.replace(/\/$/, '') : '';
+const API_BASE = 'https://latambanks-api.onrender.com';
 
 // ============================================================
 // STATE
@@ -1020,65 +1015,6 @@ const BANK_COLORS  = {
 const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
 const bankColor = (code, i) => BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
 
-// ============================================================
-// SUPABASE FETCH
-// ============================================================
-async function supa(table, params = {}) {
-  let url = `${SUPA_URL}/rest/v1/${table}?`;
-  const parts = [];
-  if (params.select)  parts.push(`select=${params.select}`);
-  if (params.eq)      Object.entries(params.eq).forEach(([k,v]) => parts.push(`${k}=eq.${v}`));
-  if (params.in)      Object.entries(params.in).forEach(([k,v]) => parts.push(`${k}=in.(${v.join(',')})`));
-  if (params.gte)     Object.entries(params.gte).forEach(([k,v]) => parts.push(`${k}=gte.${v}`));
-  if (params.lte)     Object.entries(params.lte).forEach(([k,v]) => parts.push(`${k}=lte.${v}`));
-  if (params.order)   parts.push(`order=${params.order}`);
-  if (params.limit)   parts.push(`limit=${params.limit}`);
-  url += parts.join('&');
-
-  const resp = await fetch(url, {
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': `Bearer ${SUPA_KEY}`,
-      'Content-Type': 'application/json',
-      'Range': '0-49999',
-      'Prefer': 'count=none'
-    }
-  });
-  if (!resp.ok) throw new Error(`Supabase error ${resp.status}: ${await resp.text()}`);
-  return resp.json();
-}
-
-// Paginated fetch — retrieves ALL rows by looping with offset until empty page
-async function supaAll(table, params = {}, pageSize = 1000) {
-  let all = [];
-  let offset = 0;
-  while (true) {
-    let url = `${SUPA_URL}/rest/v1/${table}?`;
-    const parts = [];
-    if (params.select) parts.push(`select=${params.select}`);
-    if (params.eq)     Object.entries(params.eq).forEach(([k,v]) => parts.push(`${k}=eq.${v}`));
-    if (params.order)  parts.push(`order=${params.order}`);
-    parts.push(`limit=${pageSize}`);
-    parts.push(`offset=${offset}`);
-    url += parts.join('&');
-
-    const resp = await fetch(url, {
-      headers: {
-        'apikey': SUPA_KEY,
-        'Authorization': `Bearer ${SUPA_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'count=none'
-      }
-    });
-    if (!resp.ok) throw new Error(`Supabase error ${resp.status}: ${await resp.text()}`);
-    const page = await resp.json();
-    if (!page.length) break;
-    all = all.concat(page);
-    if (page.length < pageSize) break; // last page
-    offset += pageSize;
-  }
-  return all;
-}
 
 // Fetch con timeout: cancela la petición si no responde en `ms` milisegundos.
 // Usa AbortController para cancelar realmente la conexión (no solo ignorar la respuesta).
@@ -1089,26 +1025,16 @@ function fetchWithTimeout(url, options, ms) {
     .finally(() => clearTimeout(id));
 }
 
-// Helper: llama a /api/datos con timeout y fallback silencioso (devuelve null si falla/timeout)
+// Helper: llama a /api/datos — lanza error si falla (timeout 15s cubre cold start de Render)
 async function apiDatos(params) {
-  if (!API_BASE) return null;
-  try {
-    const r = await fetchWithTimeout(`${API_BASE}/api/datos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    }, 5000); // 5s: si Render está dormido no esperamos 60s
-    const j = await r.json();
-    if (r.ok && j.ok && Array.isArray(j.rows)) return j.rows;
-    console.warn('API /datos no OK:', j.error || r.status);
-  } catch (e) {
-    if (e.name === 'AbortError') {
-      console.warn('API /datos timeout — Render despertando, usando Supabase directo');
-    } else {
-      console.warn('API /datos falló:', e);
-    }
-  }
-  return null;
+  const r = await fetchWithTimeout(`${API_BASE}/api/datos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
+  }, 15000);
+  const j = await r.json();
+  if (r.ok && j.ok && Array.isArray(j.rows)) return j.rows;
+  throw new Error(j.error || `API /datos error ${r.status}`);
 }
 
 // ============================================================
@@ -1122,96 +1048,31 @@ function setLsMsg(text) {
 async function init() {
   try {
     setStatus('loading', 'Connecting...');
+    setLsMsg('Loading data...');
 
-    let bootstrapFromApi = false;
-    let bootstrapPlanCuentas = false;
-    let bootstrapPatrimonio = false;
-    if (API_BASE_URL) {
-      try {
-        setLsMsg('Loading data...');
-        const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 6000); // 6s timeout
-        const j = await r.json();
-        if (r.ok && j.ok && Array.isArray(j.periodos) && j.periodos.length && Array.isArray(j.instituciones)) {
-          ST.periodos = j.periodos;
-          j.instituciones.forEach(row => { ST.bancos[row.codigo] = row.razon_social; });
-          bootstrapFromApi = true;
+    const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 15000);
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || `Bootstrap error ${r.status}`);
+    if (!Array.isArray(j.periodos) || !j.periodos.length) throw new Error('No data found in database');
 
-          // plan_cuentas (Grupo 1)
-          if (Array.isArray(j.planCuentas) && j.planCuentas.length) {
-            j.planCuentas.forEach(row => { ST.planCuentas[row.cuenta] = row.descripcion; });
-            console.log(`Plan de cuentas (API): ${j.planCuentas.length} cuentas cargadas`);
-            bootstrapPlanCuentas = true;
-          }
+    ST.periodos = j.periodos;
+    j.instituciones.forEach(row => { ST.bancos[row.codigo] = row.razon_social; });
 
-          // patrimonio ranking (Grupo 1)
-          if (Array.isArray(j.patrimonioRows) && j.patrimonioRows.length) {
-            const patMap = {};
-            j.patrimonioRows.forEach(row => { patMap[row.ins_cod] = (patMap[row.ins_cod] || 0) + row.monto_total; });
-            ST._patrimonioMap = patMap;
-            ST._patrimonioRanking = Object.keys(patMap)
-              .map(Number)
-              .filter(c => c !== 999)
-              .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
-            bootstrapPatrimonio = true;
-          }
-        } else {
-          console.warn('API bootstrap no OK, usando Supabase directo:', j.error || r.status);
-        }
-      } catch (e) {
-        if (e.name === 'AbortError') {
-          console.warn('API bootstrap timeout — Render despertando, usando Supabase directo');
-        } else {
-          console.warn('API bootstrap falló, usando Supabase directo:', e);
-        }
-      }
+    if (Array.isArray(j.planCuentas) && j.planCuentas.length) {
+      j.planCuentas.forEach(row => { ST.planCuentas[row.cuenta] = row.descripcion; });
     }
 
-    if (!bootstrapFromApi) {
-      setLsMsg('Cargando períodos disponibles...');
-      const [logs, insts] = await Promise.all([
-        supa('carga_log', { select: 'periodo', eq: { estado: 'ok' }, order: 'periodo.asc' }),
-        supa('instituciones', { select: 'codigo,razon_social', order: 'codigo.asc' }),
-      ]);
-      ST.periodos = logs.map(r => r.periodo);
-      if (!ST.periodos.length) throw new Error('No data found in database');
-      insts.forEach(r => ST.bancos[r.codigo] = r.razon_social);
+    if (Array.isArray(j.patrimonioRows) && j.patrimonioRows.length) {
+      const patMap = {};
+      j.patrimonioRows.forEach(row => { patMap[row.ins_cod] = (patMap[row.ins_cod] || 0) + row.monto_total; });
+      ST._patrimonioMap = patMap;
+      ST._patrimonioRanking = Object.keys(patMap)
+        .map(Number)
+        .filter(c => c !== 999)
+        .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
     }
 
-    if (!ST.periodos.length) throw new Error('No data found in database');
-
-    // Load plan de cuentas — paginated to guarantee all rows (fallback si no vino en bootstrap)
-    if (!bootstrapPlanCuentas) {
-      setLsMsg('Cargando plan de cuentas...');
-      const plan = await supaAll('plan_cuentas', { select: 'cuenta,descripcion', order: 'cuenta.asc' });
-      plan.forEach(r => ST.planCuentas[r.cuenta] = r.descripcion);
-      console.log(`Plan de cuentas (Supabase directo): ${plan.length} accounts loaded`);
-    }
-
-    // Fetch patrimonio ranking for bank list sorting (fallback si no vino en bootstrap)
-    if (!bootstrapPatrimonio) {
-      setLsMsg('Preparando ranking de bancos...');
-      const lastP = ST.periodos[ST.periodos.length - 1];
-      try {
-        const patRows = await supa('datos_financieros', {
-          select: 'ins_cod,monto_total',
-          eq: { tipo: 'b1', cuenta: '300000000', periodo: lastP }
-        });
-        const patMap = {};
-        patRows.forEach(r => { patMap[r.ins_cod] = (patMap[r.ins_cod] || 0) + r.monto_total; });
-        ST._patrimonioMap = patMap;
-        ST._patrimonioRanking = Object.keys(patMap)
-          .map(Number)
-          .filter(c => c !== 999)
-          .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
-      } catch(e) {
-        console.warn('No se pudo cargar ranking de patrimonio:', e);
-      }
-    }
-
-    // Fill period selectors
     fillPeriodSelectors();
-
-    // Fill bank list
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
@@ -1219,7 +1080,6 @@ async function init() {
     document.getElementById('loadingScreen').style.display = 'none';
     setStatus('ok', `${ST.periodos.length} periods available`);
 
-    // Default: load BTG Pactual (59) for last 12 months, show Banking System
     const n = ST.periodos.length;
     const desdeIdx = Math.max(0, n - 13);
     document.getElementById('selDesde').selectedIndex = desdeIdx;
@@ -1228,12 +1088,10 @@ async function init() {
     fillBankList();
     await run();
     showTab('resumen');
-    trackVisit(); // fire and forget
+    trackVisit();
 
     // Mantener Render despierto mientras el tab está abierto (ping cada 14 min)
-    if (API_BASE) {
-      setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);
-    }
+    setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);
 
   } catch(e) {
     setStatus('error', 'Connection error');
@@ -1604,44 +1462,9 @@ async function fetchData(tipo, cuentas, periodos, bancos) {
   const key = `${tipo}_${periodos.join(',')}_${[...bancos].sort().join(',')}_${cuentas.join(',')}`;
   if (ST.data[key]) return ST.data[key];
 
-  // Intentar backend primero (una sola llamada; el servidor hace el batching interno)
-  if (API_BASE_URL) {
-    try {
-      const r = await fetchWithTimeout(`${API_BASE}/api/datos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo, periodos, bancos: [...bancos], cuentas })
-      }, 12000); // 12s: cubre cold starts de Render (~10s) con margen
-      const j = await r.json();
-      if (r.ok && j.ok && Array.isArray(j.rows)) {
-        ST.data[key] = j.rows;
-        return j.rows;
-      }
-      console.warn('API /datos no OK, usando Supabase directo:', j.error || r.status);
-    } catch (e) {
-      if (e.name === 'AbortError') {
-        console.warn('API /datos timeout en fetchData — Render despertando, usando Supabase directo');
-      } else {
-        console.warn('API /datos falló, usando Supabase directo:', e);
-      }
-    }
-  }
-
-  // Fallback: Supabase directo con batching por períodos
-  const PERIOD_BATCH = 6;
-  let allRows = [];
-  for (let i = 0; i < periodos.length; i += PERIOD_BATCH) {
-    const batchPeriodos = periodos.slice(i, i + PERIOD_BATCH);
-    const rows = await supa('datos_financieros', {
-      select: 'periodo,ins_cod,cuenta,monto_total,monto_clp,monto_uf,monto_tc,monto_ext',
-      eq: { tipo },
-      in: { periodo: batchPeriodos, ins_cod: [...bancos], cuenta: cuentas },
-      limit: 10000
-    });
-    allRows = allRows.concat(rows);
-  }
-  ST.data[key] = allRows;
-  return allRows;
+  const rows = await apiDatos({ tipo, periodos, bancos: [...bancos], cuentas });
+  ST.data[key] = rows;
+  return rows;
 }
 
 function sumRows(rows, cuenta, periodo) {
@@ -1944,19 +1767,10 @@ async function showROEChart() {
     const lastMonth = parseInt(lastP.slice(4, 6));
     const allBanks = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
 
-    const [apiUtil, apiEq] = await Promise.all([
+    const [rows, equityRows] = await Promise.all([
       apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }),
       apiDatos({ tipo: 'b1', cuentas: ['300000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' })
     ]);
-    let rows, equityRows;
-    if (apiUtil && apiEq) {
-      rows = apiUtil; equityRows = apiEq;
-    } else {
-      [rows, equityRows] = await Promise.all([
-        supa('datos_financieros', { select: 'ins_cod,monto_total', eq: { tipo: 'r1', periodo: lastP, cuenta: '590000000' }, in: { ins_cod: allBanks } }),
-        supa('datos_financieros', { select: 'ins_cod,monto_total', eq: { tipo: 'b1', periodo: lastP, cuenta: '300000000' }, in: { ins_cod: allBanks } })
-      ]);
-    }
 
     const getUtil = c => rows.filter(r => r.ins_cod === c).reduce((s,r) => s+(r.monto_total||0), 0);
     const getEq   = c => equityRows.filter(r => r.ins_cod === c).reduce((s,r) => s+(r.monto_total||0), 0);
@@ -2798,15 +2612,7 @@ async function expSelect(code) {
     const lastP = periodos[periodos.length - 1];
 
     // Fetch main account data — query all tipos to cover b1/r1/c1
-    let rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos, bancos: banks, select: 'periodo,ins_cod,cuenta,monto_total' });
-    if (!rows) {
-      const [eb1, er1, ec1] = await Promise.all([
-        supa('datos_financieros', { select: 'periodo,ins_cod,cuenta,monto_total', eq: { tipo: 'b1', cuenta: code }, in: { periodo: periodos, ins_cod: banks }, order: 'periodo.asc' }),
-        supa('datos_financieros', { select: 'periodo,ins_cod,cuenta,monto_total', eq: { tipo: 'r1', cuenta: code }, in: { periodo: periodos, ins_cod: banks }, order: 'periodo.asc' }),
-        supa('datos_financieros', { select: 'periodo,ins_cod,cuenta,monto_total', eq: { tipo: 'c1', cuenta: code }, in: { periodo: periodos, ins_cod: banks }, order: 'periodo.asc' }),
-      ]);
-      rows = [...eb1, ...er1, ...ec1];
-    }
+    const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos, bancos: banks, select: 'periodo,ins_cod,cuenta,monto_total' });
 
     const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
     const bankCodes = banks.filter(c => c !== 999);
@@ -2866,15 +2672,7 @@ async function expSelect(code) {
       document.getElementById('expSubTitle').textContent = `Sub-accounts`;
 
       // Fetch last period values for all sub-accounts — all tipos
-      let subRows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: allSubs, periodos: [lastP], bancos: banks, select: 'cuenta,ins_cod,monto_total' });
-      if (!subRows) {
-        const [sb1, sr1, sc1] = await Promise.all([
-          supa('datos_financieros', { select: 'cuenta,ins_cod,monto_total', eq: { tipo: 'b1', periodo: lastP }, in: { cuenta: allSubs, ins_cod: banks } }),
-          supa('datos_financieros', { select: 'cuenta,ins_cod,monto_total', eq: { tipo: 'r1', periodo: lastP }, in: { cuenta: allSubs, ins_cod: banks } }),
-          supa('datos_financieros', { select: 'cuenta,ins_cod,monto_total', eq: { tipo: 'c1', periodo: lastP }, in: { cuenta: allSubs, ins_cod: banks } }),
-        ]);
-        subRows = [...sb1, ...sr1, ...sc1];
-      }
+      const subRows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: allSubs, periodos: [lastP], bancos: banks, select: 'cuenta,ins_cod,monto_total' });
 
       const getSubVal = c => subRows
         .filter(r => r.cuenta === c && banks.includes(r.ins_cod))
@@ -3321,15 +3119,7 @@ async function runAccountView() {
 
   try {
     // Query all tipos in parallel — merge results so we never miss data
-    let rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos: [desde, hasta], bancos: allBanks, select: 'ins_cod,periodo,monto_total' });
-    if (!rows) {
-      const [rb1, rr1, rc1] = await Promise.all([
-        supa('datos_financieros', { select: 'ins_cod,periodo,monto_total', eq: { tipo: 'b1', cuenta: code }, in: { ins_cod: allBanks, periodo: [desde, hasta] } }),
-        supa('datos_financieros', { select: 'ins_cod,periodo,monto_total', eq: { tipo: 'r1', cuenta: code }, in: { ins_cod: allBanks, periodo: [desde, hasta] } }),
-        supa('datos_financieros', { select: 'ins_cod,periodo,monto_total', eq: { tipo: 'c1', cuenta: code }, in: { ins_cod: allBanks, periodo: [desde, hasta] } }),
-      ]);
-      rows = [...rb1, ...rr1, ...rc1];
-    }
+    const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos: [desde, hasta], bancos: allBanks, select: 'ins_cod,periodo,monto_total' });
 
     const getVal = (bank, periodo) =>
       rows.filter(r => r.ins_cod === bank && r.periodo === periodo)
@@ -3420,12 +3210,12 @@ async function runAccountView() {
   }
 }
 // ============================================================
-// VISIT COUNTER (Supabase + localStorage)
+// VISIT COUNTER (localStorage)
 // ============================================================
 
 async function trackVisit() {
   try {
-    // Detect country via free API
+    // Detect country via free geo API
     let country = 'Unknown', countryCode = '??';
     try {
       const geo = await fetch('https://ipapi.co/json/');
@@ -3436,83 +3226,66 @@ async function trackVisit() {
       }
     } catch {}
 
-    // My visits — localStorage
+    // My visits — localStorage (persiste en este navegador)
     const myCount = (parseInt(localStorage.getItem('btg_my_visits') || '0') + 1);
-    localStorage.setItem('btg_my_visits', myCount);
-
-    // Track country in localStorage
-    const byCountryKey = 'btg_visits_by_country';
-    let byCountry = {};
-    try { byCountry = JSON.parse(localStorage.getItem(byCountryKey) || '{}'); } catch {}
-    byCountry[country] = { count: (byCountry[country]?.count || 0) + 1, code: countryCode };
-    localStorage.setItem(byCountryKey, JSON.stringify(byCountry));
-
-    // Increment global counter via Supabase RPC (upsert visit_counter row)
-    try {
-      await fetch(`${SUPA_URL}/rest/v1/rpc/increment_visits`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPA_KEY,
-          'Authorization': `Bearer ${SUPA_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ p_country_name: country, p_country_code: countryCode })
-      });
-    } catch {}
+    localStorage.setItem('btg_my_visits', String(myCount));
 
     ST._myVisits = myCount;
     ST._myCountry = country;
     ST._myCountryCode = countryCode;
+
+    // Registro global en CockroachDB (fire and forget)
+    fetch(`${API_BASE}/api/visits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country_code: countryCode, country_name: country })
+    }).catch(() => {});
   } catch(e) { console.warn('Visit tracking:', e.message); }
 }
 
 async function loadVisitStats() {
   try {
-    // Total visits from Supabase visit_counter table
-    let total = '—';
-    try {
-      const resp = await fetch(`${SUPA_URL}/rest/v1/visit_counter?select=total_visits`, {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
-      });
-      if (resp.ok) {
-        const rows = await resp.json();
-        total = rows.reduce((s, r) => s + (r.total_visits || 0), 0);
-      }
-    } catch {}
-
-    const countEl = document.getElementById('visitCount');
-    if (countEl) countEl.textContent = typeof total === 'number' ? total.toLocaleString() : total;
-
-    const myEl = document.getElementById('myVisitCount');
-    if (myEl) myEl.textContent = (parseInt(localStorage.getItem('btg_my_visits') || '0')).toLocaleString();
-
-    // Location from ST
     const flagEmoji = code => code?.length === 2
       ? String.fromCodePoint(...[...code].map(c => 0x1F1E6 + c.charCodeAt(0) - 65))
       : '🌐';
+
+    // My visits + location — localStorage
+    const myEl = document.getElementById('myVisitCount');
+    if (myEl) myEl.textContent = (parseInt(localStorage.getItem('btg_my_visits') || '0')).toLocaleString();
+
     const locEl = document.getElementById('visitCountry');
     if (locEl && ST._myCountry) locEl.textContent = `${flagEmoji(ST._myCountryCode)} ${ST._myCountry}`;
 
-    // By country from localStorage
-    let byCountry = {};
-    try { byCountry = JSON.parse(localStorage.getItem('btg_visits_by_country') || '{}'); } catch {}
-    const sorted = Object.entries(byCountry).sort((a,b) => b[1].count - a[1].count);
-    const maxV = sorted[0]?.[1].count || 1;
-    const el = document.getElementById('visitsByCountry');
-    if (el && sorted.length) {
-      el.innerHTML = sorted.map(([c, d]) => {
-        const pct = (d.count / maxV * 100).toFixed(0);
-        return `<div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:140px;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${flagEmoji(d.code)} ${c}</div>
-          <div style="flex:1;background:var(--bg3);border-radius:3px;height:14px;">
-            <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px;opacity:0.7;"></div>
-          </div>
-          <div style="width:30px;font-family:var(--mono);font-size:11px;color:var(--text2);text-align:right;">${d.count}</div>
-        </div>`;
-      }).join('');
-    } else if (el) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--text3);">Only your visits are tracked locally. Share the dashboard to see more countries.</div>';
+    // Global stats — CockroachDB vía backend
+    try {
+      const r = await fetchWithTimeout(`${API_BASE}/api/visits`, {}, 5000);
+      if (!r.ok) throw new Error(`status ${r.status}`);
+      const j = await r.json();
+
+      const countEl = document.getElementById('visitCount');
+      if (countEl) countEl.textContent = j.ok && j.total != null ? Number(j.total).toLocaleString() : '—';
+
+      const el = document.getElementById('visitsByCountry');
+      if (el && j.ok && Array.isArray(j.byCountry) && j.byCountry.length) {
+        const maxV = j.byCountry[0].visit_count || 1;
+        el.innerHTML = j.byCountry.map(d => {
+          const pct = (d.visit_count / maxV * 100).toFixed(0);
+          return `<div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:140px;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${flagEmoji(d.country_code)} ${d.country_name}</div>
+            <div style="flex:1;background:var(--bg3);border-radius:3px;height:14px;">
+              <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px;opacity:0.7;"></div>
+            </div>
+            <div style="width:36px;font-family:var(--mono);font-size:11px;color:var(--text2);text-align:right;">${Number(d.visit_count).toLocaleString()}</div>
+          </div>`;
+        }).join('');
+      } else if (el) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--text3);">No visit data yet.</div>';
+      }
+    } catch(e) {
+      const countEl = document.getElementById('visitCount');
+      if (countEl) countEl.textContent = '—';
+      console.warn('loadVisitStats (global):', e.message);
     }
   } catch(e) { console.warn('loadVisitStats:', e.message); }
 }
@@ -3795,19 +3568,10 @@ async function renderChileanBanks() {
       .filter(p => ST.periodos.includes(p)));
     const fetchPeriods = [...fetchSet];
 
-    const [apiRows, apiInc] = await Promise.all([
+    const [rows, incomeRows] = await Promise.all([
       apiDatos({ tipo: 'b1', cuentas, periodos: [lastP], bancos: allBanks, select: 'ins_cod,cuenta,monto_total' }),
       apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: fetchPeriods, bancos: allBanks, select: 'ins_cod,periodo,monto_total' })
     ]);
-    let rows, incomeRows;
-    if (apiRows && apiInc) {
-      rows = apiRows; incomeRows = apiInc;
-    } else {
-      [rows, incomeRows] = await Promise.all([
-        supa('datos_financieros', { select: 'ins_cod,cuenta,monto_total', eq: { tipo: 'b1', periodo: lastP }, in: { ins_cod: allBanks, cuenta: cuentas } }),
-        supa('datos_financieros', { select: 'ins_cod,periodo,monto_total', eq: { tipo: 'r1', cuenta: '590000000' }, in: { ins_cod: allBanks, periodo: fetchPeriods } })
-      ]);
-    }
 
     const getVal = (bank, cuenta) =>
       rows.filter(r => r.ins_cod === bank && r.cuenta === cuenta)

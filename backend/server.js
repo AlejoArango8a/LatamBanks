@@ -165,6 +165,55 @@ app.post('/api/datos', async (req, res) => {
 });
 
 // ============================================================
+// VISITS — contador global por país
+// ============================================================
+
+// Crea la tabla si no existe (se llama una vez al arrancar)
+async function ensureVisitTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS visit_counter (
+      country_code  TEXT PRIMARY KEY,
+      country_name  TEXT NOT NULL,
+      visit_count   INT  NOT NULL DEFAULT 1
+    )
+  `);
+}
+ensureVisitTable().catch(e => console.warn('ensureVisitTable:', e.message));
+
+// POST /api/visits  — registra una visita con país
+app.post('/api/visits', async (req, res) => {
+  try {
+    const { country_code = '??', country_name = 'Unknown' } = req.body || {};
+    await query(
+      `INSERT INTO visit_counter (country_code, country_name, visit_count)
+       VALUES ($1, $2, 1)
+       ON CONFLICT (country_code) DO UPDATE SET
+         visit_count  = visit_counter.visit_count + 1,
+         country_name = EXCLUDED.country_name`,
+      [country_code.slice(0, 4), country_name.slice(0, 80)]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('/api/visits POST error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// GET /api/visits  — total global + desglose por país
+app.get('/api/visits', async (req, res) => {
+  try {
+    const rows = await query(
+      'SELECT country_code, country_name, visit_count::int FROM visit_counter ORDER BY visit_count DESC'
+    );
+    const total = rows.reduce((s, r) => s + Number(r.visit_count), 0);
+    res.json({ ok: true, total, byCountry: rows });
+  } catch (e) {
+    console.error('/api/visits GET error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // START
 // ============================================================
 const PORT = process.env.PORT || 3000;

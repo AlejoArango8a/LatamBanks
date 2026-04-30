@@ -25,7 +25,7 @@ if not exist ".env" (
     echo  Pasos para crearlo:
     echo    1. Busca el archivo ".env.example" en esta carpeta
     echo    2. Duplicalo y renombralo a ".env"
-    echo    3. Abrelo con el Bloc de notas y pega tu SUPABASE_URL y SUPABASE_KEY
+    echo    3. Abrelo con el Bloc de notas y pega tu COCKROACH_URL
     echo.
     pause
     exit /b 1
@@ -53,7 +53,7 @@ if "%ZIP_PATH%"=="CANCELADO" (
 echo  Archivo seleccionado: %ZIP_PATH%
 echo.
 echo  ─────────────────────────────────────────────────
-echo  Iniciando carga en Supabase...
+echo  Iniciando carga en CockroachDB...
 echo  ─────────────────────────────────────────────────
 echo.
 
