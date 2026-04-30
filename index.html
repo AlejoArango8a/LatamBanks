@@ -2010,6 +2010,12 @@ function drawLineChart(canvasId, periodos, series, chartType) {
     }
   }
 
+  // Breathing room: 8% above max and 5% below min so bars never touch the axis edges.
+  // Skip lo-pad when it was forced to zero (multi-series positive) to keep honest zero baseline.
+  const rangeGuard = (rawHi - rawLo) || Math.abs(rawHi) * 0.1 || 1;
+  rawHi += rangeGuard * 0.08;
+  if (rawLo > 0) rawLo -= rangeGuard * 0.05;
+
   const scale = niceScale(rawLo, rawHi);
   const lo = scale.lo, hi = scale.hi;
 
