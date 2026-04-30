@@ -1,0 +1,38 @@
+// ============================================================
+// STATE — single source of truth for mutable app state
+// ============================================================
+export const ST = {
+  periodos: [],
+  bancos: {},
+  selected: new Set(),
+  selectedOrder: [],
+  desde: null,
+  hasta: null,
+  data: {},
+  planCuentas: {},
+  lastPeriodo: null,
+  exp: { hierarchy: null, path: [], selected: null, history: [] },
+
+  // UI prefs (set immediately so boot code can reference them)
+  theme: 'light',
+  chartType: 'bars',
+  showBarLabels: null,
+  currency: 'USD',
+  usdRate: null,
+  usdDate: null,
+  fontSize: 14,
+
+  // Account View state
+  _avAccount: null,
+  _avGroup: '',
+  _avTreeExpanded: {},
+
+  // Explorer state
+  _expSubFilter: true,
+};
+
+// Chart instances (canvas Chart.js objects if needed in future)
+export const CHARTS = {};
+
+// Bar/line chart hit-testing state, keyed by canvas ID
+export const CHART_STATE = {};

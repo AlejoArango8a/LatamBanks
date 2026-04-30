@@ -1,0 +1,372 @@
+// ============================================================
+// RESUMEN — main dashboard: run(), KPIs, chart, ROE
+// ============================================================
+import { ST } from '../state.js';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtP, fmtB, periodLabel } from '../format.js';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js';
+import { expSelect } from './explorer.js';
+import { setStatus, showErr } from '../utils.js';
+
+// ---- KPI refresh (called after run or currency toggle) ----
+export function refreshKPIs() {
+  if (!ST._kpiRaw) return;
+  const m          = ST._kpiRaw;
+  const lastMonth  = parseInt(m.lastP.slice(4, 6));
+  const utilAnualizada = m.utilidad * (12 / lastMonth);
+  const roe        = m.patrimonio ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
+  const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
+
+  const firstBank  = ST.selectedOrder[0];
+  const bankLabel  = firstBank ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:6px;">${bankName(firstBank)}</span>` : '';
+
+  const header     = document.getElementById('bankHeader');
+  const headerName = document.getElementById('bankHeaderName');
+  const headerSub  = document.getElementById('bankHeaderSub');
+  if (header && firstBank) {
+    const color = bankColor(firstBank, 0);
+    header.style.display = 'block';
+    header.style.borderLeftColor = color;
+    headerName.textContent = bankName(firstBank);
+    headerName.style.color = color;
+    const others = ST.selectedOrder.slice(1).map(c => bankName(c));
+    headerSub.textContent = others.length
+      ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
+      : `Last period: ${periodLabel(m.lastP)}`;
+  } else if (header) {
+    header.style.display = 'none';
+  }
+
+  document.getElementById('kpiResumen').innerHTML = `
+    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
+    <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
+    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_vista')"><div class="kpi-label">Demand Deposits</div><div class="kpi-val">${fmtKPI(m.depVista)}</div><div class="kpi-sub">${fmtP(m.depVista, m.depositos)} of deposits</div></div>
+    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_plazo')"><div class="kpi-label">Time Deposits</div><div class="kpi-val">${fmtKPI(m.depPlazo)}</div><div class="kpi-sub">${fmtP(m.depPlazo, m.depositos)} of deposits</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('bonos')"><div class="kpi-label">Bonds Issued</div><div class="kpi-val">${fmtKPI(m.bonos)}</div><div class="kpi-sub">${fmtP(m.bonos, m.totalAssets)} of assets</div></div>
+    <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
+    <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
+    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
+    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d</div><div class="kpi-val">${fmtKPI(m.mora90)}</div><div class="kpi-sub">${fmtP(m.mora90, m.colocaciones)} of loans</div></div>
+  `;
+
+  document.getElementById('kpiBalance').innerHTML = `
+    <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
+    <div class="kpi green"><div class="kpi-label">Net Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Total Deposits</div><div class="kpi-val">${fmtKPI(m.depositos)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Leverage ${m.patrimonio ? (m.totalAssets / m.patrimonio).toFixed(1) + 'x' : '—'}</div></div>
+  `;
+
+  document.getElementById('kpiResultados').innerHTML = `
+    <div class="kpi blue"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
+    <div class="kpi green"><div class="kpi-label">Net Interest Income</div><div class="kpi-val">${fmtKPI(m.ingresoNeto)}</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Total Operating Income</div><div class="kpi-val">${fmtKPI(m.totalIng)}</div><div class="kpi-sub">Fees ${fmtKPI(m.ingComis)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Credit Losses</div><div class="kpi-val">${fmtKPI(Math.abs(m.perdCred))}</div><div class="kpi-sub">${fmtP(Math.abs(m.perdCred), m.totalIng)} of income</div></div>
+  `;
+}
+
+// ---- Main data-fetch and render loop ----
+export async function run() {
+  if (!ST.selected.size) { showErr('Please select at least one bank'); return; }
+  showErr('');
+  setStatus('loading', 'Fetching data...');
+  ST._activeBalBank = null;
+  ST._activeResBank = null;
+
+  if (window.innerWidth <= 700) {
+    const content = document.getElementById('sidebarContent');
+    const arrow   = document.getElementById('sidebarArrow');
+    if (content) content.classList.remove('open');
+    if (arrow)   arrow.textContent = '▾';
+  }
+
+  const selDesde = document.getElementById('selDesde').value;
+  const selHasta = document.getElementById('selHasta').value;
+
+  if (selDesde !== ST.desde || selHasta !== ST.hasta) ST.data = {};
+  ST.desde = selDesde;
+  ST.hasta = selHasta;
+
+  const todosLosPeriodos = ST.periodos.filter(p => p >= ST.desde && p <= ST.hasta);
+  const lastP = todosLosPeriodos[todosLosPeriodos.length - 1];
+
+  let periodos;
+  const UMBRAL_TRIMESTRAL = 26;
+  if (todosLosPeriodos.length > UMBRAL_TRIMESTRAL) {
+    const trimSet = new Set();
+    trimSet.add(lastP);
+    for (let i = todosLosPeriodos.length - 1; i >= 0; i -= 3) trimSet.add(todosLosPeriodos[i]);
+    periodos = todosLosPeriodos.filter(p => trimSet.has(p));
+  } else {
+    periodos = todosLosPeriodos;
+  }
+
+  const isTrimestral = periodos.length < todosLosPeriodos.length;
+  ST.lastPeriodo = lastP;
+  ST.exp.hierarchy = null;
+
+  const rangeLabel = periodLabel(todosLosPeriodos[0]) + ' — ' + periodLabel(lastP);
+  document.getElementById('rangePill').textContent = rangeLabel + (isTrimestral ? ' · trimestral' : '');
+
+  const banks = [...ST.selected];
+
+  try {
+    const B1_CUENTAS = ['100000000','105000000','107000000','110000000','120000000','130000000',
+      '140000000','144000000','145000000','146000000','148000000','149000000',
+      '150000000','160000000','170000000','175000000','185000000','190000000','195000000',
+      '200000000','207000000','210000000','230000000','240000000','241000000','242000000',
+      '243000000','244000000','245000000','246000000','250000000','255000000','260000000',
+      '270000000','285000000','290000000','300000000','310000000','311000000','312000000',
+      '320000000','330000000','340000000','350000000','380000000','390000000','500000000','505000000','510000000'];
+
+    const R1_CUENTAS = ['520000000','525000000','530000000','540000000','550000000',
+      '560000000','570000000','580000000','590000000','462000000','464000000',
+      '466000000','468000000','469000000','470000000','480000000'];
+
+    const C1_CUENTAS = ['851000000','852000000','853000000','854000000','855000000',
+      '857000000','857100000','857200000','857300000','857400000',
+      '813000000','814000000'];
+
+    const [b1, r1, c1] = await Promise.all([
+      fetchData('b1', B1_CUENTAS, periodos, banks),
+      fetchData('r1', R1_CUENTAS, periodos, banks),
+      fetchData('c1', C1_CUENTAS, periodos, banks),
+    ]);
+
+    const firstBank = ST.selectedOrder[0] || banks[0];
+    const b1v = c => sumRows(b1.filter(r => r.ins_cod === firstBank), c, lastP);
+    const r1v = c => sumRows(r1.filter(r => r.ins_cod === firstBank), c, lastP);
+    const c1v = c => sumRows(c1.filter(r => r.ins_cod === firstBank), c, lastP);
+    const b1s = c => getSeriesForCuenta(b1, c, periodos);
+    const r1s = c => getSeriesForCuenta(r1, c, periodos);
+    const c1s = c => getSeriesForCuenta(c1, c, periodos);
+
+    const totalAssets  = b1v('100000000');
+    const colocaciones = b1v('500000000');
+    const depVista     = b1v('241000000');
+    const depPlazo     = b1v('242000000');
+    const depositos    = depVista + depPlazo;
+    const bonos        = b1v('245000000');
+    const patrimonio   = b1v('300000000');
+    const utilidad     = r1v('590000000');
+    const mora90       = c1v('857000000');
+
+    const ingresoNeto  = r1v('520000000');
+    const ingresoReaj  = r1v('525000000');
+    const ingComis     = r1v('530000000');
+    const resFin       = r1v('540000000');
+    const totalIng     = r1v('550000000');
+    const totalGas     = r1v('560000000');
+    const resOpA       = r1v('570000000');
+    const perdCred     = r1v('470000000');
+    const resOp        = r1v('580000000');
+    const impuesto     = r1v('480000000');
+
+    ST._kpiRaw = {
+      totalAssets, colocaciones, depositos, depVista, depPlazo, bonos,
+      patrimonio, utilidad, mora90,
+      pasivos: b1v('200000000'), ingresoNeto, totalIng, lastP,
+      perdCred, impuesto, resOp, totalGas, resOpA, ingComis, ingresoReaj, resFin,
+    };
+    refreshKPIs();
+
+    ST._series = { periodos, b1s, r1s, c1s, b1, r1, c1 };
+    showResChart(ST._lastResChart || 'patrimonio');
+
+    ST._b1    = b1;
+    ST._lastP = lastP;
+    showBalTab(ST._lastBalTab || 'assets');
+
+    const resData = { ingresoNeto, ingresoReaj, ingComis, resFin, totalIng,
+      gastosP: r1v('462000000'), gastosA: r1v('464000000'),
+      totalGas, resOpA, perdCred, resOp, impuesto, utilidad };
+    ST._resTableData = resData;
+    renderResTable(resData);
+
+    const carNorm  = c1v('854000000') + c1v('851000000');
+    const carSub   = c1v('852000000');
+    const carInc   = c1v('853000000') + c1v('855000000');
+    const castigos = c1v('813000000');
+    const recup    = c1v('814000000');
+
+    document.getElementById('kpiCalidad').innerHTML = `
+      <div class="kpi green"><div class="kpi-label">Cartera Normal</div><div class="kpi-val">$${fmtB(carNorm)}B</div><div class="kpi-sub">${fmtP(carNorm, carNorm + carSub + carInc)}</div></div>
+      <div class="kpi yellow"><div class="kpi-label">Cartera Subestándar</div><div class="kpi-val">$${fmtB(carSub)}B</div><div class="kpi-sub">${fmtP(carSub, carNorm + carSub + carInc)}</div></div>
+      <div class="kpi red"><div class="kpi-label">Cartera Incumplimiento</div><div class="kpi-val">$${fmtB(carInc)}B</div><div class="kpi-sub">${fmtP(carInc, carNorm + carSub + carInc)}</div></div>
+      <div class="kpi blue"><div class="kpi-label">NPL +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90, colocaciones)} of loans</div></div>
+    `;
+    renderCalidad({ carNorm, carSub, carInc, mora90, castigos, recup });
+
+    const moraSeries = c1s('857000000');
+    drawLineChart('chartMora', periodos, [{ label: 'NPL +90d', data: moraSeries.map(v => v / 1e9), color: 'var(--red)' }]);
+
+    renderComparativo(b1, r1, c1, lastP);
+
+    document.getElementById('dashContent').style.display = 'flex';
+    setStatus('ok', `${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
+
+    if (ST.exp.selected) expSelect(ST.exp.selected);
+    const hi = document.getElementById('headerInfo');
+    if (hi) hi.textContent = rangeLabel;
+
+  } catch (e) {
+    setStatus('error', 'Error al consultar datos');
+    showErr('Error: ' + e.message);
+    console.error(e);
+  }
+}
+
+// ---- Resumen chart ----
+export function showResChart(tipo) {
+  ST._lastResChart = tipo;
+
+  const chartWrap = document.getElementById('chartResumenWrap');
+  const roeWrap   = document.getElementById('roeSystemWrap');
+  if (chartWrap) chartWrap.style.display = 'block';
+  if (roeWrap)   roeWrap.style.display   = 'none';
+  const dataTable = document.getElementById('resChartTablePanel');
+  if (dataTable && ST._lastResChart) dataTable.style.display = 'block';
+  const titleEl = document.querySelector('#tab-resumen .panel-title');
+  if (titleEl) titleEl.textContent = 'Banking System Evolution';
+
+  const map = { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL' };
+  document.querySelectorAll('.rcbtn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
+  });
+
+  const kpiMap = { activos:0, coloc:1, dep_vista:2, dep_plazo:3, bonos:4, pasivos:5, patrimonio:6, utilidad:7, mora:9 };
+  document.querySelectorAll('#kpiResumen .kpi-btn').forEach((el, i) => {
+    el.classList.toggle('kpi-active', i === kpiMap[tipo]);
+  });
+
+  if (!ST._series) return;
+  const { periodos, b1, r1, c1 } = ST._series;
+  const banks = [...ST.selected];
+
+  const cuentaMap = {
+    activos:    { rows: b1, cuenta: '100000000' },
+    coloc:      { rows: b1, cuenta: '500000000' },
+    pasivos:    { rows: b1, cuenta: '200000000' },
+    patrimonio: { rows: b1, cuenta: '300000000' },
+    utilidad:   { rows: r1, cuenta: '590000000' },
+    mora:       { rows: c1, cuenta: '857000000' },
+    dep_vista:  { rows: b1, cuenta: '241000000' },
+    dep_plazo:  { rows: b1, cuenta: '242000000' },
+    bonos:      { rows: b1, cuenta: '245000000' },
+  };
+  const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
+  const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
+
+  const series = banks.map((code, i) => {
+    const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
+    const data  = sparseData(periodos.map(p =>
+      rows.filter(r => r.ins_cod === code && r.cuenta === cuenta && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
+    ));
+    return { label: bankName(code), data, color };
+  });
+
+  drawLineChart('chartResumen', periodos, series, ST.chartType);
+  setupChartTooltip('chartResumen', 'chartTooltip');
+
+  document.getElementById('resumenLegend').innerHTML = series.map(s =>
+    `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
+  ).join('');
+
+  const panel      = document.getElementById('resChartTablePanel');
+  const tableEl    = document.getElementById('resChartTable');
+  const tableTitleEl = document.getElementById('resChartTableTitle');
+  if (panel && tableEl) {
+    const metricLabels = { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL +90d', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
+    if (tableTitleEl) tableTitleEl.textContent = metricLabels[tipo] || tipo;
+    panel.style.display = 'block';
+
+    let html = `<table class="tbl" style="white-space:nowrap;font-size:12px;"><thead><tr>
+      <th style="white-space:nowrap;min-width:120px;" data-export="Bank">Bank</th>
+      ${periodos.map(p => {
+        const mm   = p.slice(4, 6);
+        const yyyy = p.slice(0, 4);
+        return `<th class="r" style="white-space:nowrap;min-width:80px;font-size:10px;" data-export="01/${mm}/${yyyy}">${periodLabel(p)}</th>`;
+      }).join('')}
+    </tr></thead><tbody>`;
+
+    series.forEach(s => {
+      html += `<tr>
+        <td style="font-weight:600;color:${s.color};white-space:nowrap;">${s.label}</td>
+        ${s.data.map(v => {
+          if (v === null || v === undefined) return `<td class="r" style="color:var(--text3)">—</td>`;
+          return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;">${fmtAxis(v)}</td>`;
+        }).join('')}
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    tableEl.innerHTML = html;
+  }
+}
+
+// ---- ROE ranking chart ----
+export async function showROEChart() {
+  const chartWrap = document.getElementById('chartResumenWrap');
+  const roeWrap   = document.getElementById('roeSystemWrap');
+  if (!chartWrap || !roeWrap) return;
+
+  chartWrap.style.display = 'none';
+  roeWrap.style.display   = 'block';
+  roeWrap.innerHTML = '<div style="padding:20px;color:var(--text2);">Loading ROE data...</div>';
+  const dataTable = document.getElementById('resChartTablePanel');
+  if (dataTable) dataTable.style.display = 'none';
+
+  document.querySelectorAll('.rcbtn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === '📈 Annual ROE');
+  });
+  const titleEl = document.querySelector('#tab-resumen .panel-title');
+  if (titleEl) titleEl.textContent = 'Annual ROE — All Banks';
+
+  try {
+    const lastP     = ST.periodos[ST.periodos.length - 1];
+    const lastMonth = parseInt(lastP.slice(4, 6));
+    const allBanks  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
+
+    const [rows, equityRows] = await Promise.all([
+      apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }),
+      apiDatos({ tipo: 'b1', cuentas: ['300000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }),
+    ]);
+
+    const getUtil = c => rows.filter(r => r.ins_cod === c).reduce((s, r) => s + (r.monto_total || 0), 0);
+    const getEq   = c => equityRows.filter(r => r.ins_cod === c).reduce((s, r) => s + (r.monto_total || 0), 0);
+
+    const bankROEs = allBanks.map(c => {
+      const util = getUtil(c), eq = getEq(c);
+      return { code: c, name: bankName(c), roe: eq ? (util / eq) * (12 / lastMonth) * 100 : null };
+    }).filter(b => b.roe !== null && Math.abs(b.roe) > 0.01)
+      .sort((a, b) => b.roe - a.roe);
+
+    const maxAbs = Math.max(...bankROEs.map(b => Math.abs(b.roe)));
+    let html = `<div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-family:var(--mono);">
+      Annualized (Month ${lastMonth} × ${Math.round(12 / lastMonth)}) · ${periodLabel(lastP)}</div>`;
+    html += '<div style="display:flex;flex-direction:column;gap:5px;">';
+    bankROEs.forEach(b => {
+      const isBTG  = b.code === 59;
+      const pct    = Math.abs(b.roe) / maxAbs * 100;
+      const color  = b.roe >= 0 ? (isBTG ? '#2563eb' : 'var(--accent)') : 'var(--red)';
+      html += `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;"
+        onclick="loadBankFromTable(${b.code})" title="Load ${b.name}">
+        <div style="width:150px;font-size:12px;font-weight:${isBTG ? '700' : '400'};
+          color:${isBTG ? '#2563eb' : 'var(--text)'};text-align:right;flex-shrink:0;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
+        <div style="flex:1;background:var(--bg3);border-radius:3px;height:18px;">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;opacity:0.85;"></div>
+        </div>
+        <div style="width:55px;font-family:var(--mono);font-size:12px;font-weight:600;
+          color:${b.roe >= 0 ? 'var(--green)' : 'var(--red)'};text-align:right;flex-shrink:0;">
+          ${b.roe.toFixed(1)}%</div>
+      </div>`;
+    });
+    html += '</div>';
+    roeWrap.innerHTML = html;
+  } catch (e) {
+    roeWrap.innerHTML = `<div style="color:var(--red);">Error: ${e.message}</div>`;
+  }
+}
