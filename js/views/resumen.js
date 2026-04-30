@@ -71,7 +71,9 @@ export function refreshKPIs() {
 export async function run() {
   if (!ST.selected.size) { showErr('Please select at least one bank'); return; }
   showErr('');
-  setStatus('loading', 'Fetching data...');
+  setStatus('loading', 'Loading...');
+  const _bar = document.getElementById('loadingBar');
+  if (_bar) _bar.style.display = 'block';
   console.log('[run] start — selected:', [...ST.selected], 'desde:', ST.desde, 'hasta:', ST.hasta);
   ST._activeBalBank = null;
   ST._activeResBank = null;
@@ -208,6 +210,7 @@ export async function run() {
     renderComparativo(b1, r1, c1, lastP);
 
     document.getElementById('dashContent').style.display = 'flex';
+    if (_bar) _bar.style.display = 'none';
     setStatus('ok', `${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
 
     if (ST.exp.selected) expSelect(ST.exp.selected);
@@ -215,6 +218,7 @@ export async function run() {
     if (hi) hi.textContent = rangeLabel;
 
   } catch (e) {
+    if (_bar) _bar.style.display = 'none';
     setStatus('error', 'Error al consultar datos');
     showErr('Error al cargar datos: ' + e.message + ' — Abre la consola del navegador (F12) para más detalles.');
     console.error('[run] Error:', e.name, e.message, e);

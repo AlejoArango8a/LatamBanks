@@ -201,6 +201,20 @@ body:not(.light) .brand > span:last-child { color:#ffffff !important; }
 .status-dot.ok     { background:var(--green); }
 .status-dot.error  { background:var(--red); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+#loadingBar {
+  position:absolute; top:0; left:0; right:0; height:3px;
+  display:none; z-index:45; overflow:hidden;
+}
+#loadingBar::after {
+  content:''; display:block; height:100%;
+  background:linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--yellow) 60%, transparent 100%);
+  background-size:300% 100%;
+  animation:loadingSlide 1.4s ease-in-out infinite;
+}
+@keyframes loadingSlide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
 
 /* BODY */
 .body { display:flex; overflow:hidden; flex:1; min-height:0; }
@@ -495,6 +509,10 @@ select option { background:var(--bg3); }
     </div>
 
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
+      <div style="display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;max-width:160px;overflow:hidden;">
+        <div class="status-dot idle" id="sDot"></div>
+        <span id="sTxt" style="overflow:hidden;text-overflow:ellipsis;"></span>
+      </div>
       <div onclick="toggleCurrency()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
@@ -564,6 +582,7 @@ select option { background:var(--bg3); }
 
     <!-- MAIN -->
     <main class="main" id="main">
+      <div id="loadingBar"></div>
       <div class="loading-screen" id="loadingScreen">
         <div class="ls-inner">
           <div class="ls-title">ALM BTG <span>·</span> Banks Monitor</div>
