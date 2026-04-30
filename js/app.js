@@ -87,11 +87,13 @@ async function init() {
     clearTimeout(wakeTimer);
     setStatus('error', 'Connection error');
     const msg = e.name === 'AbortError'
-      ? 'The server took too long to respond. Please refresh the page to try again.'
-      : e.message;
-    setLsMsg('Could not connect.');
+      ? 'Timeout: el servidor tardó demasiado. Reintenta en unos segundos.'
+      : `Error: ${e.message}`;
+    setLsMsg('No se pudo conectar al servidor.');
     showErr(msg);
-    console.error(e);
+    const retryBtn = document.getElementById('lsRetryBtn');
+    if (retryBtn) retryBtn.style.display = 'block';
+    console.error('[init] Error:', e.name, e.message, e);
   }
 }
 

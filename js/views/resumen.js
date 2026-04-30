@@ -72,6 +72,7 @@ export async function run() {
   if (!ST.selected.size) { showErr('Please select at least one bank'); return; }
   showErr('');
   setStatus('loading', 'Fetching data...');
+  console.log('[run] start — selected:', [...ST.selected], 'desde:', ST.desde, 'hasta:', ST.hasta);
   ST._activeBalBank = null;
   ST._activeResBank = null;
 
@@ -129,11 +130,13 @@ export async function run() {
       '857000000','857100000','857200000','857300000','857400000',
       '813000000','814000000'];
 
+    console.log('[run] fetching data — periodos:', periodos.length, 'banks:', banks);
     const [b1, r1, c1] = await Promise.all([
       fetchData('b1', B1_CUENTAS, periodos, banks),
       fetchData('r1', R1_CUENTAS, periodos, banks),
       fetchData('c1', C1_CUENTAS, periodos, banks),
     ]);
+    console.log('[run] data received — b1:', b1.length, 'r1:', r1.length, 'c1:', c1.length);
 
     const firstBank = ST.selectedOrder[0] || banks[0];
     const b1v = c => sumRows(b1.filter(r => r.ins_cod === firstBank), c, lastP);
@@ -213,8 +216,9 @@ export async function run() {
 
   } catch (e) {
     setStatus('error', 'Error al consultar datos');
-    showErr('Error: ' + e.message);
-    console.error(e);
+    showErr('Error al cargar datos: ' + e.message + ' — Abre la consola del navegador (F12) para más detalles.');
+    console.error('[run] Error:', e.name, e.message, e);
+    document.getElementById('dashContent').style.display = 'flex';
   }
 }
 

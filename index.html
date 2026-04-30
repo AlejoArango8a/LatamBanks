@@ -462,11 +462,13 @@ select option { background:var(--bg3); }
 }
 /* ERROR */
 .err-box {
-  background:rgba(248,113,113,0.07);
-  border:1px solid rgba(248,113,113,0.25);
-  border-radius:5px; padding:10px 14px;
-  font-family:var(--mono); font-size:11px;
-  color:var(--red); display:none;
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:200; max-width:480px; width:90%;
+  background:rgba(248,113,113,0.12);
+  border:1px solid rgba(248,113,113,0.4);
+  border-radius:8px; padding:12px 16px;
+  font-family:var(--mono); font-size:12px; text-align:center;
+  color:var(--red); display:none; box-shadow:0 4px 20px rgba(0,0,0,0.25);
 }
 </style>
 </head>
@@ -582,9 +584,10 @@ select option { background:var(--bg3); }
             <div class="ls-bar" style="--i:13"></div>
           </div>
           <div class="ls-msg" id="lsMsg">Conectando al servidor...</div>
-          <div class="err-box" id="errBox" style="max-width:420px;text-align:center;"></div>
+          <button id="lsRetryBtn" onclick="location.reload()" style="display:none;margin-top:8px;padding:8px 24px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-family:var(--sans);">↺ Reintentar</button>
         </div>
       </div>
+      <div class="err-box" id="errBox"></div>
 
       <!-- TABS -->
       <div id="dashContent" style="display:none;flex-direction:column;gap:20px;">
