@@ -470,7 +470,7 @@ select option { background:var(--bg3); }
 }
 </style>
 </head>
-<body>
+<body class="light">
 <div class="app">
 
   <!-- TOPBAR -->
@@ -497,15 +497,15 @@ select option { background:var(--bg3); }
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
         border-radius:20px;padding:2px;font-family:var(--mono);font-size:11px;font-weight:500;">
-        <span id="switchCLP" style="padding:3px 10px;border-radius:16px;background:var(--accent);color:#000;transition:all 0.2s;">CLP</span>
-        <span id="switchUSD" style="padding:3px 10px;border-radius:16px;color:var(--text3);transition:all 0.2s;">USD</span>
+        <span id="switchCLP" style="padding:3px 10px;border-radius:16px;color:var(--text3);transition:all 0.2s;">CLP</span>
+        <span id="switchUSD" style="padding:3px 10px;border-radius:16px;background:var(--yellow);color:#000;transition:all 0.2s;">USD</span>
       </div>
       <div onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
         border-radius:20px;padding:2px;font-family:var(--mono);font-size:11px;font-weight:500;">
-        <span id="switchDark" style="padding:3px 10px;border-radius:16px;background:var(--accent);color:#000;transition:all 0.2s;">◑</span>
-        <span id="switchLight" style="padding:3px 10px;border-radius:16px;color:var(--text3);transition:all 0.2s;">☀</span>
+        <span id="switchDark" style="padding:3px 10px;border-radius:16px;color:var(--text3);transition:all 0.2s;">◑</span>
+        <span id="switchLight" style="padding:3px 10px;border-radius:16px;background:var(--accent);color:#fff;transition:all 0.2s;">☀</span>
       </div>
     </div>
   </div>
@@ -582,9 +582,9 @@ select option { background:var(--bg3); }
             <div class="ls-bar" style="--i:13"></div>
           </div>
           <div class="ls-msg" id="lsMsg">Conectando al servidor...</div>
+          <div class="err-box" id="errBox" style="max-width:420px;text-align:center;"></div>
         </div>
       </div>
-      <div class="err-box" id="errBox"></div>
 
       <!-- TABS -->
       <div id="dashContent" style="display:none;flex-direction:column;gap:20px;">

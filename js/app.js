@@ -28,11 +28,20 @@ import { exportTableById, exportChartTable } from './export.js';
 
 // ---- init() ----
 async function init() {
+  // Declared outside try/catch so both blocks can access it.
+  let wakeTimer;
   try {
     setStatus('loading', 'Connecting...');
-    setLsMsg('Loading data...');
+    setLsMsg('Connecting to server...');
 
-    const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 15000);
+    // The server may be cold-starting (Render free tier sleeps after inactivity).
+    // Show a friendly message after 6 seconds so the user knows it's still working.
+    wakeTimer = setTimeout(() => {
+      setLsMsg('Server is waking up — this can take up to 60 s on first load...');
+    }, 6000);
+
+    const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 60000);
+    clearTimeout(wakeTimer);
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || `Bootstrap error ${r.status}`);
     if (!Array.isArray(j.periodos) || !j.periodos.length) throw new Error('No data found in database');
@@ -75,8 +84,13 @@ async function init() {
     setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);
 
   } catch (e) {
+    clearTimeout(wakeTimer);
     setStatus('error', 'Connection error');
-    showErr(e.message);
+    const msg = e.name === 'AbortError'
+      ? 'The server took too long to respond. Please refresh the page to try again.'
+      : e.message;
+    setLsMsg('Could not connect.');
+    showErr(msg);
     console.error(e);
   }
 }
