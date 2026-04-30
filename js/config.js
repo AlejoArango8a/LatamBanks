@@ -5,7 +5,7 @@ export const API_BASE = 'https://latambanks-api.onrender.com';
 
 export const BANK_COLORS = {
   1:  '#0A1464',
-  12: '#205491',
+  12: '#327CD3',
   14: '#6E0308',
   16: '#F2DC21',
   37: '#F70000',
