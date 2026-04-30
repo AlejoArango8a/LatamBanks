@@ -3,7 +3,8 @@
 // ============================================================
 import { ST } from '../state.js';
 import { API_BASE } from '../config.js';
-import { MESES, bankName, periodLabel } from '../format.js';
+import { MESES } from '../config.js';
+import { bankName, periodLabel } from '../format.js';
 import { fetchWithTimeout } from '../api.js';
 
 export function populateConfig() {
