@@ -74,7 +74,7 @@ export function fillBankList() {
 }
 
 export function toggleBank(c, on) {
-  if (on && ST.selected.size >= 3 && !ST.selected.has(c)) {
+  if (on && ST.selected.size >= 5 && !ST.selected.has(c)) {
     document.getElementById('bankLimitMsg').style.display = 'block';
     setTimeout(() => document.getElementById('bankLimitMsg').style.display = 'none', 3000);
     document.querySelectorAll('.bank-item').forEach(el => {
@@ -90,7 +90,7 @@ export function toggleBank(c, on) {
     ST.selected.delete(c);
     ST.selectedOrder = ST.selectedOrder.filter(x => x !== c);
   }
-  if (ST.selected.size < 3) document.getElementById('bankLimitMsg').style.display = 'none';
+  if (ST.selected.size < 5) document.getElementById('bankLimitMsg').style.display = 'none';
   document.querySelectorAll('.bank-item').forEach(el => {
     const cb = el.querySelector('input');
     if (cb) el.classList.toggle('on', cb.checked);
@@ -107,7 +107,7 @@ export function selAll(on) {
   if (on) {
     const codes  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
     const ranked = ST._patrimonioRanking?.length ? ST._patrimonioRanking : codes;
-    ranked.slice(0, 3).forEach(c => { ST.selected.add(c); ST.selectedOrder.push(c); });
+    ranked.slice(0, 5).forEach(c => { ST.selected.add(c); ST.selectedOrder.push(c); });
   }
   fillBankList();
 }
