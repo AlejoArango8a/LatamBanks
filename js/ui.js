@@ -158,6 +158,30 @@ export function loadBankFromTable(bankCode) {
   window.run();
 }
 
+// ---- Home shortcut: BTG Pactual Chile, last 12 months ----
+export function goHome() {
+  if (!ST.periodos.length) return; // data not loaded yet
+  const BTG_CODE = 59;
+  ST.selected.clear();
+  ST.selectedOrder = [];
+  ST.selected.add(BTG_CODE);
+  ST.selectedOrder.push(BTG_CODE);
+  fillBankList();
+
+  const desde = document.getElementById('selDesde');
+  const hasta  = document.getElementById('selHasta');
+  if (desde && hasta) {
+    const n = ST.periodos.length;
+    desde.selectedIndex = Math.max(0, n - 12);
+    hasta.selectedIndex  = n - 1;
+    ST.desde = ST.periodos[desde.selectedIndex];
+    ST.hasta  = ST.periodos[hasta.selectedIndex];
+  }
+
+  showTab('resumen');
+  window.run();
+}
+
 // ---- Sidebar toggle (mobile) ----
 export function toggleSidebar() {
   const content = document.getElementById('sidebarContent');
