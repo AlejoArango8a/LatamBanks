@@ -305,43 +305,11 @@
     }
 
     .flag-btn.is-disabled {
-      opacity: 0.78;
+      opacity: 0.52;
       cursor: default;
       pointer-events: none;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-      border-color: rgba(255, 255, 255, 0.36);
-      filter: saturate(1.08);
-    }
-
-    /* Países aún sin monitor: etiqueta país + insignia Soon */
-    .flag-caption-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-    .flag-name-soon {
-      font-size: 10px;
-      font-weight: 600;
-      color: rgba(245, 248, 255, 0.94);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      text-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.9),
-        0 2px 10px rgba(0, 0, 0, 0.55);
-    }
-    .flag-soon-pill {
-      font-size: 8px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.95);
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      background: rgba(0, 0, 0, 0.28);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-      line-height: 1;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+      border-color: rgba(255, 255, 255, 0.32);
     }
 
     .flag-caption {
@@ -467,28 +435,19 @@
           <span class="flag-btn is-disabled" title="Coming soon">
             <img src="assets/Colombia%20flag.png" alt="Colombia" />
           </span>
-          <div class="flag-caption-col">
-            <span class="flag-name-soon">Colombia</span>
-            <span class="flag-soon-pill" aria-label="Coming soon">Soon</span>
-          </div>
+          <span class="flag-caption">Colombia</span>
         </div>
         <div class="flag-entry">
           <span class="flag-btn is-disabled" title="Coming soon">
             <img src="assets/Peru%20flag.png" alt="Peru" />
           </span>
-          <div class="flag-caption-col">
-            <span class="flag-name-soon">Peru</span>
-            <span class="flag-soon-pill" aria-label="Coming soon">Soon</span>
-          </div>
+          <span class="flag-caption">Peru</span>
         </div>
         <div class="flag-entry">
           <span class="flag-btn is-disabled" title="Coming soon">
             <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
           </span>
-          <div class="flag-caption-col">
-            <span class="flag-name-soon">Uruguay</span>
-            <span class="flag-soon-pill" aria-label="Coming soon">Soon</span>
-          </div>
+          <span class="flag-caption">Uruguay</span>
         </div>
       </div>
     </div>
