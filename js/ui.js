@@ -167,6 +167,17 @@ export function toggleSidebar() {
   if (arrow) arrow.textContent = isOpen ? '▴' : '▾';
 }
 
+// ---- Mobile accordion section toggle ----
+export function toggleSection(id) {
+  const body  = document.getElementById(id);
+  if (!body) return;
+  const isOpen = body.classList.toggle('open');
+  // arrow ids: arrSecCountry, arrSecPeriod, arrSecBanks
+  const arrowId = 'arr' + id.charAt(0).toUpperCase() + id.slice(1);
+  const arrow = document.getElementById(arrowId);
+  if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
+}
+
 // ---- Country overlay ----
 export function selectCountry(country) {
   const flags = { chile:'flagChile', colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };

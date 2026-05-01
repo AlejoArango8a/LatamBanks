@@ -17,7 +17,7 @@ import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.j
 // UI
 import {
   fillPeriodSelectors, fillBankList, toggleBank, selAll,
-  showTab, loadBankFromTable, toggleSidebar, selectCountry,
+  showTab, loadBankFromTable, toggleSidebar, toggleSection, selectCountry,
   syncBrandLogoByTheme, toggleTheme, setChartType, toggleBarLabels,
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
@@ -149,6 +149,7 @@ window.selAll           = selAll;
 window.showTab          = showTab;
 window.loadBankFromTable = loadBankFromTable;
 window.toggleSidebar    = toggleSidebar;
+window.toggleSection    = toggleSection;
 window.selectCountry    = selectCountry;
 window.toggleTheme      = toggleTheme;
 window.setChartType     = setChartType;

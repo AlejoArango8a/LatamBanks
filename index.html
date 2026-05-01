@@ -60,6 +60,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   .sidebar { width: 200px; }
   .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
+/* Desktop: accordion wrappers fully transparent to flex parent */
+.mob-section    { display: contents; }
+.mob-section-hd { display: none; }
+.mob-section-bd { display: contents; }
+
 @media (max-width: 700px) {
   body { overflow: auto; }
   .app { grid-template-rows: auto 1fr; height: auto; min-height: 100vh; }
@@ -74,8 +79,16 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   #sidebarToggle { display: flex !important; }
   #sidebarContent { display: none; }
   #sidebarContent.open { display: flex; flex-direction: column; }
-  #sidebarContent.open .bank-scroll { max-height: 220px; overflow-y: auto; flex: 1; }
   #sidebarContent.open .btn-primary { flex-shrink: 0; margin: 8px 12px 12px; width: calc(100% - 24px); }
+  /* Mobile accordion sections */
+  .mob-section    { display: block; }
+  .mob-section-hd { display: flex !important; align-items: center; justify-content: space-between;
+    padding: 9px 14px; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text);
+    border-bottom: 1px solid var(--border); user-select: none; letter-spacing: 0.5px; }
+  .mob-section-hd:active { background: var(--bg3); }
+  .mob-section-bd { display: none; }
+  .mob-section-bd.open { display: flex; flex-direction: column; }
+  .mob-section-bd.open .bank-scroll { max-height: 200px; overflow-y: auto; flex: 1; }
   .sidebar-block { min-width: 140px; }
   .main { overflow-y: visible; padding: 10px; }
 
@@ -509,10 +522,6 @@ select option { background:var(--bg3); }
     </div>
 
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
-      <div style="display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;max-width:160px;overflow:hidden;">
-        <div class="status-dot idle" id="sDot"></div>
-        <span id="sTxt" style="overflow:hidden;text-overflow:ellipsis;"></span>
-      </div>
       <div onclick="toggleCurrency()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
@@ -542,6 +551,13 @@ select option { background:var(--bg3); }
         <span id="sidebarArrow">▾</span>
       </div>
       <div id="sidebarContent">
+        <!-- ── Mobile Section: Country ── -->
+        <div class="mob-section">
+          <div class="mob-section-hd" onclick="toggleSection('secCountry')">
+            <span>&#127758; Country</span>
+            <span id="arrSecCountry">&#x25B8;</span>
+          </div>
+          <div class="mob-section-bd" id="secCountry">
         <!-- BTG Country Selector -->
         <div class="sidebar-block" style="padding:12px;text-align:center;">
           <div class="sidebar-label" style="margin-bottom:8px;font-size:10px;letter-spacing:1.5px;text-align:center;">BTG Country Selector</div>
@@ -558,8 +574,17 @@ select option { background:var(--bg3); }
           <div id="usdSidebarLabel" style="font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;"></div>
         </div>
 
+          </div><!-- end secCountry -->
+        </div><!-- end mob-section country -->
+
+        <!-- ── Mobile Section: Period Range ── -->
+        <div class="mob-section">
+          <div class="mob-section-hd" onclick="toggleSection('secPeriod')">
+            <span>&#128197; Period Range</span>
+            <span id="arrSecPeriod">&#x25B8;</span>
+          </div>
+          <div class="mob-section-bd" id="secPeriod">
         <!-- Period range -->
-        <div id="sidebarBankControls">
         <div class="sidebar-block">
           <div class="sidebar-label" style="text-align:center;font-size:10px;letter-spacing:1.5px;margin-bottom:8px;">Period range</div>
           <div class="range-row">
@@ -567,6 +592,16 @@ select option { background:var(--bg3); }
             <select id="selHasta" onchange="onPeriodChange()"></select>
           </div>
         </div>
+          </div><!-- end secPeriod -->
+        </div><!-- end mob-section period -->
+
+        <!-- ── Mobile Section: Banks ── -->
+        <div class="mob-section">
+          <div class="mob-section-hd" onclick="toggleSection('secBanks')">
+            <span>&#127974; Banks</span>
+            <span id="arrSecBanks">&#x25B8;</span>
+          </div>
+          <div class="mob-section-bd" id="secBanks">
         <div class="sidebar-block">
           <div class="sidebar-label" style="text-align:center;font-size:10px;letter-spacing:1.5px;margin-bottom:8px;">Bank Selection (max. 5)</div>
           <div id="bankLimitMsg" style="display:none;font-size:10px;color:var(--yellow);font-family:var(--mono);padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:3px;margin-bottom:6px;">
@@ -576,8 +611,9 @@ select option { background:var(--bg3); }
         <div class="bank-scroll" id="bankList">
           <div class="empty"><div class="empty-icon">🏦</div><p>Loading banks...</p></div>
         </div>
-        </div><!-- end sidebarBankControls -->
-        </div>
+          </div><!-- end secBanks -->
+        </div><!-- end mob-section banks -->
+      </div><!-- end sidebarContent -->
     </aside>
 
     <!-- MAIN -->
