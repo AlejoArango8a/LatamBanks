@@ -72,9 +72,9 @@
       object-fit: cover;
       /* Priorizar mitad inferior: más skyline / edificios, menos solo cielo */
       object-position: center 42%;
-      /* Un poco más sombreada para que el copy blanco lea más claro */
-      filter: brightness(0.56) saturate(0.92);
-      -webkit-filter: brightness(0.56) saturate(0.92);
+      /* Foto un poco más sombreada para contraste con el copy claro */
+      filter: brightness(0.50) saturate(0.90);
+      -webkit-filter: brightness(0.50) saturate(0.90);
     }
 
     .landing-bg-veil {
@@ -84,8 +84,8 @@
       pointer-events: none;
       /* Velo: leve capa oscura + bruma clara (más opaco = texto más legible) */
       background:
-        linear-gradient(180deg, rgba(245,247,250,0.24) 0%, rgba(218,224,234,0.30) 100%),
-        rgba(10, 16, 32, 0.14);
+        linear-gradient(180deg, rgba(245,247,250,0.20) 0%, rgba(218,224,234,0.26) 100%),
+        rgba(10, 16, 32, 0.20);
     }
 
     /* Sitio encima del fondo decorativo */
