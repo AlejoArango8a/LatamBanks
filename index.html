@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Latam Banks Monitor</title>
   <meta name="description" content="Official CMF data — balance sheets, income statements, and credit quality for Latin American banks." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -17,8 +18,10 @@
       --text2:     #445066;
       --text3:     #627084;
       --border:    #bcc4d2;
-      --btg-navy:  #0A1464;
-      --btg-blue:  #17327a;
+      /* Banner sobrio · un poco más oscuro que #0A1464 para contraste con el logo sin fondo */
+      --banner-bg: #050d34;
+      --banner-bg-mid: #071240;
+      --btg-accent: #0A1464;
       --sans: 'Inter', system-ui, sans-serif;
     }
 
@@ -32,26 +35,25 @@
       line-height: 1.55;
     }
 
-    /* Top bar — same navy as stats ribbon below */
+    /* Top bar — mismo tono sobrio que la franja de stats */
     nav {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 22px;
+      gap: 26px;
       flex-wrap: wrap;
-      min-height: 56px;
-      padding: 12px 32px;
-      background: var(--btg-navy);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      min-height: 68px;
+      padding: 16px 36px;
+      background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     .nav-logo {
       display: block;
       line-height: 0;
     }
-    /* PNG con transparencia — sin caja detrás */
     .nav-logo img {
-      height: 32px;
+      height: 42px;
       width: auto;
       display: block;
     }
@@ -61,19 +63,21 @@
       color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
     }
     .nav-brand-title {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.2em;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(255,255,255, 0.95);
+      color: rgba(255,255,255, 0.98);
+      line-height: 1.2;
     }
     .nav-brand-sub {
-      font-size: 12px;
-      color: rgba(255,255,255, 0.62);
-      font-weight: 400;
+      font-size: 14px;
+      color: rgba(255,255,255, 0.64);
+      font-weight: 500;
+      letter-spacing: 0.06em;
     }
 
     .btn-navy {
@@ -85,12 +89,12 @@
       font-size: 13px;
       font-weight: 600;
       text-decoration: none;
-      background: var(--btg-navy);
+      background: var(--banner-bg);
       color: #fff;
-      border: 1px solid transparent;
-      transition: background 0.18s;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: background 0.18s, border-color 0.18s;
     }
-    .btn-navy:hover { background: var(--btg-blue); }
+    .btn-navy:hover { background: var(--banner-bg-mid); border-color: rgba(255,255,255,0.14); }
 
     .wrap {
       max-width: 1040px;
@@ -116,14 +120,29 @@
       .hero-copy { text-align: center; }
     }
 
-    .hero-copy h1 {
-      font-size: clamp(22px, 3.2vw, 30px);
+    /* Título hero en dos líneas — mismo azul soberio que el banner */
+    .hero-title {
+      margin: 0 0 16px 0;
+      max-width: 560px;
+      line-height: 1.2;
+      font-family: inherit;
       font-weight: 700;
-      letter-spacing: -0.022em;
-      color: var(--btg-navy);
-      margin-bottom: 14px;
-      line-height: 1.22;
-      max-width: 520px;
+    }
+    .hero-title-main {
+      display: block;
+      font-size: clamp(26px, 4.2vw, 40px);
+      letter-spacing: -0.03em;
+      color: var(--banner-bg);
+      font-weight: 700;
+    }
+    .hero-title-sub {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(17px, 2.35vw, 24px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--banner-bg);
+      opacity: 0.92;
     }
 
     .hero-sub {
@@ -217,12 +236,12 @@
       letter-spacing: 0.05em;
     }
     .flag-caption.live {
-      color: var(--btg-navy);
+      color: var(--banner-bg);
     }
 
-    /* Misma banda azul oscura que arriba */
+    /* Misma franja sobria que el header */
     .stats-ribbon {
-      background: var(--btg-navy);
+      background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
       color: #e8eaf2;
       padding: 22px 28px;
     }
@@ -264,7 +283,7 @@
       color: var(--text3);
     }
     .cred-bar b {
-      color: var(--btg-navy);
+      color: var(--banner-bg);
       font-weight: 600;
     }
   </style>
@@ -273,7 +292,7 @@
 
 <nav>
   <a class="nav-logo" href="/" title="BTG Pactual">
-    <img src="assets/BTG%20Logo%20blanco.png" alt="BTG Pactual" />
+    <img src="assets/LogoBTG-SinFondo.png" alt="BTG Pactual" />
   </a>
   <a class="nav-brand-text" href="/">
     <span class="nav-brand-title">Latam Banks Monitor</span>
@@ -284,7 +303,10 @@
 <main class="wrap">
   <div class="hero-grid">
     <div class="hero-copy">
-      <h1>Latam Banks Monitor - Financial Information</h1>
+      <h1 class="hero-title">
+        <span class="hero-title-main">Latam Banks Monitor</span>
+        <span class="hero-title-sub">Financial Information</span>
+      </h1>
       <p class="hero-sub">
         Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data —
         Chile today, Colombia, Peru and Uruguay next.
