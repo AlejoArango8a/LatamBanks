@@ -1,14 +1,14 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js?v=bmon3';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon3';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon3';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon3';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon3';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon3';
-import { expSelect } from './explorer.js?v=bmon3';
-import { setStatus, showErr } from '../utils.js?v=bmon3';
+import { ST } from '../state.js?v=bmon4';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon4';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon4';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon4';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon4';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon4';
+import { expSelect } from './explorer.js?v=bmon4';
+import { setStatus, showErr } from '../utils.js?v=bmon4';
 
 // ---- KPI refresh (called after run or currency toggle) ----
 export function refreshKPIs() {

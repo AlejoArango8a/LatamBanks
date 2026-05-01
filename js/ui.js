@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST } from './state.js?v=bmon3';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon3';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon3';
-import { setStatus, showErr } from './utils.js?v=bmon3';
-import { sumRows } from './api.js?v=bmon3';
+import { ST } from './state.js?v=bmon4';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon4';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon4';
+import { setStatus, showErr } from './utils.js?v=bmon4';
+import { sumRows } from './api.js?v=bmon4';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -119,7 +119,12 @@ export function showTab(tab) {
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(b => {
-    const map = { resumen:'Bank Monitor', chileanbanks:'Banks System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', explorador:'Account Explorer' };
+    const key = b.getAttribute('data-tab');
+    if (key) {
+      b.classList.toggle('active', key === tab);
+      return;
+    }
+    const map = { resumen:'Bank Monitor', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', explorador:'Account Explorer', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
