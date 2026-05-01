@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon12';
-import { ST, datasetIsoCountry } from './state.js?v=bmon12';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon12';
-import { fetchWithTimeout } from './api.js?v=bmon12';
+import { API_BASE } from './config.js?v=bmon13';
+import { ST, datasetIsoCountry } from './state.js?v=bmon13';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon13';
+import { fetchWithTimeout } from './api.js?v=bmon13';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon12';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon12';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon12';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon12';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon12';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon12';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon13';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon13';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon13';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon13';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon13';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon13';
 
 // UI
 import {
@@ -23,10 +23,10 @@ import {
   fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
-} from './ui.js?v=bmon12';
+} from './ui.js?v=bmon13';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon12';
+import { exportTableById, exportChartTable } from './export.js?v=bmon13';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -89,31 +89,43 @@ async function switchCountryDataset() {
   ST.exp.hierarchy = null;
   showErr('');
   setStatus('loading', 'Actualizando datos…');
-  await fetchAndApplyBootstrap();
-  fillPeriodSelectors();
-  fillBankList();
+  try {
+    await fetchAndApplyBootstrap();
+    fillPeriodSelectors();
+    fillBankList();
 
-  ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
+    ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
 
-  const n = ST.periodos.length;
-  const desdeIdx = Math.max(0, n - 13);
-  const selDesde = document.getElementById('selDesde');
-  const selHasta = document.getElementById('selHasta');
-  if (selDesde) selDesde.selectedIndex = desdeIdx;
-  if (selHasta) selHasta.selectedIndex = n - 1;
-  ST.selected.clear();
-  ST.selectedOrder = [];
-  const defaultBank = datasetIsoCountry() === 'CO' ? 66 : 59;
-  toggleBank(defaultBank, true);
-  fillBankList();
-  ST.desde = selDesde?.value ?? null;
-  ST.hasta = selHasta?.value ?? null;
+    const n = ST.periodos.length;
+    const desdeIdx = Math.max(0, n - 13);
+    const selDesde = document.getElementById('selDesde');
+    const selHasta = document.getElementById('selHasta');
+    if (selDesde) selDesde.selectedIndex = desdeIdx;
+    if (selHasta) selHasta.selectedIndex = n - 1;
+    ST.selected.clear();
+    ST.selectedOrder = [];
+    const defaultBank = datasetIsoCountry() === 'CO' ? 66 : 59;
+    toggleBank(defaultBank, true);
+    fillBankList();
+    ST.desde = selDesde?.value ?? null;
+    ST.hasta = selHasta?.value ?? null;
 
-  await run();
-  refreshBarLabelsToggleButtons();
-  setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} períodos`);
-  fetchUSDRate().catch(() => {});
-  syncCurrencyToggleUI();
+    await run();
+    refreshBarLabelsToggleButtons();
+    setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} períodos`);
+    fetchUSDRate().catch(() => {});
+
+    const activeTab = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
+    if (activeTab === 'chileanbanks') await renderChileanBanks();
+    else if (activeTab === 'accountview') initAccountView();
+    else if (activeTab === 'explorador' && Object.keys(ST.planCuentas).length > 0) initExplorer();
+  } catch (e) {
+    setStatus('error', 'Actualización país');
+    showErr(e.message || String(e));
+    console.error('[switchCountryDataset]', e);
+  } finally {
+    syncCurrencyToggleUI();
+  }
 }
 
 // ---- init() ----
@@ -124,6 +136,7 @@ async function init() {
     setStatus('loading', 'Connecting...');
     setLsMsg('Connecting to server...');
     applyCountryFromUrl();
+    syncCurrencyToggleUI();
 
     // The server may be cold-starting (Render free tier sleeps after inactivity).
     // Show a friendly message after 6 seconds so the user knows it's still working.

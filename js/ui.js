@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon12';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon12';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon12';
-import { setStatus, showErr } from './utils.js?v=bmon12';
-import { sumRows } from './api.js?v=bmon12';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon13';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon13';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon13';
+import { setStatus, showErr } from './utils.js?v=bmon13';
+import { sumRows } from './api.js?v=bmon13';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -281,6 +281,7 @@ export function selectCountry(country) {
   if (country === 'chile') {
     if (overlay) overlay.style.display = 'none';
     ST.country = 'chile';
+    syncCurrencyToggleUI();
     if (prev === 'colombia') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
@@ -288,6 +289,7 @@ export function selectCountry(country) {
   if (country === 'colombia') {
     ST.country = 'colombia';
     if (overlay) overlay.style.display = 'none';
+    syncCurrencyToggleUI();
     queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
