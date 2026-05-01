@@ -76,10 +76,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
     flex-direction: column;
     overflow: visible;
   }
-  #sidebarToggle { display: flex !important; }
-  #sidebarContent { display: none; }
-  #sidebarContent.open { display: flex; flex-direction: column; }
-  #sidebarContent.open .btn-primary { flex-shrink: 0; margin: 8px 12px 12px; width: calc(100% - 24px); }
+  #sidebarContent { display: flex; flex-direction: column; }
+  #sidebarContent .btn-primary { flex-shrink: 0; margin: 8px 12px 12px; width: calc(100% - 24px); }
   /* Mobile accordion sections */
   .mob-section    { display: block; }
   .mob-section-hd { display: flex !important; align-items: center; justify-content: space-between;
@@ -542,14 +540,6 @@ select option { background:var(--bg3); }
   <div class="body">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebarEl">
-      <!-- Mobile toggle header -->
-      <div id="sidebarToggle" onclick="toggleSidebar()" style="display:none;
-        padding:10px 14px;cursor:pointer;font-size:12px;font-weight:600;
-        color:var(--text);border-bottom:1px solid var(--border);
-        align-items:center;justify-content:space-between;user-select:none;">
-        <span>⚙ Filters &amp; Banks</span>
-        <span id="sidebarArrow">▾</span>
-      </div>
       <div id="sidebarContent">
         <!-- ── Mobile Section: Country ── -->
         <div class="mob-section">
