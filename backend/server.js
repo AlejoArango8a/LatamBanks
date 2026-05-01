@@ -4,7 +4,13 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+
+// Body parser — handle both Vercel pre-parsed and raw stream bodies
+app.use((req, res, next) => {
+  if (req.body !== undefined) return next(); // already parsed by Vercel runtime
+  express.json({ limit: '2mb' })(req, res, next);
+});
+app.use(express.urlencoded({ extended: false }));
 
 // ============================================================
 // CORS — cerrado por defecto; abre solo los orígenes en FRONTEND_URLS.
@@ -14,7 +20,7 @@ const useOpenCors = (process.env.CORS_OPEN || '0') !== '0';
 if (useOpenCors) {
   app.use(cors({ origin: true, maxAge: 3600 }));
 } else {
-  const DEFAULT_FRONTEND = 'https://alejoarango8a.github.io,https://latambanks.vercel.app';
+  const DEFAULT_FRONTEND = 'https://alejoarango8a.github.io,https://latambanks.vercel.app,https://latam-banks.vercel.app';
   const origins = (process.env.FRONTEND_URLS || DEFAULT_FRONTEND)
     .split(',')
     .map((s) => s.trim())
@@ -211,6 +217,15 @@ app.get('/api/visits', async (req, res) => {
     console.error('/api/visits GET error:', e);
     res.status(500).json({ ok: false, error: String(e.message) });
   }
+});
+
+// ============================================================
+// ERROR HANDLER — returns JSON instead of Express's default HTML
+// ============================================================
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[express error]', err.message, err.stack);
+  res.status(err.status || 500).json({ ok: false, error: err.message || 'Internal server error' });
 });
 
 // ============================================================
