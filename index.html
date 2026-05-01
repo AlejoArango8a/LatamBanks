@@ -70,7 +70,7 @@
 
     .landing-bg img {
       object-fit: cover;
-      object-position: center;
+      object-position: 58% center;
       /* Sin difuminación: nitidez completa */
       filter: brightness(0.64) saturate(0.94);
       -webkit-filter: brightness(0.64) saturate(0.94);
@@ -161,15 +161,25 @@
       box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
     }
 
-    main.page-main {
+    main.page-main.wrap {
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 0;
-      padding: 20px 0 28px;
       width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 32px clamp(28px, 5vw, 48px) 40px clamp(28px, 7vw, 96px);
+      box-sizing: border-box;
+    }
+    @media (max-width: 880px) {
+      main.page-main.wrap {
+        align-items: center;
+        padding-left: 28px;
+        padding-right: 28px;
+      }
     }
 
     .wrap {
@@ -181,25 +191,30 @@
 
     .hero-grid {
       display: block;
-      max-width: 680px;
-      padding: 0;
+      width: 100%;
+      max-width: min(520px, 100%);
+      padding: 8px 0 16px;
+      box-sizing: border-box;
     }
 
     .hero-copy {
       text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
     @media (max-width: 880px) {
       .hero-copy { text-align: center; max-width: none; }
     }
 
-    /* Banderas: entre párrafo hero y botón */
+    /* Banderas: entre párrafo hero y botón — más aire vertical */
     .hero-copy .flags-zone {
-      margin: 6px 0 22px;
+      margin: 26px 0 32px;
       text-align: left;
     }
     .hero-copy .flags-label {
       text-align: left;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     .hero-copy .flags-row {
       justify-content: flex-start;
@@ -216,7 +231,7 @@
 
     /* Título hero en dos líneas — mismo azul soberio que el banner */
     .hero-title {
-      margin: 0 0 16px 0;
+      margin: 0 0 26px 0;
       max-width: 560px;
       line-height: 1.2;
       font-family: inherit;
@@ -246,12 +261,12 @@
     }
 
     .hero-sub {
-      font-size: 14px;
+      font-size: 15px;
       color: rgba(248, 250, 255, 0.92);
       max-width: 440px;
-      margin-bottom: 0;
+      margin: 0 0 8px;
       font-weight: 500;
-      line-height: 1.6;
+      line-height: 1.72;
       text-shadow:
         0 1px 3px rgba(0, 0, 0, 0.9),
         0 2px 14px rgba(0, 0, 0, 0.55);
@@ -264,7 +279,8 @@
     .hero-copy-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 4px;
     }
 
     .flags-zone {
@@ -285,7 +301,7 @@
     .flags-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 24px;
       justify-content: center;
     }
 
@@ -293,7 +309,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .flag-btn {
