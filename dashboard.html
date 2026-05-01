@@ -99,6 +99,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   /* Topbar: logo smaller, topbar compact */
   .topbar { flex-wrap: nowrap; height: auto; min-height: 48px; padding: 6px 10px; gap: 4px; }
   .topbar-right { gap: 4px; flex-shrink: 0; }
+  #mobBankPickerBtn { display: inline-flex !important; }
   .topbar-right .status { display: none; } /* hide status text on mobile */
   .ccy-toggle-opt { font-size: 8px; min-height: 20px; padding: 4px 6px; letter-spacing: 0.03em !important; }
   .ccy-toggle-opt.ccy-l { padding-inline: 8px 5px !important; }
@@ -232,6 +233,21 @@ body.light .tabs-scroll-chevron {
   gap:10px;
   flex-shrink:0;
   overflow:hidden;
+}
+#mobBankPickerBtn {
+  display:none;
+  align-items:center;
+  gap:4px;
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:600;
+  padding:5px 9px;
+  border-radius:6px;
+  border:1px solid var(--border2);
+  background:var(--bg3);
+  color:var(--text);
+  cursor:pointer;
+  flex-shrink:0;
 }
 .ccy-toggle {
   display:inline-flex;
@@ -649,6 +665,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
     </div>
 
     <div class="topbar-right">
+      <button type="button" id="mobBankPickerBtn" onclick="mobOpenBankPick()" aria-label="Open bank selection">&#127974; Banks</button>
       <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span id="switchCLP" class="ccy-toggle-opt ccy-l" title="Local currency">CLP</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
       <div onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
@@ -715,9 +732,9 @@ body.light #sidebarPeriodPick.sidebar-disabled {
         <div class="mob-section">
           <div class="mob-section-hd" onclick="toggleSection('secBanks')">
             <span>&#127974; Banks</span>
-            <span id="arrSecBanks">&#x25B8;</span>
+            <span id="arrSecBanks">&#x25BE;</span>
           </div>
-          <div class="mob-section-bd" id="secBanks">
+          <div class="mob-section-bd open" id="secBanks">
         <div class="sidebar-block">
           <div class="sidebar-label" style="text-align:center;font-size:10px;letter-spacing:1.5px;margin-bottom:8px;">Bank Selection (max. 5)</div>
           <div id="bankLimitMsg" style="display:none;font-size:10px;color:var(--yellow);font-family:var(--mono);padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:3px;margin-bottom:6px;">

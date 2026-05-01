@@ -7,11 +7,34 @@ export const CO_CUIF = {
   colocaciones: '140000',
   pasivos: '200000',
   patrimonio: '300000',
-  depVista: '241000',
-  depPlazo: '242000',
+  /** Depósitos en cuenta corriente (CUIF nombre estándar: “DEPOSITOS EN CUENTA CORRIENTE”, cuenta típica 210500). */
+  depVista: '210500',
+  /** Certificados de depósito a término (“CERTIFICADOS DE DEPOSITO A TERMINO”, típico 210700). */
+  depPlazo: '210700',
   bonos: '250000',
   utilidadNet: '590000',
 };
+
+/** Agregador “CATEGORIA E … RIESGO DE INCOBRABILIDAD” cuando el reporte viene consolidado. */
+export const CO_CUIF_NPL_ROLLUP = '141225';
+
+/**
+ * Segmentación por producto (sin el agregador 141225) para sumar cuando 141225 no viene informado.
+ * No equivale literalmente al NPL +90 d Chile (CMF c1).
+ */
+export const CO_CUIF_NPL_SEGMENTS = [
+  '141025',
+  '141480',
+  '140445',
+  '141425',
+  '141450',
+  '148825',
+  '148850',
+  '148880',
+  '160548',
+  '160838',
+  '160848',
+];
 
 /** Account Explorer sidebar — CUIF 6 dígitos (familias alineadas con el plan cargado CO). */
 export const CO_CUENTAS_PRINCIPALES = {

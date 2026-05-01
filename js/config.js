@@ -28,7 +28,11 @@ export const BANK_COLORS = {
 
 export const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
 
-export const bankColor = (code, i) => BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
+export const bankColor = (code, i) => {
+  const c = Number(code);
+  if (c === 59 || c === 66) return BANK_COLORS[59];
+  return BANK_COLORS[code] ?? CHART_COLORS[i % CHART_COLORS.length];
+};
 
 export const BANK_NAMES = {
   1:   'Banco de Chile',

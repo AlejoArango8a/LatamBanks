@@ -252,14 +252,22 @@ export function toggleSidebar() {
 }
 
 // ---- Mobile accordion section toggle ----
+const MOB_SECTION_ARROW = { secCountry: 'arrSecCountry', secPeriod: 'arrSecPeriod', secBanks: 'arrSecBanks' };
+
 export function toggleSection(id) {
   const body  = document.getElementById(id);
   if (!body) return;
   const isOpen = body.classList.toggle('open');
-  // arrow ids: arrSecCountry, arrSecPeriod, arrSecBanks
-  const arrowId = 'arr' + id.charAt(0).toUpperCase() + id.slice(1);
-  const arrow = document.getElementById(arrowId);
+  const arrowId = MOB_SECTION_ARROW[id];
+  const arrow = arrowId ? document.getElementById(arrowId) : null;
   if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
+}
+
+/** Mobile: expose bank accordion + scroll sidebar so the list is reachable in one tap. */
+export function mobOpenBankPick() {
+  const bd = document.getElementById('secBanks');
+  if (bd && !bd.classList.contains('open')) toggleSection('secBanks');
+  document.getElementById('sidebarBankPick')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- Country overlay / dataset switch ----
