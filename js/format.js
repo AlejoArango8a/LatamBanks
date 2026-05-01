@@ -1,8 +1,8 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon8';
-import { ST } from './state.js?v=bmon8';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon9';
+import { ST } from './state.js?v=bmon9';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -78,7 +78,15 @@ export function fmtChartPct(v, compact) {
 
 // ---- Bank name ----
 export function bankName(code) {
-  return BANK_NAMES[code] || (ST.bancos[code] || `Bank ${code}`)
+  const fromApi = ST.bancos[code];
+  if (ST.country === 'colombia') {
+    if (!fromApi) return `Bank ${code}`;
+    return String(fromApi)
+      .replace(/^BANCO\s+/i, '')
+      .replace(/\s+BANCO$/i, '')
+      .trim();
+  }
+  return BANK_NAMES[code] || (fromApi || `Bank ${code}`)
     .replace('BANCO ', '').replace(/ CHILE$/, '').replace(/-CHILE$/, '');
 }
 

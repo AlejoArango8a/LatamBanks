@@ -153,6 +153,26 @@
       text-overflow: ellipsis;
     }
 
+    /* Barra superior: en pantallas chicas, marca a la derecha (logo a la izquierda). */
+    @media (max-width: 720px) {
+      nav {
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .nav-brand-text {
+        margin-left: 0;
+        flex: 0 1 auto;
+        min-width: 0;
+        align-items: flex-end;
+        text-align: right;
+      }
+      .nav-brand-title,
+      .nav-brand-sub {
+        text-align: right;
+        max-width: min(56vw, 280px);
+      }
+    }
+
     .hero-enter-form {
       display: inline;
       margin: 0;
@@ -370,6 +390,26 @@
       gap: 10px;
     }
 
+    /** Enlace único para bandera + caption (evita zonas muertas). */
+    .hero-flag-hit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .hero-flag-hit:focus-visible {
+      outline: 2px solid rgba(140, 190, 255, 0.95);
+      outline-offset: 6px;
+      border-radius: 12px;
+    }
+    .hero-flag-hit:hover .flag-btn {
+      border-color: rgba(140, 190, 255, 0.65);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+
     .flag-btn {
       width: 72px;
       height: 72px;
@@ -385,16 +425,15 @@
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
+    .hero-flag-hit .flag-caption.live {
+      text-decoration: none;
+    }
+
     .flag-btn img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 50%;
-    }
-    a.flag-btn:hover {
-      border-color: rgba(140, 190, 255, 0.65);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
-      transform: translateY(-2px);
     }
 
     .flag-btn.is-disabled {
@@ -592,16 +631,16 @@
           <p class="flags-label">Select a Country</p>
           <div class="flags-row">
             <div class="flag-entry">
-              <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
-                <img src="assets/Chile%20flag.png" alt="Chile" />
+              <a class="hero-flag-hit" href="./dashboard.html" title="Open Chile monitor" aria-label="Chile: open monitor">
+                <span class="flag-btn"><img src="assets/Chile%20flag.png" alt="" /></span>
+                <span class="flag-caption live">Chile · live</span>
               </a>
-              <span class="flag-caption live">Chile · live</span>
             </div>
             <div class="flag-entry">
-              <span class="flag-btn is-disabled" title="Coming soon">
-                <img src="assets/Colombia%20flag.png" alt="Colombia" />
-              </span>
-              <span class="flag-caption">Colombia</span>
+              <a class="hero-flag-hit" href="./dashboard.html?country=colombia" title="Open Colombia monitor" aria-label="Colombia: open monitor">
+                <span class="flag-btn"><img src="assets/Colombia%20flag.png" alt="" /></span>
+                <span class="flag-caption live">Colombia · live</span>
+              </a>
             </div>
             <div class="flag-entry">
               <span class="flag-btn is-disabled" title="Coming soon">
@@ -619,7 +658,7 @@
         </div>
       </aside>
       <div class="hero-copy-actions hero-actions-row">
-        <form class="hero-enter-form" action="dashboard.html" method="get">
+        <form class="hero-enter-form" action="./dashboard.html" method="get">
           <button type="submit" class="btn-navy">Enter Monitor</button>
         </form>
       </div>

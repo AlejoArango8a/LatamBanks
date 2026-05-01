@@ -1,10 +1,11 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST } from '../state.js?v=bmon8';
-import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon8';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon8';
-import { apiDatos } from '../api.js?v=bmon8';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon9';
+import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon9';
+import { CO_CUIF } from '../coCuentas.js?v=bmon9';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon9';
+import { apiDatos } from '../api.js?v=bmon9';
 
 export function getCBRatings() {
   try {
@@ -43,8 +44,13 @@ export async function renderChileanBanks() {
     ? `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')}` : '';
 
   try {
-    const allBanks    = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
-    const cuentas     = ['100000000','144000000','200000000','300000000'];
+    const allBanks   = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
+    const isCO       = datasetIsoCountry() === 'CO';
+    const cuentas   = isCO
+      ? [CO_CUIF.activos, CO_CUIF.colocaciones, CO_CUIF.pasivos, CO_CUIF.patrimonio]
+      : ['100000000','144000000','200000000','300000000'];
+    const utilCuenta = isCO ? CO_CUIF.utilidadNet : '590000000';
+    const loansKey   = isCO ? CO_CUIF.colocaciones : '144000000';
     const lastPYear   = parseInt(lastP.slice(0, 4));
     const lastPMonth  = lastP.slice(4, 6);
     const priorYearP    = `${lastPYear - 1}${lastPMonth}`;
@@ -54,9 +60,12 @@ export async function renderChileanBanks() {
 
     const [rows, incomeRows] = await Promise.all([
       apiDatos({ tipo: 'b1', cuentas, periodos: [lastP], bancos: allBanks, select: 'ins_cod,cuenta,monto_total' }),
-      apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: fetchPeriods, bancos: allBanks, select: 'ins_cod,periodo,monto_total' }),
+      apiDatos({ tipo: 'r1', cuentas: [utilCuenta], periodos: fetchPeriods, bancos: allBanks, select: 'ins_cod,periodo,monto_total' }),
     ]);
 
+    const actK = isCO ? CO_CUIF.activos : '100000000';
+    const liaK = isCO ? CO_CUIF.pasivos : '200000000';
+    const eqK  = isCO ? CO_CUIF.patrimonio : '300000000';
     const getVal       = (bank, cuenta) => rows.filter(r => r.ins_cod === bank && r.cuenta === cuenta).reduce((s, r) => s + (r.monto_total || 0), 0);
     const getIncomeVal = (bank, periodo) => incomeRows.filter(r => r.ins_cod === bank && r.periodo === periodo).reduce((s, r) => s + (r.monto_total || 0), 0);
     const getNetIncome12M = bank => {
@@ -67,10 +76,10 @@ export async function renderChileanBanks() {
 
     ST._cbData = allBanks.map(c => ({
       code: c, name: bankName(c),
-      assets:      getVal(c, '100000000'),
-      loans:       getVal(c, '144000000'),
-      liabilities: getVal(c, '200000000'),
-      equity:      getVal(c, '300000000'),
+      assets:      getVal(c, actK),
+      loans:       getVal(c, loansKey),
+      liabilities: getVal(c, liaK),
+      equity:      getVal(c, eqK),
       netIncome12: getNetIncome12M(c),
     })).filter(b => b.assets > 0);
 
@@ -129,7 +138,8 @@ export function renderCBTable() {
     <tbody>`;
 
   bankData.forEach((b, rowIdx) => {
-    const isBTG    = b.code === 59;
+    const btgCode  = datasetIsoCountry() === 'CO' ? 66 : 59;
+    const isBTG    = b.code === btgCode;
     const rating   = ratings[b.code] || '—';
     const rColor   = RATING_COLORS[rating] || 'var(--text3)';
     const loansEq  = b.equity ? (b.loans / b.equity).toFixed(1) + 'x' : '—';

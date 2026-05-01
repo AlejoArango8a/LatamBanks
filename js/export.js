@@ -1,8 +1,8 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST } from './state.js?v=bmon8';
-import { periodLabel } from './format.js?v=bmon8';
+import { ST } from './state.js?v=bmon9';
+import { periodLabel } from './format.js?v=bmon9';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;

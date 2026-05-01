@@ -1,8 +1,8 @@
-// ============================================================
+﻿// ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon8';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon8';
+import { ST, CHART_STATE } from './state.js?v=bmon9';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon9';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -73,6 +73,9 @@ export function drawLineChart(canvasId, periodos, series, opts) {
 
   ctx.clearRect(0, 0, W, H);
 
+  const gridColor = ST.theme === 'light' ? '#d1dce8' : '#1e2d3d';
+  const axisColor = ST.theme === 'light' ? '#6b8aaa' : '#94a8be';
+
   const COLORS = {
     'var(--accent)': '#38bdf8',
     'var(--green)':  '#34d399',
@@ -82,7 +85,20 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   };
 
   const allVals = series.flatMap(s => s.data).filter(v => v !== null && isFinite(v));
-  if (!allVals.length) return;
+  if (!allVals.length) {
+    const msg = opts.emptyMessage || '';
+    if (msg) {
+      ctx.font = `${narrowCanvas ? 11 : 12}px DM Mono, monospace`;
+      ctx.fillStyle = axisColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const lines = msg.split(/\n/);
+      const midY = PAD_tb.t + (H - PAD_tb.t - PAD_tb.b) / 2;
+      lines.forEach((line, i) => ctx.fillText(line, W / 2, midY + (i - (lines.length - 1) / 2) * 16));
+    }
+    CHART_STATE[canvasId] = { bars: [], periodos, series: [], PAD: { l: 0 }, W, H, dpr, valueScale };
+    return;
+  }
 
   let rawLo = Math.min(...allVals);
   let rawHi = Math.max(...allVals);
@@ -132,8 +148,6 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const toY = v => PAD.t + cH - ((v - lo) / (hi - lo)) * cH;
   const zeroY = toY(0);
 
-  const gridColor = ST.theme === 'light' ? '#d1dce8' : '#1e2d3d';
-  const axisColor = ST.theme === 'light' ? '#6b8aaa' : '#94a8be';
   ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
   scale.ticks.forEach(tick => {

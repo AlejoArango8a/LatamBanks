@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon8';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon8';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon8';
-import { setStatus, showErr } from './utils.js?v=bmon8';
-import { sumRows } from './api.js?v=bmon8';
+import { ST, datasetIsoCountry } from './state.js?v=bmon9';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon9';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon9';
+import { setStatus, showErr } from './utils.js?v=bmon9';
+import { sumRows } from './api.js?v=bmon9';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -263,15 +263,19 @@ export function toggleSection(id) {
 }
 
 // ---- Country overlay / dataset switch ----
-export function selectCountry(country) {
-  const prev = ST.country;
-  const flags = { chile:'flagChile', colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };
+export function syncCountryFlagsVisual(activeCountryKey) {
+  const flags = { chile: 'flagChile', colombia: 'flagColombia', peru: 'flagPeru', uruguay: 'flagUruguay' };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.style.borderColor = c === country ? 'var(--accent)' : 'transparent';
-    btn.style.opacity     = c === country ? '1' : '0.45';
+    btn.style.borderColor = c === activeCountryKey ? 'var(--accent)' : 'transparent';
+    btn.style.opacity     = c === activeCountryKey ? '1' : '0.45';
   });
+}
+
+export function selectCountry(country) {
+  const prev = ST.country;
+  syncCountryFlagsVisual(country);
   const overlay = document.getElementById('countryOverlay');
 
   if (country === 'chile') {
@@ -380,14 +384,26 @@ export function toggleBarLabels() {
 
 // ---- Currency ----
 export async function fetchUSDRate() {
+  const sbl = document.getElementById('usdSidebarLabel');
   try {
+    if (ST.country === 'colombia') {
+      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await resp.json();
+      if (data.result === 'success' && data.rates && data.rates.COP) {
+        ST.usdRate = Number(data.rates.COP);
+        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
+        ST.usdDate = d.toISOString().slice(0, 10);
+        const txt = `1 USD ≈ $${Math.round(ST.usdRate).toLocaleString('es-CO')} COP · ${ST.usdDate}`;
+        if (sbl) sbl.textContent = txt;
+      }
+      return;
+    }
     const resp = await fetch('https://mindicador.cl/api/dolar');
     const data = await resp.json();
     if (data.serie && data.serie.length > 0) {
       ST.usdRate = data.serie[0].valor;
       ST.usdDate = data.serie[0].fecha.slice(0, 10);
       const txt  = `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')} · ${ST.usdDate}`;
-      const sbl  = document.getElementById('usdSidebarLabel');
       if (sbl) sbl.textContent = txt;
     }
   } catch (e) { console.warn('No se pudo obtener tasa USD:', e); }
@@ -418,7 +434,7 @@ export function toggleCurrency() {
   if (ST._series) window.showResChart(ST._lastResChart || 'patrimonio');
   if (ST._b1)     window.showBalTab(ST._lastBalTab || 'assets');
   if (ST._resTableData) window.renderResTable(ST._resTableData);
-  if (ST._kpiRaw) {
+  if (ST._kpiRaw && ST.country !== 'colombia') {
     const m = ST._kpiRaw;
     const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);
     const carSub  = sumRows(ST._c1 || [], '852000000', ST._lastP);

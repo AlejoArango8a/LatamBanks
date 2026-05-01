@@ -126,11 +126,12 @@ app.get('/api/bootstrap', async (req, res) => {
            WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000' AND periodo = $2`,
           [country, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
-      } else if (country === 'CO' && process.env.CO_EQUITY_CUENTA) {
+      } else if (country === 'CO') {
+        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '300000').trim();
         patrimonioRows = await query(
           `SELECT ins_cod::int, monto_total::bigint FROM datos_financieros
            WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3`,
-          [country, String(process.env.CO_EQUITY_CUENTA).trim(), lastPeriodo],
+          [country, eqCuenta, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       }
     } catch (e) {
