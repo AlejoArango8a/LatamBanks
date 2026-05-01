@@ -350,7 +350,7 @@ export function toggleCurrency() {
     const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);
     const carSub  = sumRows(ST._c1 || [], '852000000', ST._lastP);
     const carInc  = sumRows(ST._c1 || [], '853000000', ST._lastP) + sumRows(ST._c1 || [], '855000000', ST._lastP);
-    window.renderCalidad({ carNorm, carSub, carInc, mora90: m.mora90,
+    window.renderCalidad({ carNorm, carSub, carInc, mora90: m.mora90, colocaciones: m.colocaciones,
       castigos: sumRows(ST._c1 || [], '813000000', ST._lastP),
       recup:    sumRows(ST._c1 || [], '814000000', ST._lastP) });
   }

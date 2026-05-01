@@ -3,7 +3,7 @@
 // ============================================================
 import { ST } from '../state.js';
 import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtP, fmtB, periodLabel } from '../format.js';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js';
@@ -49,7 +49,7 @@ export function refreshKPIs() {
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d</div><div class="kpi-val">${fmtKPI(m.mora90)}</div><div class="kpi-sub">${fmtP(m.mora90, m.colocaciones)} of loans</div></div>
+    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d / Loans</div><div class="kpi-val">${m.colocaciones ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false) : '—'}</div><div class="kpi-sub">CMF NPL vs total loans (${fmtKPI(m.mora90)} · loans ${fmtKPI(m.colocaciones)})</div></div>
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
@@ -200,12 +200,14 @@ export async function run() {
       <div class="kpi green"><div class="kpi-label">Cartera Normal</div><div class="kpi-val">$${fmtB(carNorm)}B</div><div class="kpi-sub">${fmtP(carNorm, carNorm + carSub + carInc)}</div></div>
       <div class="kpi yellow"><div class="kpi-label">Cartera Subestándar</div><div class="kpi-val">$${fmtB(carSub)}B</div><div class="kpi-sub">${fmtP(carSub, carNorm + carSub + carInc)}</div></div>
       <div class="kpi red"><div class="kpi-label">Cartera Incumplimiento</div><div class="kpi-val">$${fmtB(carInc)}B</div><div class="kpi-sub">${fmtP(carInc, carNorm + carSub + carInc)}</div></div>
-      <div class="kpi blue"><div class="kpi-label">NPL +90d</div><div class="kpi-val">$${fmtB(mora90)}B</div><div class="kpi-sub">${fmtP(mora90, colocaciones)} of loans</div></div>
+      <div class="kpi blue"><div class="kpi-label">NPL +90 / total loans</div><div class="kpi-val">${colocaciones ? fmtChartPct(nplPctFromRaw(mora90, colocaciones), false) : '—'}</div><div class="kpi-sub">CMF NPL ${fmtKPI(mora90)} · loans ${fmtKPI(colocaciones)}</div></div>
     `;
-    renderCalidad({ carNorm, carSub, carInc, mora90, castigos, recup });
+    renderCalidad({ carNorm, carSub, carInc, mora90, colocaciones, castigos, recup });
 
-    const moraSeries = c1s('857000000');
-    drawLineChart('chartMora', periodos, [{ label: 'NPL +90d', data: moraSeries.map(v => v / 1e9), color: 'var(--red)' }]);
+    const loanTs  = b1s('500000000');
+    const moraTs  = c1s('857000000');
+    const moraPct = periodos.map((_, i) => nplPctFromRaw(moraTs[i], loanTs[i]));
+    drawLineChart('chartMora', periodos, [{ label: 'NPL +90 / loans', data: moraPct, color: 'var(--red)' }], { valueScale: 'percent' });
 
     renderComparativo(b1, r1, c1, lastP);
 
@@ -239,7 +241,7 @@ export function showResChart(tipo) {
   const titleEl = document.querySelector('#tab-resumen .panel-title');
   if (titleEl) titleEl.textContent = 'Banking System Evolution';
 
-  const map = { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL' };
+  const map = { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %' };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
   });
@@ -259,24 +261,42 @@ export function showResChart(tipo) {
     pasivos:    { rows: b1, cuenta: '200000000' },
     patrimonio: { rows: b1, cuenta: '300000000' },
     utilidad:   { rows: r1, cuenta: '590000000' },
-    mora:       { rows: c1, cuenta: '857000000' },
     dep_vista:  { rows: b1, cuenta: '241000000' },
     dep_plazo:  { rows: b1, cuenta: '242000000' },
     bonos:      { rows: b1, cuenta: '245000000' },
   };
-  const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
-  const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
 
-  const series = banks.map((code, i) => {
-    const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
-    const data  = sparseData(periodos.map(p =>
-      rows.filter(r => r.ins_cod === code && r.cuenta === cuenta && r.periodo === p)
-          .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
-    ));
-    return { label: bankName(code), data, color };
-  });
+  let series;
+  let chartOpts;
 
-  drawLineChart('chartResumen', periodos, series);
+  if (tipo === 'mora') {
+    chartOpts = { valueScale: 'percent' };
+    series = banks.map((code, i) => {
+      const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
+      const data = periodos.map(p => {
+        const moraAbs = c1.filter(r => r.ins_cod === code && r.cuenta === '857000000' && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0);
+        const loanAbs = b1.filter(r => r.ins_cod === code && r.cuenta === '500000000' && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0);
+        return nplPctFromRaw(moraAbs, loanAbs);
+      });
+      return { label: bankName(code), data, color };
+    });
+  } else {
+    const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
+    const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
+    series = banks.map((code, i) => {
+      const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
+      const data  = sparseData(periodos.map(p =>
+        rows.filter(r => r.ins_cod === code && r.cuenta === cuenta && r.periodo === p)
+            .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
+      ));
+      return { label: bankName(code), data, color };
+    });
+    chartOpts = undefined;
+  }
+
+  drawLineChart('chartResumen', periodos, series, chartOpts);
   setupChartTooltip('chartResumen', 'chartTooltip');
 
   document.getElementById('resumenLegend').innerHTML = series.map(s =>
@@ -287,7 +307,7 @@ export function showResChart(tipo) {
   const tableEl    = document.getElementById('resChartTable');
   const tableTitleEl = document.getElementById('resChartTableTitle');
   if (panel && tableEl) {
-    const metricLabels = { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL +90d', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
+    const metricLabels = { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
     if (tableTitleEl) tableTitleEl.textContent = metricLabels[tipo] || tipo;
     panel.style.display = 'block';
 
@@ -304,7 +324,8 @@ export function showResChart(tipo) {
       html += `<tr>
         <td style="font-weight:600;color:${s.color};white-space:nowrap;">${s.label}</td>
         ${s.data.map(v => {
-          if (v === null || v === undefined) return `<td class="r" style="color:var(--text3)">—</td>`;
+          if (v === null || v === undefined || !Number.isFinite(v)) return `<td class="r" style="color:var(--text3)">—</td>`;
+          if (tipo === 'mora') return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;">${fmtChartPct(v, false)}</td>`;
           return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;">${fmtAxis(v)}</td>`;
         }).join('')}
       </tr>`;

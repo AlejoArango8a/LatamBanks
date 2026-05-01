@@ -3,7 +3,7 @@
 // ============================================================
 import { ST } from '../state.js';
 import { bankColor } from '../config.js';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB } from '../format.js';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js';
 import { sumRows } from '../api.js';
 
 // ---- Balance section definitions ----
@@ -214,7 +214,7 @@ export function renderResTable(m) {
 }
 
 // ---- Calidad de Cartera ----
-export function renderCalidad({ carNorm, carSub, carInc, mora90, castigos, recup }) {
+export function renderCalidad({ carNorm, carSub, carInc, mora90, colocaciones, castigos, recup }) {
   const tot  = carNorm + carSub + carInc;
   const bars = [
     { l: 'Normal',         v: carNorm, color: '#34d399', pct: tot ? carNorm / tot : 0 },
@@ -244,7 +244,8 @@ export function renderCalidad({ carNorm, carSub, carInc, mora90, castigos, recup
     const v = sumRows(ST._c1 || [], r.c, ST._lastP);
     mHtml += `<tr><td class="i1">${r.l}</td><td class="r">${fmtKPI(v)}</td></tr>`;
   });
-  mHtml += `<tr><td class="hl">TOTAL +90d</td><td class="r hl">${fmtKPI(mora90)}</td></tr>`;
+  mHtml += `<tr><td class="hl">TOTAL +90d (CMF)</td><td class="r hl">${fmtKPI(mora90)}</td></tr>`;
+  mHtml += `<tr><td class="hl">NPL / colocaciones</td><td class="r hl">${colocaciones ? fmtChartPct(nplPctFromRaw(mora90, colocaciones), false) : '—'}</td></tr>`;
   mHtml += `<tr><td style="padding-top:8px;color:var(--text3)">Castigos</td><td class="r neg">${fmtKPI(castigos)}</td></tr>`;
   mHtml += `<tr><td>Recuperaciones</td><td class="r pos">${fmtKPI(recup)}</td></tr>`;
   mHtml += `<tr><td class="hl">Castigos Netos</td><td class="r hl neg">${fmtKPI(castigos - recup)}</td></tr>`;
@@ -272,7 +273,14 @@ export function renderComparativo(b1, r1, c1, lastP) {
     { l: 'Dep. Plazo',     fn: c => getB1V('242000000', c) },
     { l: 'Equity',         fn: c => getB1V('300000000', c) },
     { l: 'Utilidad',       fn: c => r1.filter(r => r.cuenta === '590000000' && r.ins_cod === c && r.periodo === lastP).reduce((s, r) => s + (r.monto_total || 0), 0) },
-    { l: 'Mora +90d',      fn: c => c1.filter(r => r.cuenta === '857000000' && r.ins_cod === c && r.periodo === lastP).reduce((s, r) => s + (r.monto_total || 0), 0) },
+    {
+      l: 'NPL +90 / loans',
+      fn: c => nplPctFromRaw(
+        c1.filter(r => r.cuenta === '857000000' && r.ins_cod === c && r.periodo === lastP).reduce((s, r) => s + (r.monto_total || 0), 0),
+        getB1V('500000000', c)
+      ),
+      fmtCell: v => (v == null || !Number.isFinite(v) ? '—' : fmtChartPct(v, false)),
+    },
   ];
 
   let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Indicador</th>`;
@@ -281,10 +289,14 @@ export function renderComparativo(b1, r1, c1, lastP) {
 
   metrics.forEach(m => {
     const vals = codes.map(m.fn);
-    const maxA = Math.max(...vals.map(Math.abs));
+    const nums = vals.filter(v => typeof v === 'number' && Number.isFinite(v));
+    const maxA = nums.length ? Math.max(...nums.map(Math.abs)) : 0;
     html += `<tr><td>${m.l}</td>`;
     vals.forEach(v => {
-      html += `<td class="r ${v < 0 ? 'neg' : ''} ${Math.abs(v) === maxA && maxA > 0 ? 'hl' : ''}">${fmtM(v)}</td>`;
+      const absOk = typeof v === 'number' && Number.isFinite(v);
+      const isMax = absOk && Math.abs(v) === maxA && maxA > 0;
+      const cell = m.fmtCell ? m.fmtCell(v) : fmtM(v);
+      html += `<td class="r ${typeof v === 'number' && v < 0 ? 'neg' : ''} ${isMax ? 'hl' : ''}">${cell}</td>`;
     });
     html += '</tr>';
   });
@@ -304,12 +316,6 @@ export function renderComparativo(b1, r1, c1, lastP) {
     html += `<td class="r">${pat ? (act / pat).toFixed(1) + 'x' : '—'}</td>`;
   });
   html += '</tr>';
-  html += `<tr><td class="i1">Mora / Coloc.</td>`;
-  codes.forEach(c => {
-    const col = getB1V('500000000', c);
-    const mor = c1.filter(r => r.cuenta === '857000000' && r.ins_cod === c && r.periodo === lastP).reduce((s, r) => s + (r.monto_total || 0), 0);
-    html += `<td class="r">${col ? (mor / col * 100).toFixed(2) + '%' : '—'}</td>`;
-  });
-  html += '</tr></tbody></table></div>';
+  html += '</tbody></table></div>';
   document.getElementById('compTable').innerHTML = html;
 }

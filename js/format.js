@@ -55,6 +55,24 @@ export const fmtM = n => Math.round(n / 1e6).toLocaleString('es-CL');
 export const fmtB = n => (n / 1e9).toFixed(1).replace('.', ',');
 export const fmtP = (n, d) => d ? (n / d * 100).toFixed(2) + '%' : '—';
 
+/** NPL / total loans (CMF amounts are same unit → ratio is scale-free). */
+export function nplPctFromRaw(moraAbs, loansAbs) {
+  const l = Number(loansAbs) || 0;
+  if (l <= 0) return null;
+  return (Number(moraAbs) || 0) / l * 100;
+}
+
+/** Chart / table percentage (e.g. 2,35%). */
+export function fmtChartPct(v, compact) {
+  if (v === null || v === undefined || !isFinite(v)) return '—';
+  const abs = Math.abs(v);
+  const dec = compact
+    ? (abs < 0.5 ? 2 : abs < 15 ? 1 : 0)
+    : (abs < 0.1 ? 3 : abs < 25 ? 2 : 1);
+  const d = Math.min(Math.max(dec, 0), 3);
+  return v.toLocaleString('es-CL', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
+}
+
 // ---- Bank name ----
 export function bankName(code) {
   return BANK_NAMES[code] || (ST.bancos[code] || `Bank ${code}`)

@@ -103,7 +103,7 @@ export function exportTableById(tableContainerId, filename) {
 export function exportChartTable() {
   const metricLabels = {
     activos:'Assets', coloc:'Loans', pasivos:'Liabilities',
-    patrimonio:'Equity', utilidad:'Net_Income', mora:'NPL',
+    patrimonio:'Equity', utilidad:'Net_Income', mora:'NPL_pct_of_loans',
     dep_vista:'Demand_Deposits', dep_plazo:'Time_Deposits', bonos:'Bonds',
   };
   const metric = ST._lastResChart || 'data';

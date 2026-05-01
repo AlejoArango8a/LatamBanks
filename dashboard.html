@@ -728,7 +728,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
                   <button class="rcbtn active" onclick="showResChart('patrimonio')">🏛 Equity</button>
                   <button class="rcbtn" onclick="showResChart('utilidad')">💰 Net Income</button>
                   <button class="rcbtn" onclick="showROEChart()">📈 Annual ROE</button>
-                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ NPL</button>
+                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ NPL %</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
                   <button type="button" id="btnLabels" class="lbl123-btn state-auto" onclick="toggleBarLabels()" title=""></button>
@@ -803,7 +803,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
           </div>
           <br>
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Evolución NPL +90d</div></div>
+            <div class="panel-head"><div class="panel-title">Evolución NPL +90 / total loans (%)</div></div>
             <div class="panel-body"><canvas class="chart-canvas" id="chartMora" height="160"></canvas></div>
           </div>
         </div>

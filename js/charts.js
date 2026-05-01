@@ -2,7 +2,7 @@
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
 import { ST, CHART_STATE } from './state.js';
-import { fmtAxis, periodLabel } from './format.js';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -31,13 +31,18 @@ export function niceScale(lo, hi, tickTarget = 4) {
   return { ticks, lo: ticks[0], hi: ticks[ticks.length - 1] };
 }
 
-export function drawLineChart(canvasId, periodos, series) {
+export function drawLineChart(canvasId, periodos, series, opts) {
+  opts = opts || {};
+  const valueScale = opts.valueScale || 'billions';
+  const fmtVal = (v, compact) =>
+    valueScale === 'percent' ? fmtChartPct(v, compact) : fmtAxis(v, compact);
+
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
   const rawW = canvas.parentElement.clientWidth || canvas.parentElement.offsetWidth;
   if (!rawW || rawW < 10) {
-    requestAnimationFrame(() => drawLineChart(canvasId, periodos, series));
+    requestAnimationFrame(() => drawLineChart(canvasId, periodos, series, opts));
     return;
   }
 
@@ -104,7 +109,7 @@ export function drawLineChart(canvasId, periodos, series) {
   ctx.font = `${axisPx}px DM Mono, monospace`;
   let maxLw = 28;
   for (const tick of scale.ticks) {
-    const lw = ctx.measureText(fmtAxis(tick, axisCompact)).width;
+    const lw = ctx.measureText(fmtVal(tick, axisCompact)).width;
     if (lw > maxLw) maxLw = lw;
   }
   const PAD_l = Math.min(112, Math.max(38, Math.ceil(maxLw + 11)));
@@ -131,7 +136,7 @@ export function drawLineChart(canvasId, periodos, series) {
     ctx.fillStyle = axisColor;
     ctx.font = `${axisPx}px DM Mono, monospace`;
     ctx.textAlign = 'right';
-    ctx.fillText(fmtAxis(tick, axisCompact), PAD.l - 5, y + 3);
+    ctx.fillText(fmtVal(tick, axisCompact), PAD.l - 5, y + 3);
   });
 
   if (rawLo < 0) {
@@ -145,7 +150,7 @@ export function drawLineChart(canvasId, periodos, series) {
   const barPad = Math.max(groupW * 0.1, 2);
   const barW   = Math.max((groupW - barPad * 2) / nSeries, 2);
 
-  CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr };
+  CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr, valueScale };
 
   const showLabels = ST.showBarLabels === null ? nSeries === 1 : ST.showBarLabels === true;
   const labelsToDraw = [];
@@ -170,7 +175,7 @@ export function drawLineChart(canvasId, periodos, series) {
 
       if (showLabels) {
         const labelX = x + barW / 2;
-        const txt = fmtAxis(v, axisCompact);
+        const txt = fmtVal(v, axisCompact);
         const aboveY = barTop - 5;
         const insideY = barTop + 11;
         const labelY = aboveY > PAD.t + 12 ? aboveY : insideY;
@@ -220,7 +225,12 @@ export function setupChartTooltip(canvasId, tooltipId) {
     }
     if (found) {
       tooltip.style.display = 'block';
-      tooltip.innerHTML = `<span style="color:${found.color}">${found.label}</span><br><strong>${periodLabel(found.periodo)}</strong>: ${fmtAxis(found.val)}`;
+      const st = CHART_STATE[canvasId];
+      const valTxt =
+        st && st.valueScale === 'percent'
+          ? fmtChartPct(found.val, false)
+          : fmtAxis(found.val);
+      tooltip.innerHTML = `<span style="color:${found.color}">${found.label}</span><br><strong>${periodLabel(found.periodo)}</strong>: ${valTxt}`;
       const ttW = tooltip.offsetWidth || 160;
       const ttH = tooltip.offsetHeight || 48;
       const spaceRight = window.innerWidth - e.clientX;
