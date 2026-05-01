@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js';
-import { ST } from './state.js';
-import { setStatus, showErr, setLsMsg } from './utils.js';
-import { fetchWithTimeout } from './api.js';
+import { API_BASE } from './config.js?v=bmon3';
+import { ST } from './state.js?v=bmon3';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon3';
+import { fetchWithTimeout } from './api.js?v=bmon3';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon3';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon3';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon3';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon3';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon3';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon3';
 
 // UI
 import {
@@ -21,10 +21,10 @@ import {
   syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
-} from './ui.js';
+} from './ui.js?v=bmon3';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js';
+import { exportTableById, exportChartTable } from './export.js?v=bmon3';
 
 // ---- init() ----
 async function init() {

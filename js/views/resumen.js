@@ -1,14 +1,14 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js';
-import { expSelect } from './explorer.js';
-import { setStatus, showErr } from '../utils.js';
+import { ST } from '../state.js?v=bmon3';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon3';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon3';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon3';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon3';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon3';
+import { expSelect } from './explorer.js?v=bmon3';
+import { setStatus, showErr } from '../utils.js?v=bmon3';
 
 // ---- KPI refresh (called after run or currency toggle) ----
 export function refreshKPIs() {
@@ -269,14 +269,16 @@ export function showResChart(tipo) {
   let series;
   let chartOpts;
 
+  const sameIns = (row, code) => Number(row.ins_cod) === Number(code);
+
   if (tipo === 'mora') {
     chartOpts = { valueScale: 'percent' };
     series = banks.map((code, i) => {
       const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
       const data = periodos.map(p => {
-        const moraAbs = c1.filter(r => r.ins_cod === code && r.cuenta === '857000000' && r.periodo === p)
+        const moraAbs = c1.filter(r => sameIns(r, code) && r.cuenta === '857000000' && r.periodo === p)
           .reduce((s, r) => s + (r.monto_total || 0), 0);
-        const loanAbs = b1.filter(r => r.ins_cod === code && r.cuenta === '500000000' && r.periodo === p)
+        const loanAbs = b1.filter(r => sameIns(r, code) && r.cuenta === '500000000' && r.periodo === p)
           .reduce((s, r) => s + (r.monto_total || 0), 0);
         return nplPctFromRaw(moraAbs, loanAbs);
       });
@@ -288,7 +290,7 @@ export function showResChart(tipo) {
     series = banks.map((code, i) => {
       const color = BANK_COLORS[code] || CHART_COLORS[i % CHART_COLORS.length];
       const data  = sparseData(periodos.map(p =>
-        rows.filter(r => r.ins_cod === code && r.cuenta === cuenta && r.periodo === p)
+        rows.filter(r => sameIns(r, code) && r.cuenta === cuenta && r.periodo === p)
             .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
       ));
       return { label: bankName(code), data, color };

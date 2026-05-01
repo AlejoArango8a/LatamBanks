@@ -1,8 +1,8 @@
 // ============================================================
 // API — network layer and data-access helpers
 // ============================================================
-import { API_BASE } from './config.js';
-import { ST } from './state.js';
+import { API_BASE } from './config.js?v=bmon3';
+import { ST } from './state.js?v=bmon3';
 
 export function fetchWithTimeout(url, options, ms) {
   const ctrl = new AbortController();

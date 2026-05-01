@@ -1,12 +1,12 @@
 // ============================================================
 // EXPLORADOR — account hierarchy browser
 // ============================================================
-import { ST } from '../state.js';
-import { CUENTAS_PRINCIPALES, bankColor } from '../config.js';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js';
-import { apiDatos } from '../api.js';
-import { drawLineChart, setupChartTooltip } from '../charts.js';
-import { setStatus } from '../utils.js';
+import { ST } from '../state.js?v=bmon3';
+import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon3';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon3';
+import { apiDatos } from '../api.js?v=bmon3';
+import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon3';
+import { setStatus } from '../utils.js?v=bmon3';
 
 export function getExpAccounts() {
   return Object.keys(CUENTAS_PRINCIPALES).sort();
