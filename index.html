@@ -96,15 +96,15 @@
       z-index: 2;
     }
 
-    /* Top bar — mismo tono sobrio que la franja de stats */
+    /* Top bar — una sola fila; la marca puede reducir tipografía antes de partir */
     nav {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 38px;
-      flex-wrap: wrap;
-      min-height: 68px;
-      padding: 16px 36px;
+      gap: clamp(10px, 3vw, 38px);
+      flex-wrap: nowrap;
+      padding: clamp(10px, 3vw, 16px) clamp(14px, 4vw, 36px);
+      min-height: 58px;
       background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
       border-bottom: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
@@ -113,9 +113,10 @@
     .nav-logo {
       display: block;
       line-height: 0;
+      flex-shrink: 0;
     }
     .nav-logo img {
-      height: 42px;
+      height: clamp(32px, 9vw, 42px);
       width: auto;
       display: block;
     }
@@ -125,23 +126,31 @@
       color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      margin-left: 10px;
+      gap: clamp(2px, 0.8vw, 4px);
+      margin-left: clamp(6px, 2vw, 10px);
+      min-width: 0;
+      flex: 1 1 auto;
     }
     .nav-brand-title {
-      font-size: clamp(16px, 1.85vw, 18px);
+      font-size: clamp(11px, 4.4vw, 18px);
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: clamp(0.02em, 0.06vw, 0.04em);
       text-transform: none;
       color: rgba(255,255,255, 0.98);
-      line-height: 1.2;
+      line-height: 1.18;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .nav-brand-sub {
-      font-size: 11px;
+      font-size: clamp(9px, 3.1vw, 11px);
       color: rgba(255,255,255, 0.55);
       font-weight: 500;
       letter-spacing: 0.05em;
-      line-height: 1.25;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hero-enter-form {
@@ -482,40 +491,42 @@
     .stats-ribbon {
       background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
       color: #e8eaf2;
-      padding: 22px 28px;
+      padding: clamp(14px, 4vw, 22px) clamp(16px, 4vw, 28px);
     }
     .stats-ribbon-inner {
       max-width: 1040px;
       margin: 0 auto;
+      box-sizing: border-box;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      gap: 24px;
+      flex-wrap: nowrap;
+      justify-content: space-evenly;
+      align-items: center;
+      gap: clamp(10px, 3.5vw, 26px);
       font-size: 13px;
     }
-    .stats-ribbon strong {
-      font-size: 20px;
+    .stats-ribbon-inner .stats-stat {
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: center;
+    }
+    .stats-ribbon-inner .stats-stat strong {
+      font-size: clamp(14px, 4vw, 20px);
       font-weight: 700;
       color: #fff;
       display: block;
       letter-spacing: -0.02em;
       margin-bottom: 2px;
     }
-    .stats-ribbon span {
+    .stats-ribbon-inner .stats-stat span {
+      display: block;
       opacity: 0.85;
-      font-size: 11px;
+      font-size: clamp(8px, 2.7vw, 11px);
       text-transform: uppercase;
       letter-spacing: 0.08em;
+      line-height: 1.25;
     }
-    @media (max-width: 560px) {
-      .stats-ribbon-item--narrow-hide {
-        display: none;
-      }
-      .stats-ribbon-inner {
-        flex-wrap: nowrap;
-        gap: clamp(14px, 5vw, 22px);
-        justify-content: space-evenly;
-      }
+    .stats-stat-roadmap.stats-stat-roadmap--off {
+      display: none !important;
     }
 
     /* Bajo la franja de stats (banner azul): barra oscura full-bleed fija para créditos */
@@ -619,10 +630,10 @@
 <div class="page-bottom">
 <div class="stats-ribbon">
   <div class="stats-ribbon-inner">
-    <div><strong>24+</strong><span>banks monitored</span></div>
-    <div><strong>2M+</strong><span>data points indexed</span></div>
-    <div><strong>36+</strong><span>months of history</span></div>
-    <div class="stats-ribbon-item--narrow-hide"><strong>4</strong><span>markets on roadmap</span></div>
+    <div class="stats-stat"><strong>24+</strong><span>banks monitored</span></div>
+    <div class="stats-stat"><strong>2M+</strong><span>data points indexed</span></div>
+    <div class="stats-stat"><strong>36+</strong><span>months of history</span></div>
+    <div class="stats-stat stats-stat-roadmap stats-stat-roadmap--off"><strong>4</strong><span>markets on roadmap</span></div>
   </div>
 </div>
 
@@ -632,6 +643,52 @@
   <span>Created by: <b>Alejandro Arango Ochoa</b></span>
 </div>
 </div>
+
+<script>
+(function () {
+  function tuneStatsRibbon() {
+    var inner = document.querySelector('.stats-ribbon-inner');
+    var roadmap = document.querySelector('.stats-stat-roadmap');
+    if (!inner || !roadmap) return;
+
+    inner.style.flexWrap = 'nowrap';
+    roadmap.classList.remove('stats-stat-roadmap--off');
+
+    requestAnimationFrame(function () {
+      var wrapX = inner.scrollWidth > inner.clientWidth + 1;
+      var wrapY = inner.scrollHeight > inner.clientHeight + 4;
+      if (wrapX || wrapY) {
+        roadmap.classList.add('stats-stat-roadmap--off');
+        return;
+      }
+      requestAnimationFrame(function () {
+        if (inner.scrollWidth > inner.clientWidth + 1 || inner.scrollHeight > inner.clientHeight + 4) {
+          roadmap.classList.add('stats-stat-roadmap--off');
+        }
+      });
+    });
+  }
+
+  var t;
+  window.addEventListener('resize', function () {
+    clearTimeout(t);
+    t = setTimeout(tuneStatsRibbon, 60);
+  });
+
+  function scheduleTune() {
+    requestAnimationFrame(tuneStatsRibbon);
+    setTimeout(tuneStatsRibbon, 120);
+    setTimeout(tuneStatsRibbon, 400);
+  }
+
+  window.addEventListener('load', scheduleTune);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleTune);
+  } else {
+    scheduleTune();
+  }
+})();
+</script>
 
 </body>
 </html>
