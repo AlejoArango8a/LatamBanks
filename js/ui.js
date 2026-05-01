@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST } from './state.js?v=bmon7';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon7';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon7';
-import { setStatus, showErr } from './utils.js?v=bmon7';
-import { sumRows } from './api.js?v=bmon7';
+import { ST, datasetIsoCountry } from './state.js?v=bmon8';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon8';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon8';
+import { setStatus, showErr } from './utils.js?v=bmon8';
+import { sumRows } from './api.js?v=bmon8';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -68,7 +68,8 @@ export function fillBankList() {
   });
 
   if (ST.selected.size === 0) {
-    const def = codes.includes(59) ? 59 : codes[0];
+    const prefer = datasetIsoCountry() === 'CO' ? 66 : 59;
+    const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
   }
 }
@@ -220,7 +221,7 @@ export function loadBankFromTable(bankCode) {
 // ---- Home shortcut: BTG Pactual Chile, last 12 months ----
 export function goHome() {
   if (!ST.periodos.length) return; // data not loaded yet
-  const BTG_CODE = 59;
+  const BTG_CODE = datasetIsoCountry() === 'CO' ? 66 : 59;
   ST.selected.clear();
   ST.selectedOrder = [];
   ST.selected.add(BTG_CODE);
@@ -261,8 +262,9 @@ export function toggleSection(id) {
   if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
 }
 
-// ---- Country overlay ----
+// ---- Country overlay / dataset switch ----
 export function selectCountry(country) {
+  const prev = ST.country;
   const flags = { chile:'flagChile', colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
@@ -271,11 +273,21 @@ export function selectCountry(country) {
     btn.style.opacity     = c === country ? '1' : '0.45';
   });
   const overlay = document.getElementById('countryOverlay');
+
   if (country === 'chile') {
     if (overlay) overlay.style.display = 'none';
     ST.country = 'chile';
+    if (prev === 'colombia') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
+
+  if (country === 'colombia') {
+    ST.country = 'colombia';
+    if (overlay) overlay.style.display = 'none';
+    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+    return;
+  }
+
   const names    = { colombia:'Colombia', peru:'Perú', uruguay:'Uruguay' };
   const flagImgs = { colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };
   if (overlay) {

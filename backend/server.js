@@ -55,6 +55,12 @@ const pool = new Pool({
 
 pool.on('error', (err) => console.error('DB pool error:', err));
 
+/** CL = CMF Chile, CO = CUIF Colombia (columna country en tablas maestras). */
+function resolveDatasetCountry(input) {
+  const s = String(input ?? 'CL').toUpperCase().trim();
+  return s === 'CO' ? 'CO' : 'CL';
+}
+
 // Helper: ejecuta una query y devuelve las filas
 async function query(sql, params = []) {
   const client = await pool.connect();
@@ -83,30 +89,62 @@ app.get('/health', async (req, res) => {
 // ============================================================
 app.get('/api/bootstrap', async (req, res) => {
   try {
+    const country = resolveDatasetCountry(req.query.country);
     const [periodosRows, institucionesRaw, planCuentas] = await Promise.all([
-      query("SELECT periodo FROM carga_log WHERE estado = 'ok' ORDER BY periodo ASC"),
-      query('SELECT codigo::int, razon_social FROM instituciones ORDER BY codigo ASC'),
-      query('SELECT cuenta, descripcion FROM plan_cuentas ORDER BY cuenta ASC'),
+      query(
+        "SELECT periodo FROM carga_log WHERE estado = 'ok' AND country = $1 ORDER BY periodo ASC",
+        [country],
+      ),
+      query(
+        'SELECT codigo::int, razon_social FROM instituciones WHERE country = $1 ORDER BY codigo ASC',
+        [country],
+      ),
+      query(
+        'SELECT cuenta, descripcion FROM plan_cuentas WHERE country = $1 ORDER BY cuenta ASC',
+        [country],
+      ),
     ]);
-    // Asegurar que codigo sea número (CockroachDB devuelve bigint como string)
     const instituciones = institucionesRaw.map(r => ({ ...r, codigo: Number(r.codigo) }));
 
     const periodos = periodosRows.map(r => r.periodo);
     if (!periodos.length) {
-      return res.status(502).json({ ok: false, error: 'No hay períodos en la base de datos' });
+      return res.status(502).json({
+        ok: false,
+        error:
+          country === 'CO'
+            ? 'Sin períodos cargados para Colombia (CO). Ejecuta colombia_loader.py después de aplicar migrations/001.'
+            : 'No hay períodos en la base de datos',
+      });
     }
 
     const lastPeriodo = periodos[periodos.length - 1];
-    const patrimonioRows = await query(
-      "SELECT ins_cod::int, monto_total::bigint FROM datos_financieros WHERE tipo = 'b1' AND cuenta = '300000000' AND periodo = $1",
-      [lastPeriodo]
-    ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })))
-    .catch(e => {
+    let patrimonioRows = [];
+    try {
+      if (country === 'CL') {
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, monto_total::bigint FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000' AND periodo = $2`,
+          [country, lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      } else if (country === 'CO' && process.env.CO_EQUITY_CUENTA) {
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, monto_total::bigint FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3`,
+          [country, String(process.env.CO_EQUITY_CUENTA).trim(), lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      }
+    } catch (e) {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
-      return [];
-    });
+    }
 
-    res.json({ ok: true, periodos, instituciones, planCuentas, patrimonioRows });
+    res.json({
+      ok: true,
+      country,
+      periodos,
+      instituciones,
+      planCuentas,
+      patrimonioRows,
+    });
   } catch (e) {
     console.error('/api/bootstrap error:', e);
     res.status(500).json({ ok: false, error: String(e.message) });
@@ -123,7 +161,9 @@ const ALLOWED_COLS = new Set([
 
 app.post('/api/datos', async (req, res) => {
   try {
-    const { tipo, tipos: tiposArr, periodos, bancos, cuentas, select: selectCols } = req.body || {};
+    const body = req.body || {};
+    const { tipo, tipos: tiposArr, periodos, bancos, cuentas, select: selectCols } = body;
+    const country = resolveDatasetCountry(body.country);
 
     const tiposList = Array.isArray(tiposArr) && tiposArr.length ? tiposArr
                     : tipo ? [tipo]
@@ -140,13 +180,13 @@ app.post('/api/datos', async (req, res) => {
     // Castear columnas numéricas para que pg las devuelva como números, no strings
     const selectStr = cols.map(c => NUMERIC_COLS.has(c) ? `${c}::bigint AS ${c}` : c).join(', ');
 
-    // Una query por tipo — en paralelo
     const tipoPromises = tiposList.map(t => {
-      const params = [t, periodos, cuentas];
+      const params = [country, t, periodos, cuentas];
       let sql = `SELECT ${selectStr} FROM datos_financieros
-                 WHERE tipo = $1
-                   AND periodo = ANY($2)
-                   AND cuenta  = ANY($3)`;
+                 WHERE country = $1
+                   AND tipo = $2
+                   AND periodo = ANY($3)
+                   AND cuenta  = ANY($4)`;
       if (Array.isArray(bancos) && bancos.length) {
         params.push(bancos);
         sql += ` AND ins_cod = ANY($${params.length})`;

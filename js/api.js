@@ -1,8 +1,8 @@
 // ============================================================
 // API — network layer and data-access helpers
 // ============================================================
-import { API_BASE } from './config.js?v=bmon7';
-import { ST } from './state.js?v=bmon7';
+import { API_BASE } from './config.js?v=bmon8';
+import { ST, datasetIsoCountry } from './state.js?v=bmon8';
 
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();
@@ -33,7 +33,7 @@ export async function apiDatos(params, signal) {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify({ ...params, country: datasetIsoCountry() }),
     },
     15000,
     signal
@@ -44,7 +44,7 @@ export async function apiDatos(params, signal) {
 }
 
 function dataCacheKey(tipo, periodos, bancos, cuentas) {
-  const country = ST.country || 'chile';
+  const country = datasetIsoCountry();
   return `${country}|${tipo}|${periodos.join(',')}|${[...bancos].sort().join(',')}|${cuentas.join(',')}`;
 }
 

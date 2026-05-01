@@ -1,14 +1,14 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js?v=bmon7';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon7';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon7';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon7';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon7';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon7';
-import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon7';
-import { setStatus, showErr } from '../utils.js?v=bmon7';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon8';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon8';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon8';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon8';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon8';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon8';
+import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon8';
+import { setStatus, showErr } from '../utils.js?v=bmon8';
 
 let runAbortController = null;
 let roeAbortController = null;
@@ -82,6 +82,24 @@ export async function run() {
   setStatus('loading', 'Loading...');
   const _bar = document.getElementById('loadingBar');
   if (_bar) _bar.style.display = 'block';
+
+  if (datasetIsoCountry() === 'CO') {
+    showErr('');
+    setStatus('ok', `Colombia CUIF · ${ST.periodos.length} períodos`);
+    if (_bar) _bar.style.display = 'none';
+    document.getElementById('dashContent').style.display = 'flex';
+    const kEl = document.getElementById('kpiResumen');
+    if (kEl) {
+      kEl.innerHTML = `
+      <div class="kpi" style="grid-column:1/-1;max-width:720px;">
+        <div class="kpi-label">Colombia · datos.gov.co (CUIF)</div>
+        <div class="kpi-val">Dataset listo</div>
+        <div class="kpi-sub">Los KPIs del resumen usan códigos CMF Chile (9 dígitos). Falta mapear cuentas CUIF (6 dígitos). BTG Colombia: ins_cod 66.</div>
+      </div>`;
+    }
+    return;
+  }
+
   console.log('[run] start — selected:', [...ST.selected], 'desde:', ST.desde, 'hasta:', ST.hasta);
   ST._activeBalBank = null;
   ST._activeResBank = null;

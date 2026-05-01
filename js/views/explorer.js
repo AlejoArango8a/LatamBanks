@@ -1,12 +1,12 @@
 // ============================================================
 // EXPLORADOR — account hierarchy browser
 // ============================================================
-import { ST } from '../state.js?v=bmon7';
-import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon7';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon7';
-import { apiDatos } from '../api.js?v=bmon7';
-import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon7';
-import { setStatus } from '../utils.js?v=bmon7';
+import { ST } from '../state.js?v=bmon8';
+import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon8';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon8';
+import { apiDatos } from '../api.js?v=bmon8';
+import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon8';
+import { setStatus } from '../utils.js?v=bmon8';
 
 let expAbortController = null;
 

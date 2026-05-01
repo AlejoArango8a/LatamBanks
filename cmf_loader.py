@@ -154,23 +154,23 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
                 plan_cuentas = parse_plan_cuentas(text)
 
         if instituciones:
-            rows_t = [(k, v) for k, v in instituciones.items()]
+            rows_t = [('CL', k, v) for k, v in instituciones.items()]
             psycopg2.extras.execute_values(
                 cur,
-                "INSERT INTO instituciones (codigo, razon_social) VALUES %s "
-                "ON CONFLICT (codigo) DO UPDATE SET razon_social = EXCLUDED.razon_social",
+                "INSERT INTO instituciones (country, codigo, razon_social) VALUES %s "
+                "ON CONFLICT (country, codigo) DO UPDATE SET razon_social = EXCLUDED.razon_social",
                 rows_t,
             )
             conn.commit()
             log.info(f"  Instituciones: {len(rows_t)} registros")
 
         if plan_cuentas:
-            rows_t = [(k, v) for k, v in plan_cuentas.items()]
+            rows_t = [('CL', k, v) for k, v in plan_cuentas.items()]
             for i in range(0, len(rows_t), BATCH_SIZE):
                 psycopg2.extras.execute_values(
                     cur,
-                    "INSERT INTO plan_cuentas (cuenta, descripcion) VALUES %s "
-                    "ON CONFLICT (cuenta) DO UPDATE SET descripcion = EXCLUDED.descripcion",
+                    "INSERT INTO plan_cuentas (country, cuenta, descripcion) VALUES %s "
+                    "ON CONFLICT (country, cuenta) DO UPDATE SET descripcion = EXCLUDED.descripcion",
                     rows_t[i:i+BATCH_SIZE],
                 )
             conn.commit()
@@ -200,6 +200,7 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
             for cuenta, vals in data.items():
                 if is_multi:
                     all_tuples.append((
+                        'CL',
                         periodo, tipo, ins_code, cuenta,
                         vals[0] if len(vals) > 0 else 0,
                         vals[1] if len(vals) > 1 else 0,
@@ -209,6 +210,7 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
                     ))
                 else:
                     all_tuples.append((
+                        'CL',
                         periodo, tipo, ins_code, cuenta,
                         0, 0, 0, 0, vals,
                     ))
@@ -219,9 +221,9 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
 
         INSERT_SQL = (
             "INSERT INTO datos_financieros "
-            "(periodo, tipo, ins_cod, cuenta, monto_clp, monto_uf, monto_tc, monto_ext, monto_total) "
+            "(country, periodo, tipo, ins_cod, cuenta, monto_clp, monto_uf, monto_tc, monto_ext, monto_total) "
             "VALUES %s "
-            "ON CONFLICT (periodo, tipo, ins_cod, cuenta) DO UPDATE SET "
+            "ON CONFLICT (country, periodo, tipo, ins_cod, cuenta) DO UPDATE SET "
             "monto_clp   = EXCLUDED.monto_clp, "
             "monto_uf    = EXCLUDED.monto_uf, "
             "monto_tc    = EXCLUDED.monto_tc, "
@@ -233,11 +235,11 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
         conn.commit()
 
         cur.execute(
-            "INSERT INTO carga_log (periodo, archivos_procesados, estado) VALUES (%s, %s, %s) "
-            "ON CONFLICT (periodo) DO UPDATE SET "
+            "INSERT INTO carga_log (country, periodo, archivos_procesados, estado) VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (country, periodo) DO UPDATE SET "
             "archivos_procesados = EXCLUDED.archivos_procesados, "
             "estado = EXCLUDED.estado",
-            (periodo, file_count, "ok"),
+            ('CL', periodo, file_count, "ok"),
         )
         conn.commit()
 
@@ -249,5 +251,8 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
 # ============================================================
 def get_loaded_periods(conn) -> set:
     cur = conn.cursor()
-    cur.execute("SELECT periodo FROM carga_log WHERE estado = 'ok'")
+    cur.execute(
+        "SELECT periodo FROM carga_log WHERE country = %s AND estado = 'ok'",
+        ('CL',),
+    )
     return {row[0] for row in cur.fetchall()}

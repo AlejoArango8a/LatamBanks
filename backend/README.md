@@ -7,8 +7,8 @@ API Express que sirve los datos financieros desde CockroachDB al dashboard.
 | Endpoint | Método | Descripción |
 |----------|--------|-------------|
 | `/health` | GET | Estado del servicio y conexión a DB |
-| `/api/bootstrap` | GET | Períodos, instituciones, plan de cuentas y ranking patrimonial |
-| `/api/datos` | POST | Datos financieros filtrados por tipo, períodos, cuentas y bancos |
+| `/api/bootstrap` | GET | `?country=CL` o `CO` — períodos, instituciones, plan de cuentas y ranking patrimonial |
+| `/api/datos` | POST | Datos financieros; body con `country` (CL|CO), tipo(s), períodos, cuentas, bancos |
 | `/api/visits` | GET | Total de visitas globales y desglose por país |
 | `/api/visits` | POST | Registra una visita con código y nombre de país |
 
@@ -20,6 +20,8 @@ En el servicio Web → **Environment**:
 |----------|--------|
 | `COCKROACH_URL` | Connection string de CockroachDB Serverless (formato postgresql://...) |
 | `FRONTEND_URLS` | Orígenes CORS permitidos. Ej: `https://alejoarango8a.github.io` (separados por coma) |
+| `CO_EQUITY_CUENTA` | (Opcional) Cuenta b1 CUIF Colombia (6 dígitos) para ranking patrimonio si `country=CO` |
+
 
 ## Despliegue
 

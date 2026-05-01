@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon7';
-import { ST } from './state.js?v=bmon7';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon7';
-import { fetchWithTimeout } from './api.js?v=bmon7';
+import { API_BASE } from './config.js?v=bmon8';
+import { ST, datasetIsoCountry } from './state.js?v=bmon8';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon8';
+import { fetchWithTimeout } from './api.js?v=bmon8';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon7';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon7';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon7';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon7';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon7';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon7';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon8';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon8';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon8';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon8';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon8';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon8';
 
 // UI
 import {
@@ -22,10 +22,76 @@ import {
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
-} from './ui.js?v=bmon7';
+} from './ui.js?v=bmon8';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon7';
+import { exportTableById, exportChartTable } from './export.js?v=bmon8';
+
+function applyBootstrapPayload(j) {
+  ST.periodos = j.periodos || [];
+  ST.bancos = {};
+  (j.instituciones || []).forEach(row => {
+    ST.bancos[row.codigo] = row.razon_social;
+  });
+  ST.planCuentas = {};
+  if (Array.isArray(j.planCuentas)) {
+    j.planCuentas.forEach(row => {
+      ST.planCuentas[row.cuenta] = row.descripcion;
+    });
+  }
+  ST._patrimonioMap = {};
+  ST._patrimonioRanking = [];
+  if (Array.isArray(j.patrimonioRows) && j.patrimonioRows.length) {
+    const patMap = {};
+    j.patrimonioRows.forEach(row => {
+      patMap[row.ins_cod] = (patMap[row.ins_cod] || 0) + row.monto_total;
+    });
+    ST._patrimonioMap     = patMap;
+    ST._patrimonioRanking = Object.keys(patMap).map(Number).filter(c => c !== 999)
+      .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
+  }
+}
+
+async function fetchAndApplyBootstrap() {
+  const cc = encodeURIComponent(datasetIsoCountry());
+  const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap?country=${cc}`, {}, 60000);
+  const j = await r.json();
+  if (!r.ok || !j.ok) throw new Error(j.error || `Bootstrap error ${r.status}`);
+  if (!Array.isArray(j.periodos) || !j.periodos.length) {
+    throw new Error(j.error || 'No data found in database');
+  }
+  applyBootstrapPayload(j);
+}
+
+async function switchCountryDataset() {
+  ST.data = {};
+  ST.exp.hierarchy = null;
+  showErr('');
+  setStatus('loading', 'Actualizando datos…');
+  await fetchAndApplyBootstrap();
+  fillPeriodSelectors();
+  fillBankList();
+
+  ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
+
+  const n = ST.periodos.length;
+  const desdeIdx = Math.max(0, n - 13);
+  const selDesde = document.getElementById('selDesde');
+  const selHasta = document.getElementById('selHasta');
+  if (selDesde) selDesde.selectedIndex = desdeIdx;
+  if (selHasta) selHasta.selectedIndex = n - 1;
+  ST.selected.clear();
+  ST.selectedOrder = [];
+  const defaultBank = datasetIsoCountry() === 'CO' ? 66 : 59;
+  toggleBank(defaultBank, true);
+  fillBankList();
+  ST.desde = selDesde?.value ?? null;
+  ST.hasta = selHasta?.value ?? null;
+
+  await run();
+  refreshBarLabelsToggleButtons();
+  setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} períodos`);
+}
 
 // ---- init() ----
 async function init() {
@@ -41,29 +107,8 @@ async function init() {
       setLsMsg('Server is waking up — this can take up to 60 s on first load...');
     }, 6000);
 
-    const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap`, {}, 60000);
+    await fetchAndApplyBootstrap();
     clearTimeout(wakeTimer);
-    const j = await r.json();
-    if (!r.ok || !j.ok) throw new Error(j.error || `Bootstrap error ${r.status}`);
-    if (!Array.isArray(j.periodos) || !j.periodos.length) throw new Error('No data found in database');
-
-    ST.country = 'chile';
-    ST.periodos = j.periodos;
-    j.instituciones.forEach(row => { ST.bancos[row.codigo] = row.razon_social; });
-
-    if (Array.isArray(j.planCuentas) && j.planCuentas.length) {
-      j.planCuentas.forEach(row => { ST.planCuentas[row.cuenta] = row.descripcion; });
-    }
-
-    if (Array.isArray(j.patrimonioRows) && j.patrimonioRows.length) {
-      const patMap = {};
-      j.patrimonioRows.forEach(row => { patMap[row.ins_cod] = (patMap[row.ins_cod] || 0) + row.monto_total; });
-      ST._patrimonioMap     = patMap;
-      ST._patrimonioRanking = Object.keys(patMap)
-        .map(Number)
-        .filter(c => c !== 999)
-        .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
-    }
 
     fillPeriodSelectors();
     fillBankList();
@@ -71,13 +116,13 @@ async function init() {
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
     setLsMsg('Listo');
     document.getElementById('loadingScreen').style.display = 'none';
-    setStatus('ok', `${ST.periodos.length} periods available`);
+    setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} periods available`);
 
     const n = ST.periodos.length;
     const desdeIdx = Math.max(0, n - 13);
     document.getElementById('selDesde').selectedIndex = desdeIdx;
     document.getElementById('selHasta').selectedIndex = n - 1;
-    toggleBank(59, true);
+    toggleBank(datasetIsoCountry() === 'CO' ? 66 : 59, true);
     fillBankList();
     await run();
     showTab('resumen');
@@ -101,6 +146,8 @@ async function init() {
 }
 
 // ---- Expose to window (required for inline HTML event handlers) ----
+window.switchCountryDataset = switchCountryDataset;
+
 // Core
 window.run             = run;
 window.refreshKPIs     = refreshKPIs;

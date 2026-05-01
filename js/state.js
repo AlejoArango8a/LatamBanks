@@ -32,6 +32,11 @@ export const ST = {
   _expSubFilter: true,
 };
 
+/** Código país para API y BD (bootstrap /datos): CL | CO */
+export function datasetIsoCountry() {
+  return ST.country === 'colombia' ? 'CO' : 'CL';
+}
+
 // Chart instances (canvas Chart.js objects if needed in future)
 export const CHARTS = {};
 

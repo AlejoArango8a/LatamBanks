@@ -12,8 +12,11 @@ dashboard.html             Aplicación del monitor banking (SPA, entry principal
 js/app.js                   Bootstrap + cableado global (se carga desde dashboard.html con ?v=…)
 Old info/                  Material histórico (ignorado en Git si está listado en .gitignore local)
 Cargar nuevo mes CMF.bat    ← Lo que usas cada mes para subir datos
-cargar_zip.py               Script de carga (llamado por el .bat)
-cmf_loader.py               Librería: parsers y carga a CockroachDB
+cargar_zip.py               Script de carga ZIP CMF Chile (usa cmf_loader)
+colombia_loader.py           ETL Colombia · API Socrata CUIF → Cockroach (country CO)
+cmf_loader.py               Librería CMF Chile: ZIP → tabla datos_financieros (country CL)
+migrations/                 Migraciones SQL (p. ej. multi-país 001_country_multijurisdiction.sql)
+.github/workflows/          GitHub Actions (carga CUIF Colombia programada)
 .env                        Tus credenciales (no se sube a GitHub)
 .env.example                Plantilla para crear el .env
 requirements.txt            Dependencias Python
@@ -55,6 +58,26 @@ pip install -r requirements.txt
 
 ---
 
+## Colombia — CUIF (Superfinanciera · datos.gov.co)
+
+1. Aplica en **CockroachDB** el SQL  
+   **`migrations/001_country_multijurisdiction.sql`** (columna `country` y PK compuestas; Chile queda como `CL` por defecto).
+2. Carga inicial / incremental desde Socrata (API pública):
+
+   ```
+   python colombia_loader.py --institutions-plan
+   python colombia_loader.py --historical
+   python colombia_loader.py --incremental
+   ```
+
+3. Opcional — **GitHub Actions** mes a mes: archivo  
+   `.github/workflows/colombia-cuif-monthly.yml`. Configura el secret **`COCKROACH_URL`** en el repositorio.
+4. Opcional — en Render (backend), variable **`CO_EQUITY_CUENTA`**: cuenta de balance CUIF de 6 dígitos para ranking de patrimonio cuando `country=CO` en `/api/bootstrap`.
+
+El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los KPI principales del resumen siguen usando códigos **CMF Chile** hasta definir el mapeo CUIF→vistas.
+
+---
+
 ## Stack técnico
 
 | Capa | Tecnología | Hosting |
@@ -62,7 +85,7 @@ pip install -r requirements.txt
 | Frontend | `dashboard.html` + ES modules (`js/`) | GitHub Pages / Vercel |
 | Backend | Express / Node.js | Render |
 | Base de datos | CockroachDB Serverless | AWS us-east-1 |
-| ETL | Python (`cmf_loader.py`) | Local |
+| ETL | Python (`cmf_loader.py`, `colombia_loader.py`) | Local / GitHub Actions |
 
 ---
 
@@ -71,7 +94,7 @@ pip install -r requirements.txt
 | País | Estado |
 |------|--------|
 | Chile | Activo (CMF, desde 2022) |
-| Colombia | En desarrollo |
+| Colombia | ETL CUIF disponible (`colombia_loader.py`); KPIs panel resumen aún en cuentas CMF |
 | Perú | En desarrollo |
 | Uruguay | En desarrollo |
 

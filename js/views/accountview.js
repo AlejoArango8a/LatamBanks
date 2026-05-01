@@ -1,9 +1,9 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST } from '../state.js?v=bmon7';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon7';
-import { apiDatos } from '../api.js?v=bmon7';
+import { ST } from '../state.js?v=bmon8';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon8';
+import { apiDatos } from '../api.js?v=bmon8';
 
 // ---- Hierarchy level helper ----
 export function avGetLevel(c) {
