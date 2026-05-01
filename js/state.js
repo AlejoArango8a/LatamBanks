@@ -37,6 +37,18 @@ export function datasetIsoCountry() {
   return ST.country === 'colombia' ? 'CO' : 'CL';
 }
 
+/**
+ * ISO 4217 label for the local-currency side of the topbar toggle (per active dashboard).
+ * Chile → CLP, Colombia → COP; extend when more jurisdictions go live.
+ */
+export function reportingLocalCurrencyISO() {
+  if (ST.country === 'colombia') return 'COP';
+  if (ST.country === 'chile') return 'CLP';
+  if (ST.country === 'peru') return 'PEN';
+  if (ST.country === 'uruguay') return 'UYU';
+  return 'Local';
+}
+
 // Chart instances (canvas Chart.js objects if needed in future)
 export const CHARTS = {};
 

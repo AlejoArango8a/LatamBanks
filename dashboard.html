@@ -649,7 +649,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
     </div>
 
     <div class="topbar-right">
-      <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span lang="en" id="switchCLP" class="ccy-toggle-opt ccy-l">Local Ccy</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
+      <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span id="switchCLP" class="ccy-toggle-opt ccy-l" title="Local currency">CLP</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
       <div onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
@@ -1145,7 +1145,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon11"></script>
+<script type="module" src="js/app.js?v=bmon12"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

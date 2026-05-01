@@ -1,8 +1,8 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon11';
-import { ST } from './state.js?v=bmon11';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon12';
+import { ST } from './state.js?v=bmon12';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -113,6 +113,21 @@ function titleCaseCoToken(lower) {
   return c;
 }
 
+/** Nombres curator (CUIF establecimientos tipo 1, codigo_entidad). */
+const CO_BANK_DISPLAY = new Map([
+  [66, 'BTG Pactual Colombia'],
+  [12, 'GNB Sudameris'],
+  [9, 'Citibank'],
+  [64, 'J.P. Morgan'],
+  [56, 'Falabella'],
+  [60, 'Mundo Mujer'],
+  [57, 'Pichincha'],
+  [55, 'Finandina'],
+  [58, 'Coopcentral'],
+  [49, 'AV Villas'],
+  [43, 'Banco Agrario'],
+]);
+
 export function polishColombianBankDisplay(raw) {
   let s = stripSociedadAnonima(raw);
   if (!s) return '';
@@ -130,6 +145,8 @@ export function bankName(code) {
   const fromApi = ST.bancos[code];
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
+    const ins = Number(code);
+    if (!Number.isNaN(ins) && CO_BANK_DISPLAY.has(ins)) return CO_BANK_DISPLAY.get(ins);
     return polishColombianBankDisplay(fromApi);
   }
   return BANK_NAMES[code] || (fromApi || `Bank ${code}`)

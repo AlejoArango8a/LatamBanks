@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon11';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon11';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon11';
-import { setStatus, showErr } from './utils.js?v=bmon11';
-import { sumRows } from './api.js?v=bmon11';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon12';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon12';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon12';
+import { setStatus, showErr } from './utils.js?v=bmon12';
+import { sumRows } from './api.js?v=bmon12';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -420,6 +420,7 @@ export function syncCurrencyToggleUI() {
   const usdEl = document.getElementById('switchUSD');
   if (!localEl || !usdEl) return;
   const isUsd = ST.currency === 'USD';
+  localEl.textContent = reportingLocalCurrencyISO();
   localEl.classList.toggle('ccy-on', !isUsd);
   usdEl.classList.toggle('ccy-on', isUsd);
 }

@@ -1,8 +1,8 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST } from './state.js?v=bmon11';
-import { periodLabel } from './format.js?v=bmon11';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon12';
+import { periodLabel } from './format.js?v=bmon12';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;
@@ -59,6 +59,11 @@ export function addMetaSheet(wb) {
   const lastPLabel = ST.periodos.length ? periodLabel(lastP) : '—';
   const today      = new Date();
   const todayStr   = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+  const localIso = reportingLocalCurrencyISO();
+  const rateLocale = ST.country === 'colombia' ? 'es-CO' : 'es-CL';
+  const currencyMeta = ST.currency === 'USD' && ST.usdRate
+    ? `USD (1 USD ≈ $${Math.round(ST.usdRate).toLocaleString(rateLocale)} ${localIso})`
+    : `${localIso} (MM$, as reported)`;
   const metaData   = [
     ['Source',              'Bank Monitor — ALM BTG Pactual Chile'],
     ['Data source',         'CMF (Comisión para el Mercado Financiero) — Chile'],
@@ -66,7 +71,7 @@ export function addMetaSheet(wb) {
     ['Built by',            'Alejandro Arango Ochoa — ALM BTG Pactual Chile'],
     ['Data updated through', lastPLabel],
     ['Exported on',         todayStr],
-    ['Currency',            ST.currency === 'USD' ? `USD (1 USD = $${Math.round(ST.usdRate || 0).toLocaleString('es-CL')} CLP)` : 'Local Ccy (MM$, as reported)'],
+    ['Currency',            currencyMeta],
     ['Values',              'Raw numbers (no abbreviation)'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(metaData);
