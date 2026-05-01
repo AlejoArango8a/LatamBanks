@@ -13,15 +13,12 @@
     :root {
       --bg:        #e6e9ef;
       --bg-shade:  #dce0e7;
-      --surface:   #f6f7f9;
-      --surface2:  #ffffff;
       --text:      #1a2332;
       --text2:     #445066;
       --text3:     #627084;
       --border:    #bcc4d2;
       --btg-navy:  #0A1464;
       --btg-blue:  #17327a;
-      --btg-light: #327CD3;
       --sans: 'Inter', system-ui, sans-serif;
     }
 
@@ -35,39 +32,30 @@
       line-height: 1.55;
     }
 
-    /* ── NAV: dark gray, BTG wordmark in white ── */
+    /* Top bar — same navy as stats ribbon below */
     nav {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 22px;
       flex-wrap: wrap;
-      gap: 14px;
-      min-height: 54px;
+      min-height: 56px;
       padding: 12px 32px;
-      background: #3a404d;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+      background: var(--btg-navy);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .nav-left {
-      display: flex;
-      align-items: baseline;
-      gap: 20px;
-      flex-wrap: wrap;
+
+    .nav-logo {
+      display: block;
+      line-height: 0;
     }
-    .nav-logo-text {
-      font-size: 17px;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: 0.08em;
-      text-decoration: none;
-      text-transform: uppercase;
-      white-space: nowrap;
+    /* PNG con transparencia — sin caja detrás */
+    .nav-logo img {
+      height: 32px;
+      width: auto;
+      display: block;
     }
-    .nav-logo-text span {
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      opacity: 0.92;
-    }
+
     .nav-brand-text {
       text-decoration: none;
       color: inherit;
@@ -80,64 +68,53 @@
       font-weight: 600;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.95);
+      color: rgba(255,255,255, 0.95);
     }
     .nav-brand-sub {
       font-size: 12px;
-      color: rgba(255,255,255,0.58);
+      color: rgba(255,255,255, 0.62);
       font-weight: 400;
     }
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px;
+    .btn-navy {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       padding: 10px 22px;
       border-radius: 4px;
       font-size: 13px;
       font-weight: 600;
       text-decoration: none;
-      border: 1px solid transparent;
-      transition: background 0.18s, border-color 0.18s;
-    }
-    .btn-primary {
-      background: var(--btg-light);
-      color: #fff;
-    }
-    .btn-primary:hover { background: #2a6bb8; }
-    .btn-navy {
       background: var(--btg-navy);
       color: #fff;
+      border: 1px solid transparent;
+      transition: background 0.18s;
     }
     .btn-navy:hover { background: var(--btg-blue); }
-    .btn-outline {
-      background: transparent;
-      color: var(--btg-navy);
-      border-color: rgba(10,20,100,0.35);
-    }
-    .btn-outline:hover { background: rgba(10,20,100,0.06); border-color: var(--btg-navy); }
-    .btn svg { flex-shrink: 0; opacity: 0.9; }
-    .btn-nav-dash {
-      background: var(--btg-light);
-      color: #fff;
-      border-color: transparent;
-    }
-    .btn-nav-dash:hover { background: #2a6bb8; }
 
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+    .wrap {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
 
-    /* ── Hero two columns ── */
     .hero-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 40px;
-      align-items: center;
+      align-items: start;
       padding: 44px 0 36px;
     }
     @media (max-width: 880px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 32px; padding-top: 28px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 36px; padding-top: 28px; }
     }
 
-    .hero-copy { text-align: left; }
-    @media (max-width: 880px) { .hero-copy { text-align: center; } }
+    .hero-copy {
+      text-align: left;
+    }
+    @media (max-width: 880px) {
+      .hero-copy { text-align: center; }
+    }
 
     .hero-copy h1 {
       font-size: clamp(22px, 3.2vw, 30px);
@@ -148,72 +125,90 @@
       line-height: 1.22;
       max-width: 520px;
     }
+
     .hero-sub {
       font-size: 14px;
       color: var(--text2);
       max-width: 440px;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
-    @media (max-width: 880px) { .hero-sub { margin-left: auto; margin-right: auto; } }
+    @media (max-width: 880px) {
+      .hero-sub { margin-left: auto; margin-right: auto; }
+      .hero-copy-actions { justify-content: center; }
+    }
 
     .hero-copy-actions {
-      display: flex; flex-wrap: wrap; gap: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    @media (max-width: 880px) { .hero-copy-actions { justify-content: center; } }
 
-    /* Flags — PNG assets */
-    .flags-block { margin-bottom: 0; }
+    /* Banderas: sin tarjeta / sin caja — solo sobre el fondo de la página */
+    .flags-zone {
+      text-align: center;
+    }
+    @media (min-width: 881px) {
+      .flags-zone { text-align: center; padding-top: 8px; }
+    }
+
     .flags-label {
       font-size: 11px;
       letter-spacing: 0.09em;
       text-transform: uppercase;
       color: var(--text3);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       font-weight: 600;
+      text-align: center;
     }
-    @media (max-width: 880px) { .flags-label { text-align: center; } }
 
     .flags-row {
-      display: flex; flex-wrap: wrap;
-      gap: 14px;
-      justify-content: flex-start;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
-    @media (max-width: 880px) { .flags-row { justify-content: center; } }
 
     .flag-entry {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
+
+    /* Botón-bandera circular, sin fondo blanco detrás del bloque completo */
     .flag-btn {
-      width: 72px;
-      height: 72px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-      box-shadow: 0 4px 14px rgba(10,20,100,0.07);
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 2px solid rgba(10,20,100,0.12);
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       text-decoration: none;
       cursor: pointer;
-      transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
     .flag-btn img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+      border-radius: 50%;
     }
     a.flag-btn:hover {
-      border-color: var(--btg-light);
-      box-shadow: 0 6px 22px rgba(50,124,211,0.18);
+      border-color: rgba(50,124,211,0.55);
+      box-shadow: 0 6px 20px rgba(10,20,100,0.12);
       transform: translateY(-2px);
     }
-    .flag-btn[disabled], .flag-btn.is-disabled {
+
+    .flag-btn.is-disabled {
       opacity: 0.42;
       cursor: default;
       pointer-events: none;
       box-shadow: none;
     }
+
     .flag-caption {
       font-size: 10px;
       font-weight: 600;
@@ -225,52 +220,7 @@
       color: var(--btg-navy);
     }
 
-    /* Hero preview card */
-    .hero-preview {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0;
-      box-shadow: 0 12px 40px rgba(10,20,100,0.1);
-      overflow: hidden;
-    }
-    .hero-preview-cap {
-      background: linear-gradient(90deg, #f0f3f9, #eef1f6);
-      padding: 10px 14px;
-      font-size: 11px;
-      color: var(--text3);
-      border-bottom: 1px solid var(--border);
-      font-weight: 600;
-    }
-    .hero-preview-cap strong { color: var(--btg-navy); }
-    .hero-preview-body {
-      padding: 16px;
-      background: repeating-linear-gradient(
-        -12deg,
-        transparent,
-        transparent 10px,
-        rgba(10,20,100,0.02) 10px,
-        rgba(10,20,100,0.02) 11px
-      );
-    }
-    .hero-preview-body.flags-panel {
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: flex-start;
-      padding: 22px 20px 26px;
-    }
-    .flags-row.in-preview {
-      justify-content: center;
-      gap: 18px;
-    }
-    .flags-label.center {
-      text-align: center;
-      margin-bottom: 14px !important;
-    }
-
-    /* Navy stats ribbon */
+    /* Misma banda azul oscura que arriba */
     .stats-ribbon {
       background: var(--btg-navy);
       color: #e8eaf2;
@@ -293,197 +243,41 @@
       letter-spacing: -0.02em;
       margin-bottom: 2px;
     }
-    .stats-ribbon span { opacity: 0.85; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .stats-ribbon span {
+      opacity: 0.85;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
 
-    /* Credibility strip */
+    /* Última franja antes del final de página */
     .cred-bar {
-      max-width: 1040px; margin: 0 auto;
-      padding: 16px 28px;
-      display: flex; flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      align-items: center;
-      font-size: 12px;
-      color: var(--text3);
-      border-bottom: 1px solid rgba(188,196,210,0.7);
-    }
-    .cred-bar b { color: var(--btg-navy); font-weight: 600; }
-
-    section.panel {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 28px 26px;
-      margin: 26px auto;
-      max-width: 1040px;
-      box-shadow: 0 2px 12px rgba(10,20,100,0.04);
-    }
-    .panel-head-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .section-label {
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text3);
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .section-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-    .section-sub {
-      font-size: 13px;
-      color: var(--text2);
-      max-width: 420px;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-    @media (max-width: 900px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 560px) {
-      .features-grid { grid-template-columns: 1fr; }
-    }
-
-    .feature-card {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 18px 16px;
-      background: linear-gradient(180deg, #fafbfd, var(--surface));
-    }
-    .feature-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      background: rgba(10,20,100,0.06);
-      border: 1px solid rgba(10,20,100,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-    .feature-icon svg {
-      width: 18px; height: 18px;
-      stroke: var(--btg-navy);
-      stroke-width: 1.65;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .feature-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    .feature-desc {
-      font-size: 12px;
-      color: var(--text2);
-      line-height: 1.5;
-    }
-
-    .data-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-top: 24px;
-      padding-top: 22px;
-      border-top: 1px solid var(--border);
-    }
-    @media (max-width: 640px) { .data-row { grid-template-columns: 1fr; } }
-    .data-item-label {
-      font-size: 10px;
-      color: var(--text3);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    .data-item-value {
-      font-size: 13px;
-      color: var(--text);
-      line-height: 1.45;
-      font-weight: 400;
-    }
-    .data-item-value a { color: var(--btg-light); text-decoration: none; font-weight: 600; }
-    .data-item-value a:hover { text-decoration: underline; }
-
-    .cta-banner {
-      max-width: 1040px;
-      margin: 0 auto 32px;
-      padding: 0 28px;
-    }
-    .cta-inner {
-      background: linear-gradient(135deg, #0f1a5e 0%, #0A1464 50%, #133080 100%);
-      border-radius: 8px;
-      padding: 26px 32px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .cta-inner p {
-      font-size: 14px;
-      color: rgba(255,255,255,0.88);
-      max-width: 480px;
-    }
-    .cta-inner .lead {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-
-    footer {
-      padding: 22px 28px 32px;
       max-width: 1040px;
       margin: 0 auto;
+      padding: 18px 28px 48px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
       flex-wrap: wrap;
-      gap: 14px;
-      font-size: 11px;
+      gap: 18px;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
       color: var(--text3);
     }
-    .footer-left { display: flex; align-items: center; gap: 10px; }
-    .footer-right { display: flex; gap: 18px; }
-    .footer-right a {
-      color: var(--text2);
-      text-decoration: none;
-      font-weight: 500;
+    .cred-bar b {
+      color: var(--btg-navy);
+      font-weight: 600;
     }
-    .footer-right a:hover { color: var(--btg-navy); }
-
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-left">
-    <a class="nav-logo-text" href="/">BTG <span>Pactual</span></a>
-    <a class="nav-brand-text" href="/">
-      <span class="nav-brand-title">Latam Banks Monitor</span>
-      <span class="nav-brand-sub">ALM · BTG Pactual Chile</span>
-    </a>
-  </div>
-  <a class="btn btn-nav-dash" href="dashboard.html">
-    Open dashboard
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+  <a class="nav-logo" href="/" title="BTG Pactual">
+    <img src="assets/BTG%20Logo%20blanco.png" alt="BTG Pactual" />
+  </a>
+  <a class="nav-brand-text" href="/">
+    <span class="nav-brand-title">Latam Banks Monitor</span>
+    <span class="nav-brand-sub">ALM · BTG Pactual Chile</span>
   </a>
 </nav>
 
@@ -496,40 +290,36 @@
         Chile today, Colombia, Peru and Uruguay next.
       </p>
       <div class="hero-copy-actions">
-        <a class="btn btn-navy" href="dashboard.html">Enter Chile monitor</a>
-        <a class="btn btn-outline" href="#capabilities">Explore capabilities</a>
+        <a class="btn-navy" href="dashboard.html">Enter Chile monitor</a>
       </div>
     </div>
 
-    <div class="hero-preview">
-      <div class="hero-preview-cap"><strong>Launch by jurisdiction</strong></div>
-      <div class="hero-preview-body flags-panel">
-        <p class="flags-label center">Select a market</p>
-        <div class="flags-row in-preview">
-          <div class="flag-entry">
-            <a class="flag-btn" href="dashboard.html" title="Open Chile dashboard">
-              <img src="assets/Chile%20flag.png" alt="Chile" />
-            </a>
-            <span class="flag-caption live">Chile · live</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Colombia%20flag.png" alt="Colombia" />
-            </span>
-            <span class="flag-caption">Colombia</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Peru%20flag.png" alt="Peru" />
-            </span>
-            <span class="flag-caption">Peru</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
-            </span>
-            <span class="flag-caption">Uruguay</span>
-          </div>
+    <div class="flags-zone">
+      <p class="flags-label">Select a market</p>
+      <div class="flags-row">
+        <div class="flag-entry">
+          <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
+            <img src="assets/Chile%20flag.png" alt="Chile" />
+          </a>
+          <span class="flag-caption live">Chile · live</span>
+        </div>
+        <div class="flag-entry">
+          <span class="flag-btn is-disabled" title="Coming soon">
+            <img src="assets/Colombia%20flag.png" alt="Colombia" />
+          </span>
+          <span class="flag-caption">Colombia</span>
+        </div>
+        <div class="flag-entry">
+          <span class="flag-btn is-disabled" title="Coming soon">
+            <img src="assets/Peru%20flag.png" alt="Peru" />
+          </span>
+          <span class="flag-caption">Peru</span>
+        </div>
+        <div class="flag-entry">
+          <span class="flag-btn is-disabled" title="Coming soon">
+            <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
+          </span>
+          <span class="flag-caption">Uruguay</span>
         </div>
       </div>
     </div>
@@ -550,85 +340,6 @@
   <span>Accounting: <b>IFRS</b> effective Jan 2022</span>
   <span>Frequency: <b>Monthly updates</b></span>
 </div>
-
-<section class="panel" id="capabilities">
-  <div class="panel-head-row">
-    <div>
-      <div class="section-label">Platform</div>
-      <h2 class="section-title">What you can analyse</h2>
-    </div>
-    <p class="section-sub">System-wide views plus institution drill-down — all exportable.</p>
-  </div>
-
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-      <div class="feature-title">Bank Monitor</div>
-      <div class="feature-desc">Trend assets, placements, deposits, equity and income for up to five banks on the same timeline.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
-      <div class="feature-title">Balance sheet & income</div>
-      <div class="feature-desc">Full statements by bank and period. Switch Chilean pesos ↔ US dollar with CB published FX.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
-      <div class="feature-title">Account explorer</div>
-      <div class="feature-desc">Three-level CMF chart of accounts, compare balances across the system and drill to sub-accounts.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
-      <div class="feature-title">Rankings & comparative</div>
-      <div class="feature-desc">Equity rankings, ROE, period-on-period deltas and cross-bank benchmarks.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <div class="feature-title">Credit quality</div>
-      <div class="feature-desc">NPL trends, vintage analysis and concentration views derived from supervisory returns.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-      <div class="feature-title">Excel-ready</div>
-      <div class="feature-desc">One-click downloads for monitors, tables and ranking extracts — formatted for briefing packs.</div>
-    </div>
-  </div>
-
-  <div class="data-row">
-    <div>
-      <div class="data-item-label">Legal source</div>
-      <div class="data-item-value"><a href="https://www.cmfchile.cl" target="_blank" rel="noopener">cmfchile.cl</a></div>
-    </div>
-    <div>
-      <div class="data-item-label">Figures</div>
-      <div class="data-item-value">Millions Chilean pesos and USD equivalents</div>
-    </div>
-    <div>
-      <div class="data-item-label">Roadmap</div>
-      <div class="data-item-value">Multi-country supervisory feeds as they become standardized</div>
-    </div>
-  </div>
-</section>
-
-<div class="cta-banner">
-  <div class="cta-inner">
-    <div>
-      <div class="lead">No signup — jump straight into the monitor</div>
-      <p>Pick Chile from the jurisdiction tiles or open the dashboard to load the latest supervisory filings.</p>
-    </div>
-    <a class="btn btn-primary" href="dashboard.html">Open dashboard</a>
-  </div>
-</div>
-
-<footer>
-  <div class="footer-left">
-    <span>BTG Pactual · ALM Chile · Built by Alejandro Arango Ochoa</span>
-  </div>
-  <div class="footer-right">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="https://www.cmfchile.cl" target="_blank" rel="noopener">CMF Chile</a>
-    <a href="https://github.com/AlejoArango8a/LatamBanks" target="_blank" rel="noopener">GitHub</a>
-  </div>
-</footer>
 
 </body>
 </html>
