@@ -259,15 +259,19 @@ select option { background:var(--bg3); }
 #sidebarContent { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
 #sidebarBankControls { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
 /* Bank-only rail inactive when the active tab ignores the bank list */
-#sidebarBankPick.sidebar-disabled {
-  opacity: 0.42;
+/* Paused sections (banks / period): clearly inactive vs país + USD activos */
+#sidebarBankPick.sidebar-disabled,
+#sidebarPeriodPick.sidebar-disabled {
+  opacity: 0.24;
   pointer-events: none;
-  filter: saturate(0.45);
+  filter: saturate(0.25) brightness(0.82);
   user-select: none;
+  position: relative;
 }
-body.light #sidebarBankPick.sidebar-disabled {
-  opacity: 0.58;
-  filter: saturate(0.58);
+body.light #sidebarBankPick.sidebar-disabled,
+body.light #sidebarPeriodPick.sidebar-disabled {
+  opacity: 0.38;
+  filter: saturate(0.4) brightness(0.92);
 }
 
 /* Compact on-chart numeric labels toggle */
@@ -613,6 +617,7 @@ body.light #sidebarBankPick.sidebar-disabled {
           </div><!-- end secCountry -->
         </div><!-- end mob-section country -->
 
+        <div id="sidebarPeriodPick">
         <!-- ── Mobile Section: Period Range ── -->
         <div class="mob-section">
           <div class="mob-section-hd" onclick="toggleSection('secPeriod')">
@@ -630,6 +635,7 @@ body.light #sidebarBankPick.sidebar-disabled {
         </div>
           </div><!-- end secPeriod -->
         </div><!-- end mob-section period -->
+        </div><!-- end sidebarPeriodPick -->
 
         <div id="sidebarBankPick">
         <!-- ── Mobile Section: Banks ── -->

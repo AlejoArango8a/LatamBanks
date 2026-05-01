@@ -129,7 +129,7 @@
       margin-left: 10px;
     }
     .nav-brand-title {
-      font-size: 15px;
+      font-size: clamp(16px, 1.85vw, 18px);
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: none;
@@ -507,6 +507,16 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
+    @media (max-width: 560px) {
+      .stats-ribbon-item--narrow-hide {
+        display: none;
+      }
+      .stats-ribbon-inner {
+        flex-wrap: nowrap;
+        gap: clamp(14px, 5vw, 22px);
+        justify-content: space-evenly;
+      }
+    }
 
     /* Bajo la franja de stats (banner azul): barra oscura full-bleed fija para créditos */
     .cred-bar {
@@ -612,7 +622,7 @@
     <div><strong>24+</strong><span>banks monitored</span></div>
     <div><strong>2M+</strong><span>data points indexed</span></div>
     <div><strong>36+</strong><span>months of history</span></div>
-    <div><strong>4</strong><span>markets on roadmap</span></div>
+    <div class="stats-ribbon-item--narrow-hide"><strong>4</strong><span>markets on roadmap</span></div>
   </div>
 </div>
 

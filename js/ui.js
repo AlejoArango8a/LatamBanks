@@ -123,15 +123,17 @@ export function showTab(tab) {
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
-  const sidebarEl  = document.getElementById('sidebarEl');
-  const bankPick   = document.getElementById('sidebarBankPick');
+  const sidebarEl   = document.getElementById('sidebarEl');
+  const bankPick    = document.getElementById('sidebarBankPick');
+  const periodPick  = document.getElementById('sidebarPeriodPick');
   if (sidebarEl) sidebarEl.style.display = '';
-  if (bankPick) {
-    const greyBankPick = ['chileanbanks', 'accountview'].includes(tab);
-    bankPick.classList.toggle('sidebar-disabled', greyBankPick);
-    if (greyBankPick) bankPick.setAttribute('aria-disabled', 'true');
-    else bankPick.removeAttribute('aria-disabled');
-  }
+  const muteBankPeriod = ['chileanbanks', 'accountview'].includes(tab);
+  [bankPick, periodPick].forEach(section => {
+    if (!section) return;
+    section.classList.toggle('sidebar-disabled', muteBankPeriod);
+    if (muteBankPeriod) section.setAttribute('aria-disabled', 'true');
+    else section.removeAttribute('aria-disabled');
+  });
 
   requestAnimationFrame(() => {
     const activeTab = document.querySelector('.tab.active');
