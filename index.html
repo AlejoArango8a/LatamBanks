@@ -70,8 +70,8 @@
 
     .landing-bg img {
       object-fit: cover;
-      /* Encuadre hacia la parte superior de la imagen */
-      object-position: center top;
+      /* Priorizar mitad inferior: más skyline / edificios, menos solo cielo */
+      object-position: center 42%;
       /* Sin difuminación: nitidez completa */
       filter: brightness(0.64) saturate(0.94);
       -webkit-filter: brightness(0.64) saturate(0.94);
