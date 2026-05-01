@@ -1,14 +1,14 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js?v=bmon4';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon4';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon4';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon4';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon4';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon4';
-import { expSelect } from './explorer.js?v=bmon4';
-import { setStatus, showErr } from '../utils.js?v=bmon4';
+import { ST } from '../state.js?v=bmon5';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon5';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon5';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon5';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon5';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon5';
+import { expSelect } from './explorer.js?v=bmon5';
+import { setStatus, showErr } from '../utils.js?v=bmon5';
 
 // ---- KPI refresh (called after run or currency toggle) ----
 export function refreshKPIs() {
@@ -44,7 +44,7 @@ export function refreshKPIs() {
     <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
     <div class="kpi yellow kpi-btn" onclick="showResChart('dep_vista')"><div class="kpi-label">Demand Deposits</div><div class="kpi-val">${fmtKPI(m.depVista)}</div><div class="kpi-sub">${fmtP(m.depVista, m.depositos)} of deposits</div></div>
     <div class="kpi yellow kpi-btn" onclick="showResChart('dep_plazo')"><div class="kpi-label">Time Deposits</div><div class="kpi-val">${fmtKPI(m.depPlazo)}</div><div class="kpi-sub">${fmtP(m.depPlazo, m.depositos)} of deposits</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('bonos')"><div class="kpi-label">Bonds Issued</div><div class="kpi-val">${fmtKPI(m.bonos)}</div><div class="kpi-sub">${fmtP(m.bonos, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('bonos')"><div class="kpi-label">Issued Bonds</div><div class="kpi-val">${fmtKPI(m.bonos)}</div><div class="kpi-sub">${fmtP(m.bonos, m.totalAssets)} of assets</div></div>
     <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>

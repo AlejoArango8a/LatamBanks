@@ -1,8 +1,8 @@
 // ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon4';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon4';
+import { ST, CHART_STATE } from './state.js?v=bmon5';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon5';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -50,7 +50,8 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const W = rawW;
   const isResumen = canvasId === 'chartResumen';
   const H = isResumen ? 360 : 180;
-  const narrowCanvas = W < 440;
+  const narrowCanvas = W < 480;
+  const veryNarrow   = W < 360;
 
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
@@ -59,10 +60,16 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const PAD_tb = narrowCanvas ? { t: 13, b: 38 } : { t: 16, b: 44 };
+  const PAD_tb = veryNarrow
+    ? { t: 12, b: 48 }
+    : narrowCanvas ? { t: 13, b: 44 } : { t: 16, b: 44 };
   const PAD_r = narrowCanvas ? 10 : 16;
   const cH_prov = H - PAD_tb.t - PAD_tb.b;
-  const tickTarget = Math.max(4, Math.min(8, Math.floor(cH_prov / 34)));
+  const tickTarget = veryNarrow
+    ? Math.max(3, Math.min(5, Math.floor(cH_prov / 42)))
+    : narrowCanvas
+      ? Math.max(3, Math.min(6, Math.floor(cH_prov / 36)))
+      : Math.max(4, Math.min(8, Math.floor(cH_prov / 34)));
 
   ctx.clearRect(0, 0, W, H);
 
@@ -104,7 +111,7 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const scale = niceScale(rawLo, rawHi, tickTarget);
   const lo = scale.lo, hi = scale.hi;
 
-  const axisPx = narrowCanvas ? 9 : 10;
+  const axisPx = veryNarrow ? 8 : narrowCanvas ? 9 : 10;
   const axisCompact = narrowCanvas;
   ctx.font = `${axisPx}px DM Mono, monospace`;
   let maxLw = 28;
@@ -152,7 +159,13 @@ export function drawLineChart(canvasId, periodos, series, opts) {
 
   CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr, valueScale };
 
-  const showLabels = ST.showBarLabels === null ? nSeries === 1 : ST.showBarLabels === true;
+  /** On narrow canvas, do not auto-show bar top labels (readable axes first; user uses 123 toggle). */
+  const showLabels =
+    ST.showBarLabels === true
+      ? true
+      : ST.showBarLabels === false
+        ? false
+        : narrowCanvas ? false : nSeries === 1;
   const labelsToDraw = [];
 
   series.forEach((s, si) => {
@@ -194,15 +207,19 @@ export function drawLineChart(canvasId, periodos, series, opts) {
     ctx.fillText(txt, labelX, labelY);
   });
 
-  const xAxisPx = narrowCanvas ? 9 : 10;
-  const periodStep = Math.max(1, Math.ceil(n / (narrowCanvas ? 7 : 10)));
+  const xAxisPx = veryNarrow ? 8 : narrowCanvas ? 9 : 10;
+  const periodStep = Math.max(
+    1,
+    Math.ceil(n / (veryNarrow ? 4 : narrowCanvas ? 5 : 10))
+  );
   periodos.forEach((p, i) => {
     if (i % periodStep !== 0 && i !== n - 1) return;
     const x = PAD.l + i * groupW + groupW / 2;
     ctx.fillStyle = axisColor;
     ctx.font = `${xAxisPx}px DM Mono, monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText(periodLabel(p), x, PAD.t + cH + (narrowCanvas ? 32 : 36));
+    const xAxisYOff = veryNarrow ? 34 : narrowCanvas ? 34 : 36;
+    ctx.fillText(periodLabel(p), x, PAD.t + cH + xAxisYOff);
   });
 }
 

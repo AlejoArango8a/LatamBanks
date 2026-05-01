@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon4';
-import { ST } from './state.js?v=bmon4';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon4';
-import { fetchWithTimeout } from './api.js?v=bmon4';
+import { API_BASE } from './config.js?v=bmon5';
+import { ST } from './state.js?v=bmon5';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon5';
+import { fetchWithTimeout } from './api.js?v=bmon5';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon4';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon4';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon4';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon4';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon4';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon4';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon5';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon5';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon5';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon5';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon5';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon5';
 
 // UI
 import {
@@ -21,10 +21,11 @@ import {
   syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
-} from './ui.js?v=bmon4';
+  initTopbarTabsOverflow,
+} from './ui.js?v=bmon5';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon4';
+import { exportTableById, exportChartTable } from './export.js?v=bmon5';
 
 // ---- init() ----
 async function init() {
@@ -189,5 +190,6 @@ if (_clpBtn && _usdBtn) {
   _usdBtn.style.color      = '#000';
 }
 
+initTopbarTabsOverflow();
 init();
 fetchUSDRate();

@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST } from './state.js?v=bmon4';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon4';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon4';
-import { setStatus, showErr } from './utils.js?v=bmon4';
-import { sumRows } from './api.js?v=bmon4';
+import { ST } from './state.js?v=bmon5';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon5';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon5';
+import { setStatus, showErr } from './utils.js?v=bmon5';
+import { sumRows } from './api.js?v=bmon5';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -112,6 +112,58 @@ export function selAll(on) {
   fillBankList();
 }
 
+// ---- Tab bar scroll hint + fade (narrow viewports) ----
+let __topbarTabsOverflowWired = false;
+
+/** Sync fade + › chevron when tab row overflows horizontally. */
+export function syncTopbarTabsOverflow() {
+  const tabsEl = document.getElementById('tabsEl');
+  const chev = document.getElementById('tabsScrollChevron');
+  const fade = document.getElementById('tabsFade');
+  if (!tabsEl || !fade) return;
+  const ov = tabsEl.scrollWidth > tabsEl.clientWidth + 6;
+  fade.style.display = ov ? 'block' : 'none';
+
+  if (!chev) return;
+  if (!ov) {
+    chev.classList.remove('visible');
+    chev.setAttribute('disabled', 'disabled');
+    return;
+  }
+  const atEnd = tabsEl.scrollLeft + tabsEl.clientWidth >= tabsEl.scrollWidth - 8;
+  if (atEnd) {
+    chev.classList.remove('visible');
+    chev.setAttribute('disabled', 'disabled');
+  } else {
+    chev.classList.add('visible');
+    chev.removeAttribute('disabled');
+  }
+}
+
+export function initTopbarTabsOverflow() {
+  if (__topbarTabsOverflowWired) return;
+  __topbarTabsOverflowWired = true;
+
+  const tabsEl = document.getElementById('tabsEl');
+  const chev = document.getElementById('tabsScrollChevron');
+
+  if (tabsEl && chev) {
+    chev.addEventListener('click', () => {
+      if (chev.hasAttribute('disabled')) return;
+      tabsEl.scrollBy({ left: Math.min(180, Math.max(120, tabsEl.clientWidth * 0.45)), behavior: 'smooth' });
+    });
+    tabsEl.addEventListener('scroll', () => syncTopbarTabsOverflow(), { passive: true });
+  }
+
+  let resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => syncTopbarTabsOverflow(), 80);
+  });
+
+  syncTopbarTabsOverflow();
+}
+
 // ---- Tab routing ----
 export function showTab(tab) {
   ['resumen','chileanbanks','accountview','balance','resultados','comparativo','explorador','config'].forEach(t => {
@@ -143,9 +195,8 @@ export function showTab(tab) {
   requestAnimationFrame(() => {
     const activeTab = document.querySelector('.tab.active');
     if (activeTab) activeTab.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
-    const tabsEl = document.getElementById('tabsEl');
-    const fade   = document.getElementById('tabsFade');
-    if (tabsEl && fade) fade.style.display = tabsEl.scrollWidth <= tabsEl.clientWidth ? 'none' : 'block';
+    syncTopbarTabsOverflow();
+    requestAnimationFrame(() => syncTopbarTabsOverflow());
   });
 
   if (tab === 'resumen' && ST._series) {
@@ -294,7 +345,8 @@ export function refreshBarLabelsToggleButtons() {
     } else {
       btn.classList.add('state-auto');
       btn.textContent = '123';
-      btn.title = 'Auto · show values when exactly one bank · click for forced ON';
+      btn.title =
+        'Auto · wide charts: values on bars when one bank · narrow: labels off for readable axes · click for ON';
     }
   });
 }
