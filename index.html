@@ -70,9 +70,8 @@
 
     .landing-bg img {
       object-fit: cover;
+      /* Encuadre hacia la parte superior de la imagen */
       object-position: center top;
-      transform: translateY(-4%);
-      transform-origin: center top;
       /* Sin difuminación: nitidez completa */
       filter: brightness(0.64) saturate(0.94);
       -webkit-filter: brightness(0.64) saturate(0.94);
@@ -182,21 +181,20 @@
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: flex-start;
       justify-content: center;
       min-height: 0;
       width: 100%;
       max-width: none;
       margin: 0;
-      /* Más aire a la izquierda (cielo), bloque hero pegado a la derecha */
-      padding: 24px clamp(24px, 4vw, 40px) 28px clamp(32px, 8vw, 104px);
+      padding: 24px clamp(28px, 5vw, 48px) 28px clamp(28px, 7vw, 96px);
       box-sizing: border-box;
     }
     @media (max-width: 880px) {
       main.page-main.wrap {
-        align-items: flex-end;
-        padding-left: 22px;
-        padding-right: 22px;
+        align-items: center;
+        padding-left: 28px;
+        padding-right: 28px;
       }
     }
 
@@ -216,28 +214,40 @@
     }
 
     .hero-copy {
-      text-align: right;
+      text-align: left;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
       gap: 20px;
     }
+    @media (max-width: 880px) {
+      .hero-copy { text-align: center; max-width: none; }
+    }
+
+    /* Mismo ritmo vertical que gap en .hero-copy */
     .hero-copy .flags-zone {
       margin: 0;
-      text-align: right;
-      width: 100%;
+      text-align: left;
     }
     .hero-copy .flags-label {
-      text-align: right;
+      text-align: left;
       margin-bottom: 14px;
     }
     .hero-copy .flags-row {
-      justify-content: flex-end;
+      justify-content: flex-start;
+    }
+    @media (max-width: 880px) {
+      .hero-copy .flags-zone,
+      .hero-copy .flags-label {
+        text-align: center;
+      }
+      .hero-copy .flags-row {
+        justify-content: center;
+      }
     }
 
     /* Título hero en dos líneas — mismo azul soberio que el banner */
     .hero-title {
-      margin: -25px 0 0 auto;
+      margin: -25px 0 0 0;
       max-width: 560px;
       line-height: 1.2;
       font-family: inherit;
@@ -270,7 +280,7 @@
       font-size: 15px;
       color: rgba(248, 250, 255, 0.92);
       max-width: 440px;
-      margin: 0 0 0 auto;
+      margin: 0;
       font-weight: 500;
       line-height: 1.72;
       text-shadow:
@@ -283,11 +293,10 @@
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 20px;
-      justify-content: flex-end;
-      width: 100%;
     }
     @media (max-width: 880px) {
-      .hero-sub { margin-left: auto; margin-right: 0; }
+      .hero-sub { margin-left: auto; margin-right: auto; }
+      .hero-copy-actions { justify-content: center; }
     }
 
     .flags-zone {
