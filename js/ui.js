@@ -119,7 +119,7 @@ export function showTab(tab) {
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(b => {
-    const map = { resumen:'Bank Monitor', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', explorador:'Account Explorer' };
+    const map = { resumen:'Bank Monitor', chileanbanks:'Banks System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', explorador:'Account Explorer' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
