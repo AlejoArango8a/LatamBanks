@@ -1,12 +1,18 @@
 // ============================================================
 // EXPLORADOR — account hierarchy browser
 // ============================================================
-import { ST } from '../state.js?v=bmon13';
-import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon13';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon13';
-import { apiDatos } from '../api.js?v=bmon13';
-import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon13';
-import { setStatus } from '../utils.js?v=bmon13';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
+import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon14';
+import {
+  CO_CUENTAS_PRINCIPALES,
+  isExplorerTopAggregate,
+  explorerSubLevel,
+  explorerParentChildMatch,
+} from '../coCuentas.js?v=bmon14';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon14';
+import { apiDatos } from '../api.js?v=bmon14';
+import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon14';
+import { setStatus } from '../utils.js?v=bmon14';
 
 let expAbortController = null;
 
@@ -16,7 +22,9 @@ export function abortExplorerFetch() {
 }
 
 export function getExpAccounts() {
-  return Object.keys(CUENTAS_PRINCIPALES).sort();
+  const isCO = datasetIsoCountry() === 'CO';
+  const m = isCO ? CO_CUENTAS_PRINCIPALES : CUENTAS_PRINCIPALES;
+  return Object.keys(m).sort((a, b) => Number(a) - Number(b));
 }
 
 export function renderExpGrid() {
@@ -87,6 +95,7 @@ export async function expSelect(code) {
       return;
     }
     const lastP = periodos[periodos.length - 1];
+    const iso = datasetIsoCountry();
 
     const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos, bancos: banks, select: 'periodo,ins_cod,cuenta,monto_total' }, signal);
     if (signal.aborted) return;
@@ -135,7 +144,7 @@ export async function expSelect(code) {
     // Sub-accounts (3-level hierarchical tree)
     const digit    = code[0];
     const allSubs  = Object.keys(ST.planCuentas)
-      .filter(c => c[0] === digit && !/^[1-9]0{8}$/.test(c))
+      .filter(c => c[0] === digit && !isExplorerTopAggregate(c, iso))
       .sort();
 
     const subPanel = document.getElementById('expSubPanel');
@@ -149,12 +158,7 @@ export async function expSelect(code) {
         .filter(r => r.cuenta === c && banks.includes(r.ins_cod))
         .reduce((s, r) => s + (r.monto_total || 0), 0);
 
-      const getLevel = c => {
-        const trailing = c.match(/0+$/)?.[0].length || 0;
-        if (trailing >= 6) return 1;
-        if (trailing >= 2) return 2;
-        return 3;
-      };
+      const getLevel = c => explorerSubLevel(c, iso);
 
       if (!ST._expTreeExpanded) ST._expTreeExpanded = {};
 
@@ -186,10 +190,9 @@ export async function expSelect(code) {
           if (ST._expSubFilter && !hasData) return '';
           const lbl        = toSentenceCase(ST.planCuentas[c] || c);
           const level      = getLevel(c);
-          const children   = level < 3 ? allSubs.filter(ch =>
-            ch !== c && ch[0] === digit && getLevel(ch) === level + 1 &&
-            ch.startsWith(c.slice(0, c.length - (level === 1 ? 6 : (level === 2 ? 2 : 0))))
-          ) : [];
+          const children   = level < 3
+            ? allSubs.filter(ch => explorerParentChildMatch(c, ch, digit, iso))
+            : [];
           const hasChildren = children.length > 0;
           const isExpanded  = ST._expTreeExpanded[c];
           const isSelected  = ST.exp.selected === c;

@@ -1,17 +1,16 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST } from '../state.js?v=bmon13';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon13';
-import { apiDatos } from '../api.js?v=bmon13';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
+import { accountViewLevel } from '../coCuentas.js?v=bmon14';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon14';
+import { apiDatos } from '../api.js?v=bmon14';
 
-// ---- Hierarchy level helper ----
+const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
+
+// ---- Hierarchy level helper (Chile 9-digit CMF vs Colombia 6-digit CUIF) ----
 export function avGetLevel(c) {
-  if (/^[1-9]0+$/.test(c)) return 0;
-  const trailing = c.match(/0+$/)?.[0].length || 0;
-  if (trailing >= 4) return 1;
-  if (trailing >= 1) return 2;
-  return 3;
+  return accountViewLevel(String(c), _isoCt());
 }
 
 export function initAccountView() {
@@ -110,6 +109,11 @@ export function avRenderTree(box, digit, l1, allInGroup) {
       ? allInGroup.filter(ch => {
           if (ch === c) return false;
           if (avGetLevel(ch) !== level + 1) return false;
+          if (_isoCt() === 'CO') {
+            const pp = c.replace(/0+$/, '');
+            const cp = ch.replace(/0+$/, '');
+            return cp.startsWith(pp) && cp.length > pp.length;
+          }
           return ch.startsWith(sigPart);
         })
       : [];
@@ -272,8 +276,9 @@ export async function runAccountView() {
         </tr></thead>
         <tbody>`;
 
+    const BTG_BANK = datasetIsoCountry() === 'CO' ? 66 : 59;
     bankData.forEach(b => {
-      const isBTG      = b.code === 59;
+      const isBTG      = Number(b.code) === BTG_BANK;
       const dv         = (b.v2 - b.v1) * usdFactor;
       const dp         = b.v1 !== 0 ? ((b.v2 - b.v1) / Math.abs(b.v1) * 100) : null;
       const deltaColor = dv > 0 ? 'var(--green)' : dv < 0 ? 'var(--red)' : 'var(--text3)';

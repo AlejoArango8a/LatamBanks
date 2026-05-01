@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon13';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon13';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon13';
-import { setStatus, showErr } from './utils.js?v=bmon13';
-import { sumRows } from './api.js?v=bmon13';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon14';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon14';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon14';
+import { setStatus, showErr } from './utils.js?v=bmon14';
+import { sumRows } from './api.js?v=bmon14';
 
 // ---- Run & period ----
 export function onPeriodChange() {

@@ -1,8 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon13';
-import { ST } from './state.js?v=bmon13';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon14';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon14';
+import { ST } from './state.js?v=bmon14';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -171,7 +172,8 @@ export function getTipo(code) {
 
 // ---- Explorer account label ----
 export function getExpLabel(c) {
-  if (CUENTAS_PRINCIPALES[c]) return CUENTAS_PRINCIPALES[c];
+  const map = ST.country === 'colombia' ? CO_CUENTAS_PRINCIPALES : CUENTAS_PRINCIPALES;
+  if (map[c]) return map[c];
   const raw = ST.planCuentas[c] || c;
   return toSentenceCase(raw);
 }

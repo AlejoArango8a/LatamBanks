@@ -1,15 +1,15 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon13';
-import { CO_CUIF } from '../coCuentas.js?v=bmon13';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon13';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon13';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon13';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon13';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon13';
-import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon13';
-import { setStatus, showErr } from '../utils.js?v=bmon13';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
+import { CO_CUIF } from '../coCuentas.js?v=bmon14';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon14';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon14';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon14';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon14';
+import { expSelect, abortExplorerFetch, getExpAccounts } from './explorer.js?v=bmon14';
+import { setStatus, showErr } from '../utils.js?v=bmon14';
 
 let runAbortController = null;
 let roeAbortController = null;
@@ -266,7 +266,8 @@ export async function run() {
       document.getElementById('dashContent').style.display = 'flex';
       if (_bar) _bar.style.display = 'none';
       setStatus('ok', `Colombia CUIF · ${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s)`);
-      if (ST.exp.selected) expSelect(ST.exp.selected);
+      const expPick = ST.exp.selected;
+      if (expPick && getExpAccounts().includes(expPick)) await expSelect(expPick);
       return;
     }
 
@@ -375,7 +376,8 @@ export async function run() {
     if (_bar) _bar.style.display = 'none';
     setStatus('ok', `${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
 
-    if (ST.exp.selected) expSelect(ST.exp.selected);
+    const expPick = ST.exp.selected;
+    if (expPick && getExpAccounts().includes(expPick)) await expSelect(expPick);
     const hi = document.getElementById('headerInfo');
     if (hi) hi.textContent = rangeLabel;
 

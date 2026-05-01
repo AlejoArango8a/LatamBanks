@@ -23,6 +23,7 @@ export const BANK_COLORS = {
   53: '#5E2C8B',
   59: '#2563eb',
   62: '#00A9E4',
+  66: '#2563eb',
 };
 
 export const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
@@ -70,6 +71,7 @@ export const BANK_LOGOS = {
   60:  'https://www.ccb.cn/favicon.ico',
   61:  'https://www.bankofchina.com/favicon.ico',
   62:  'https://www.tanner.cl/favicon.ico',
+  66:  'https://www.btgpactual.com/favicon.ico',
 };
 
 export const MESES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -103,6 +105,7 @@ export const FELLER_RATINGS = {
   60: 'AAA',
   61: 'AAA',
   62: 'AA-',
+  66: 'AA',
 };
 
 export const RATING_COLORS = {
