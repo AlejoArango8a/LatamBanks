@@ -180,21 +180,38 @@
     }
 
     .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      align-items: center;
+      display: block;
+      max-width: 680px;
       padding: 0;
-    }
-    @media (max-width: 880px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 32px; }
     }
 
     .hero-copy {
       text-align: left;
     }
     @media (max-width: 880px) {
-      .hero-copy { text-align: center; }
+      .hero-copy { text-align: center; max-width: none; }
+    }
+
+    /* Banderas: entre párrafo hero y botón */
+    .hero-copy .flags-zone {
+      margin: 6px 0 22px;
+      text-align: left;
+    }
+    .hero-copy .flags-label {
+      text-align: left;
+      margin-bottom: 12px;
+    }
+    .hero-copy .flags-row {
+      justify-content: flex-start;
+    }
+    @media (max-width: 880px) {
+      .hero-copy .flags-zone,
+      .hero-copy .flags-label {
+        text-align: center;
+      }
+      .hero-copy .flags-row {
+        justify-content: center;
+      }
     }
 
     /* Título hero en dos líneas — mismo azul soberio que el banner */
@@ -232,7 +249,7 @@
       font-size: 14px;
       color: rgba(248, 250, 255, 0.92);
       max-width: 440px;
-      margin-bottom: 22px;
+      margin-bottom: 0;
       font-weight: 500;
       line-height: 1.6;
       text-shadow:
@@ -252,9 +269,6 @@
 
     .flags-zone {
       text-align: center;
-    }
-    @media (min-width: 881px) {
-      .flags-zone { text-align: center; padding-top: 8px; }
     }
 
     .flags-label {
@@ -422,38 +436,37 @@
       <p class="hero-sub">
         Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data.
       </p>
+      <div class="flags-zone">
+        <p class="flags-label">Select a Country</p>
+        <div class="flags-row">
+          <div class="flag-entry">
+            <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
+              <img src="assets/Chile%20flag.png" alt="Chile" />
+            </a>
+            <span class="flag-caption live">Chile · live</span>
+          </div>
+          <div class="flag-entry">
+            <span class="flag-btn is-disabled" title="Coming soon">
+              <img src="assets/Colombia%20flag.png" alt="Colombia" />
+            </span>
+            <span class="flag-caption">Colombia</span>
+          </div>
+          <div class="flag-entry">
+            <span class="flag-btn is-disabled" title="Coming soon">
+              <img src="assets/Peru%20flag.png" alt="Peru" />
+            </span>
+            <span class="flag-caption">Peru</span>
+          </div>
+          <div class="flag-entry">
+            <span class="flag-btn is-disabled" title="Coming soon">
+              <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
+            </span>
+            <span class="flag-caption">Uruguay</span>
+          </div>
+        </div>
+      </div>
       <div class="hero-copy-actions">
         <a class="btn-navy" href="dashboard.html">Enter Monitor</a>
-      </div>
-    </div>
-
-    <div class="flags-zone">
-      <p class="flags-label">Select a Country</p>
-      <div class="flags-row">
-        <div class="flag-entry">
-          <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
-            <img src="assets/Chile%20flag.png" alt="Chile" />
-          </a>
-          <span class="flag-caption live">Chile · live</span>
-        </div>
-        <div class="flag-entry">
-          <span class="flag-btn is-disabled" title="Coming soon">
-            <img src="assets/Colombia%20flag.png" alt="Colombia" />
-          </span>
-          <span class="flag-caption">Colombia</span>
-        </div>
-        <div class="flag-entry">
-          <span class="flag-btn is-disabled" title="Coming soon">
-            <img src="assets/Peru%20flag.png" alt="Peru" />
-          </span>
-          <span class="flag-caption">Peru</span>
-        </div>
-        <div class="flag-entry">
-          <span class="flag-btn is-disabled" title="Coming soon">
-            <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
-          </span>
-          <span class="flag-caption">Uruguay</span>
-        </div>
       </div>
     </div>
   </div>
