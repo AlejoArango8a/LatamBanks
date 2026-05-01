@@ -143,12 +143,17 @@
       font-size: 13px;
       font-weight: 600;
       text-decoration: none;
-      background: var(--banner-bg);
+      background: rgba(255, 255, 255, 0.12);
       color: #fff;
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: background 0.18s, border-color 0.18s;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
-    .btn-navy:hover { background: var(--banner-bg-mid); border-color: rgba(255,255,255,0.14); }
+    .btn-navy:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.42);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
 
     main.page-main {
       flex: 1 1 auto;
@@ -181,11 +186,21 @@
 
     .hero-copy {
       text-align: left;
-      padding: 24px 26px 26px;
-      border-radius: 12px;
-      background: rgba(252, 253, 255, 0.86);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 40px rgba(5, 13, 52, 0.14);
+      padding: 22px 24px 24px;
+      border-radius: 10px;
+      background: rgba(5, 13, 52, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+      .hero-copy,
+      .flags-zone {
+        background: rgba(5, 13, 52, 0.72);
+      }
     }
     @media (max-width: 880px) {
       .hero-copy { text-align: center; }
@@ -203,7 +218,7 @@
       display: block;
       font-size: clamp(26px, 4.2vw, 40px);
       letter-spacing: -0.03em;
-      color: var(--banner-bg);
+      color: rgba(255, 255, 255, 0.98);
       font-weight: 700;
     }
     .hero-title-sub {
@@ -212,16 +227,17 @@
       font-size: clamp(17px, 2.35vw, 24px);
       font-weight: 600;
       letter-spacing: -0.02em;
-      color: var(--banner-bg);
-      opacity: 0.92;
+      color: rgba(226, 234, 250, 0.9);
+      opacity: 1;
     }
 
     .hero-sub {
       font-size: 14px;
-      color: var(--text2);
+      color: rgba(210, 220, 240, 0.88);
       max-width: 440px;
       margin-bottom: 22px;
       font-weight: 500;
+      line-height: 1.6;
     }
     @media (max-width: 880px) {
       .hero-sub { margin-left: auto; margin-right: auto; }
@@ -234,14 +250,18 @@
       gap: 10px;
     }
 
-    /* Banderas: misma lógica de panel claro que el hero */
+    /* Cristal oscuro (misma familia visual que el header), no bloques blancos */
     .flags-zone {
       text-align: center;
-      padding: 22px 22px 26px;
-      border-radius: 12px;
-      background: rgba(252, 253, 255, 0.86);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 40px rgba(5, 13, 52, 0.14);
+      padding: 22px 20px 24px;
+      border-radius: 10px;
+      background: rgba(5, 13, 52, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     @media (min-width: 881px) {
       .flags-zone { text-align: center; }
@@ -251,7 +271,7 @@
       font-size: 11px;
       letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: var(--text3);
+      color: rgba(255, 255, 255, 0.48);
       margin-bottom: 16px;
       font-weight: 600;
       text-align: center;
@@ -271,13 +291,13 @@
       gap: 8px;
     }
 
-    /* Botón-bandera circular, sin fondo blanco detrás del bloque completo */
+    /* Botón-bandera circular sobre cristal oscuro */
     .flag-btn {
       width: 76px;
       height: 76px;
       border-radius: 50%;
-      border: 2px solid rgba(10,20,100,0.12);
-      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      background: rgba(0, 0, 0, 0.12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -293,8 +313,8 @@
       border-radius: 50%;
     }
     a.flag-btn:hover {
-      border-color: rgba(50,124,211,0.55);
-      box-shadow: 0 6px 20px rgba(10,20,100,0.12);
+      border-color: rgba(140, 190, 255, 0.65);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
       transform: translateY(-2px);
     }
 
@@ -308,12 +328,12 @@
     .flag-caption {
       font-size: 10px;
       font-weight: 600;
-      color: var(--text3);
+      color: rgba(200, 210, 230, 0.62);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
     .flag-caption.live {
-      color: var(--banner-bg);
+      color: #b8d7ff;
       font-weight: 700;
     }
 
