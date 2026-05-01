@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon9';
-import { ST, datasetIsoCountry } from './state.js?v=bmon9';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon9';
-import { fetchWithTimeout } from './api.js?v=bmon9';
+import { API_BASE } from './config.js?v=bmon10';
+import { ST, datasetIsoCountry } from './state.js?v=bmon10';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon10';
+import { fetchWithTimeout } from './api.js?v=bmon10';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon9';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon9';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon9';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon9';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon9';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon9';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon10';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon10';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon10';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon10';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon10';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon10';
 
 // UI
 import {
@@ -23,10 +23,10 @@ import {
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
-} from './ui.js?v=bmon9';
+} from './ui.js?v=bmon10';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon9';
+import { exportTableById, exportChartTable } from './export.js?v=bmon10';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];

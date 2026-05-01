@@ -1,8 +1,8 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon9';
-import { ST } from './state.js?v=bmon9';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon10';
+import { ST } from './state.js?v=bmon10';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -77,14 +77,58 @@ export function fmtChartPct(v, compact) {
 }
 
 // ---- Bank name ----
+
+/** Quita sufijos legales y normaliza espacios (principalmente CUIF Colombia). */
+function stripSociedadAnonima(s) {
+  return String(s || '')
+    .replace(/\s*,\s*N\.?\s*A\.?\.?\s*$/gi, '')
+    .replace(/\s*N\.?\s*A\.?\.?\s*$/gi, '')
+    .replace(/\s*,\s*S\.?\s*A\.?\.?\s*$/gi, '')
+    .replace(/\bS\.?\s*A\.?\.?\b/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/** Siglas / marcas que no se fuerzan a “capitalize” típico. */
+const CO_ACRONYM_FORMS = new Map([
+  ['btg', 'BTG'],
+  ['bbva', 'BBVA'],
+  ['hsbc', 'HSBC'],
+  ['itau', 'ITAU'],
+  ['citibank', 'Citibank'],
+]);
+
+/** Partículas en minúscula salvo primera palabra. */
+const CO_TITLE_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'en', 'al', 'a']);
+
+function titleCaseCoToken(lower) {
+  if (!lower) return '';
+  if (lower.includes('-'))
+    return lower.split('-').map(p => titleCaseCoToken(p)).join('-');
+  const ac = CO_ACRONYM_FORMS.get(lower);
+  if (ac) return ac;
+  const c = lower.charAt(0).toLocaleUpperCase('es-CO') + lower.slice(1).toLocaleLowerCase('es-CO');
+  return c;
+}
+
+export function polishColombianBankDisplay(raw) {
+  let s = stripSociedadAnonima(raw);
+  if (!s) return '';
+  const lowerLine = s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const tokens = lowerLine.split(/\s+/).filter(Boolean);
+  const cased = tokens.map((tok, i) => {
+    const w = titleCaseCoToken(tok);
+    if (i > 0 && CO_TITLE_PARTICLES.has(tok)) return tok;
+    return w;
+  });
+  return cased.join(' ');
+}
+
 export function bankName(code) {
   const fromApi = ST.bancos[code];
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
-    return String(fromApi)
-      .replace(/^BANCO\s+/i, '')
-      .replace(/\s+BANCO$/i, '')
-      .trim();
+    return polishColombianBankDisplay(fromApi);
   }
   return BANK_NAMES[code] || (fromApi || `Bank ${code}`)
     .replace('BANCO ', '').replace(/ CHILE$/, '').replace(/-CHILE$/, '');

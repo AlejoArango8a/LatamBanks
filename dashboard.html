@@ -86,7 +86,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   .mob-section-hd:active { background: var(--bg3); }
   .mob-section-bd { display: none; }
   .mob-section-bd.open { display: flex; flex-direction: column; }
-  .mob-section-bd.open .bank-scroll { max-height: 200px; overflow-y: auto; flex: 1; }
+  .mob-section-bd.open .bank-scroll {
+    max-height: min(52vh, 420px);
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .sidebar-block { min-width: 140px; }
   .main { overflow-y: visible; padding: 10px; }
 
@@ -287,6 +293,14 @@ select:focus, input:focus { border-color:var(--accent2); }
 select option { background:var(--bg3); }
 #sidebarContent { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
 #sidebarBankControls { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+#sidebarBankPick {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+#sidebarPeriodPick { flex-shrink: 0; }
 /* Bank-only rail inactive when the active tab ignores the bank list */
 /* Paused sections (banks / period): clearly inactive vs país + USD activos */
 #sidebarBankPick.sidebar-disabled,
@@ -337,7 +351,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
   border-style: solid;
   color: var(--red);
 }
-.bank-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:6px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+.bank-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding:6px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
 .bank-scroll::-webkit-scrollbar { width:5px; }
 .bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 .bank-item {
@@ -1103,7 +1117,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon9"></script>
+<script type="module" src="js/app.js?v=bmon10"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

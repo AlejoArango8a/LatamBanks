@@ -1,15 +1,15 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon9';
-import { CO_CUIF } from '../coCuentas.js?v=bmon9';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon9';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon9';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon9';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon9';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon9';
-import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon9';
-import { setStatus, showErr } from '../utils.js?v=bmon9';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon10';
+import { CO_CUIF } from '../coCuentas.js?v=bmon10';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon10';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon10';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon10';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon10';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon10';
+import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon10';
+import { setStatus, showErr } from '../utils.js?v=bmon10';
 
 let runAbortController = null;
 let roeAbortController = null;

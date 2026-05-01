@@ -1,10 +1,10 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST } from '../state.js?v=bmon9';
-import { bankColor } from '../config.js?v=bmon9';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon9';
-import { sumRows } from '../api.js?v=bmon9';
+import { ST } from '../state.js?v=bmon10';
+import { bankColor } from '../config.js?v=bmon10';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon10';
+import { sumRows } from '../api.js?v=bmon10';
 
 // ---- Balance section definitions ----
 export const BAL_SECTIONS = {
