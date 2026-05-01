@@ -258,6 +258,63 @@ select:focus, input:focus { border-color:var(--accent2); }
 select option { background:var(--bg3); }
 #sidebarContent { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
 #sidebarBankControls { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+/* Left rail inactive on tabs that ignore period/banks (Banks System, Account View) */
+#sidebarContent.sidebar-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: saturate(0.4);
+  user-select: none;
+}
+body.light #sidebarContent.sidebar-disabled {
+  opacity: 0.55;
+  filter: saturate(0.55);
+}
+
+/* Chart bar-value toggle — clearer than numeric glyphs */
+.bar-values-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 12px!important;
+  min-height: 28px;
+  border-radius: 4px!important;
+  font-family: var(--sans)!important;
+  font-size: 11px!important;
+  font-weight: 600!important;
+  cursor: pointer;
+  border: 1px solid var(--border)!important;
+  background: var(--bg3)!important;
+  color: var(--text2)!important;
+  letter-spacing: 0.02em;
+  transition: border-color .15s, color .15s, background .15s;
+  white-space: nowrap;
+}
+.bar-values-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.bar-values-toggle.state-auto {
+  border-color: var(--border2)!important;
+  border-style: dashed!important;
+}
+.bar-values-toggle.state-on {
+  background: rgba(56,189,248,0.12)!important;
+  border: 1px solid var(--accent)!important;
+  border-style: solid!important;
+  color: var(--accent)!important;
+}
+.bar-values-toggle.state-off {
+  background: var(--bg3)!important;
+  border: 1px solid var(--red)!important;
+  border-style: solid!important;
+  color: var(--red)!important;
+}
+.bar-values-toggle .bvt-sub {
+  font-weight: 500;
+  font-size: 10px;
+  opacity: 0.88;
+}
 .bank-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:6px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
 .bank-scroll::-webkit-scrollbar { width:5px; }
 .bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
@@ -677,7 +734,7 @@ select option { background:var(--bg3); }
                   <button class="rcbtn" onclick="showResChart('mora')">⚠️ NPL</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
-                  <button id="btnLabels" onclick="toggleBarLabels()" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);" title="Mostrar/ocultar valores">123</button>
+                  <button type="button" id="btnLabels" class="bar-values-toggle state-auto" onclick="toggleBarLabels()" title="Show numbers on top of bars. Auto = on when exactly one bank; click to force on or off."></button>
                 </div>
               </div>
               <div id="chartResumenWrap" class="chart-wrap"><canvas class="chart-canvas" id="chartResumen" height="360"></canvas></div>
@@ -880,7 +937,7 @@ select option { background:var(--bg3); }
                       <div style="font-size:11px;color:var(--text2);" id="expType"></div>
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;">
-                      <button id="btnExpLabels" onclick="toggleBarLabels()" style="padding:3px 8px;background:rgba(56,189,248,0.12);border:1px solid var(--accent);border-radius:3px;font-size:10px;color:var(--accent);cursor:pointer;font-family:var(--mono);" title="Mostrar/ocultar valores">123</button>
+                      <button type="button" id="btnExpLabels" class="bar-values-toggle state-auto" onclick="toggleBarLabels()" title="Show numbers on top of bars. Auto = on when exactly one bank; click to force on or off."></button>
                       <button id="expBackBtn" onclick="expGoBack()" style="display:none;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans);">← Back</button>
                     </div>
                   </div>

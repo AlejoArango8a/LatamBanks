@@ -18,7 +18,7 @@ import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.j
 import {
   fillPeriodSelectors, fillBankList, toggleBank, selAll,
   showTab, loadBankFromTable, goHome, toggleSidebar, toggleSection, selectCountry,
-  syncBrandLogoByTheme, toggleTheme, toggleBarLabels,
+  syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
   fetchUSDRate, convertAmt, toggleCurrency,
   setFont, changeFontSize, resetFontSize, applyFontSize,
 } from './ui.js';
@@ -79,6 +79,7 @@ async function init() {
     fillBankList();
     await run();
     showTab('resumen');
+    refreshBarLabelsToggleButtons();
     trackVisit();
 
     setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);

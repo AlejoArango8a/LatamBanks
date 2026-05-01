@@ -123,13 +123,14 @@ export function showTab(tab) {
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
-  const sidebarEl     = document.getElementById('sidebarEl');
-  const bankControls  = document.getElementById('sidebarBankControls');
+  const sidebarEl      = document.getElementById('sidebarEl');
+  const sidebarContent = document.getElementById('sidebarContent');
   if (sidebarEl) sidebarEl.style.display = '';
-  if (bankControls) {
-    const greyOut             = ['chileanbanks','accountview'].includes(tab);
-    bankControls.style.opacity      = greyOut ? '0.35' : '';
-    bankControls.style.pointerEvents = greyOut ? 'none'  : '';
+  if (sidebarContent) {
+    const greyOut = ['chileanbanks', 'accountview'].includes(tab);
+    sidebarContent.classList.toggle('sidebar-disabled', greyOut);
+    if (greyOut) sidebarContent.setAttribute('aria-disabled', 'true');
+    else sidebarContent.removeAttribute('aria-disabled');
   }
 
   requestAnimationFrame(() => {
@@ -267,24 +268,43 @@ export function toggleTheme() {
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
 }
 
-// ---- Bar labels toggle ----
-export function toggleBarLabels() {
-  ST.showBarLabels = ST.showBarLabels !== true;
-  ['btnLabels','btnExpLabels'].forEach(id => {
+// ---- Bar labels toggle (per-chart: Auto = show when single bank only) ----
+export function refreshBarLabelsToggleButtons() {
+  const ids = ['btnLabels', 'btnExpLabels'];
+  let stateCls;
+  let title;
+  let html;
+  if (ST.showBarLabels === true) {
+    stateCls = 'state-on';
+    title = 'Bar values: forced ON · click for OFF';
+    html = 'Bar values <span class="bvt-sub">ON</span>';
+  } else if (ST.showBarLabels === false) {
+    stateCls = 'state-off';
+    title = 'Bar values: forced OFF · click for Auto';
+    html = 'Bar values <span class="bvt-sub">OFF</span>';
+  } else {
+    stateCls = 'state-auto';
+    title = 'Bar values: Auto · shows numbers when exactly one bank · click for forced ON';
+    html = 'Bar values <span class="bvt-sub">Auto</span>';
+  }
+  ids.forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    if (ST.showBarLabels === true) {
-      btn.style.background  = 'rgba(56,189,248,0.12)';
-      btn.style.borderColor = 'var(--accent)';
-      btn.style.color       = 'var(--accent)';
-      btn.textContent       = '123 ✓';
-    } else {
-      btn.style.background  = 'var(--bg3)';
-      btn.style.borderColor = 'var(--red)';
-      btn.style.color       = 'var(--red)';
-      btn.textContent       = '123 ✗';
-    }
+    btn.classList.add('bar-values-toggle');
+    btn.classList.remove('state-on', 'state-off', 'state-auto');
+    btn.classList.add(stateCls);
+    btn.title = title;
+    btn.innerHTML = html;
   });
+}
+
+export function toggleBarLabels() {
+  if (ST.showBarLabels === null) ST.showBarLabels = true;
+  else if (ST.showBarLabels === true) ST.showBarLabels = false;
+  else ST.showBarLabels = null;
+
+  refreshBarLabelsToggleButtons();
+
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
   if (ST.exp.selected) window.expSelect(ST.exp.selected);
 }
