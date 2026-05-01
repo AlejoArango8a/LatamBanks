@@ -208,34 +208,65 @@
     }
 
     .hero-grid {
-      display: block;
       width: 100%;
-      max-width: min(520px, 100%);
+      max-width: min(960px, 100%);
       padding: 0;
       box-sizing: border-box;
     }
 
     .hero-copy {
       text-align: left;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "lead flags"
+        "actions flags";
+      column-gap: clamp(28px, 5vw, 72px);
+      row-gap: 20px;
+      align-items: start;
+    }
+    .hero-lead-col {
+      grid-area: lead;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
+    .hero-flags-col {
+      grid-area: flags;
+      align-self: center;
+      justify-self: end;
+      min-width: 0;
+    }
+    .hero-actions-row {
+      grid-area: actions;
+      margin-top: 0;
+    }
     @media (max-width: 880px) {
-      .hero-copy { text-align: center; max-width: none; }
+      .hero-copy {
+        text-align: center;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "lead"
+          "flags"
+          "actions";
+      }
+      .hero-flags-col {
+        justify-self: center;
+        width: 100%;
+      }
     }
 
-    /* Mismo ritmo vertical que gap en .hero-copy */
+    /* Mismo ritmo vertical que gap en bloque texto */
     .hero-copy .flags-zone {
       margin: 0;
-      text-align: left;
+      text-align: right;
     }
     .hero-copy .flags-label {
-      text-align: left;
+      text-align: right;
       margin-bottom: 14px;
     }
     .hero-copy .flags-row {
-      justify-content: flex-start;
+      justify-content: flex-end;
     }
     @media (max-width: 880px) {
       .hero-copy .flags-zone,
@@ -294,7 +325,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 0;
     }
     @media (max-width: 880px) {
       .hero-sub { margin-left: auto; margin-right: auto; }
@@ -319,7 +350,7 @@
     .flags-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 28px;
+      gap: clamp(22px, 3vw, 36px);
       justify-content: center;
     }
 
@@ -327,12 +358,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .flag-btn {
-      width: 54px;
-      height: 54px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.42);
       background: rgba(0, 0, 0, 0.2);
@@ -366,7 +397,7 @@
     }
 
     .flag-caption {
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 600;
       color: rgba(230, 235, 245, 0.88);
       text-transform: uppercase;
@@ -464,43 +495,47 @@
 
   <div class="hero-grid">
     <div class="hero-copy">
-      <h1 class="hero-title">
-        <span class="hero-title-main">Latam Banks Monitor</span>
-        <span class="hero-title-sub">Financial Information</span>
-      </h1>
-      <p class="hero-sub">
-        Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data.
-      </p>
-      <div class="flags-zone">
-        <p class="flags-label">Select a Country</p>
-        <div class="flags-row">
-          <div class="flag-entry">
-            <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
-              <img src="assets/Chile%20flag.png" alt="Chile" />
-            </a>
-            <span class="flag-caption live">Chile · live</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Colombia%20flag.png" alt="Colombia" />
-            </span>
-            <span class="flag-caption">Colombia</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Peru%20flag.png" alt="Peru" />
-            </span>
-            <span class="flag-caption">Peru</span>
-          </div>
-          <div class="flag-entry">
-            <span class="flag-btn is-disabled" title="Coming soon">
-              <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
-            </span>
-            <span class="flag-caption">Uruguay</span>
+      <div class="hero-lead-col">
+        <h1 class="hero-title">
+          <span class="hero-title-main">Latam Banks Monitor</span>
+          <span class="hero-title-sub">Financial Information</span>
+        </h1>
+        <p class="hero-sub">
+          Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data.
+        </p>
+      </div>
+      <aside class="hero-flags-col" aria-label="Country selection">
+        <div class="flags-zone">
+          <p class="flags-label">Select a Country</p>
+          <div class="flags-row">
+            <div class="flag-entry">
+              <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
+                <img src="assets/Chile%20flag.png" alt="Chile" />
+              </a>
+              <span class="flag-caption live">Chile · live</span>
+            </div>
+            <div class="flag-entry">
+              <span class="flag-btn is-disabled" title="Coming soon">
+                <img src="assets/Colombia%20flag.png" alt="Colombia" />
+              </span>
+              <span class="flag-caption">Colombia</span>
+            </div>
+            <div class="flag-entry">
+              <span class="flag-btn is-disabled" title="Coming soon">
+                <img src="assets/Peru%20flag.png" alt="Peru" />
+              </span>
+              <span class="flag-caption">Peru</span>
+            </div>
+            <div class="flag-entry">
+              <span class="flag-btn is-disabled" title="Coming soon">
+                <img src="assets/Uruguay%20flag.png" alt="Uruguay" />
+              </span>
+              <span class="flag-caption">Uruguay</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="hero-copy-actions">
+      </aside>
+      <div class="hero-copy-actions hero-actions-row">
         <form class="hero-enter-form" action="dashboard.html" method="get">
           <button type="submit" class="btn-navy">Enter Monitor</button>
         </form>
