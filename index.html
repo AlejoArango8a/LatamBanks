@@ -67,8 +67,9 @@
       object-fit: cover;
       object-position: center;
       transform: scale(1.06);
-      filter: blur(4px) brightness(0.52) saturate(0.9);
-      -webkit-filter: blur(4px) brightness(0.52) saturate(0.9);
+      /* Noche SCL: un poco más de brillo que el paisaje diurno */
+      filter: blur(4px) brightness(0.62) saturate(0.92);
+      -webkit-filter: blur(4px) brightness(0.62) saturate(0.92);
     }
 
     .landing-bg-veil {
@@ -365,8 +366,8 @@
 
 <div class="landing-bg" aria-hidden="true">
   <picture>
-    <source srcset="assets/Back-mountains.avif" type="image/avif" />
-    <img src="assets/Back-mountains.jpg" alt="" decoding="async" fetchpriority="low" />
+    <source srcset="assets/Back-sclnight.avif" type="image/avif" />
+    <img src="assets/Back-sclnight.jpg" alt="" decoding="async" fetchpriority="low" />
   </picture>
 </div>
 <div class="landing-bg-veil" aria-hidden="true"></div>
