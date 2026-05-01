@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST } from './state.js?v=bmon6';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon6';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon6';
-import { setStatus, showErr } from './utils.js?v=bmon6';
-import { sumRows } from './api.js?v=bmon6';
+import { ST } from './state.js?v=bmon7';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon7';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon7';
+import { setStatus, showErr } from './utils.js?v=bmon7';
+import { sumRows } from './api.js?v=bmon7';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -271,7 +271,11 @@ export function selectCountry(country) {
     btn.style.opacity     = c === country ? '1' : '0.45';
   });
   const overlay = document.getElementById('countryOverlay');
-  if (country === 'chile') { if (overlay) overlay.style.display = 'none'; return; }
+  if (country === 'chile') {
+    if (overlay) overlay.style.display = 'none';
+    ST.country = 'chile';
+    return;
+  }
   const names    = { colombia:'Colombia', peru:'Perú', uruguay:'Uruguay' };
   const flagImgs = { colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };
   if (overlay) {

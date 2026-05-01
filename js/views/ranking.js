@@ -1,10 +1,10 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST } from '../state.js?v=bmon6';
-import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon6';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon6';
-import { apiDatos } from '../api.js?v=bmon6';
+import { ST } from '../state.js?v=bmon7';
+import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon7';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon7';
+import { apiDatos } from '../api.js?v=bmon7';
 
 export function getCBRatings() {
   try {

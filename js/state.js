@@ -2,6 +2,8 @@
 // STATE — single source of truth for mutable app state
 // ============================================================
 export const ST = {
+  /** Active dataset jurisdiction (bootstrap sets Chile; clears cache when switching live backends). */
+  country: 'chile',
   periodos: [],
   bancos: {},
   selected: new Set(),

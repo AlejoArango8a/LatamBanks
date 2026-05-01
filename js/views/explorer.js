@@ -1,12 +1,19 @@
 // ============================================================
 // EXPLORADOR — account hierarchy browser
 // ============================================================
-import { ST } from '../state.js?v=bmon6';
-import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon6';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon6';
-import { apiDatos } from '../api.js?v=bmon6';
-import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon6';
-import { setStatus } from '../utils.js?v=bmon6';
+import { ST } from '../state.js?v=bmon7';
+import { CUENTAS_PRINCIPALES, bankColor } from '../config.js?v=bmon7';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, getExpLabel, periodLabel } from '../format.js?v=bmon7';
+import { apiDatos } from '../api.js?v=bmon7';
+import { drawLineChart, setupChartTooltip } from '../charts.js?v=bmon7';
+import { setStatus } from '../utils.js?v=bmon7';
+
+let expAbortController = null;
+
+/** Abort any in-flight Explorer API calls (e.g. when starting a dashboard run). */
+export function abortExplorerFetch() {
+  expAbortController?.abort();
+}
 
 export function getExpAccounts() {
   return Object.keys(CUENTAS_PRINCIPALES).sort();
@@ -40,6 +47,10 @@ export function initExplorer() {
 }
 
 export async function expSelect(code) {
+  abortExplorerFetch();
+  expAbortController = new AbortController();
+  const signal = expAbortController.signal;
+
   if (ST.exp.selected && ST.exp.selected !== code) ST.exp.history.push(ST.exp.selected);
   ST.exp.selected = code;
   renderExpGrid();
@@ -63,9 +74,22 @@ export async function expSelect(code) {
     const selHasta = document.getElementById('selHasta').value;
     const periodos = ST.periodos.filter(p => p >= selDesde && p <= selHasta);
     const banks    = [...ST.selected];
-    const lastP    = periodos[periodos.length - 1];
+    if (!periodos.length) {
+      setStatus('error', 'No periods in selected range');
+      document.getElementById('expResult').style.display      = 'block';
+      document.getElementById('expPlaceholder').style.display = 'none';
+      document.getElementById('expTable').innerHTML =
+        `<div class="empty"><p>No periods in From/To range. Adjust selectors and retry.</p></div>`;
+      return;
+    }
+    if (!banks.length) {
+      setStatus('error', 'No banks selected');
+      return;
+    }
+    const lastP = periodos[periodos.length - 1];
 
-    const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos, bancos: banks, select: 'periodo,ins_cod,cuenta,monto_total' });
+    const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos, bancos: banks, select: 'periodo,ins_cod,cuenta,monto_total' }, signal);
+    if (signal.aborted) return;
     const usdFactor  = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
     const bankCodes  = banks.filter(c => c !== 999);
 
@@ -119,7 +143,8 @@ export async function expSelect(code) {
       subPanel.style.display = 'block';
       document.getElementById('expSubTitle').textContent = `Sub-accounts`;
 
-      const subRows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: allSubs, periodos: [lastP], bancos: banks, select: 'cuenta,ins_cod,monto_total' });
+      const subRows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: allSubs, periodos: [lastP], bancos: banks, select: 'cuenta,ins_cod,monto_total' }, signal);
+      if (signal.aborted) return;
       const getSubVal = c => subRows
         .filter(r => r.cuenta === c && banks.includes(r.ins_cod))
         .reduce((s, r) => s + (r.monto_total || 0), 0);
@@ -207,6 +232,7 @@ export async function expSelect(code) {
 
     setStatus('ok', `Cuenta ${code}`);
   } catch (e) {
+    if (e?.name === 'AbortError') return;
     setStatus('error', 'Error loading account');
     console.error(e);
   }

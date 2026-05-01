@@ -1,31 +1,61 @@
 // ============================================================
 // API — network layer and data-access helpers
 // ============================================================
-import { API_BASE } from './config.js?v=bmon6';
-import { ST } from './state.js?v=bmon6';
+import { API_BASE } from './config.js?v=bmon7';
+import { ST } from './state.js?v=bmon7';
 
-export function fetchWithTimeout(url, options, ms) {
+export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, { ...options, signal: ctrl.signal })
-    .finally(() => clearTimeout(id));
+
+  const cleanup = () => clearTimeout(id);
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      cleanup();
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    }
+    const onParentAbort = () => ctrl.abort();
+    externalSignal.addEventListener('abort', onParentAbort);
+    return fetch(url, { ...options, signal: ctrl.signal })
+      .finally(() => {
+        cleanup();
+        externalSignal.removeEventListener('abort', onParentAbort);
+      });
+  }
+
+  return fetch(url, { ...options, signal: ctrl.signal }).finally(cleanup);
 }
 
-export async function apiDatos(params) {
-  const r = await fetchWithTimeout(`${API_BASE}/api/datos`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  }, 15000);
+export async function apiDatos(params, signal) {
+  const r = await fetchWithTimeout(
+    `${API_BASE}/api/datos`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    },
+    15000,
+    signal
+  );
   const j = await r.json();
   if (r.ok && j.ok && Array.isArray(j.rows)) return j.rows;
   throw new Error(j.error || `API /datos error ${r.status}`);
 }
 
-export async function fetchData(tipo, cuentas, periodos, bancos) {
-  const key = `${tipo}_${periodos.join(',')}_${[...bancos].sort().join(',')}_${cuentas.join(',')}`;
-  if (ST.data[key]) return ST.data[key];
-  const rows = await apiDatos({ tipo, periodos, bancos: [...bancos], cuentas });
+function dataCacheKey(tipo, periodos, bancos, cuentas) {
+  const country = ST.country || 'chile';
+  return `${country}|${tipo}|${periodos.join(',')}|${[...bancos].sort().join(',')}|${cuentas.join(',')}`;
+}
+
+export async function fetchData(tipo, cuentas, periodos, bancos, signal) {
+  const key = dataCacheKey(tipo, periodos, bancos, cuentas);
+  if (ST.data[key]) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    return ST.data[key];
+  }
+  const rows = await apiDatos({ tipo, periodos, bancos: [...bancos], cuentas }, signal);
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   ST.data[key] = rows;
   return rows;
 }

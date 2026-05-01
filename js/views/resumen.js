@@ -1,14 +1,21 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js?v=bmon6';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon6';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon6';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon6';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon6';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon6';
-import { expSelect } from './explorer.js?v=bmon6';
-import { setStatus, showErr } from '../utils.js?v=bmon6';
+import { ST } from '../state.js?v=bmon7';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon7';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon7';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon7';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon7';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon7';
+import { expSelect, abortExplorerFetch } from './explorer.js?v=bmon7';
+import { setStatus, showErr } from '../utils.js?v=bmon7';
+
+let runAbortController = null;
+let roeAbortController = null;
+
+function abortROEFetch() {
+  roeAbortController?.abort();
+}
 
 // ---- KPI refresh (called after run or currency toggle) ----
 export function refreshKPIs() {
@@ -141,11 +148,17 @@ export async function run() {
       '813000000','814000000'];
 
     console.log('[run] fetching data — periodos:', periodos.length, 'banks:', banks);
+    runAbortController?.abort();
+    abortExplorerFetch();
+    runAbortController = new AbortController();
+    const signal = runAbortController.signal;
+
     const [b1, r1, c1] = await Promise.all([
-      fetchData('b1', B1_CUENTAS, periodos, banks),
-      fetchData('r1', R1_CUENTAS, periodos, banks),
-      fetchData('c1', C1_CUENTAS, periodos, banks),
+      fetchData('b1', B1_CUENTAS, periodos, banks, signal),
+      fetchData('r1', R1_CUENTAS, periodos, banks, signal),
+      fetchData('c1', C1_CUENTAS, periodos, banks, signal),
     ]);
+    if (signal.aborted) return;
     console.log('[run] data received — b1:', b1.length, 'r1:', r1.length, 'c1:', c1.length);
 
     const firstBank = ST.selectedOrder[0] || banks[0];
@@ -228,6 +241,10 @@ export async function run() {
     if (hi) hi.textContent = rangeLabel;
 
   } catch (e) {
+    if (e?.name === 'AbortError') {
+      if (_bar) _bar.style.display = 'none';
+      return;
+    }
     if (_bar) _bar.style.display = 'none';
     setStatus('error', 'Error al consultar datos');
     showErr('Error al cargar datos: ' + e.message + ' — Abre la consola del navegador (F12) para más detalles.');
@@ -238,6 +255,7 @@ export async function run() {
 
 // ---- Resumen chart ----
 export function showResChart(tipo) {
+  abortROEFetch();
   ST._lastResChart = tipo;
 
   const chartWrap = document.getElementById('chartResumenWrap');
@@ -363,15 +381,34 @@ export async function showROEChart() {
   const titleEl = document.querySelector('#tab-resumen .panel-title');
   if (titleEl) titleEl.textContent = 'Annual ROE — All Banks';
 
+  abortROEFetch();
+  roeAbortController = new AbortController();
+  const signal = roeAbortController.signal;
+
+  if (!ST.periodos?.length) {
+    roeWrap.innerHTML = `<div class="empty"><p>No period data loaded. Reload the dashboard or adjust the date range.</p></div>`;
+    return;
+  }
+  const lastPPre = ST.periodos[ST.periodos.length - 1];
+  if (!lastPPre || String(lastPPre).length < 6) {
+    roeWrap.innerHTML = `<div class="empty"><p>No period data loaded. Reload the dashboard or adjust the date range.</p></div>`;
+    return;
+  }
+
   try {
-    const lastP     = ST.periodos[ST.periodos.length - 1];
-    const lastMonth = parseInt(lastP.slice(4, 6));
+    const lastP     = lastPPre;
+    const lastMonth = parseInt(lastP.slice(4, 6), 10);
+    if (!(lastMonth >= 1 && lastMonth <= 12)) {
+      roeWrap.innerHTML = `<div class="empty"><p>Invalid period for ROE. Try reloading.</p></div>`;
+      return;
+    }
     const allBanks  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
 
     const [rows, equityRows] = await Promise.all([
-      apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }),
-      apiDatos({ tipo: 'b1', cuentas: ['300000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }),
+      apiDatos({ tipo: 'r1', cuentas: ['590000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
+      apiDatos({ tipo: 'b1', cuentas: ['300000000'], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
     ]);
+    if (signal.aborted) return;
 
     const getUtil = c => rows.filter(r => r.ins_cod === c).reduce((s, r) => s + (r.monto_total || 0), 0);
     const getEq   = c => equityRows.filter(r => r.ins_cod === c).reduce((s, r) => s + (r.monto_total || 0), 0);
@@ -381,6 +418,11 @@ export async function showROEChart() {
       return { code: c, name: bankName(c), roe: eq ? (util / eq) * (12 / lastMonth) * 100 : null };
     }).filter(b => b.roe !== null && Math.abs(b.roe) > 0.01)
       .sort((a, b) => b.roe - a.roe);
+
+    if (!bankROEs.length) {
+      roeWrap.innerHTML = `<div class="empty"><p>No comparable ROE data for banks in this period.</p></div>`;
+      return;
+    }
 
     const maxAbs = Math.max(...bankROEs.map(b => Math.abs(b.roe)));
     let html = `<div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-family:var(--mono);">
@@ -404,8 +446,10 @@ export async function showROEChart() {
       </div>`;
     });
     html += '</div>';
+    if (signal.aborted) return;
     roeWrap.innerHTML = html;
   } catch (e) {
+    if (e?.name === 'AbortError') return;
     roeWrap.innerHTML = `<div style="color:var(--red);">Error: ${e.message}</div>`;
   }
 }
