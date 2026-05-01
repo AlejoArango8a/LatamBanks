@@ -1,18 +1,18 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon10';
-import { ST, datasetIsoCountry } from './state.js?v=bmon10';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon10';
-import { fetchWithTimeout } from './api.js?v=bmon10';
+import { API_BASE } from './config.js?v=bmon11';
+import { ST, datasetIsoCountry } from './state.js?v=bmon11';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon11';
+import { fetchWithTimeout } from './api.js?v=bmon11';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon10';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon10';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon10';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon10';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon10';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon10';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon11';
+import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon11';
+import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon11';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon11';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon11';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon11';
 
 // UI
 import {
@@ -20,13 +20,13 @@ import {
   showTab, loadBankFromTable, goHome, toggleSidebar, toggleSection, selectCountry,
   syncCountryFlagsVisual,
   syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
-  fetchUSDRate, convertAmt, toggleCurrency,
+  fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
-} from './ui.js?v=bmon10';
+} from './ui.js?v=bmon11';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon10';
+import { exportTableById, exportChartTable } from './export.js?v=bmon11';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -254,14 +254,7 @@ if (_darkBtn && _lightBtn) {
 }
 syncBrandLogoByTheme();
 
-const _clpBtn = document.getElementById('switchCLP');
-const _usdBtn = document.getElementById('switchUSD');
-if (_clpBtn && _usdBtn) {
-  _clpBtn.style.background = 'transparent';
-  _clpBtn.style.color      = 'var(--text3)';
-  _usdBtn.style.background = 'var(--yellow)';
-  _usdBtn.style.color      = '#000';
-}
+if (document.getElementById('switchCLP') && document.getElementById('switchUSD')) syncCurrencyToggleUI();
 
 initTopbarTabsOverflow();
 init();

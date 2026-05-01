@@ -1,8 +1,8 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon10';
-import { ST } from './state.js?v=bmon10';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon11';
+import { ST } from './state.js?v=bmon11';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -86,6 +86,8 @@ function stripSociedadAnonima(s) {
     .replace(/\s*,\s*S\.?\s*A\.?\.?\s*$/gi, '')
     .replace(/\bS\.?\s*A\.?\.?\b/gi, ' ')
     .replace(/\s{2,}/g, ' ')
+    // API / regex leave a dangling period after stripping legal suffixes (e.g. "Bancolombia .")
+    .replace(/(?:\s*\.)+\s*$/g, '')
     .trim();
 }
 

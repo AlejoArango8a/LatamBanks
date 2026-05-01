@@ -1,8 +1,8 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST } from './state.js?v=bmon10';
-import { periodLabel } from './format.js?v=bmon10';
+import { ST } from './state.js?v=bmon11';
+import { periodLabel } from './format.js?v=bmon11';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;
@@ -66,7 +66,7 @@ export function addMetaSheet(wb) {
     ['Built by',            'Alejandro Arango Ochoa — ALM BTG Pactual Chile'],
     ['Data updated through', lastPLabel],
     ['Exported on',         todayStr],
-    ['Currency',            ST.currency === 'USD' ? `USD (1 USD = $${Math.round(ST.usdRate || 0).toLocaleString('es-CL')} CLP)` : 'CLP (MM$)'],
+    ['Currency',            ST.currency === 'USD' ? `USD (1 USD = $${Math.round(ST.usdRate || 0).toLocaleString('es-CL')} CLP)` : 'Local Ccy (MM$, as reported)'],
     ['Values',              'Raw numbers (no abbreviation)'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(metaData);

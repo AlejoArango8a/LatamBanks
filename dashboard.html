@@ -100,6 +100,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   .topbar { flex-wrap: nowrap; height: auto; min-height: 48px; padding: 6px 10px; gap: 4px; }
   .topbar-right { gap: 4px; flex-shrink: 0; }
   .topbar-right .status { display: none; } /* hide status text on mobile */
+  .ccy-toggle-opt { font-size: 8px; min-height: 20px; padding: 4px 6px; letter-spacing: 0.03em !important; }
+  .ccy-toggle-opt.ccy-l { padding-inline: 8px 5px !important; }
   .brand img { height: 22px !important; }
   .brand span { font-size: 10px !important; letter-spacing: 3px !important; }
 
@@ -231,6 +233,38 @@ body.light .tabs-scroll-chevron {
   flex-shrink:0;
   overflow:hidden;
 }
+.ccy-toggle {
+  display:inline-flex;
+  align-items:stretch;
+  cursor:pointer;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:2px;
+  font-family:var(--mono);
+  font-weight:600;
+  letter-spacing:0.06em;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.ccy-toggle-opt {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 8px;
+  min-height:22px;
+  border-radius:14px;
+  font-size:9px;
+  line-height:1.15;
+  color:var(--text3);
+  background:transparent;
+  transition:background 0.18s ease, color 0.18s ease;
+}
+.ccy-toggle-opt.ccy-l { padding-inline:10px 8px; }
+.ccy-toggle-opt.ccy-u { padding-inline:10px; letter-spacing:0.12em; }
+.ccy-toggle-opt.ccy-on.ccy-l { background:var(--accent); color:#111; letter-spacing:0.04em; }
+.ccy-toggle-opt.ccy-on.ccy-u { background:var(--yellow); color:#111; }
+body.light .ccy-toggle-opt.ccy-on.ccy-l { color:#0369a1; }
 .status-pill {
   display:inline-flex; align-items:center; gap:5px;
   padding:3px 10px;
@@ -614,14 +648,8 @@ body.light #sidebarPeriodPick.sidebar-disabled {
         aria-label="More tabs to the right · scroll sideways" title="Swipe or tap for more sections ›">›</button>
     </div>
 
-    <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
-      <div onclick="toggleCurrency()" style="
-        display:flex;align-items:center;gap:0;cursor:pointer;
-        background:var(--bg3);border:1px solid var(--border2);
-        border-radius:20px;padding:2px;font-family:var(--mono);font-size:11px;font-weight:500;">
-        <span id="switchCLP" style="padding:3px 10px;border-radius:16px;color:var(--text3);transition:all 0.2s;">CLP</span>
-        <span id="switchUSD" style="padding:3px 10px;border-radius:16px;background:var(--yellow);color:#000;transition:all 0.2s;">USD</span>
-      </div>
+    <div class="topbar-right">
+      <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span lang="en" id="switchCLP" class="ccy-toggle-opt ccy-l">Local Ccy</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
       <div onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
@@ -1117,7 +1145,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon10"></script>
+<script type="module" src="js/app.js?v=bmon11"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

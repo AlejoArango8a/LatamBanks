@@ -2,11 +2,11 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon10';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon10';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon10';
-import { setStatus, showErr } from './utils.js?v=bmon10';
-import { sumRows } from './api.js?v=bmon10';
+import { ST, datasetIsoCountry } from './state.js?v=bmon11';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon11';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon11';
+import { setStatus, showErr } from './utils.js?v=bmon11';
+import { sumRows } from './api.js?v=bmon11';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -414,21 +414,24 @@ export function convertAmt(clpMillions) {
   return clpMillions;
 }
 
+/** Visual state for the topbar segmented control (`#switchCLP` = Local Ccy, `#switchUSD` = USD). */
+export function syncCurrencyToggleUI() {
+  const localEl = document.getElementById('switchCLP');
+  const usdEl = document.getElementById('switchUSD');
+  if (!localEl || !usdEl) return;
+  const isUsd = ST.currency === 'USD';
+  localEl.classList.toggle('ccy-on', !isUsd);
+  usdEl.classList.toggle('ccy-on', isUsd);
+}
+
 export function toggleCurrency() {
   if (ST.currency === 'CLP') {
     if (!ST.usdRate) { alert('No se pudo obtener la tasa de cambio USD. Intenta nuevamente.'); return; }
     ST.currency = 'USD';
-    document.getElementById('switchCLP').style.background = 'transparent';
-    document.getElementById('switchCLP').style.color      = 'var(--text3)';
-    document.getElementById('switchUSD').style.background = 'var(--yellow)';
-    document.getElementById('switchUSD').style.color      = '#000';
   } else {
     ST.currency = 'CLP';
-    document.getElementById('switchCLP').style.background = 'var(--accent)';
-    document.getElementById('switchCLP').style.color      = '#000';
-    document.getElementById('switchUSD').style.background = 'transparent';
-    document.getElementById('switchUSD').style.color      = 'var(--text3)';
   }
+  syncCurrencyToggleUI();
   window.refreshKPIs();
   fillBankList();
   if (ST._series) window.showResChart(ST._lastResChart || 'patrimonio');
