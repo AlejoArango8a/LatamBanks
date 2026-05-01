@@ -30,9 +30,12 @@
       background: linear-gradient(180deg, var(--bg) 0%, var(--bg-shade) 100%);
       color: var(--text);
       min-height: 100vh;
+      min-height: 100dvh;
       font-size: 15px;
       font-weight: 400;
       line-height: 1.55;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Top bar — mismo tono sobrio que la franja de stats */
@@ -46,6 +49,7 @@
       padding: 16px 36px;
       background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
       border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
     }
 
     .nav-logo {
@@ -96,21 +100,33 @@
     }
     .btn-navy:hover { background: var(--banner-bg-mid); border-color: rgba(255,255,255,0.14); }
 
+    main.page-main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      padding: 20px 0 28px;
+      width: 100%;
+    }
+
     .wrap {
       max-width: 1040px;
       margin: 0 auto;
       padding: 0 28px;
+      width: 100%;
     }
 
     .hero-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 40px;
-      align-items: start;
-      padding: 44px 0 36px;
+      align-items: center;
+      padding: 0;
     }
     @media (max-width: 880px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 36px; padding-top: 28px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 32px; }
     }
 
     .hero-copy {
@@ -239,6 +255,12 @@
       color: var(--banner-bg);
     }
 
+    .page-bottom {
+      margin-top: auto;
+      flex-shrink: 0;
+      width: 100%;
+    }
+
     /* Misma franja sobria que el header */
     .stats-ribbon {
       background: linear-gradient(180deg, var(--banner-bg-mid) 0%, var(--banner-bg) 100%);
@@ -269,11 +291,12 @@
       letter-spacing: 0.08em;
     }
 
-    /* Última franja antes del final de página */
+    /* Última franja (sobre fondo página) · pegada al inferior del viewport por .page-bottom */
     .cred-bar {
-      max-width: 1040px;
+      max-width: none;
+      width: 100%;
       margin: 0 auto;
-      padding: 18px 28px 48px;
+      padding: 16px 28px 28px;
       display: flex;
       flex-wrap: wrap;
       gap: 18px;
@@ -292,7 +315,7 @@
 
 <nav>
   <a class="nav-logo" href="/" title="BTG Pactual">
-    <img src="assets/LogoBTG-SinFondo.png" alt="BTG Pactual" />
+    <img src="assets/LogoBTG-SinFondoBlanco.png" alt="BTG Pactual" />
   </a>
   <a class="nav-brand-text" href="/">
     <span class="nav-brand-title">Latam Banks Monitor</span>
@@ -300,7 +323,8 @@
   </a>
 </nav>
 
-<main class="wrap">
+<main class="page-main wrap">
+
   <div class="hero-grid">
     <div class="hero-copy">
       <h1 class="hero-title">
@@ -308,16 +332,15 @@
         <span class="hero-title-sub">Financial Information</span>
       </h1>
       <p class="hero-sub">
-        Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data —
-        Chile today, Colombia, Peru and Uruguay next.
+        Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data.
       </p>
       <div class="hero-copy-actions">
-        <a class="btn-navy" href="dashboard.html">Enter Chile monitor</a>
+        <a class="btn-navy" href="dashboard.html">Enter Monitor</a>
       </div>
     </div>
 
     <div class="flags-zone">
-      <p class="flags-label">Select a market</p>
+      <p class="flags-label">Select a Country</p>
       <div class="flags-row">
         <div class="flag-entry">
           <a class="flag-btn" href="dashboard.html" title="Open Chile monitor">
@@ -348,6 +371,7 @@
   </div>
 </main>
 
+<div class="page-bottom">
 <div class="stats-ribbon">
   <div class="stats-ribbon-inner">
     <div><strong>24+</strong><span>banks monitored</span></div>
@@ -361,6 +385,7 @@
   <span>Source: <b>CMF Chile</b> Circular 2.243</span>
   <span>Accounting: <b>IFRS</b> effective Jan 2022</span>
   <span>Frequency: <b>Monthly updates</b></span>
+</div>
 </div>
 
 </body>
