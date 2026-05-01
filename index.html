@@ -66,10 +66,10 @@
     .landing-bg img {
       object-fit: cover;
       object-position: center;
-      transform: scale(1.06);
-      /* Noche SCL: un poco más de brillo que el paisaje diurno */
-      filter: blur(4px) brightness(0.62) saturate(0.92);
-      -webkit-filter: blur(4px) brightness(0.62) saturate(0.92);
+      transform: scale(1.03);
+      /* Menos difuminación; brillo contenido sobre noche ciudad */
+      filter: blur(1.75px) brightness(0.58) saturate(0.93);
+      -webkit-filter: blur(1.75px) brightness(0.58) saturate(0.93);
     }
 
     .landing-bg-veil {
@@ -199,8 +199,12 @@
       display: block;
       font-size: clamp(26px, 4.2vw, 40px);
       letter-spacing: -0.03em;
-      color: var(--banner-bg);
+      color: #02081c;
       font-weight: 700;
+      text-shadow:
+        0 0 1px rgba(255,255,255,0.9),
+        0 2px 3px rgba(255,255,255,0.85),
+        0 8px 24px rgba(255,255,255,0.55);
     }
     .hero-title-sub {
       display: block;
@@ -208,15 +212,23 @@
       font-size: clamp(17px, 2.35vw, 24px);
       font-weight: 600;
       letter-spacing: -0.02em;
-      color: var(--banner-bg);
-      opacity: 0.92;
+      color: #07122a;
+      opacity: 0.98;
+      text-shadow:
+        0 0 1px rgba(255,255,255,0.85),
+        0 2px 3px rgba(255,255,255,0.75),
+        0 6px 20px rgba(255,255,255,0.45);
     }
 
     .hero-sub {
       font-size: 14px;
-      color: var(--text2);
+      color: #0e1524;
       max-width: 440px;
       margin-bottom: 22px;
+      font-weight: 500;
+      text-shadow:
+        0 1px 2px rgba(255,255,255,0.9),
+        0 2px 12px rgba(255,255,255,0.55);
     }
     @media (max-width: 880px) {
       .hero-sub { margin-left: auto; margin-right: auto; }
@@ -241,10 +253,11 @@
       font-size: 11px;
       letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: var(--text3);
+      color: #101828;
       margin-bottom: 16px;
       font-weight: 600;
       text-align: center;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.88), 0 2px 10px rgba(255,255,255,0.45);
     }
 
     .flags-row {
@@ -298,12 +311,15 @@
     .flag-caption {
       font-size: 10px;
       font-weight: 600;
-      color: var(--text3);
+      color: #1b2535;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.8);
     }
     .flag-caption.live {
-      color: var(--banner-bg);
+      color: #040c28;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.85), 0 0 12px rgba(180,210,255,0.35);
     }
 
     .page-bottom {
@@ -342,23 +358,27 @@
       letter-spacing: 0.08em;
     }
 
-    /* Última franja (sobre fondo página) · pegada al inferior del viewport por .page-bottom */
+    /* Bajo la franja de stats (banner azul): barra oscura full-bleed fija para créditos */
     .cred-bar {
       max-width: none;
       width: 100%;
       margin: 0 auto;
-      padding: 16px 28px 28px;
+      padding: 18px 28px 28px;
       display: flex;
       flex-wrap: wrap;
       gap: 18px;
       justify-content: center;
       align-items: center;
       font-size: 12px;
-      color: var(--text3);
+      background: linear-gradient(180deg, #2e3544 0%, #232834 52%, #1e232f 100%);
+      color: rgba(219,226,237,0.82);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      box-sizing: border-box;
     }
     .cred-bar b {
-      color: var(--banner-bg);
+      color: #f4f7fc;
       font-weight: 600;
+      letter-spacing: 0.02em;
     }
   </style>
 </head>
