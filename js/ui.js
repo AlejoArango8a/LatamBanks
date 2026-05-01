@@ -123,14 +123,14 @@ export function showTab(tab) {
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
-  const sidebarEl      = document.getElementById('sidebarEl');
-  const sidebarContent = document.getElementById('sidebarContent');
+  const sidebarEl  = document.getElementById('sidebarEl');
+  const bankPick   = document.getElementById('sidebarBankPick');
   if (sidebarEl) sidebarEl.style.display = '';
-  if (sidebarContent) {
-    const greyOut = ['chileanbanks', 'accountview'].includes(tab);
-    sidebarContent.classList.toggle('sidebar-disabled', greyOut);
-    if (greyOut) sidebarContent.setAttribute('aria-disabled', 'true');
-    else sidebarContent.removeAttribute('aria-disabled');
+  if (bankPick) {
+    const greyBankPick = ['chileanbanks', 'accountview'].includes(tab);
+    bankPick.classList.toggle('sidebar-disabled', greyBankPick);
+    if (greyBankPick) bankPick.setAttribute('aria-disabled', 'true');
+    else bankPick.removeAttribute('aria-disabled');
   }
 
   requestAnimationFrame(() => {
@@ -269,32 +269,26 @@ export function toggleTheme() {
 }
 
 // ---- Bar labels toggle (per-chart: Auto = show when single bank only) ----
+// ---- Compact "123" bar-labels toggle · Auto ⇄ forced ON ⇄ forced OFF ----
 export function refreshBarLabelsToggleButtons() {
-  const ids = ['btnLabels', 'btnExpLabels'];
-  let stateCls;
-  let title;
-  let html;
-  if (ST.showBarLabels === true) {
-    stateCls = 'state-on';
-    title = 'Bar values: forced ON · click for OFF';
-    html = 'Bar values <span class="bvt-sub">ON</span>';
-  } else if (ST.showBarLabels === false) {
-    stateCls = 'state-off';
-    title = 'Bar values: forced OFF · click for Auto';
-    html = 'Bar values <span class="bvt-sub">OFF</span>';
-  } else {
-    stateCls = 'state-auto';
-    title = 'Bar values: Auto · shows numbers when exactly one bank · click for forced ON';
-    html = 'Bar values <span class="bvt-sub">Auto</span>';
-  }
-  ids.forEach(id => {
+  ['btnLabels', 'btnExpLabels'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.classList.add('bar-values-toggle');
-    btn.classList.remove('state-on', 'state-off', 'state-auto');
-    btn.classList.add(stateCls);
-    btn.title = title;
-    btn.innerHTML = html;
+    btn.classList.remove('bar-values-toggle', 'state-on', 'state-off', 'state-auto');
+    btn.classList.add('lbl123-btn');
+    if (ST.showBarLabels === true) {
+      btn.classList.add('state-on');
+      btn.textContent = '123 ✓';
+      btn.title = 'Values on bars · forced ON · click for OFF';
+    } else if (ST.showBarLabels === false) {
+      btn.classList.add('state-off');
+      btn.textContent = '123 ✗';
+      btn.title = 'Values hidden · forced OFF · click for Auto';
+    } else {
+      btn.classList.add('state-auto');
+      btn.textContent = '123';
+      btn.title = 'Auto · show values when exactly one bank · click for forced ON';
+    }
   });
 }
 
