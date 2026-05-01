@@ -410,6 +410,28 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(100, 160, 255, 0.35);
     }
 
+    /* Celulares: banderas más chicas y una sola fila */
+    @media (max-width: 520px) {
+      .flags-row {
+        flex-wrap: nowrap;
+        gap: clamp(4px, 1.5vw, 9px);
+        justify-content: center;
+      }
+      .flag-btn {
+        width: clamp(42px, 12vw, 54px);
+        height: clamp(42px, 12vw, 54px);
+        border-width: 1.5px;
+      }
+      .flag-entry {
+        flex: 0 0 auto;
+        gap: 6px;
+      }
+      .flag-caption {
+        font-size: 8px;
+        letter-spacing: 0.03em;
+      }
+    }
+
     .page-bottom {
       margin-top: auto;
       flex-shrink: 0;
