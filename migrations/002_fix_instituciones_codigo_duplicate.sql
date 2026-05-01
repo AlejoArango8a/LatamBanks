@@ -1,30 +1,24 @@
 -- =============================================================================
--- Corrección: instituciones con código repetido entre Chile y Colombia
+-- Corrección: instituciones — mismo "codigo" en Chile y Colombia
 -- =============================================================================
--- Error típico al cargar Colombia:
---   duplicate key ... instituciones_codigo_key ... Key (codigo)=(1) already exists.
+-- Si SHOW CREATE TABLE instituciones muestra algo como:
+--   PRIMARY KEY (country, codigo)   ✅ correcto
+--   UNIQUE INDEX instituciones_codigo_key (codigo)   ❌ sobra — bloquea Colombia
 --
--- Causa: la tabla debe identificar cada banco como (country, codigo). Si sigue
--- existiendo unicidad sólo sobre "codigo", dos países no pueden tener el mismo número.
---
--- QUÉ HACER (con calma):
---
---  A) Ejecuta primero:
---       SHOW CREATE TABLE instituciones;
---
---  B) Interpreta PRIMARY KEY:
---       • Si solo aparece codigo sin country → ejecuta sólo la línea del BLOQUE 1.
---       • Si ya aparece (country, codigo) y el cargador igual falló → ejecuta el
---         comentario del BLOQUE 2 (quita los -- delante) tras confirmar nombre.
+-- Ejecuta UNA de las siguientes hasta que alguna aplique sin error (Cockroach
+-- puede usar distinta sintaxis por versión). Luego vuelve a correr:
+--   python colombia_loader.py --institutions-plan
 --
 -- =============================================================================
 
--- ─── BLOQUE 1: clave principal = país + código (migration paso 3) ────────────
+DROP INDEX IF EXISTS instituciones@instituciones_codigo_key CASCADE;
 
-ALTER TABLE instituciones ALTER PRIMARY KEY USING COLUMNS (country, codigo);
+-- Si la línea anterior falló por sintaxis, prueba:
+-- DROP INDEX IF EXISTS instituciones_codigo_key CASCADE;
 
-
--- ─── BLOQUE 2: unicidad vieja sólo-sobre-codigo (solo si hace falta) ─────────
--- Ejecutar sin los guiones `--` sólo después de revisar SHOW CREATE TABLE.
-
+-- ─── Opcional si lo anterior no existe como índice sino como constraint ─────
 -- ALTER TABLE instituciones DROP CONSTRAINT IF EXISTS instituciones_codigo_key;
+
+
+-- ─── Solo si no ves PRIMARY KEY (country, codigo) en SHOW CREATE ─────────────
+-- ALTER TABLE instituciones ALTER PRIMARY KEY USING COLUMNS (country, codigo);
