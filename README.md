@@ -15,7 +15,7 @@ Cargar nuevo mes CMF.bat    ← Lo que usas cada mes para subir datos
 cargar_zip.py               Script de carga ZIP CMF Chile (usa cmf_loader)
 colombia_loader.py           ETL Colombia · API Socrata CUIF → Cockroach (country CO)
 cmf_loader.py               Librería CMF Chile: ZIP → tabla datos_financieros (country CL)
-migrations/                 Migraciones SQL (p. ej. multi-país 001_country_multijurisdiction.sql)
+migrations/                 Migraciones SQL (multi-país: leer `001_country_multijurisdiction.sql`; pasos `001_country_step1..5`)
 .github/workflows/          GitHub Actions (carga CUIF Colombia programada)
 .env                        Tus credenciales (no se sube a GitHub)
 .env.example                Plantilla para crear el .env
@@ -60,8 +60,7 @@ pip install -r requirements.txt
 
 ## Colombia — CUIF (Superfinanciera · datos.gov.co)
 
-1. Aplica en **CockroachDB** el SQL  
-   **`migrations/001_country_multijurisdiction.sql`** (columna `country` y PK compuestas; Chile queda como `CL` por defecto).
+1. Aplica en **CockroachDB** la migración multi-país **en orden** (CockroachDB 25.x no admite “añadir `country` y cambiar la clave primaria en la misma tabla en un solo pegado”): ejecuta **`001_country_step1_add_columns.sql`**, luego **`001_country_step2_…`** … hasta **`step5`** (la guía está en **`migrations/001_country_multijurisdiction.sql`**).
 2. Carga inicial / incremental desde Socrata (API pública):
 
    ```

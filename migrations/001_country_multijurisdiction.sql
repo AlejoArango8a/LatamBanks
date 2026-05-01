@@ -1,13 +1,18 @@
--- Multi-country rows: CL (Chile CMF default) + CO (Colombia Socrata CUIF).
--- Run manually after backup against CockroachDB / Postgres-compatible.
--- Existing rows get country = CL via DEFAULT on ADD COLUMN.
-
-ALTER TABLE datos_financieros ADD COLUMN IF NOT EXISTS country STRING NOT NULL DEFAULT 'CL';
-ALTER TABLE instituciones ADD COLUMN IF NOT EXISTS country STRING NOT NULL DEFAULT 'CL';
-ALTER TABLE plan_cuentas ADD COLUMN IF NOT EXISTS country STRING NOT NULL DEFAULT 'CL';
-ALTER TABLE carga_log ADD COLUMN IF NOT EXISTS country STRING NOT NULL DEFAULT 'CL';
-
-ALTER TABLE datos_financieros ALTER PRIMARY KEY USING COLUMNS (country, periodo, tipo, ins_cod, cuenta);
-ALTER TABLE instituciones ALTER PRIMARY KEY USING COLUMNS (country, codigo);
-ALTER TABLE plan_cuentas ALTER PRIMARY KEY USING COLUMNS (country, cuenta);
-ALTER TABLE carga_log ALTER PRIMARY KEY USING COLUMNS (country, periodo);
+-- =============================================================================
+-- Multi-país (CL Chile + CO Colombia) — CockroachDB 25.x
+-- =============================================================================
+-- La consola agrupa todo en una transacción: NO mezcles en un solo pegado el
+-- "añadir columna country" con "cambiar clave primaria" en LA MISMA TABLA.
+--
+-- Ejecuta EN ORDEN, un archivo tras otro (cada uno = una o más instrucciones
+-- que pueden terminar en su propia transacción según cómo ejecutes):
+--
+--   1️⃣  001_country_step1_add_columns.sql
+--   2️⃣  001_country_step2_pk_datos_financieros.sql
+--   3️⃣  001_country_step3_pk_instituciones.sql
+--   4️⃣  001_country_step4_pk_plan_cuentas.sql
+--   5️⃣  001_country_step5_pk_carga_log.sql
+--
+-- Si el paso 1 ya funcionó antes del error: NO lo repitas si las columnas
+-- country ya existen (IF NOT EXISTS lo hace idempotente igualmente).
+-- =============================================================================
