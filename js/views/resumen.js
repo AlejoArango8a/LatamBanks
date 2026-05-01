@@ -1,20 +1,21 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST } from '../state.js?v=bmon5';
-import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon5';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon5';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon5';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon5';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon5';
-import { expSelect } from './explorer.js?v=bmon5';
-import { setStatus, showErr } from '../utils.js?v=bmon5';
+import { ST } from '../state.js?v=bmon6';
+import { BANK_COLORS, CHART_COLORS, bankColor } from '../config.js?v=bmon6';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon6';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon6';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon6';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon6';
+import { expSelect } from './explorer.js?v=bmon6';
+import { setStatus, showErr } from '../utils.js?v=bmon6';
 
 // ---- KPI refresh (called after run or currency toggle) ----
 export function refreshKPIs() {
-  if (!ST._kpiRaw) return;
+  if (!ST._kpiRaw?.lastP) return;
   const m          = ST._kpiRaw;
-  const lastMonth  = parseInt(m.lastP.slice(4, 6));
+  const lastMonth  = parseInt(String(m.lastP).slice(4, 6), 10);
+  if (!(lastMonth >= 1 && lastMonth <= 12)) return;
   const utilAnualizada = m.utilidad * (12 / lastMonth);
   const roe        = m.patrimonio ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
   const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
@@ -93,6 +94,13 @@ export async function run() {
   ST.hasta = selHasta;
 
   const todosLosPeriodos = ST.periodos.filter(p => p >= ST.desde && p <= ST.hasta);
+  if (!todosLosPeriodos.length) {
+    showErr('No hay períodos en el rango Desde/Hasta seleccionado. Elige otro intervalo.');
+    setStatus('error', 'Empty date range');
+    if (_bar) _bar.style.display = 'none';
+    document.getElementById('dashContent').style.display = 'flex';
+    return;
+  }
   const lastP = todosLosPeriodos[todosLosPeriodos.length - 1];
 
   let periodos;

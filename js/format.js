@@ -1,8 +1,8 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon5';
-import { ST } from './state.js?v=bmon5';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon6';
+import { ST } from './state.js?v=bmon6';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -48,7 +48,10 @@ export function fmtAxis(v, compact) {
 }
 
 // ---- Period & date formatters ----
-export const periodLabel = p => MESES[parseInt(p.slice(4, 6))] + ' ' + p.slice(0, 4);
+export const periodLabel = p =>
+  (!p || typeof p !== 'string' || p.length < 6)
+    ? '—'
+    : (MESES[parseInt(p.slice(4, 6), 10)] || '?') + ' ' + p.slice(0, 4);
 
 // ---- Simple ratio formatters ----
 export const fmtM = n => Math.round(n / 1e6).toLocaleString('es-CL');
