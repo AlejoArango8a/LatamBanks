@@ -25,12 +25,17 @@
       --sans: 'Inter', system-ui, sans-serif;
     }
 
-    html { font-family: var(--sans); }
+    html {
+      font-family: var(--sans);
+      min-height: 100%;
+      background-color: var(--bg-shade);
+    }
 
     body {
       font-family: var(--sans);
       position: relative;
-      background: var(--bg-shade);
+      /* Opaque background would paint on top of body::before/::after (negative z-index) and hide the image */
+      background: transparent;
       color: var(--text);
       min-height: 100vh;
       min-height: 100dvh;
@@ -45,7 +50,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      z-index: -2;
+      z-index: 0;
       background: url('assets/Back-sclnight.avif') center / cover no-repeat;
       filter: blur(4px) brightness(0.5) saturate(0.92);
       transform: scale(1.07);
@@ -56,9 +61,17 @@
       content: '';
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: 1;
       background: linear-gradient(180deg, rgba(245,247,250,0.84) 0%, rgba(215,220,230,0.88) 100%);
       pointer-events: none;
+    }
+
+    /* Sitio encima del fondo decorativo */
+    nav,
+    main.page-main,
+    .page-bottom {
+      position: relative;
+      z-index: 2;
     }
 
     /* Top bar — mismo tono sobrio que la franja de stats */
