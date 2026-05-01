@@ -14,7 +14,7 @@ const useOpenCors = (process.env.CORS_OPEN || '0') !== '0';
 if (useOpenCors) {
   app.use(cors({ origin: true, maxAge: 3600 }));
 } else {
-  const DEFAULT_FRONTEND = 'https://alejoarango8a.github.io';
+  const DEFAULT_FRONTEND = 'https://alejoarango8a.github.io,https://latambanks.vercel.app';
   const origins = (process.env.FRONTEND_URLS || DEFAULT_FRONTEND)
     .split(',')
     .map((s) => s.trim())
@@ -42,8 +42,8 @@ if (!process.env.COCKROACH_URL) {
 const pool = new Pool({
   connectionString: process.env.COCKROACH_URL,
   ssl: { rejectUnauthorized: false },
-  max: 5,
-  idleTimeoutMillis: 30000,
+  max: 2,                   // bajo para serverless (múltiples instancias en paralelo)
+  idleTimeoutMillis: 10000, // libera conexiones inactivas más rápido en serverless
   connectionTimeoutMillis: 10000,
 });
 
@@ -214,7 +214,12 @@ app.get('/api/visits', async (req, res) => {
 });
 
 // ============================================================
-// START
+// START — solo cuando se ejecuta directamente (local/Render)
+// En Vercel, el módulo se importa desde api/index.js y no escucha
 // ============================================================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API running on port ${PORT} — db: CockroachDB v2`));
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`API running on port ${PORT} — db: CockroachDB v2`));
+}
+
+module.exports = app;

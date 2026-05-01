@@ -1,7 +1,15 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-export const API_BASE = 'https://latambanks-api.onrender.com';
+// API_BASE: vacío ('') = mismo origen (Vercel, dominio propio).
+// GitHub Pages necesita la URL absoluta de Render como fallback transitorio.
+const _h = window.location.hostname;
+export const API_BASE =
+  (_h === 'localhost' || _h === '127.0.0.1')
+    ? 'http://localhost:3000'                          // desarrollo local
+    : _h.includes('github.io')
+      ? 'https://latambanks-api.onrender.com'         // GitHub Pages → Render
+      : '';                                            // Vercel / dominio propio → mismo origen
 
 export const BANK_COLORS = {
   1:  '#0A1464',
