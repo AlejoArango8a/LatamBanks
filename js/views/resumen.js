@@ -276,7 +276,7 @@ export function showResChart(tipo) {
     return { label: bankName(code), data, color };
   });
 
-  drawLineChart('chartResumen', periodos, series, ST.chartType);
+  drawLineChart('chartResumen', periodos, series);
   setupChartTooltip('chartResumen', 'chartTooltip');
 
   document.getElementById('resumenLegend').innerHTML = series.map(s =>

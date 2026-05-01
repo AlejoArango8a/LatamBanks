@@ -15,7 +15,6 @@ export const ST = {
 
   // UI prefs (set immediately so boot code can reference them)
   theme: 'light',
-  chartType: 'bars',
   showBarLabels: null,
   currency: 'USD',
   usdRate: null,
@@ -34,5 +33,5 @@ export const ST = {
 // Chart instances (canvas Chart.js objects if needed in future)
 export const CHARTS = {};
 
-// Bar/line chart hit-testing state, keyed by canvas ID
+// Bar chart tooltip hit-testing, keyed by canvas ID
 export const CHART_STATE = {};

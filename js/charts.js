@@ -1,5 +1,5 @@
 // ============================================================
-// CHARTS — canvas bar/line chart engine with tooltip support
+// CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
 import { ST, CHART_STATE } from './state.js';
 import { fmtAxis, periodLabel } from './format.js';
@@ -10,13 +10,14 @@ export function sparseData(rawData) {
   return rawData.map((v, i) => i < firstNonZero ? null : v);
 }
 
-export function niceScale(lo, hi) {
+export function niceScale(lo, hi, tickTarget = 4) {
   const allNeg = hi <= 0 && lo < 0;
   const allPos = lo >= 0 && hi > 0;
   const forceZero = !allNeg && (lo < 0 || (allPos && lo < hi * 0.2));
   const scaleLo = forceZero ? Math.min(0, lo) : lo;
   const range = hi - scaleLo || 1;
-  const roughStep = range / 4;
+  const tgt = Math.max(2, tickTarget);
+  const roughStep = range / tgt;
   const mag = Math.pow(10, Math.floor(Math.log10(Math.abs(roughStep) || 1)));
   const steps = [1, 2, 2.5, 5, 10];
   let step = mag;
@@ -30,14 +31,13 @@ export function niceScale(lo, hi) {
   return { ticks, lo: ticks[0], hi: ticks[ticks.length - 1] };
 }
 
-export function drawLineChart(canvasId, periodos, series, chartType) {
-  chartType = chartType || 'bars';
+export function drawLineChart(canvasId, periodos, series) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
   const rawW = canvas.parentElement.clientWidth || canvas.parentElement.offsetWidth;
   if (!rawW || rawW < 10) {
-    requestAnimationFrame(() => drawLineChart(canvasId, periodos, series, chartType));
+    requestAnimationFrame(() => drawLineChart(canvasId, periodos, series));
     return;
   }
 
@@ -45,6 +45,7 @@ export function drawLineChart(canvasId, periodos, series, chartType) {
   const W = rawW;
   const isResumen = canvasId === 'chartResumen';
   const H = isResumen ? 360 : 180;
+  const narrowCanvas = W < 440;
 
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
@@ -53,9 +54,10 @@ export function drawLineChart(canvasId, periodos, series, chartType) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const PAD = { t: 16, r: 16, b: 44, l: 72 };
-  const cW = W - PAD.l - PAD.r;
-  const cH = H - PAD.t - PAD.b;
+  const PAD_tb = narrowCanvas ? { t: 13, b: 38 } : { t: 16, b: 44 };
+  const PAD_r = narrowCanvas ? 10 : 16;
+  const cH_prov = H - PAD_tb.t - PAD_tb.b;
+  const tickTarget = Math.max(4, Math.min(8, Math.floor(cH_prov / 34)));
 
   ctx.clearRect(0, 0, W, H);
 
@@ -94,10 +96,28 @@ export function drawLineChart(canvasId, periodos, series, chartType) {
   rawHi += rangeGuard * 0.08;
   if (rawLo > 0) rawLo -= rangeGuard * 0.05;
 
-  const scale = niceScale(rawLo, rawHi);
+  const scale = niceScale(rawLo, rawHi, tickTarget);
   const lo = scale.lo, hi = scale.hi;
 
-  const toY  = v => PAD.t + cH - ((v - lo) / (hi - lo)) * cH;
+  const axisPx = narrowCanvas ? 9 : 10;
+  const axisCompact = narrowCanvas;
+  ctx.font = `${axisPx}px DM Mono, monospace`;
+  let maxLw = 28;
+  for (const tick of scale.ticks) {
+    const lw = ctx.measureText(fmtAxis(tick, axisCompact)).width;
+    if (lw > maxLw) maxLw = lw;
+  }
+  const PAD_l = Math.min(112, Math.max(38, Math.ceil(maxLw + 11)));
+  const PAD = {
+    t: PAD_tb.t,
+    r: PAD_r,
+    b: PAD_tb.b,
+    l: PAD_l,
+  };
+  const cW = W - PAD.l - PAD.r;
+  const cH = H - PAD.t - PAD.b;
+
+  const toY = v => PAD.t + cH - ((v - lo) / (hi - lo)) * cH;
   const zeroY = toY(0);
 
   const gridColor = ST.theme === 'light' ? '#d1dce8' : '#1e2d3d';
@@ -109,9 +129,9 @@ export function drawLineChart(canvasId, periodos, series, chartType) {
     if (y < PAD.t - 2 || y > PAD.t + cH + 2) return;
     ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cW, y); ctx.stroke();
     ctx.fillStyle = axisColor;
-    ctx.font = '10px DM Mono, monospace';
+    ctx.font = `${axisPx}px DM Mono, monospace`;
     ctx.textAlign = 'right';
-    ctx.fillText(fmtAxis(tick), PAD.l - 5, y + 3);
+    ctx.fillText(fmtAxis(tick, axisCompact), PAD.l - 5, y + 3);
   });
 
   if (rawLo < 0) {
@@ -127,83 +147,57 @@ export function drawLineChart(canvasId, periodos, series, chartType) {
 
   CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr };
 
-  if (chartType === 'line') {
-    series.forEach(s => {
-      const color = COLORS[s.color] || s.color;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2.5;
-      ctx.lineJoin = 'round';
+  const showLabels = ST.showBarLabels === null ? nSeries === 1 : ST.showBarLabels === true;
+  const labelsToDraw = [];
+
+  series.forEach((s, si) => {
+    const color = COLORS[s.color] || s.color;
+    s.data.forEach((v, i) => {
+      if (v === null) return;
+      const x = PAD.l + i * groupW + barPad + si * barW;
+      const refY = Math.min(Math.max(zeroY, PAD.t), PAD.t + cH);
+      const valY = Math.min(Math.max(toY(v), PAD.t), PAD.t + cH);
+      const barTop = Math.min(refY, valY);
+      const barBottom = Math.max(refY, valY);
+      const h = Math.max(1, barBottom - barTop);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.85;
       ctx.beginPath();
-      let started = false;
-      s.data.forEach((v, i) => {
-        if (v === null) { started = false; return; }
-        const x = PAD.l + (i + 0.5) * groupW;
-        const y = toY(v);
-        if (!started) { ctx.moveTo(x, y); started = true; }
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-      const lastIdx = s.data.reduceRight((f, v, i) => f === -1 && v !== null ? i : f, -1);
-      if (lastIdx >= 0) {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(PAD.l + (lastIdx + 0.5) * groupW, toY(s.data[lastIdx]), 4, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.roundRect(x, barTop, barW, h, 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
+
+      if (showLabels) {
+        const labelX = x + barW / 2;
+        const txt = fmtAxis(v, axisCompact);
+        const aboveY = barTop - 5;
+        const insideY = barTop + 11;
+        const labelY = aboveY > PAD.t + 12 ? aboveY : insideY;
+        labelsToDraw.push({ labelX, labelY, txt, inside: aboveY <= PAD.t + 12 });
       }
     });
-  } else {
-    const showLabels = ST.showBarLabels === null ? nSeries === 1 : ST.showBarLabels === true;
-    const labelsToDraw = [];
+  });
 
-    series.forEach((s, si) => {
-      const color = COLORS[s.color] || s.color;
-      s.data.forEach((v, i) => {
-        if (v === null) return;
-        const x = PAD.l + i * groupW + barPad + si * barW;
-        const refY  = Math.min(Math.max(zeroY, PAD.t), PAD.t + cH);
-        const valY  = Math.min(Math.max(toY(v),  PAD.t), PAD.t + cH);
-        const barTop    = Math.min(refY, valY);
-        const barBottom = Math.max(refY, valY);
-        const h = Math.max(1, barBottom - barTop);
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.85;
-        ctx.beginPath();
-        ctx.roundRect(x, barTop, barW, h, 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
+  ctx.font = `bold ${axisPx}px DM Mono, monospace`;
+  ctx.textAlign = 'center';
+  labelsToDraw.forEach(({ labelX, labelY, txt }) => {
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,35,0.85)';
+    ctx.fillRect(labelX - tw / 2 - 3, labelY - 11, tw + 6, 14);
+    ctx.fillStyle = ST.theme === 'light' ? '#1e293b' : '#f1f5f9';
+    ctx.fillText(txt, labelX, labelY);
+  });
 
-        if (showLabels) {
-          const labelX  = x + barW / 2;
-          const txt     = fmtAxis(v);
-          const aboveY  = barTop - 5;
-          const insideY = barTop + 11;
-          const labelY  = aboveY > PAD.t + 12 ? aboveY : insideY;
-          labelsToDraw.push({ labelX, labelY, v: txt, inside: aboveY <= PAD.t + 12 });
-        }
-      });
-    });
-
-    ctx.font = `bold 10px DM Mono, monospace`;
-    ctx.textAlign = 'center';
-    labelsToDraw.forEach(({ labelX, labelY, v }) => {
-      const txt = typeof v === 'string' ? v : fmtAxis(v);
-      const tw  = ctx.measureText(txt).width;
-      ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,35,0.85)';
-      ctx.fillRect(labelX - tw / 2 - 3, labelY - 11, tw + 6, 14);
-      ctx.fillStyle = ST.theme === 'light' ? '#1e293b' : '#f1f5f9';
-      ctx.fillText(txt, labelX, labelY);
-    });
-  }
-
-  const step = Math.ceil(n / 10);
+  const xAxisPx = narrowCanvas ? 9 : 10;
+  const periodStep = Math.max(1, Math.ceil(n / (narrowCanvas ? 7 : 10)));
   periodos.forEach((p, i) => {
-    if (i % step !== 0 && i !== n - 1) return;
+    if (i % periodStep !== 0 && i !== n - 1) return;
     const x = PAD.l + i * groupW + groupW / 2;
     ctx.fillStyle = axisColor;
-    ctx.font = '10px DM Mono, monospace';
+    ctx.font = `${xAxisPx}px DM Mono, monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText(periodLabel(p), x, PAD.t + cH + 36);
+    ctx.fillText(periodLabel(p), x, PAD.t + cH + (narrowCanvas ? 32 : 36));
   });
 }
 

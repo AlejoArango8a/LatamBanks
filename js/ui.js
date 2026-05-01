@@ -267,20 +267,7 @@ export function toggleTheme() {
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
 }
 
-// ---- Chart type & bar labels ----
-export function setChartType(type) {
-  ST.chartType = type;
-  ['btnBars','btnLine'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    const active = (id === 'btnBars' && type === 'bars') || (id === 'btnLine' && type === 'line');
-    btn.style.background  = active ? 'rgba(56,189,248,0.12)' : 'var(--bg3)';
-    btn.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
-    btn.style.color       = active ? 'var(--accent)' : 'var(--text2)';
-  });
-  if (ST._lastResChart) window.showResChart(ST._lastResChart);
-}
-
+// ---- Bar labels toggle ----
 export function toggleBarLabels() {
   ST.showBarLabels = ST.showBarLabels !== true;
   ['btnLabels','btnExpLabels'].forEach(id => {

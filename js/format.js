@@ -28,12 +28,20 @@ function _fmtKPIBase(clpRaw, decimals) {
 export const fmtKPI        = clpRaw => _fmtKPIBase(clpRaw, 0);
 export const fmtKPIDecimal = clpRaw => _fmtKPIBase(clpRaw, 1);
 
-// Axis label (values already divided by 1e9 = billions)
-export function fmtAxis(v) {
+// Axis label (values already divided by 1e9 = billions).
+// compact: shorter labels when chart width is small (mobile).
+export function fmtAxis(v, compact) {
   const abs = Math.abs(v);
   const sign = v < 0 ? '-' : '';
-  const sym = (ST.currency === 'USD' && ST.usdRate) ? 'USD ' : '';
-  if (abs >= 1000) return sign + sym + Math.round(abs / 1000).toLocaleString('es-CL') + ' bi';
+  const symRaw = ST.currency === 'USD' && ST.usdRate ? 'USD ' : '';
+  const sym = compact ? (symRaw ? 'USD' : '') : symRaw;
+  if (compact) {
+    if (abs >= 1000) return sign + sym + Math.round(abs / 1000).toLocaleString('es-CL') + ' bi';
+    if (abs >= 1) return sign + sym + abs.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'B';
+    if (abs >= 0.001) return sign + sym + (abs * 1000).toLocaleString('es-CL', { maximumFractionDigits: 0 }) + 'M';
+    return v === 0 ? '0' : sign + sym + abs.toFixed(2);
+  }
+  if (abs >= 1000) return sign + symRaw + Math.round(abs / 1000).toLocaleString('es-CL') + ' bi';
   if (abs >= 1)    return sign + sym + abs.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' B';
   if (abs >= 0.001) return sign + sym + (abs * 1000).toLocaleString('es-CL', { maximumFractionDigits: 0 }) + ' M';
   return v === 0 ? '0' : sign + sym + abs.toFixed(2);

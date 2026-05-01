@@ -92,7 +92,7 @@ export async function expSelect(code) {
       `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
     ).join('');
 
-    drawLineChart('chartExp', periodos, series, ST.chartType);
+    drawLineChart('chartExp', periodos, series);
     setupChartTooltip('chartExp', 'chartTooltip');
 
     const tableRows = bankCodes.map(c => ({
