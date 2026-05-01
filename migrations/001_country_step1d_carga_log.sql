@@ -1,0 +1,3 @@
+-- Paso 1d: SOLO carga_log.
+
+ALTER TABLE carga_log ADD COLUMN IF NOT EXISTS country STRING NOT NULL DEFAULT 'CL';

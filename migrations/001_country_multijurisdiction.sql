@@ -1,18 +1,21 @@
 -- =============================================================================
--- Multi-país (CL Chile + CO Colombia) — CockroachDB 25.x
+-- ORDEN COMPLETO (CockroachDB 25.x) — multi-país CL + CO
 -- =============================================================================
--- La consola agrupa todo en una transacción: NO mezcles en un solo pegado el
--- "añadir columna country" con "cambiar clave primaria" en LA MISMA TABLA.
+-- 1a–1d  Añaden la columna `country` UNA TABLA POR ARCHIVO (menos colas raras).
+-- 1-wait  Comprueba que no queden cambios de esquema en curso; ESPERA si hace falta.
+-- 2–5    Cambian la clave primaria, una tabla por paso.
 --
--- Ejecuta EN ORDEN, un archivo tras otro (cada uno = una o más instrucciones
--- que pueden terminar en su propia transacción según cómo ejecutes):
+--   1a → 001_country_step1a_datos_financieros.sql
+--   1b → 001_country_step1b_instituciones.sql
+--   1c → 001_country_step1c_plan_cuentas.sql
+--   1d → 001_country_step1d_carga_log.sql
+--   ⏳ → 001_country_step1_wait_for_jobs.sql   (OBLIGATORIO antes del paso 2)
+--   2  → 001_country_step2_pk_datos_financieros.sql
+--   3  → 001_country_step3_pk_instituciones.sql
+--   4  → 001_country_step4_pk_plan_cuentas.sql
+--   5  → 001_country_step5_pk_carga_log.sql
 --
---   1️⃣  001_country_step1_add_columns.sql
---   2️⃣  001_country_step2_pk_datos_financieros.sql
---   3️⃣  001_country_step3_pk_instituciones.sql
---   4️⃣  001_country_step4_pk_plan_cuentas.sql
---   5️⃣  001_country_step5_pk_carga_log.sql
---
--- Si el paso 1 ya funcionó antes del error: NO lo repitas si las columnas
--- country ya existen (IF NOT EXISTS lo hace idempotente igualmente).
+-- El archivo 001_country_step1_add_columns.sql junta 1a–1d: úsalo solo si tu
+-- consola ejecuta cada sentencia en su propia transacción; si falla el paso 2
+-- con "undergoing a schema change", usa 1a–1d + 1_wait en su lugar.
 -- =============================================================================

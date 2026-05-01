@@ -1,0 +1,21 @@
+-- =============================================================================
+-- ANTES del paso 2 (cambiar clave de datos_financieros) — lee con calma
+-- =============================================================================
+-- Cockroach aplica muchos cambios de esquema EN SEGUNDO PLANO. Si ejecutas el
+-- paso 2 demasiado pronto, verás:
+--   "table datos_financieros is currently undergoing a schema change"
+--
+-- Qué hacer:
+-- 1) Ejecuta la consulta de abajo (SHOW JOBS).
+-- 2) Mira si hay trabajos con estado "running" o "pending" que hablen de
+--    SCHEMA / schema change / datos_financieros.
+-- 3) NO ejecutes el archivo del paso 2 hasta que esos trabajos pasen a
+--    "succeeded" o desaparezcan de la lista activa.
+-- 4) Si la tabla es muy grande, puede tardar varios minutos u horas: es normal.
+-- 5) Tras quedar limpio, espera 1–2 minutos extra y entonces ejecuta el paso 2.
+--
+-- Si llevas HORAS igual: abre un ticket con Cockroach o revisa su documentación
+-- de "jobs" / "schema change" (no canceles jobs a menos que sepas qué haces).
+-- =============================================================================
+
+SHOW JOBS;
