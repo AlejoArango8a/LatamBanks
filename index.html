@@ -35,39 +35,57 @@
       line-height: 1.55;
     }
 
-    /* ── NAV: navy stripe + BTG white logo ── */
+    /* ── NAV: dark gray, BTG wordmark in white ── */
     nav {
-      display: flex; align-items: stretch;
-      min-height: 52px;
-      background: var(--surface2);
-      border-bottom: 3px solid var(--btg-navy);
-      box-shadow: 0 1px 3px rgba(10,20,100,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      min-height: 54px;
+      padding: 12px 32px;
+      background: #3a404d;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     }
-    .nav-btg {
-      display: flex; align-items: center;
-      justify-content: center;
-      padding: 0 22px;
-      background: var(--btg-navy);
-      flex-shrink: 0;
+    .nav-left {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      flex-wrap: wrap;
     }
-    .nav-btg img { height: 30px; width: auto; display: block; }
-    .nav-rest {
-      flex: 1; display: flex;
-      align-items: center; justify-content: space-between;
-      padding: 10px 32px;
-      gap: 16px; flex-wrap: wrap;
+    .nav-logo-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .nav-logo-text span {
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      opacity: 0.92;
     }
     .nav-brand-text {
-      text-decoration: none; color: inherit;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     .nav-brand-title {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.18em;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--btg-navy);
+      color: rgba(255,255,255,0.95);
     }
     .nav-brand-sub {
-      font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 400;
+      font-size: 12px;
+      color: rgba(255,255,255,0.58);
+      font-weight: 400;
     }
 
     .btn {
@@ -97,6 +115,12 @@
     }
     .btn-outline:hover { background: rgba(10,20,100,0.06); border-color: var(--btg-navy); }
     .btn svg { flex-shrink: 0; opacity: 0.9; }
+    .btn-nav-dash {
+      background: var(--btg-light);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-nav-dash:hover { background: #2a6bb8; }
 
     .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
 
@@ -115,21 +139,14 @@
     .hero-copy { text-align: left; }
     @media (max-width: 880px) { .hero-copy { text-align: center; } }
 
-    .hero-kicker {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text3);
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
     .hero-copy h1 {
-      font-size: clamp(26px, 3.8vw, 36px);
+      font-size: clamp(22px, 3.2vw, 30px);
       font-weight: 700;
-      letter-spacing: -0.035em;
+      letter-spacing: -0.022em;
       color: var(--btg-navy);
       margin-bottom: 14px;
-      line-height: 1.18;
+      line-height: 1.22;
+      max-width: 520px;
     }
     .hero-sub {
       font-size: 14px;
@@ -141,7 +158,6 @@
 
     .hero-copy-actions {
       display: flex; flex-wrap: wrap; gap: 10px;
-      margin-bottom: 22px;
     }
     @media (max-width: 880px) { .hero-copy-actions { justify-content: center; } }
 
@@ -237,27 +253,21 @@
         rgba(10,20,100,0.02) 11px
       );
     }
-    .mini-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .mini-pill {
-      flex: 1;
-      height: 38px;
-      border-radius: 4px;
-      background: #fff;
-      border: 1px solid var(--border);
+    .hero-preview-body.flags-panel {
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 22px 20px 26px;
     }
-    .mini-chart {
-      height: 120px;
-      border-radius: 4px;
-      background: linear-gradient(180deg, rgba(50,124,211,0.08), transparent);
-      border: 1px solid rgba(50,124,211,0.2);
-      position: relative;
+    .flags-row.in-preview {
+      justify-content: center;
+      gap: 18px;
     }
-    .mini-chart::after {
-      content: '';
-      position: absolute; left: 8%; right: 8%; bottom: 22%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--btg-light), transparent);
-      opacity: 0.65;
+    .flags-label.center {
+      text-align: center;
+      margin-bottom: 14px !important;
     }
 
     /* Navy stats ribbon */
@@ -451,12 +461,6 @@
       color: var(--text3);
     }
     .footer-left { display: flex; align-items: center; gap: 10px; }
-    .footer-left .ft-logo {
-      height: 22px;
-      padding: 2px 8px;
-      background: var(--btg-navy);
-      border-radius: 4px;
-    }
     .footer-right { display: flex; gap: 18px; }
     .footer-right a {
       color: var(--text2);
@@ -465,36 +469,28 @@
     }
     .footer-right a:hover { color: var(--btg-navy); }
 
-    @media (max-width: 640px) {
-      nav { flex-direction: column; }
-      .nav-btg { padding: 12px 20px; }
-      .nav-rest { padding: 14px 20px; }
-    }
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-btg">
-    <img src="assets/BTG%20Logo%20blanco.png" alt="BTG Pactual" />
-  </div>
-  <div class="nav-rest">
+  <div class="nav-left">
+    <a class="nav-logo-text" href="/">BTG <span>Pactual</span></a>
     <a class="nav-brand-text" href="/">
-      <div class="nav-brand-title">Latam Banks Monitor</div>
-      <div class="nav-brand-sub">ALM · BTG Pactual Chile · Public regulatory insights</div>
-    </a>
-    <a class="btn btn-navy" href="dashboard.html">
-      Open dashboard
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      <span class="nav-brand-title">Latam Banks Monitor</span>
+      <span class="nav-brand-sub">ALM · BTG Pactual Chile</span>
     </a>
   </div>
+  <a class="btn btn-nav-dash" href="dashboard.html">
+    Open dashboard
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+  </a>
 </nav>
 
 <main class="wrap">
   <div class="hero-grid">
     <div class="hero-copy">
-      <p class="hero-kicker">Regulatory filings · Monthly · CMF Chile</p>
-      <h1>A single view across the Latin American banking system</h1>
+      <h1>Latam Banks Monitor - Financial Information</h1>
       <p class="hero-sub">
         Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data —
         Chile today, Colombia, Peru and Uruguay next.
@@ -503,10 +499,13 @@
         <a class="btn btn-navy" href="dashboard.html">Enter Chile monitor</a>
         <a class="btn btn-outline" href="#capabilities">Explore capabilities</a>
       </div>
+    </div>
 
-      <div class="flags-block">
-        <p class="flags-label">Launch by jurisdiction</p>
-        <div class="flags-row">
+    <div class="hero-preview">
+      <div class="hero-preview-cap"><strong>Launch by jurisdiction</strong></div>
+      <div class="hero-preview-body flags-panel">
+        <p class="flags-label center">Select a market</p>
+        <div class="flags-row in-preview">
           <div class="flag-entry">
             <a class="flag-btn" href="dashboard.html" title="Open Chile dashboard">
               <img src="assets/Chile%20flag.png" alt="Chile" />
@@ -532,19 +531,6 @@
             <span class="flag-caption">Uruguay</span>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="hero-preview" aria-hidden="true">
-      <div class="hero-preview-cap"><strong>Preview</strong> — Bank Monitor · multi-bank curves · CLP / USD</div>
-      <div class="hero-preview-body">
-        <div class="mini-row">
-          <div class="mini-pill"></div>
-          <div class="mini-pill"></div>
-          <div class="mini-pill"></div>
-          <div class="mini-pill"></div>
-        </div>
-        <div class="mini-chart"></div>
       </div>
     </div>
   </div>
@@ -627,7 +613,7 @@
   <div class="cta-inner">
     <div>
       <div class="lead">No signup — jump straight into the monitor</div>
-      <p>Pick Chile from the tiles above or use the dashboard button to load regulators’ latest filings.</p>
+      <p>Pick Chile from the jurisdiction tiles or open the dashboard to load the latest supervisory filings.</p>
     </div>
     <a class="btn btn-primary" href="dashboard.html">Open dashboard</a>
   </div>
@@ -635,8 +621,7 @@
 
 <footer>
   <div class="footer-left">
-    <img class="ft-logo" src="assets/BTG%20Logo%20blanco.png" alt="BTG" />
-    <span>ALM · BTG Pactual Chile · Built by Alejandro Arango Ochoa</span>
+    <span>BTG Pactual · ALM Chile · Built by Alejandro Arango Ochoa</span>
   </div>
   <div class="footer-right">
     <a href="dashboard.html">Dashboard</a>
