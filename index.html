@@ -3,625 +3,325 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LatamBanks — Banking Intelligence for Latin America</title>
-  <meta name="description" content="Real-time financial monitor for Latin American banking systems. Official CMF data, monthly updates, multi-country coverage." />
+  <title>Latam Banks Monitor</title>
+  <meta name="description" content="Official CMF data — balance sheets, income statements, and credit quality for Latin American banks." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:   #06091a;
-      --navy2:  #0d1330;
-      --navy3:  #111827;
-      --blue:   #0A1464;
-      --accent: #2563eb;
-      --yellow: #F2DC21;
-      --white:  #f8fafc;
-      --gray:   #94a3b8;
-      --gray2:  #64748b;
-      --border: rgba(255,255,255,0.07);
-      --sans:   'Inter', system-ui, sans-serif;
+      --bg:        #e8eaed;
+      --bg2:       #dfe2e6;
+      --surface:   #f4f5f7;
+      --surface2:  #ffffff;
+      --text:      #1e293b;
+      --text2:     #475569;
+      --text3:     #64748b;
+      --border:    #cbd5e1;
+      --btg-navy:  #0A1464;
+      --btg-blue:  #1e3a8a;
+      --btg-light: #327CD3;
+      --sans:      'Inter', system-ui, sans-serif;
     }
-
-    html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--sans);
-      background: var(--navy);
-      color: var(--white);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.5;
     }
 
-    /* ── NAV ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 48px;
-      background: rgba(6,9,26,0.85);
-      backdrop-filter: blur(12px);
+      padding: 14px 40px;
+      background: var(--surface2);
       border-bottom: 1px solid var(--border);
     }
     .nav-brand {
       display: flex; align-items: center; gap: 12px;
-      text-decoration: none;
-    }
-    .nav-brand img { height: 26px; filter: brightness(0) invert(1); }
-    .nav-brand-text {
-      font-size: 11px; font-weight: 700; letter-spacing: 4px;
-      color: var(--white); text-transform: uppercase;
-    }
-    .nav-brand-text em { color: var(--yellow); font-style: normal; }
-    .nav-cta {
-      display: flex; align-items: center; gap: 8px;
-      padding: 9px 22px; border-radius: 6px;
-      background: var(--yellow); color: #000;
-      font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
-      text-decoration: none; transition: opacity 0.2s;
-    }
-    .nav-cta:hover { opacity: 0.88; }
-
-    /* ── HERO ── */
-    .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Subtle grid background */
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
-    }
-    /* Blue glow top-center */
-    .hero::after {
-      content: '';
-      position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
-      width: 600px; height: 400px;
-      background: radial-gradient(ellipse, rgba(37,99,235,0.18) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 14px; border-radius: 20px;
-      border: 1px solid rgba(242,220,33,0.3);
-      background: rgba(242,220,33,0.06);
-      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
-      color: var(--yellow); text-transform: uppercase;
-      margin-bottom: 28px; position: relative; z-index: 1;
-    }
-    .hero-badge-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--yellow); animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
-    }
-
-    .hero h1 {
-      font-size: clamp(36px, 6vw, 72px);
-      font-weight: 800; line-height: 1.08;
-      letter-spacing: -1.5px;
-      max-width: 860px;
-      position: relative; z-index: 1;
-      margin-bottom: 24px;
-    }
-    .hero h1 span { color: var(--yellow); }
-
-    .hero-sub {
-      font-size: clamp(15px, 2vw, 18px);
-      color: var(--gray);
-      max-width: 540px; line-height: 1.6;
-      position: relative; z-index: 1;
-      margin-bottom: 44px;
-    }
-
-    .hero-actions {
-      display: flex; align-items: center; gap: 16px;
-      position: relative; z-index: 1;
-      flex-wrap: wrap; justify-content: center;
-    }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 32px; border-radius: 8px;
-      background: var(--yellow); color: #000;
-      font-size: 15px; font-weight: 700;
-      text-decoration: none; transition: all 0.2s;
-      letter-spacing: 0.2px;
-    }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-primary svg { width: 16px; height: 16px; }
-
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 28px; border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--white); font-size: 15px; font-weight: 500;
-      text-decoration: none; transition: all 0.2s;
-    }
-    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
-
-    /* ── STATS BAR ── */
-    .stats {
-      background: var(--navy2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 36px 48px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 32px;
-    }
-    .stat-item { text-align: center; }
-    .stat-value {
-      font-size: 36px; font-weight: 800;
-      color: var(--white); letter-spacing: -1px;
-      display: block;
-    }
-    .stat-value .accent { color: var(--yellow); }
-    .stat-label {
-      font-size: 12px; color: var(--gray2);
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-top: 4px; display: block;
-    }
-
-    /* ── SECTION COMMON ── */
-    section { padding: 96px 48px; max-width: 1200px; margin: 0 auto; }
-    .section-label {
-      font-size: 11px; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--yellow);
-      margin-bottom: 16px;
-    }
-    .section-title {
-      font-size: clamp(28px, 4vw, 42px);
-      font-weight: 800; letter-spacing: -0.8px;
-      line-height: 1.12; margin-bottom: 16px;
-    }
-    .section-sub {
-      font-size: 16px; color: var(--gray); line-height: 1.6;
-      max-width: 520px; margin-bottom: 56px;
-    }
-
-    /* ── FEATURES ── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .feature-card {
-      background: var(--navy2);
-      padding: 32px 28px;
-      transition: background 0.2s;
-    }
-    .feature-card:hover { background: var(--navy3); }
-    .feature-icon {
-      width: 40px; height: 40px; border-radius: 8px;
-      background: rgba(37,99,235,0.12);
-      border: 1px solid rgba(37,99,235,0.2);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
-    }
-    .feature-icon svg { width: 20px; height: 20px; stroke: #60a5fa; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .feature-title {
-      font-size: 15px; font-weight: 700;
-      margin-bottom: 10px; color: var(--white);
-    }
-    .feature-desc {
-      font-size: 13px; color: var(--gray); line-height: 1.6;
-    }
-
-    /* ── COUNTRIES ── */
-    .countries-section { background: var(--navy2); }
-    .countries-section > div { max-width: 1200px; margin: 0 auto; padding: 96px 48px; }
-    .countries-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-    .country-card {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 28px 24px;
-      display: flex; flex-direction: column; gap: 12px;
-      transition: all 0.2s; position: relative; overflow: hidden;
-      background: rgba(255,255,255,0.02);
-    }
-    .country-card.active {
-      border-color: rgba(242,220,33,0.3);
-      background: rgba(242,220,33,0.04);
-      cursor: pointer;
       text-decoration: none; color: inherit;
     }
-    .country-card.active:hover { background: rgba(242,220,33,0.08); transform: translateY(-2px); }
-    .country-card.inactive { opacity: 0.45; }
-
-    .country-flag { font-size: 32px; line-height: 1; }
-    .country-name { font-size: 16px; font-weight: 700; }
-    .country-status {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
-      text-transform: uppercase;
+    .nav-brand img { height: 24px; }
+    .nav-brand-text {
+      font-size: 12px; font-weight: 500; letter-spacing: 0.12em;
+      color: var(--text2); text-transform: uppercase;
     }
-    .country-status.live { color: #4ade80; }
-    .country-status.soon { color: var(--gray2); }
-    .status-dot-sm { width: 5px; height: 5px; border-radius: 50%; }
-    .live .status-dot-sm { background: #4ade80; animation: pulse 2s infinite; }
-    .soon .status-dot-sm { background: var(--gray2); }
-    .country-detail { font-size: 12px; color: var(--gray2); line-height: 1.5; }
+    .nav-brand-text em { color: var(--btg-navy); font-style: normal; font-weight: 600; }
 
-    /* ── DATA SOURCE ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 4px;
+      font-size: 13px; font-weight: 500;
+      text-decoration: none; border: 1px solid transparent;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-primary {
+      background: var(--btg-navy); color: #fff;
+    }
+    .btn-primary:hover { background: var(--btg-blue); }
+    .btn-outline {
+      background: transparent; color: var(--btg-navy);
+      border-color: var(--btg-navy);
+    }
+    .btn-outline:hover { background: rgba(10, 20, 100, 0.06); }
+
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+    .hero {
+      padding: 36px 0 32px;
+      text-align: center;
+    }
+    .hero-line {
+      font-size: 12px; color: var(--text3); margin-bottom: 12px; font-weight: 500;
+    }
+
+    h1 {
+      font-size: clamp(22px, 4vw, 30px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: var(--text2);
+      max-width: 520px;
+      margin: 0 auto 22px;
+      font-weight: 400;
+    }
+
+    /* Country flags — direct access */
+    .flags-label {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 10px;
+    }
+    .flags-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .flag-entry { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .flag-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 1px solid var(--border); background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; line-height: 1;
+      text-decoration: none; color: inherit;
+      cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    a.flag-btn:hover {
+      border-color: var(--btg-light);
+      box-shadow: 0 0 0 3px rgba(50, 124, 211, 0.15);
+    }
+    .flag-btn[disabled], .flag-btn.flag-disabled {
+      opacity: 0.35; cursor: not-allowed; pointer-events: none;
+    }
+    .flag-caption {
+      font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .flag-caption.live { color: var(--btg-navy); }
+
+    .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    .stats-inline {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 8px 20px;
+      padding: 16px;
+      margin: 0 auto 28px;
+      max-width: 640px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px; color: var(--text3);
+    }
+    .stats-inline strong { color: var(--text); font-weight: 600; margin-right: 4px; }
+
+    section.panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 22px 20px;
+      margin-bottom: 16px;
+    }
+    .section-label {
+      font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 8px; font-weight: 500;
+    }
+    .section-title {
+      font-size: 17px; font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .section-sub {
+      font-size: 13px; color: var(--text2);
+      margin-bottom: 18px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+      background: var(--surface);
+    }
+    .feature-title {
+      font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+    }
+    .feature-desc {
+      font-size: 12px; color: var(--text2); line-height: 1.45;
+    }
+
     .data-row {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
-      gap: 32px; margin-top: 56px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid var(--border);
     }
-    .data-item { padding: 28px 0; border-top: 1px solid var(--border); }
-    .data-item-label { font-size: 11px; color: var(--gray2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-    .data-item-value { font-size: 15px; font-weight: 600; color: var(--white); line-height: 1.4; }
-    .data-item-value a { color: var(--accent); text-decoration: none; }
+    @media (max-width: 640px) { .data-row { grid-template-columns: 1fr; } }
+    .data-item-label {
+      font-size: 10px; color: var(--text3); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .data-item-value {
+      font-size: 12px; color: var(--text); line-height: 1.45;
+    }
+    .data-item-value a { color: var(--btg-light); text-decoration: none; }
     .data-item-value a:hover { text-decoration: underline; }
 
-    /* ── CTA SECTION ── */
-    .cta-section {
-      text-align: center; padding: 96px 48px;
-      max-width: 700px; margin: 0 auto;
-    }
-    .cta-section h2 {
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 800; letter-spacing: -0.8px;
-      margin-bottom: 20px;
-    }
-    .cta-section h2 span { color: var(--yellow); }
-    .cta-section p { font-size: 16px; color: var(--gray); margin-bottom: 40px; line-height: 1.6; }
-
-    /* ── FOOTER ── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 48px;
+      padding: 20px 24px 28px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 11px; color: var(--text3);
+      max-width: 928px; margin: 0 auto;
     }
-    .footer-left { display: flex; align-items: center; gap: 10px; }
-    .footer-left img { height: 20px; filter: brightness(0) invert(1); opacity: 0.5; }
-    .footer-copy { font-size: 12px; color: var(--gray2); }
-    .footer-right { display: flex; gap: 24px; }
-    .footer-right a { font-size: 12px; color: var(--gray2); text-decoration: none; transition: color 0.2s; }
-    .footer-right a:hover { color: var(--white); }
+    .footer-left { display: flex; align-items: center; gap: 8px; }
+    .footer-left img { height: 18px; opacity: 0.75; }
+    .footer-right { display: flex; gap: 16px; }
+    .footer-right a { color: var(--text3); text-decoration: none; }
+    .footer-right a:hover { color: var(--btg-navy); }
 
-    /* ── SCREENSHOT MOCKUP ── */
-    .mockup-wrap {
-      margin: 56px auto 0;
-      max-width: 900px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      position: relative; z-index: 1;
-    }
-    .mockup-bar {
-      background: var(--navy3);
-      padding: 10px 16px;
-      display: flex; align-items: center; gap: 6px;
-      border-bottom: 1px solid var(--border);
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #f87171; } .dot-y { background: #fbbf24; } .dot-g { background: #4ade80; }
-    .mockup-url {
-      margin: 0 auto;
-      background: rgba(255,255,255,0.05);
-      border-radius: 4px;
-      padding: 3px 16px;
-      font-size: 11px; color: var(--gray2);
-      font-family: monospace;
-    }
-    .mockup-body {
-      background: var(--navy3);
-      height: 340px;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--gray2);
-      font-size: 13px;
-      position: relative; overflow: hidden;
-    }
-    /* Fake dashboard preview */
-    .fake-dash {
-      position: absolute; inset: 0;
-      padding: 20px; display: flex; flex-direction: column; gap: 12px;
-    }
-    .fake-topbar {
-      height: 36px; background: rgba(255,255,255,0.04);
-      border-radius: 6px; border: 1px solid var(--border);
-    }
-    .fake-content { display: flex; gap: 12px; flex: 1; min-height: 0; }
-    .fake-sidebar { width: 160px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
-    .fake-main { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-    .fake-kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
-    .fake-kpi { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; height: 56px; }
-    .fake-chart { flex: 1; background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.15); border-radius: 6px; position: relative; overflow: hidden; }
-    .fake-chart-line {
-      position: absolute; bottom: 24px; left: 16px; right: 16px; height: 80px;
-    }
-    .fake-chart-line svg { width: 100%; height: 100%; }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      nav { padding: 14px 20px; }
-      .nav-brand-text { display: none; }
-      .stats { grid-template-columns: repeat(2,1fr); padding: 28px 20px; }
-      section { padding: 64px 20px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .countries-grid { grid-template-columns: repeat(2,1fr); }
-      .data-row { grid-template-columns: 1fr; gap: 0; }
-      footer { padding: 24px 20px; }
-      .countries-section > div { padding: 64px 20px; }
-      .cta-section { padding: 64px 20px; }
-    }
-    @media (max-width: 480px) {
-      .countries-grid { grid-template-columns: 1fr 1fr; }
-      .hero-actions { flex-direction: column; width: 100%; }
-      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
-    }
+    main { padding-bottom: 8px; }
   </style>
 </head>
 <body>
 
-<!-- ── NAVBAR ── -->
 <nav>
   <a class="nav-brand" href="/">
-    <img src="assets/btg-logo-dark.png" alt="BTG" onerror="this.style.display='none'" />
-    <span class="nav-brand-text">ALM <em>·</em> Banks Monitor</span>
+    <img src="assets/btg-logo-dark.png" alt="BTG" />
+    <span class="nav-brand-text">ALM <em>·</em> Latam Banks Monitor</span>
   </a>
-  <a class="nav-cta" href="./dashboard">
-    Open Dashboard
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-  </a>
+  <a class="btn btn-primary" href="./dashboard">Open dashboard</a>
 </nav>
 
-<!-- ── HERO ── -->
-<section class="hero">
-  <div class="hero-badge">
-    <div class="hero-badge-dot"></div>
-    Live — Chile · Data updated monthly
-  </div>
+<main>
+  <div class="wrap hero">
+    <p class="hero-line">Official regulatory data · IFRS · Chile live</p>
+    <h1>Latam Banks Monitor</h1>
+    <p class="hero-sub">
+      Balance sheets, income statements, credit quality and system rankings across Latin America.
+      Monthly CMF filings for Chile; additional markets in the roadmap.
+    </p>
 
-  <h1>Banking intelligence<br>for <span>Latin America</span></h1>
-
-  <p class="hero-sub">
-    Monitor the financial health of every bank in the region — balance sheets, income statements, credit quality, and key ratios — powered by official regulatory data.
-  </p>
-
-  <div class="hero-actions">
-    <a class="btn-primary" href="./dashboard">
-      Open Dashboard
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-    </a>
-    <a class="btn-secondary" href="#features">See what's inside</a>
-  </div>
-
-  <!-- Browser mockup -->
-  <div class="mockup-wrap">
-    <div class="mockup-bar">
-      <div class="dot dot-r"></div>
-      <div class="dot dot-y"></div>
-      <div class="dot dot-g"></div>
-      <div class="mockup-url">latambanks.vercel.app/dashboard</div>
+    <p class="flags-label">Open by country</p>
+    <div class="flags-row">
+      <div class="flag-entry">
+        <a class="flag-btn" href="./dashboard" title="Chile — open monitor">🇨🇱</a>
+        <span class="flag-caption live">Chile · live</span>
+      </div>
+      <div class="flag-entry">
+        <span class="flag-btn flag-disabled" title="Coming soon">🇨🇴</span>
+        <span class="flag-caption">Colombia</span>
+      </div>
+      <div class="flag-entry">
+        <span class="flag-btn flag-disabled" title="Coming soon">🇵🇪</span>
+        <span class="flag-caption">Peru</span>
+      </div>
+      <div class="flag-entry">
+        <span class="flag-btn flag-disabled" title="Coming soon">🇺🇾</span>
+        <span class="flag-caption">Uruguay</span>
+      </div>
     </div>
-    <div class="mockup-body">
-      <div class="fake-dash">
-        <div class="fake-topbar"></div>
-        <div class="fake-content">
-          <div class="fake-sidebar"></div>
-          <div class="fake-main">
-            <div class="fake-kpis">
-              <div class="fake-kpi"></div>
-              <div class="fake-kpi" style="border-color:rgba(242,220,33,0.2);background:rgba(242,220,33,0.05)"></div>
-              <div class="fake-kpi"></div>
-              <div class="fake-kpi"></div>
-            </div>
-            <div class="fake-chart">
-              <svg class="fake-chart-line" viewBox="0 0 400 80" preserveAspectRatio="none">
-                <polyline points="0,60 40,45 80,50 120,30 160,35 200,20 240,25 280,10 320,15 360,8 400,5"
-                  fill="none" stroke="rgba(37,99,235,0.5)" stroke-width="2"/>
-                <polyline points="0,70 40,65 80,68 120,58 160,62 200,55 240,60 280,48 320,52 360,42 400,45"
-                  fill="none" stroke="rgba(242,220,33,0.4)" stroke-width="2"/>
-              </svg>
-            </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="./dashboard">Open dashboard</a>
+      <a class="btn btn-outline" href="#features">Capabilities</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats-inline">
+      <span><strong>24</strong> banks</span>
+      <span><strong>2M+</strong> data points</span>
+      <span><strong>36+</strong> months history</span>
+      <span><strong>4</strong> countries (roadmap)</span>
+    </div>
+
+    <section class="panel" id="features">
+      <div class="section-label">Platform</div>
+      <h2 class="section-title">What you can do</h2>
+      <p class="section-sub">High-level monitors, statements, rankings, and drill-down — export to Excel.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-title">Bank Monitor</div>
+          <div class="feature-desc">Trends for assets, loans, deposits, equity and net income (up to 5 banks).</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Balance sheet & income statement</div>
+          <div class="feature-desc">Full statements per bank and period — CLP or USD.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Account explorer</div>
+          <div class="feature-desc">CMF chart of accounts, three drill levels, compare across banks.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Rankings & NPL</div>
+          <div class="feature-desc">System ranking by equity or ROE; credit quality and NPL trends.</div>
+        </div>
+      </div>
+
+      <div class="data-row">
+        <div>
+          <div class="data-item-label">Data source</div>
+          <div class="data-item-value">
+            <a href="https://www.cmfchile.cl" target="_blank" rel="noopener">CMF Chile</a> — Circular 2.243
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── STATS ── -->
-<div class="stats">
-  <div class="stat-item">
-    <span class="stat-value"><span class="accent" data-target="24">0</span></span>
-    <span class="stat-label">Banks monitored</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-value"><span class="accent" data-target="2">0</span>M+</span>
-    <span class="stat-label">Data points</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-value"><span class="accent" data-target="36">0</span>+</span>
-    <span class="stat-label">Months of history</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-value"><span class="accent" data-target="4">0</span></span>
-    <span class="stat-label">Countries (roadmap)</span>
-  </div>
-</div>
-
-<!-- ── FEATURES ── -->
-<section id="features">
-  <div class="section-label">Platform</div>
-  <h2 class="section-title">Everything you need to<br>analyze the banking system</h2>
-  <p class="section-sub">From high-level system evolution to account-level drill-downs across any bank, any period.</p>
-
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      </div>
-      <div class="feature-title">Bank Monitor</div>
-      <div class="feature-desc">Track key indicators over time — assets, loans, deposits, equity, and net income — for up to 5 banks simultaneously.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-      </div>
-      <div class="feature-title">Balance Sheet & P&L</div>
-      <div class="feature-desc">Full balance sheet and income statement for any bank and period, in CLP or USD, with one-click Excel export.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </div>
-      <div class="feature-title">Account Explorer</div>
-      <div class="feature-desc">Drill down through 3 levels of the CMF chart of accounts and compare any account across all banks.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      </div>
-      <div class="feature-title">System Ranking</div>
-      <div class="feature-desc">See the full banking system ranked by equity or ROE, with period-over-period comparison at a glance.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div class="feature-title">Credit Quality (NPL)</div>
-      <div class="feature-desc">Monitor non-performing loan ratios and portfolio quality evolution across the system and by institution.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </div>
-      <div class="feature-title">CLP / USD Toggle</div>
-      <div class="feature-desc">Switch all figures between Chilean Pesos and US Dollars using real-time exchange rates from the central bank.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ── COUNTRIES ── -->
-<div class="countries-section">
-  <div>
-    <div class="section-label">Coverage</div>
-    <h2 class="section-title">Built for the region</h2>
-    <p class="section-sub">Starting with Chile — expanding to cover every major banking system in Latin America.</p>
-
-    <div class="countries-grid">
-      <a class="country-card active" href="./dashboard">
-        <div class="country-flag">🇨🇱</div>
-        <div class="country-name">Chile</div>
-        <div class="country-status live"><div class="status-dot-sm"></div> Live</div>
-        <div class="country-detail">CMF data · IFRS 2022+<br>24 banks · Monthly updates</div>
-      </a>
-      <div class="country-card inactive">
-        <div class="country-flag">🇨🇴</div>
-        <div class="country-name">Colombia</div>
-        <div class="country-status soon"><div class="status-dot-sm"></div> Coming soon</div>
-        <div class="country-detail">Superintendencia Financiera</div>
-      </div>
-      <div class="country-card inactive">
-        <div class="country-flag">🇵🇪</div>
-        <div class="country-name">Peru</div>
-        <div class="country-status soon"><div class="status-dot-sm"></div> Coming soon</div>
-        <div class="country-detail">SBS — Superintendencia de Banca</div>
-      </div>
-      <div class="country-card inactive">
-        <div class="country-flag">🇺🇾</div>
-        <div class="country-name">Uruguay</div>
-        <div class="country-status soon"><div class="status-dot-sm"></div> Coming soon</div>
-        <div class="country-detail">BCU — Banco Central del Uruguay</div>
-      </div>
-    </div>
-
-    <div class="data-row">
-      <div class="data-item">
-        <div class="data-item-label">Data source</div>
-        <div class="data-item-value">
-          <a href="https://www.cmfchile.cl" target="_blank">CMF Chile</a> — Circular N° 2.243<br>
-          Balance y Estado de Situación Banks
+        <div>
+          <div class="data-item-label">Standard</div>
+          <div class="data-item-value">IFRS from Jan 2022 · MM$ CLP / USD</div>
+        </div>
+        <div>
+          <div class="data-item-label">Updates</div>
+          <div class="data-item-value">Monthly, after CMF publication</div>
         </div>
       </div>
-      <div class="data-item">
-        <div class="data-item-label">Accounting standard</div>
-        <div class="data-item-value">IFRS — effective January 2022<br>Figures in MM$ CLP or USD</div>
-      </div>
-      <div class="data-item">
-        <div class="data-item-label">Update frequency</div>
-        <div class="data-item-value">Monthly · Published by CMF<br>~30 days after period close</div>
-      </div>
-    </div>
+    </section>
   </div>
-</div>
+</main>
 
-<!-- ── CTA ── -->
-<section>
-  <div class="cta-section" style="padding:0">
-    <h2>Start exploring<br><span>the data</span></h2>
-    <p>No registration required. Open the dashboard and start analyzing the Chilean banking system in seconds.</p>
-    <a class="btn-primary" href="./dashboard" style="display:inline-flex">
-      Open Dashboard
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-    </a>
-  </div>
-</section>
-
-<!-- ── FOOTER ── -->
 <footer>
   <div class="footer-left">
-    <img src="assets/btg-logo-dark.png" alt="BTG" onerror="this.style.display='none'" />
-    <span class="footer-copy">ALM · BTG Pactual Chile · Built by Alejandro Arango Ochoa</span>
+    <img src="assets/btg-logo-dark.png" alt="" />
+    <span>ALM · BTG Pactual Chile · Alejandro Arango Ochoa</span>
   </div>
   <div class="footer-right">
     <a href="./dashboard">Dashboard</a>
-    <a href="https://www.cmfchile.cl" target="_blank">CMF Chile</a>
-    <a href="https://github.com/AlejoArango8a/LatamBanks" target="_blank">GitHub</a>
+    <a href="https://www.cmfchile.cl" target="_blank" rel="noopener">CMF</a>
+    <a href="https://github.com/AlejoArango8a/LatamBanks" target="_blank" rel="noopener">GitHub</a>
   </div>
 </footer>
-
-<script>
-  // Animated counters
-  function animateCounter(el, target, suffix) {
-    const duration = 1800;
-    const start = performance.now();
-    const update = (now) => {
-      const p = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(ease * target);
-      if (p < 1) requestAnimationFrame(update);
-    };
-    requestAnimationFrame(update);
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        const el = e.target;
-        animateCounter(el, +el.dataset.target);
-        observer.unobserve(el);
-      }
-    });
-  }, { threshold: 0.5 });
-
-  document.querySelectorAll('[data-target]').forEach(el => observer.observe(el));
-</script>
 
 </body>
 </html>
