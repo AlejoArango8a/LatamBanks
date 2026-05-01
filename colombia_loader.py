@@ -233,6 +233,7 @@ def fetch_window_rows(where_extra: str) -> list[dict]:
     offset = 0
     limit = 50000
     while True:
+        log.info("  Pedido a datos.gov.co (hasta %s filas por bloque, offset %s)...", limit, offset)
         rows = socrata_get(
             {
                 "$where": where,
@@ -286,7 +287,6 @@ def run_historical(conn, years: tuple[int, int] | None = None):
             log.warning("Filas omitidas (error parseo): %s", len(skipped))
         ingest_tuple_batch(conn, tuples)
         bump_carga_log(conn, dict(counts))
-        loaded |= set(counts.keys())
         log.info("Año %s — %s filas, %s períodos distintos", yr, len(tuples), len(counts))
 
 
