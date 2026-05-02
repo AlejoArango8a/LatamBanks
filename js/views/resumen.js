@@ -2,7 +2,7 @@
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
-import { CO_CUIF, CO_CUIF_NPL_ROLLUP, CO_CUIF_NPL_SEGMENTS } from '../coCuentas.js?v=bmon14';
+import { CO_CUIF, CO_CUIF_NPL_PLUS90 } from '../coCuentas.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon14';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
@@ -15,9 +15,7 @@ let runAbortController = null;
 let roeAbortController = null;
 
 function coMoraNumerator(rowsOneBankOneTipo, period) {
-  const rollupAbs = Math.abs(sumRows(rowsOneBankOneTipo, CO_CUIF_NPL_ROLLUP, period));
-  if (rollupAbs > 1e-6) return rollupAbs;
-  return CO_CUIF_NPL_SEGMENTS.reduce(
+  return CO_CUIF_NPL_PLUS90.reduce(
     (s, cuenta) => s + Math.abs(sumRows(rowsOneBankOneTipo, cuenta, period)),
     0
   );
@@ -45,7 +43,7 @@ export function refreshKPIs() {
       : '—';
     const moraSub = !m.colocaciones
       ? '—'
-      : `CMF NPL vs total loans (${fmtKPI(m.mora90)} · loans ${fmtKPI(m.colocaciones)})`;
+      : `CUIF D+E +90d vs gross loans (${fmtKPI(m.mora90)} · ${fmtKPI(m.colocaciones)})`;
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
@@ -84,7 +82,7 @@ export function refreshKPIs() {
     <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">Detailed P&amp;L (CUIF r1)</div><div class="kpi-val">—</div><div class="kpi-sub">Income statement decomposition pending for Colombia.</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF categoría E</div><div class="kpi-sub">Indicador en Resumen: suma líneas categoría E (riesgo incobrabilidad) sobre colocaciones 140000. No coincide con clasificación CMF Chile (c1 +90 d).</div></div>`;
+    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF mora D+E</div><div class="kpi-sub">NPL en Resumen: suma 140435/440, 140820/825, 141020/025 y 141225 sobre colocación 140000 (análogo al +90d CMF Chile, distinta fuente).</div></div>`;
     return;
   }
 
@@ -200,8 +198,7 @@ export async function run() {
         CO_CUIF.depVista,
         CO_CUIF.depPlazo,
         CO_CUIF.bonos,
-        CO_CUIF_NPL_ROLLUP,
-        ...CO_CUIF_NPL_SEGMENTS,
+        ...CO_CUIF_NPL_PLUS90,
       ])];
       const R1_CO = [CO_CUIF.utilidadNet];
 

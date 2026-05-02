@@ -15,34 +15,40 @@ export const CO_CUIF = {
   utilidadNet: '590000',
 };
 
-/** Agregador “CATEGORIA E … RIESGO DE INCOBRABILIDAD” cuando el reporte viene consolidado. */
-export const CO_CUIF_NPL_ROLLUP = '141225';
-
 /**
- * Segmentación por producto (sin el agregador 141225) para sumar cuando 141225 no viene informado.
- * No equivale literalmente al NPL +90 d Chile (CMF c1).
+ * CUIF b1 — mora +90 días: categorías D y E por modalidad (numerador NPL Key Data y gráfico mora).
+ * Suma / colocaciones 140000 ≈ NPL / préstamos (análogo conceptual al +90d CMF Chile).
  */
-export const CO_CUIF_NPL_SEGMENTS = [
+export const CO_CUIF_NPL_PLUS90 = [
+  '140435',
+  '140440',
+  '140820',
+  '140825',
+  '141020',
   '141025',
-  '141480',
-  '140445',
-  '141425',
-  '141450',
-  '148825',
-  '148850',
-  '148880',
-  '160548',
-  '160838',
-  '160848',
+  '141225',
 ];
+
+export const CO_CUIF_NPL_PLUS90_LABELS = {
+  140435: 'Mora vivienda D (+90d)',
+  140440: 'Mora vivienda E',
+  140820: 'Mora consumo D (+90d)',
+  140825: 'Mora consumo E',
+  141020: 'Mora comercial D (+90d)',
+  141025: 'Mora comercial E',
+  141225: 'Mora microcrédito E',
+};
 
 /** Balance Sheet tabs — cuentas 6d; alineado con B1_CO en resumen.run */
 export const BAL_CO_SECTIONS = {
   assets: [
     { c: CO_CUIF.activos, l: 'Total assets', cls: 'hl' },
     { c: CO_CUIF.colocaciones, l: 'Loans · gross portfolio', cls: 'i2' },
-    { c: CO_CUIF_NPL_ROLLUP, l: 'Category E · roll-up (CUIF)', cls: 'i3' },
-    ...CO_CUIF_NPL_SEGMENTS.map(c => ({ c, l: `Category E · ${c}`, cls: 'i3' })),
+    ...CO_CUIF_NPL_PLUS90.map(c => ({
+      c,
+      l: CO_CUIF_NPL_PLUS90_LABELS[c] || c,
+      cls: 'i3',
+    })),
   ],
   liabilities: [
     { c: CO_CUIF.pasivos, l: 'Total liabilities', cls: 'hl' },
