@@ -56,16 +56,13 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
 @media (max-width: 1200px) {
   #topbarUsdArea { display:none !important; }
 }
-@media (max-width: 900px) {
-  .sidebar { width: 200px; }
-  .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-}
 /* Desktop: accordion wrappers fully transparent to flex parent */
 .mob-section    { display: contents; }
 .mob-section-hd { display: none; }
 .mob-section-bd { display: contents; }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   body { overflow: auto; }
   .app { grid-template-rows: auto 1fr; height: auto; min-height: 100vh; }
   .body { flex-direction: column; overflow: visible; }
@@ -95,22 +92,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   }
   .sidebar-block { min-width: 140px; }
   .main { overflow-y: visible; padding: 10px; }
-
-  /* Bank rail: let Country / Period / Banks stack at natural height (desktop flex:1 was hiding Banks row). */
-  .sidebar {
-    flex: 0 0 auto;
-    min-height: unset;
-  }
-  #sidebarContent {
-    flex: 0 0 auto;
-    min-height: unset;
-    overflow: visible;
-  }
-  #sidebarBankPick {
-    flex: 0 0 auto;
-    min-height: unset;
-    overflow: visible;
-  }
 
   /* Topbar: logo smaller, topbar compact */
   .topbar { flex-wrap: nowrap; height: auto; min-height: 48px; padding: 6px 10px; gap: 4px; }
@@ -365,6 +346,28 @@ body.light #sidebarBankPick.sidebar-disabled,
 body.light #sidebarPeriodPick.sidebar-disabled {
   opacity: 0.38;
   filter: saturate(0.4) brightness(0.92);
+}
+
+/*
+ * Narrow viewports: rules above give #sidebarContent / #sidebarBankPick flex:1 + overflow:hidden.
+ * This block must appear AFTER those so Country / Period / Banks (incl. bank list) are not clipped.
+ */
+@media (max-width: 900px) {
+  .sidebar {
+    overflow: visible;
+    flex: 0 0 auto;
+    min-height: unset;
+  }
+  #sidebarContent {
+    flex: 0 0 auto;
+    min-height: unset;
+    overflow: visible;
+  }
+  #sidebarBankPick {
+    flex: 0 0 auto;
+    min-height: unset;
+    overflow: visible;
+  }
 }
 
 /* Compact on-chart numeric labels toggle */
