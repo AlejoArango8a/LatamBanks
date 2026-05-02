@@ -125,6 +125,9 @@ function titleCaseCoToken(lower) {
   return c;
 }
 
+/** Grupo Aval — codigo_entidad CUIF (establecimientos tipo 1). */
+const CO_AVAL_CODES = new Set([1, 2, 23, 49]);
+
 /** Nombres curator (CUIF establecimientos tipo 1, codigo_entidad). */
 const CO_BANK_DISPLAY = new Map([
   [66, 'BTG Pactual Colombia'],
@@ -158,8 +161,12 @@ export function bankName(code) {
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
     const ins = Number(code);
-    if (!Number.isNaN(ins) && CO_BANK_DISPLAY.has(ins)) return CO_BANK_DISPLAY.get(ins);
-    return polishColombianBankDisplay(fromApi);
+    if (Number.isNaN(ins)) return polishColombianBankDisplay(fromApi);
+    let name = !Number.isNaN(ins) && CO_BANK_DISPLAY.has(ins)
+      ? CO_BANK_DISPLAY.get(ins)
+      : polishColombianBankDisplay(fromApi);
+    if (CO_AVAL_CODES.has(ins)) name = `${name} (Aval)`;
+    return name;
   }
   return BANK_NAMES[code] || (fromApi || `Bank ${code}`)
     .replace('BANCO ', '').replace(/ CHILE$/, '').replace(/-CHILE$/, '');
