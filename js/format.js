@@ -31,21 +31,32 @@ export const fmtKPIDecimal = clpRaw => _fmtKPIBase(clpRaw, 1);
 
 // Axis label (values already divided by 1e9 = billions).
 // compact: shorter labels when chart width is small (mobile).
+// Sub‑0.001 B (e.g. USD view of small COP balances) must not round to 0.00 — use fractional millions (×1000).
 export function fmtAxis(v, compact) {
   const abs = Math.abs(v);
   const sign = v < 0 ? '-' : '';
   const symRaw = ST.currency === 'USD' && ST.usdRate ? 'USD ' : '';
   const sym = compact ? (symRaw ? 'USD' : '') : symRaw;
+  const fracM = mm =>
+    mm.toLocaleString('es-CL', {
+      maximumFractionDigits: mm < 0.01 ? 4 : mm < 1 ? 3 : 0,
+    });
   if (compact) {
     if (abs >= 1000) return sign + sym + Math.round(abs / 1000).toLocaleString('es-CL') + ' bi';
     if (abs >= 1) return sign + sym + abs.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'B';
     if (abs >= 0.001) return sign + sym + (abs * 1000).toLocaleString('es-CL', { maximumFractionDigits: 0 }) + 'M';
-    return v === 0 ? '0' : sign + sym + abs.toFixed(2);
+    if (v === 0) return '0';
+    const mm = abs * 1000;
+    if (mm >= 1e-6) return sign + sym + fracM(mm) + 'M';
+    return sign + sym + abs.toExponential(1) + 'B';
   }
   if (abs >= 1000) return sign + symRaw + Math.round(abs / 1000).toLocaleString('es-CL') + ' bi';
   if (abs >= 1)    return sign + sym + abs.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' B';
   if (abs >= 0.001) return sign + sym + (abs * 1000).toLocaleString('es-CL', { maximumFractionDigits: 0 }) + ' M';
-  return v === 0 ? '0' : sign + sym + abs.toFixed(2);
+  if (v === 0) return '0';
+  const mm = abs * 1000;
+  if (mm >= 1e-6) return sign + sym + fracM(mm) + ' M';
+  return sign + sym + abs.toExponential(1) + ' B';
 }
 
 // ---- Period & date formatters ----
