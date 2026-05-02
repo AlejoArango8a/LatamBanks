@@ -212,6 +212,37 @@ app.post('/api/datos', async (req, res) => {
 });
 
 // ============================================================
+// GEO (server-side) — evita CORS del navegador a ipapi.co
+// ============================================================
+app.get('/api/geo', async (req, res) => {
+  try {
+    const xf = req.headers['x-forwarded-for'];
+    const raw = typeof xf === 'string' ? xf.split(',')[0].trim() : '';
+    const ip = raw || req.socket?.remoteAddress || '';
+    const local = !ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.');
+    if (local) {
+      return res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
+    }
+    const geoRes = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`);
+    if (!geoRes.ok) {
+      return res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
+    }
+    const d = await geoRes.json();
+    if (d.error) {
+      return res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
+    }
+    res.json({
+      ok: true,
+      country_name: d.country_name || 'Unknown',
+      country_code: (d.country_code || '??').toString().slice(0, 4),
+    });
+  } catch (e) {
+    console.warn('/api/geo:', e.message);
+    res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
+  }
+});
+
+// ============================================================
 // VISITS — contador global por país
 // ============================================================
 

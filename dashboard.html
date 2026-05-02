@@ -96,6 +96,22 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   .sidebar-block { min-width: 140px; }
   .main { overflow-y: visible; padding: 10px; }
 
+  /* Bank rail: let Country / Period / Banks stack at natural height (desktop flex:1 was hiding Banks row). */
+  .sidebar {
+    flex: 0 0 auto;
+    min-height: unset;
+  }
+  #sidebarContent {
+    flex: 0 0 auto;
+    min-height: unset;
+    overflow: visible;
+  }
+  #sidebarBankPick {
+    flex: 0 0 auto;
+    min-height: unset;
+    overflow: visible;
+  }
+
   /* Topbar: logo smaller, topbar compact */
   .topbar { flex-wrap: nowrap; height: auto; min-height: 48px; padding: 6px 10px; gap: 4px; }
   .topbar-right { gap: 4px; flex-shrink: 0; }

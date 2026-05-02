@@ -45,11 +45,13 @@ export async function trackVisit() {
   try {
     let country = 'Unknown', countryCode = '??';
     try {
-      const geo = await fetch('https://ipapi.co/json/');
+      const geo = await fetchWithTimeout(`${API_BASE}/api/geo`, {}, 5000);
       if (geo.ok) {
         const d = await geo.json();
-        country     = d.country_name || 'Unknown';
-        countryCode = d.country_code || '??';
+        if (d.ok && d.country_code) {
+          country     = d.country_name || 'Unknown';
+          countryCode = d.country_code || '??';
+        }
       }
     } catch {}
 
