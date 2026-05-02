@@ -406,10 +406,27 @@ export async function run() {
   }
 }
 
+// Key Data tile order in #kpiResumen (refreshKPIs HTML)
+const KPI_RESUMEN_IDX = {
+  activos: 0, coloc: 1, dep_vista: 2, dep_plazo: 3, bonos: 4,
+  pasivos: 5, patrimonio: 6, utilidad: 7, roe: 8, mora: 9,
+};
+
+function syncKpiResumenActive(tipo) {
+  const idx = KPI_RESUMEN_IDX[tipo];
+  document.querySelectorAll('#kpiResumen .kpi-btn').forEach((el, i) => {
+    el.classList.toggle('kpi-active', idx !== undefined && i === idx);
+  });
+}
+
 // ---- Resumen chart ----
 export function showResChart(tipo) {
   abortROEFetch();
   ST._lastResChart = tipo;
+  if (tipo === 'roe') {
+    showROEChart();
+    return;
+  }
 
   const chartWrap = document.getElementById('chartResumenWrap');
   const roeWrap   = document.getElementById('roeSystemWrap');
@@ -425,10 +442,7 @@ export function showResChart(tipo) {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
   });
 
-  const kpiMap = { activos:0, coloc:1, dep_vista:2, dep_plazo:3, bonos:4, pasivos:5, patrimonio:6, utilidad:7, mora:9 };
-  document.querySelectorAll('#kpiResumen .kpi-btn').forEach((el, i) => {
-    el.classList.toggle('kpi-active', i === kpiMap[tipo]);
-  });
+  syncKpiResumenActive(tipo);
 
   if (!ST._series) return;
   const { periodos, b1, r1, c1 } = ST._series;
@@ -546,6 +560,8 @@ export async function showROEChart() {
   const roeWrap   = document.getElementById('roeSystemWrap');
   if (!chartWrap || !roeWrap) return;
 
+  ST._lastResChart = 'roe';
+
   chartWrap.style.display = 'none';
   roeWrap.style.display   = 'block';
   roeWrap.innerHTML = '<div style="padding:20px;color:var(--text2);">Loading ROE data...</div>';
@@ -555,6 +571,7 @@ export async function showROEChart() {
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === '📈 Annual ROE');
   });
+  syncKpiResumenActive('roe');
   const titleEl = document.querySelector('#tab-resumen .panel-title');
   if (titleEl) titleEl.textContent = 'Annual ROE — All Banks';
 
