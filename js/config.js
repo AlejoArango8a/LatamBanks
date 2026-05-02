@@ -24,6 +24,7 @@ export const BANK_COLORS = {
   59: '#2563eb',
   62: '#00A9E4',
   66: '#2563eb',
+  10001: '#047857',
 };
 
 export const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];

@@ -30,6 +30,7 @@ import {
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon14';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon14';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -54,6 +55,7 @@ function applyBootstrapPayload(j) {
     ST._patrimonioRanking = Object.keys(patMap).map(Number).filter(c => c !== 999)
       .sort((a, b) => (patMap[b] || 0) - (patMap[a] || 0));
   }
+  if (datasetIsoCountry() === 'CO') patchColombiaGrupoAvalBootstrap();
 }
 
 function applyCountryFromUrl() {

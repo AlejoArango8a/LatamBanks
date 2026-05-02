@@ -3,6 +3,7 @@
 // ============================================================
 import { API_BASE } from './config.js?v=bmon14';
 import { ST, datasetIsoCountry } from './state.js?v=bmon14';
+import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.js?v=bmon14';
 
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();
@@ -28,18 +29,24 @@ export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
 }
 
 export async function apiDatos(params, signal) {
+  const { fetchBanks, requestedBanks } = expandGrupoAvalFetchBanks(params.bancos);
+  const payload = { ...params, country: datasetIsoCountry() };
+  if (fetchBanks != null) payload.bancos = fetchBanks;
+
   const r = await fetchWithTimeout(
     `${API_BASE}/api/datos`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...params, country: datasetIsoCountry() }),
+      body: JSON.stringify(payload),
     },
     15000,
     signal
   );
   const j = await r.json();
-  if (r.ok && j.ok && Array.isArray(j.rows)) return j.rows;
+  if (r.ok && j.ok && Array.isArray(j.rows)) {
+    return mergeGrupoAvalApiRows(j.rows, requestedBanks != null ? requestedBanks : params.bancos);
+  }
   throw new Error(j.error || `API /datos error ${r.status}`);
 }
 
