@@ -2,6 +2,21 @@
 // RANKING — Chilean Banking System tab
 // ============================================================
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
+
+function bankingSystemPanelTitle() {
+  if (ST.country === 'colombia') return 'Colombian Banking System';
+  if (ST.country === 'chile') return 'Chilean Banking System';
+  if (ST.country === 'peru') return 'Peruvian Banking System';
+  if (ST.country === 'uruguay') return 'Uruguayan Banking System';
+  return 'Banking System';
+}
+
+function wireCbExportButton() {
+  const btn = document.getElementById('cbExportBtn');
+  if (!btn || typeof window.exportTableById !== 'function') return;
+  const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System' : 'Chilean_Banking_System';
+  btn.onclick = () => window.exportTableById('cbTable', slug);
+}
 import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon14';
 import { CO_CUIF } from '../coCuentas.js?v=bmon14';
 import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon14';
@@ -23,6 +38,9 @@ export function saveCBRating(code, val) {
 }
 
 export async function renderChileanBanks() {
+  const titleEl = document.getElementById('cbPanelTitle');
+  if (titleEl) titleEl.textContent = bankingSystemPanelTitle();
+
   const el = document.getElementById('cbTable');
   if (!el) return;
   if (!ST.periodos.length) {
@@ -85,6 +103,7 @@ export async function renderChileanBanks() {
 
     if (!ST._cbSort) ST._cbSort = { col: 'equity', dir: -1 };
     renderCBTable();
+    wireCbExportButton();
 
   } catch (e) {
     el.innerHTML = `<div class="empty"><p>Error loading data: ${e.message}</p></div>`;

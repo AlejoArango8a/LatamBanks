@@ -263,13 +263,6 @@ export function toggleSection(id) {
   if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
 }
 
-/** Mobile: expose bank accordion + scroll sidebar so the list is reachable in one tap. */
-export function mobOpenBankPick() {
-  const bd = document.getElementById('secBanks');
-  if (bd && !bd.classList.contains('open')) toggleSection('secBanks');
-  document.getElementById('sidebarBankPick')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
   const flags = { chile: 'flagChile', colombia: 'flagColombia', peru: 'flagPeru', uruguay: 'flagUruguay' };
