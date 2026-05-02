@@ -295,7 +295,7 @@
       margin-bottom: 14px;
     }
     .hero-copy .flags-row {
-      justify-content: center;
+      margin-inline: auto;
     }
     @media (max-width: 880px) {
       .hero-copy .flags-zone,
@@ -303,7 +303,7 @@
         text-align: center;
       }
       .hero-copy .flags-row {
-        justify-content: center;
+        margin-inline: auto;
       }
     }
 
@@ -377,10 +377,14 @@
     }
 
     .flags-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: clamp(22px, 3vw, 36px);
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      width: 100%;
+      max-width: min(100%, 440px);
+      margin-inline: auto;
+      gap: clamp(16px, 3vw, 28px);
+      justify-items: center;
+      align-items: start;
     }
 
     .flag-entry {
@@ -458,12 +462,12 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(100, 160, 255, 0.35);
     }
 
-    /* Celulares: banderas más chicas y una sola fila */
+    /* Celulares: banderas más chicas; rejilla 4 columnas equidistantes */
     @media (max-width: 520px) {
       .flags-row {
-        flex-wrap: nowrap;
-        gap: clamp(10px, 3.2vw, 16px);
-        justify-content: center;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        max-width: 100%;
+        gap: clamp(8px, 2.5vw, 14px);
       }
       .flag-btn {
         width: clamp(38px, 10.5vw, 52px);
