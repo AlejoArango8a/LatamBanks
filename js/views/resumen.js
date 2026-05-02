@@ -2,7 +2,7 @@
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
-import { CO_CUIF, CO_CUIF_NPL_PLUS90 } from '../coCuentas.js?v=bmon14';
+import { CO_CUIF, CO_CUIF_NPL_PLUS90, coB1AccountsForRun, coR1AccountsForRun } from '../coCuentas.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon14';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
@@ -79,7 +79,7 @@ export function refreshKPIs() {
 
     document.getElementById('kpiResultados').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Net Income · 590000</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">Detailed P&amp;L (CUIF r1)</div><div class="kpi-val">—</div><div class="kpi-sub">Income statement decomposition pending for Colombia.</div></div>`;
+    <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">P&amp;L detail (CUIF r1)</div><div class="kpi-val">Income Statement tab</div><div class="kpi-sub">Main lines: interest, fees, operating income/expenses, credit losses, tax.</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
     <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF mora D+E</div><div class="kpi-sub">NPL en Resumen: suma 140435/440, 140820/825, 141020/025 y 141225 sobre colocación 140000 (análogo al +90d CMF Chile, distinta fuente).</div></div>`;
@@ -190,17 +190,8 @@ export async function run() {
 
   try {
     if (datasetIsoCountry() === 'CO') {
-      const B1_CO = [...new Set([
-        CO_CUIF.activos,
-        CO_CUIF.colocaciones,
-        CO_CUIF.pasivos,
-        CO_CUIF.patrimonio,
-        CO_CUIF.depVista,
-        CO_CUIF.depPlazo,
-        CO_CUIF.bonos,
-        ...CO_CUIF_NPL_PLUS90,
-      ])];
-      const R1_CO = [CO_CUIF.utilidadNet];
+      const B1_CO = coB1AccountsForRun();
+      const R1_CO = coR1AccountsForRun();
 
       runAbortController?.abort();
       abortExplorerFetch();

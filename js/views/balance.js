@@ -7,6 +7,19 @@ import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctF
 import { sumRows } from '../api.js?v=bmon14';
 import { BAL_CO_SECTIONS, R1_CO_ROWS } from '../coCuentas.js?v=bmon14';
 
+/** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
+export function syncFinStatementPanelLabels() {
+  const balSub = document.querySelector('#tab-balance .panel-head .panel-sub');
+  const resSub = document.querySelector('#tab-resultados .panel-head .panel-sub');
+  if (!balSub && !resSub) return;
+  const cur =
+    ST.currency === 'USD'
+      ? 'USD (converted)'
+      : `MM$ ${reportingLocalCurrencyISO()}`;
+  if (balSub) balSub.textContent = `Last selected period — ${cur}`;
+  if (resSub) resSub.textContent = `Last period — ${cur}`;
+}
+
 // ---- Balance section definitions ----
 export const BAL_SECTIONS = {
   activos: [
@@ -81,6 +94,7 @@ export function renderBankTabs(containerId, activeCode, onSelect) {
 
 export function showBalTab(sec, bankCode) {
   ST._lastBalTab = sec;
+  syncFinStatementPanelLabels();
   const banks = [...ST.selected];
 
   document.querySelectorAll('#tab-balance .itab').forEach(b =>
@@ -103,11 +117,11 @@ export function showBalTab(sec, bankCode) {
 
   if (banks.length === 1) {
     const code = banks[0];
-    const loc = reportingLocalCurrencyISO();
+    const amtLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
     if (isCO) {
       let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
         <th class="cod">Account</th><th>Description</th>
-        <th class="r">MM$ ${loc}</th>
+        <th class="r">${amtLabel}</th>
       </tr></thead><tbody>`;
       rows.forEach(row => {
         const bankRows = getRows(row.c, code);
@@ -264,7 +278,7 @@ export function renderCalidad({ carNorm, carSub, carInc, mora90, colocaciones, c
     { l: 'Col. Vivienda',    c: '857300000' },
     { l: 'Col. Consumo',     c: '857400000' },
   ];
-  const colLabel = ST.currency === 'USD' ? 'USD' : 'MM$ CLP';
+  const colLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
   let mHtml = `<table class="tbl"><thead><tr><th>Cartera</th><th class="r">${colLabel}</th></tr></thead><tbody>`;
   mRows.forEach(r => {
     const v = sumRows(ST._c1 || [], r.c, ST._lastP);

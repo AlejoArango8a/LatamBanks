@@ -7,6 +7,7 @@ import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon14';
 import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon14';
 import { setStatus, showErr } from './utils.js?v=bmon14';
 import { sumRows } from './api.js?v=bmon14';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon14';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -207,6 +208,7 @@ export function showTab(tab) {
   if (tab === 'config')       { window.populateConfig(); window.loadVisitStats(); }
   if (tab === 'chileanbanks') window.renderChileanBanks();
   if (tab === 'accountview')  window.initAccountView();
+  syncFinStatementPanelLabels();
 }
 
 export function loadBankFromTable(bankCode) {
@@ -454,6 +456,7 @@ export function toggleCurrency() {
   if (ST.exp.selected) window.expSelect(ST.exp.selected);
   if (ST._cbData) window.renderCBTable();
   if (ST._avAccount && document.getElementById('avResultTable')) window.runAccountView();
+  syncFinStatementPanelLabels();
 }
 
 // ---- Font ----

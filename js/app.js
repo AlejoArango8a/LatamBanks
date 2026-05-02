@@ -8,7 +8,10 @@ import { fetchWithTimeout } from './api.js?v=bmon14';
 
 // Views
 import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon14';
-import { showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo } from './views/balance.js?v=bmon14';
+import {
+  showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
+  syncFinStatementPanelLabels,
+} from './views/balance.js?v=bmon14';
 import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon14';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon14';
 import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon14';
@@ -132,6 +135,7 @@ async function switchCountryDataset() {
     console.error('[switchCountryDataset]', e);
   } finally {
     syncCurrencyToggleUI();
+    syncFinStatementPanelLabels();
   }
 }
 
@@ -169,6 +173,7 @@ async function init() {
     toggleBank(datasetIsoCountry() === 'CO' ? 66 : 59, true);
     fillBankList();
     await run();
+    syncFinStatementPanelLabels();
     showTab('resumen');
     refreshBarLabelsToggleButtons();
     trackVisit();
