@@ -1,10 +1,11 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST } from '../state.js?v=bmon14';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon14';
 import { sumRows } from '../api.js?v=bmon14';
+import { BAL_CO_SECTIONS, R1_CO_ROWS } from '../coCuentas.js?v=bmon14';
 
 // ---- Balance section definitions ----
 export const BAL_SECTIONS = {
@@ -86,7 +87,10 @@ export function showBalTab(sec, bankCode) {
     b.classList.toggle('active', b.textContent.trim().toLowerCase() === sec));
   if (!ST._b1) return;
 
-  const rows = BAL_SECTIONS[sec];
+  const rows = datasetIsoCountry() === 'CO' ? BAL_CO_SECTIONS[sec] : BAL_SECTIONS[sec];
+  if (!rows) return;
+
+  const isCO = datasetIsoCountry() === 'CO';
 
   const b1Map = new Map();
   ST._b1.forEach(r => {
@@ -99,6 +103,27 @@ export function showBalTab(sec, bankCode) {
 
   if (banks.length === 1) {
     const code = banks[0];
+    const loc = reportingLocalCurrencyISO();
+    if (isCO) {
+      let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
+        <th class="cod">Account</th><th>Description</th>
+        <th class="r">MM$ ${loc}</th>
+      </tr></thead><tbody>`;
+      rows.forEach(row => {
+        const bankRows = getRows(row.c, code);
+        const tot = bankRows.reduce((s, r) => s + (r.monto_total || 0), 0);
+        const neg = tot < 0 ? 'neg' : '';
+        html += `<tr>
+        <td class="cod">${row.c}</td>
+        <td class="${row.cls}">${row.l}</td>
+        <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}">${fmtKPI(tot)}</td>
+      </tr>`;
+      });
+      html += `</tbody></table></div>`;
+      document.getElementById('balBankTabs').innerHTML = '';
+      document.getElementById('balTable').innerHTML = html;
+      return;
+    }
     let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
       <th class="cod">Cuenta</th><th>Descripción</th>
       <th class="r">CLP Non-adj.</th><th class="r">Adj. UF/IVP</th>
@@ -177,6 +202,7 @@ export function renderResTable(m) {
     {l:'Income Tax',                       c:'480000000', cls:'i1'},
     {l:'NET INCOME (LOSS)',                c:'590000000', cls:'hl'},
   ];
+  const r1Rows = datasetIsoCountry() === 'CO' ? R1_CO_ROWS : R1_ROWS;
 
   if (ST._series && ST._series.r1 && ST._lastP) {
     const r1    = ST._series.r1;
@@ -190,7 +216,7 @@ export function renderResTable(m) {
       html += `<th class="r" style="color:${bankColor(code, i)}">${bankName(code)}</th>`;
     });
     html += `</tr></thead><tbody>`;
-    R1_ROWS.forEach(row => {
+    r1Rows.forEach(row => {
       html += `<tr><td class="${row.cls}">${row.l}</td>`;
       banks.forEach(code => {
         const v = getVal(row.c, code);
@@ -202,9 +228,9 @@ export function renderResTable(m) {
     document.getElementById('resBankTabs').innerHTML = '';
     document.getElementById('resTable').innerHTML = html;
   } else {
-    const colLabel = ST.currency === 'USD' ? 'USD' : 'MM$ CLP';
+    const colLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
     let html = `<table class="tbl"><thead><tr><th>Concepto</th><th class="r">${colLabel}</th></tr></thead><tbody>`;
-    R1_ROWS.forEach(row => {
+    r1Rows.forEach(row => {
       const v = m[row.c] || 0;
       html += `<tr><td class="${row.cls}">${row.l}</td><td class="r ${v < 0 ? 'neg' : 'pos'} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td></tr>`;
     });

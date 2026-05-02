@@ -36,6 +36,30 @@ export const CO_CUIF_NPL_SEGMENTS = [
   '160848',
 ];
 
+/** Balance Sheet tabs — cuentas 6d; alineado con B1_CO en resumen.run */
+export const BAL_CO_SECTIONS = {
+  assets: [
+    { c: CO_CUIF.activos, l: 'Total assets', cls: 'hl' },
+    { c: CO_CUIF.colocaciones, l: 'Loans · gross portfolio', cls: 'i2' },
+    { c: CO_CUIF_NPL_ROLLUP, l: 'Category E · roll-up (CUIF)', cls: 'i3' },
+    ...CO_CUIF_NPL_SEGMENTS.map(c => ({ c, l: `Category E · ${c}`, cls: 'i3' })),
+  ],
+  liabilities: [
+    { c: CO_CUIF.pasivos, l: 'Total liabilities', cls: 'hl' },
+    { c: CO_CUIF.depVista, l: 'Demand deposits', cls: 'i2' },
+    { c: CO_CUIF.depPlazo, l: 'Time deposits', cls: 'i2' },
+    { c: CO_CUIF.bonos, l: 'Issued bonds', cls: 'i2' },
+  ],
+  equity: [
+    { c: CO_CUIF.patrimonio, l: 'Total equity', cls: 'hl' },
+  ],
+};
+
+/** Income Statement — filas r1 cargadas hoy para CO (ampliar con R1_CO en run si hace falta). */
+export const R1_CO_ROWS = [
+  { l: 'Net income', c: CO_CUIF.utilidadNet, cls: 'hl' },
+];
+
 /** Account Explorer sidebar — CUIF 6 dígitos (familias alineadas con el plan cargado CO). */
 export const CO_CUENTAS_PRINCIPALES = {
   '100000': 'Assets',

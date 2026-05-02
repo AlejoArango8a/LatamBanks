@@ -441,6 +441,7 @@ export function toggleCurrency() {
   if (ST._series) window.showResChart(ST._lastResChart || 'patrimonio');
   if (ST._b1)     window.showBalTab(ST._lastBalTab || 'assets');
   if (ST._resTableData) window.renderResTable(ST._resTableData);
+  else if (ST._series?.r1 && datasetIsoCountry() === 'CO') window.renderResTable(null);
   if (ST._kpiRaw && ST.country !== 'colombia') {
     const m = ST._kpiRaw;
     const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);

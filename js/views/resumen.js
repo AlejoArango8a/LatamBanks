@@ -264,10 +264,13 @@ export async function run() {
       ST._series = { periodos, b1s, r1s, c1s, b1, r1, c1 };
       showResChart(ST._lastResChart || 'patrimonio');
 
-      ST._b1    = null;
+      ST._b1    = b1;
       ST._c1    = null;
       ST._lastP = lastP;
       ST._resTableData = null;
+
+      showBalTab(ST._lastBalTab || 'assets');
+      renderResTable(null);
 
       const hi = document.getElementById('headerInfo');
       if (hi) hi.textContent = rangeLabel;
