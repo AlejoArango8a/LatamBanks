@@ -212,6 +212,124 @@ app.post('/api/datos', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/diagnostics/account-coverage — plan_cuentas vs datos_financieros
+// Query: ?country=CL|CO
+// ============================================================
+app.get('/api/diagnostics/account-coverage', async (req, res) => {
+  try {
+    const country = resolveDatasetCountry(req.query.country);
+
+    const [
+      planCnt,
+      datosCnt,
+      orphanCnt,
+      deadPlanCnt,
+      byTipo,
+      planByDigit,
+      orphanSample,
+      deadSample,
+    ] = await Promise.all([
+      query(
+        'SELECT COUNT(DISTINCT cuenta)::int AS n FROM plan_cuentas WHERE country = $1',
+        [country],
+      ),
+      query(
+        'SELECT COUNT(DISTINCT cuenta)::int AS n FROM datos_financieros WHERE country = $1',
+        [country],
+      ),
+      query(
+        `SELECT COUNT(DISTINCT d.cuenta)::int AS n
+         FROM datos_financieros d
+         WHERE d.country = $1
+           AND NOT EXISTS (
+             SELECT 1 FROM plan_cuentas p
+             WHERE p.country = $1 AND p.cuenta = d.cuenta
+           )`,
+        [country],
+      ),
+      query(
+        `SELECT COUNT(*)::int AS n
+         FROM plan_cuentas p
+         WHERE p.country = $1
+           AND NOT EXISTS (
+             SELECT 1 FROM datos_financieros d
+             WHERE d.country = $1 AND d.cuenta = p.cuenta
+           )`,
+        [country],
+      ),
+      query(
+        `SELECT tipo, COUNT(DISTINCT cuenta)::int AS n
+         FROM datos_financieros
+         WHERE country = $1
+         GROUP BY tipo
+         ORDER BY tipo`,
+        [country],
+      ),
+      query(
+        `SELECT SUBSTRING(cuenta, 1, 1) AS d, COUNT(DISTINCT cuenta)::int AS n
+         FROM plan_cuentas
+         WHERE country = $1
+         GROUP BY 1
+         ORDER BY 1`,
+        [country],
+      ),
+      query(
+        `SELECT DISTINCT d.cuenta
+         FROM datos_financieros d
+         WHERE d.country = $1
+           AND NOT EXISTS (
+             SELECT 1 FROM plan_cuentas p
+             WHERE p.country = $1 AND p.cuenta = d.cuenta
+           )
+         ORDER BY d.cuenta
+         LIMIT 40`,
+        [country],
+      ),
+      query(
+        `SELECT p.cuenta
+         FROM plan_cuentas p
+         WHERE p.country = $1
+           AND NOT EXISTS (
+             SELECT 1 FROM datos_financieros d
+             WHERE d.country = $1 AND d.cuenta = p.cuenta
+           )
+         ORDER BY p.cuenta
+         LIMIT 40`,
+        [country],
+      ),
+    ]);
+
+    const byTipoMap = {};
+    for (const row of byTipo) byTipoMap[row.tipo] = row.n;
+
+    const planByFirstDigit = {};
+    for (const row of planByDigit) planByFirstDigit[row.d] = row.n;
+
+    res.json({
+      ok: true,
+      country,
+      summary: {
+        distinctCuentasInPlan:    planCnt[0]?.n ?? 0,
+        distinctCuentasInDatos:   datosCnt[0]?.n ?? 0,
+        /** Cuentas que aparecen en movimientos pero no están en plan_cuentas */
+        datosOrphansNotInPlan:    orphanCnt[0]?.n ?? 0,
+        /** Filas de plan sin ningún movimiento en datos_financieros */
+        planCuentasNeverInDatos:  deadPlanCnt[0]?.n ?? 0,
+      },
+      datosDistinctByTipo: byTipoMap,
+      planDistinctByFirstDigit: planByFirstDigit,
+      samples: {
+        datosOrphansNotInPlan: orphanSample.map((r) => r.cuenta),
+        planNeverInDatos:      deadSample.map((r) => r.cuenta),
+      },
+    });
+  } catch (e) {
+    console.error('/api/diagnostics/account-coverage error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // GEO (server-side) — evita CORS del navegador a ipapi.co
 // ============================================================
 app.get('/api/geo', async (req, res) => {

@@ -8,6 +8,7 @@ API Express que sirve los datos financieros desde CockroachDB al dashboard.
 |----------|--------|-------------|
 | `/health` | GET | Estado del servicio y conexión a DB |
 | `/api/bootstrap` | GET | `?country=CL` o `CO` — períodos, instituciones, plan de cuentas y ranking patrimonial |
+| `/api/diagnostics/account-coverage` | GET | `?country=CL` o `CO` — conteos plan vs `datos_financieros`, huérfanas, muestras (uso interno / QA) |
 | `/api/datos` | POST | Datos financieros; body con `country` (CL|CO), tipo(s), períodos, cuentas, bancos |
 | `/api/visits` | GET | Total de visitas globales y desglose por país |
 | `/api/visits` | POST | Registra una visita con código y nombre de país |
