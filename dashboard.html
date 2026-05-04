@@ -64,7 +64,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
 @media (max-width: 900px) {
   .kpi-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   body { overflow: auto; }
-  .app { grid-template-rows: auto 1fr; height: auto; min-height: 100vh; }
+  .app { grid-template-rows: auto minmax(0,auto) 1fr; height: auto; min-height: 100vh; }
   .body { flex-direction: column; overflow: visible; }
   .sidebar {
     width: 100% !important;
@@ -155,7 +155,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
 }
 
 /* LAYOUT */
-.app { display:grid; grid-template-rows:56px 1fr; height:100dvh; min-height:0; }
+.app { display:grid; grid-template-rows:auto minmax(0,auto) 1fr; height:100dvh; min-height:0; }
 
 /* TOPBAR */
 .topbar {
@@ -308,9 +308,19 @@ body.light .ccy-toggle-opt.ccy-on.ccy-l { color:#0369a1; }
 .status-dot.ok     { background:var(--green); }
 .status-dot.error  { background:var(--red); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.loading-bar-row {
+  height: 0;
+  overflow: hidden;
+  transition: height 0.12s ease;
+  z-index: 45;
+}
+.loading-bar-row.is-loading {
+  height: 3px;
+}
 #loadingBar {
-  position:absolute; bottom:0; left:0; right:0; height:3px;
-  display:none; z-index:55; overflow:hidden; pointer-events:none;
+  display:none;
+  height:3px;
+  overflow:hidden; pointer-events:none;
 }
 #loadingBar::after {
   content:''; display:block; height:100%;
@@ -805,8 +815,9 @@ body.light .kpi-custom-badge {
         <span id="switchLight" style="padding:3px 10px;border-radius:16px;background:var(--accent);color:#fff;transition:all 0.2s;">☀</span>
       </div>
     </div>
-    <div id="loadingBar"></div>
   </div>
+
+  <div id="loadingBarRow" class="loading-bar-row"><div id="loadingBar"></div></div>
 
   <div class="body">
     <!-- SIDEBAR -->

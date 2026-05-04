@@ -182,13 +182,19 @@ export function refreshKPIs() {
   syncKpiResumenActive(ST._lastResChart || 'patrimonio');
 }
 
+function setRunLoadingBar(on) {
+  const bar = document.getElementById('loadingBar');
+  const row = document.getElementById('loadingBarRow');
+  if (bar) bar.style.display = on ? 'block' : 'none';
+  if (row) row.classList.toggle('is-loading', !!on);
+}
+
 // ---- Main data-fetch and render loop ----
 export async function run() {
   if (!ST.selected.size) { showErr('Please select at least one bank'); return; }
   showErr('');
   setStatus('loading', 'Loading...');
-  const _bar = document.getElementById('loadingBar');
-  if (_bar) _bar.style.display = 'block';
+  setRunLoadingBar(true);
 
   console.log('[run] start — selected:', [...ST.selected], 'desde:', ST.desde, 'hasta:', ST.hasta);
   ST._activeBalBank = null;
@@ -205,7 +211,7 @@ export async function run() {
   if (!todosLosPeriodos.length) {
     showErr('No hay períodos en el rango Desde/Hasta seleccionado. Elige otro intervalo.');
     setStatus('error', 'Empty date range');
-    if (_bar) _bar.style.display = 'none';
+    setRunLoadingBar(false);
     document.getElementById('dashContent').style.display = 'flex';
     return;
   }
@@ -259,7 +265,10 @@ export async function run() {
           ? fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
           : Promise.resolve([]),
       ]);
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        setRunLoadingBar(false);
+        return;
+      }
 
       const firstBank = ST.selectedOrder[0] || banks[0];
       const b1v = c => sumRows(b1.filter(r => r.ins_cod === firstBank), c, lastP);
@@ -321,7 +330,7 @@ export async function run() {
       if (hi) hi.textContent = rangeLabel;
 
       document.getElementById('dashContent').style.display = 'flex';
-      if (_bar) _bar.style.display = 'none';
+      setRunLoadingBar(false);
       setStatus('ok', `Colombia CUIF · ${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s)`);
       return;
     }
@@ -361,7 +370,10 @@ export async function run() {
       fetchData('r1', R1_CUENTAS, periodos, banks, signal),
       fetchData('c1', C1_CUENTAS, periodos, banks, signal),
     ]);
-    if (signal.aborted) return;
+    if (signal.aborted) {
+      setRunLoadingBar(false);
+      return;
+    }
     console.log('[run] data received — b1:', b1.length, 'r1:', r1.length, 'c1:', c1.length);
 
     const firstBank = ST.selectedOrder[0] || banks[0];
@@ -439,7 +451,7 @@ export async function run() {
     renderComparativo(b1, r1, c1, lastP);
 
     document.getElementById('dashContent').style.display = 'flex';
-    if (_bar) _bar.style.display = 'none';
+    setRunLoadingBar(false);
     setStatus('ok', `${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
 
     const hi = document.getElementById('headerInfo');
@@ -447,10 +459,10 @@ export async function run() {
 
   } catch (e) {
     if (e?.name === 'AbortError') {
-      if (_bar) _bar.style.display = 'none';
+      setRunLoadingBar(false);
       return;
     }
-    if (_bar) _bar.style.display = 'none';
+    setRunLoadingBar(false);
     setStatus('error', 'Error al consultar datos');
     showErr('Error al cargar datos: ' + e.message + ' — Abre la consola del navegador (F12) para más detalles.');
     console.error('[run] Error:', e.name, e.message, e);
