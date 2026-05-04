@@ -39,6 +39,11 @@ export function fillPeriodSelectors() {
 export function fillBankList() {
   const list  = document.getElementById('bankList');
   list.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'bank-list-header';
+  header.innerHTML =
+    '<span class="bank-hdr-spacer" aria-hidden="true"></span><span class="bank-hdr-name">Bank</span><span class="bank-hdr-equity">Equity</span>';
+  list.appendChild(header);
   const codes = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
 
   if (ST._patrimonioRanking && ST._patrimonioRanking.length > 0) {
@@ -265,6 +270,13 @@ export function toggleSection(id) {
   if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
 }
 
+/** Etiqueta del botón mora/deterioro en la barra del gráfico Resumen (CO vs CL). */
+export function syncResumenMoraChartButton() {
+  const moraBtn = document.getElementById('btnResChartMora');
+  if (!moraBtn) return;
+  moraBtn.textContent = ST.country === 'colombia' ? '⚠️ Deterioro %' : '⚠️ NPL %';
+}
+
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
   const flags = { chile: 'flagChile', colombia: 'flagColombia', peru: 'flagPeru', uruguay: 'flagUruguay' };
@@ -285,6 +297,7 @@ export function selectCountry(country) {
     if (overlay) overlay.style.display = 'none';
     ST.country = 'chile';
     syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
     if (prev === 'colombia') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
@@ -293,6 +306,7 @@ export function selectCountry(country) {
     ST.country = 'colombia';
     if (overlay) overlay.style.display = 'none';
     syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
     queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }

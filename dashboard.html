@@ -439,6 +439,21 @@ body.light #sidebarPeriodPick.sidebar-disabled {
 .bank-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding:6px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
 .bank-scroll::-webkit-scrollbar { width:5px; }
 .bank-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+.bank-list-header {
+  display:flex; align-items:center; gap:8px;
+  padding:4px 8px 8px;
+  margin-bottom:2px;
+  border-bottom:1px solid var(--border2);
+  flex-shrink:0;
+}
+.bank-list-header .bank-hdr-spacer { width:21px; flex-shrink:0; }
+.bank-list-header .bank-hdr-name {
+  flex:1; font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:var(--text3);
+}
+.bank-list-header .bank-hdr-equity {
+  font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:var(--text3);
+  text-align:right; min-width:52px;
+}
 .bank-item {
   display:flex; align-items:center; gap:8px;
   padding:6px 8px; border-radius:4px;
@@ -852,7 +867,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
                   <button class="rcbtn active" onclick="showResChart('patrimonio')">🏛 Equity</button>
                   <button class="rcbtn" onclick="showResChart('utilidad')">💰 Net Income</button>
                   <button class="rcbtn" onclick="showROEChart()">📈 Annual ROE</button>
-                  <button class="rcbtn" onclick="showResChart('mora')">⚠️ NPL %</button>
+                  <button type="button" class="rcbtn" id="btnResChartMora" onclick="showResChart('mora')">⚠️ NPL %</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
                   <button type="button" id="btnLabels" class="lbl123-btn state-auto" onclick="toggleBarLabels()" title=""></button>
@@ -1138,10 +1153,6 @@ body.light #sidebarPeriodPick.sidebar-disabled {
                   <div class="sidebar-label">Data source</div>
                   <div style="font-size:13px;color:var(--text);margin-top:4px;">CMF — Financial Market Commission (Chile)</div>
                   <div style="font-size:12px;color:var(--text2);margin-top:2px;">Balance y Estado de Situación Banks (Circular N° 2.243)</div>
-                </div>
-                <div>
-                  <div class="sidebar-label">Accounting standard</div>
-                  <div style="font-size:13px;color:var(--text);margin-top:4px;">IFRS — effective January 2022</div>
                 </div>
                 <div>
                   <div class="sidebar-label">Current query status</div>

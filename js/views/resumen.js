@@ -2,7 +2,7 @@
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
-import { CO_CUIF, CO_CUIF_NPL_PLUS90, coB1AccountsForRun, coR1AccountsForRun } from '../coCuentas.js?v=bmon14';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon14';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
@@ -13,13 +13,6 @@ import { setStatus, showErr } from '../utils.js?v=bmon14';
 
 let runAbortController = null;
 let roeAbortController = null;
-
-function coMoraNumerator(rowsOneBankOneTipo, period) {
-  return CO_CUIF_NPL_PLUS90.reduce(
-    (s, cuenta) => s + Math.abs(sumRows(rowsOneBankOneTipo, cuenta, period)),
-    0
-  );
-}
 
 function abortROEFetch() {
   roeAbortController?.abort();
@@ -43,7 +36,7 @@ export function refreshKPIs() {
       : '—';
     const moraSub = !m.colocaciones
       ? '—'
-      : `CUIF D+E +90d vs gross loans (${fmtKPI(m.mora90)} · ${fmtKPI(m.colocaciones)})`;
+      : `Cuentas 148·149 vs colocación 140000 (${fmtKPI(m.mora90)} · ${fmtKPI(m.colocaciones)})`;
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
@@ -69,7 +62,7 @@ export function refreshKPIs() {
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d / Loans</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>`;
+    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">Deterioro / Total Loans</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -82,7 +75,7 @@ export function refreshKPIs() {
     <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">P&amp;L detail (CUIF r1)</div><div class="kpi-val">Income Statement tab</div><div class="kpi-sub">Main lines: interest, fees, operating income/expenses, credit losses, tax.</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF mora D+E</div><div class="kpi-sub">NPL en Resumen: suma 140435/440, 140820/825, 141020/025 y 141225 sobre colocación 140000 (análogo al +90d CMF Chile, distinta fuente).</div></div>
+    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">Deterioro (148·149)</div><div class="kpi-sub">Key Data: suma del activo en cuentas 148### y 149### (deterioro) sobre colocación bruta 140000.</div></div>
     <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Calificaciones (referencia)</div><div class="kpi-val">Davivienda, Scotiabank Colpatria y Banco Caja Social: AAA</div><div class="kpi-sub">Davivienda es AAA; Scotiabank Colpatria también es AAA; Banco Caja Social también lo es. Más bancos y perspectivas en la pestaña Banking System.</div></div>`;
     return;
   }
@@ -191,7 +184,9 @@ export async function run() {
 
   try {
     if (datasetIsoCountry() === 'CO') {
-      const B1_CO = coB1AccountsForRun();
+      const B1_BASE = coB1AccountsForRun();
+      const deterioroC = coDeterioroActivoCuentasFromPlan(Object.keys(ST.planCuentas || {}));
+      const B1_CO = [...new Set([...B1_BASE, ...deterioroC])];
       const R1_CO = coR1AccountsForRun();
 
       runAbortController?.abort();
@@ -426,7 +421,9 @@ export function showResChart(tipo) {
   const titleEl = document.querySelector('#tab-resumen .panel-title');
   if (titleEl) titleEl.textContent = 'Banking System Evolution';
 
-  const map = { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %' };
+  const map = datasetIsoCountry() === 'CO'
+    ? { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ Deterioro %' }
+    : { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %' };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
   });
@@ -515,7 +512,9 @@ export function showResChart(tipo) {
   const tableEl    = document.getElementById('resChartTable');
   const tableTitleEl = document.getElementById('resChartTableTitle');
   if (panel && tableEl) {
-    const metricLabels = { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
+    const metricLabels = datasetIsoCountry() === 'CO'
+      ? { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'Deterioro / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' }
+      : { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
     if (tableTitleEl) tableTitleEl.textContent = metricLabels[tipo] || tipo;
     panel.style.display = 'block';
 

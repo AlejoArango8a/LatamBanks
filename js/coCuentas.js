@@ -16,29 +16,38 @@ export const CO_CUIF = {
   utilidadNet: '590000',
 };
 
-/**
- * CUIF b1 — mora +90 días: categorías D y E por modalidad (numerador NPL Key Data y gráfico mora).
- * Suma / colocaciones 140000 ≈ NPL / préstamos (análogo conceptual al +90d CMF Chile).
- */
-export const CO_CUIF_NPL_PLUS90 = [
-  '140435',
-  '140440',
-  '140820',
-  '140825',
-  '141020',
-  '141025',
-  '141225',
-];
+/** Normaliza cuenta CUIF CO a 6 dígitos (prefix clase; ceros a la derecha típico CUIF). */
+export function coCuentaNorm6(cuenta) {
+  const d = String(cuenta ?? '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length >= 6) return d.slice(0, 6);
+  return d.padEnd(6, '0');
+}
 
-export const CO_CUIF_NPL_PLUS90_LABELS = {
-  140435: 'Mora vivienda D (+90d)',
-  140440: 'Mora vivienda E',
-  140820: 'Mora consumo D (+90d)',
-  140825: 'Mora consumo E',
-  141020: 'Mora comercial D (+90d)',
-  141025: 'Mora comercial E',
-  141225: 'Mora microcrédito E',
-};
+/** Deterioro en el activo — todas las cuentas 148### y 149### (CUIF). */
+export function coIsDeterioroActivoCuenta(cuenta) {
+  const k = coCuentaNorm6(cuenta);
+  return k.startsWith('148') || k.startsWith('149');
+}
+
+/**
+ * Cuentas b1 a solicitar: del plan cargado, todas las de familias 148 y 149.
+ */
+export function coDeterioroActivoCuentasFromPlan(planKeys) {
+  const out = new Set();
+  for (const cu of planKeys || []) {
+    const k = coCuentaNorm6(cu);
+    if (k.startsWith('148') || k.startsWith('149')) out.add(k);
+  }
+  return [...out].sort();
+}
+
+/** Numerador Key Data / gráfico deterioro CO: suma |monto| en 148·149 para el periodo. */
+export function coMoraNumerator(rowsOneBankOneTipo, period) {
+  return rowsOneBankOneTipo
+    .filter(r => (!period || r.periodo === period) && coIsDeterioroActivoCuenta(r.cuenta))
+    .reduce((s, r) => s + Math.abs(Number(r.monto_total) || 0), 0);
+}
 
 /**
  * Balance Sheet — principales subcuentas CUIF b1 (6 dígitos), alineadas al desglose tipo Chile.
@@ -53,11 +62,8 @@ export const BAL_CO_SECTIONS = {
     { c: '120000', l: 'Financial assets at FVOCI', cls: 'i1' },
     { c: '130000', l: 'Hedging derivatives (assets)', cls: 'i1' },
     { c: '140000', l: 'Loans · gross portfolio', cls: 'i2' },
-    ...CO_CUIF_NPL_PLUS90.map(c => ({
-      c,
-      l: CO_CUIF_NPL_PLUS90_LABELS[c] || c,
-      cls: 'i3',
-    })),
+    { c: '148000', l: 'Deterioro en el activo (familia 148)', cls: 'i3' },
+    { c: '149000', l: 'Deterioro en el activo (familia 149)', cls: 'i3' },
     { c: '150000', l: 'Investments in associates / subsidiaries', cls: 'i1' },
     { c: '160000', l: 'Intangible assets', cls: 'i1' },
     { c: '170000', l: 'Property, plant and equipment', cls: 'i1' },

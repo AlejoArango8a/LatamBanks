@@ -26,6 +26,7 @@ import {
   fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI, refreshMoneyDenominatedUI,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
+  syncResumenMoraChartButton,
 } from './ui.js?v=bmon14';
 
 // Export helpers
@@ -139,6 +140,7 @@ async function switchCountryDataset() {
   } finally {
     syncCurrencyToggleUI();
     syncFinStatementPanelLabels();
+    syncResumenMoraChartButton();
   }
 }
 
@@ -151,6 +153,7 @@ async function init() {
     setLsMsg('Connecting to server...');
     applyCountryFromUrl();
     syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
 
     // The server may be cold-starting (Render free tier sleeps after inactivity).
     // Show a friendly message after 6 seconds so the user knows it's still working.
@@ -176,6 +179,7 @@ async function init() {
     document.getElementById('selHasta').selectedIndex = n - 1;
     toggleBank(datasetIsoCountry() === 'CO' ? 66 : 59, true);
     fillBankList();
+    syncResumenMoraChartButton();
     await run();
     syncFinStatementPanelLabels();
     showTab('resumen');
