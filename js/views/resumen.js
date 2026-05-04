@@ -45,7 +45,7 @@ function customKpiTileHtml(m) {
     sub = 'Elegí una cuenta del plan · click para abrir el selector';
   }
   return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data — click para cambiar cuenta">
-    <div class="kpi-label"><span class="kpi-custom-badge">CUSTOM</span> cuenta libre</div>
+    <div class="kpi-label kpi-custom-label-row"><span class="kpi-custom-badge">Custom</span><span class="kpi-custom-heading">Custom Account</span></div>
     <div class="kpi-val">${val}</div>
     <div class="kpi-sub" style="line-height:1.35;">${sub}</div>
   </div>`;

@@ -624,20 +624,41 @@ body.light .custom-kpi-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.12); }
 .kpi-btn { cursor:pointer; transition:transform 0.1s, box-shadow 0.1s; }
 .kpi-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
 .kpi-btn.kpi-active { box-shadow:0 0 0 2px var(--accent); }
+/* Custom Key tile: light grey accent (dark theme) / light blue (light theme) */
 .kpi.kpi-custom-tile {
-  background:linear-gradient(160deg, rgba(168,85,247,0.14), var(--bg2) 55%);
-  border:1px dashed rgba(167,139,250,0.65);
+  background:linear-gradient(165deg, rgba(203,213,225,0.14) 0%, var(--bg2) 52%);
+  border:1px dashed rgba(148,163,184,0.5);
   border-radius:8px;
 }
 .kpi.kpi-custom-tile::after {
   height:3px;
-  background:linear-gradient(90deg, #a855f7, #6366f1, #22d3ee);
+  background:linear-gradient(90deg, rgba(148,163,184,0.75), var(--accent));
 }
-.kpi.kpi-custom-tile .kpi-label { color:#c4b5fd; font-weight:700; letter-spacing:0.04em; }
+.kpi.kpi-custom-tile .kpi-custom-label-row {
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+  text-transform:none; letter-spacing:0.02em; font-weight:600; color:var(--text2);
+}
+.kpi.kpi-custom-tile .kpi-custom-heading {
+  color:var(--text); font-weight:700;
+}
 .kpi-custom-badge {
   display:inline-block; padding:1px 6px; border-radius:3px;
-  font-size:8px; font-weight:800; letter-spacing:0.12em;
-  background:rgba(168,85,247,0.35); color:#f5f3ff; vertical-align:middle;
+  font-size:8px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase;
+  background:rgba(148,163,184,0.35); color:var(--text); vertical-align:middle;
+  border:1px solid rgba(148,163,184,0.35);
+}
+body.light .kpi.kpi-custom-tile {
+  background:linear-gradient(165deg, rgba(224,242,254,0.92) 0%, var(--bg2) 55%);
+  border:1px dashed rgba(14,165,233,0.4);
+}
+body.light .kpi.kpi-custom-tile::after {
+  background:linear-gradient(90deg, var(--accent2), var(--accent));
+}
+body.light .kpi.kpi-custom-tile .kpi-custom-label-row { color:var(--text2); }
+body.light .kpi.kpi-custom-tile .kpi-custom-heading { color:var(--accent2); }
+body.light .kpi-custom-badge {
+  background:rgba(2,132,199,0.15); color:var(--accent2);
+  border-color:rgba(2,132,199,0.28);
 }
 
 /* PANEL */
