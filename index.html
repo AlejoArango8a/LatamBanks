@@ -238,9 +238,15 @@
       min-height: clamp(420px, 58dvh, 780px);
       box-sizing: border-box;
       isolation: isolate;
+      --hero-title-main-fs: clamp(26px, 4.2vw, 40px);
+      /*
+        Espacio título ↔ copy ↔ botón: equidistante (un solo gap en flex).
+        Mínimo ≈ tamaño visual de una línea del titular “Latam Banks Monitor”.
+      */
+      --hero-pitch-gap: max(calc(var(--hero-title-main-fs) * 1.28), 2.35rem);
     }
 
-    /* Columna izquierda absoluta dentro del escenario para repartir alto sin % frágiles */
+    /* Columna izquierda: contenido agrupado y centrado en altura dentro del margen útil */
     .hero-left {
       position: absolute;
       left: clamp(0px, 1.5vw, 16px);
@@ -251,9 +257,9 @@
       z-index: 3;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       align-items: flex-start;
-      gap: clamp(24px, 5vh, 56px);
+      gap: 0;
       text-align: left;
       pointer-events: none;
     }
@@ -263,23 +269,23 @@
         max-width: min(360px, 40vw);
       }
     }
-    /* Viewports no tan altos */
+    /* Viewports bajos: no encoger demasiado el hueco tipo “altura del titular” */
     @media (min-width: 721px) and (max-height: 720px) {
-      .hero-left {
-        gap: clamp(14px, 2.5vh, 28px);
-      }
-      .hero-lead-col {
-        gap: clamp(14px, 2.8vh, 28px);
+      .hero-stage {
+        --hero-pitch-gap: max(calc(var(--hero-title-main-fs) * 1.05), 1.85rem);
       }
     }
-    .hero-left > * {
+
+    .hero-left > .hero-left-stack {
       pointer-events: auto;
     }
 
-    .hero-lead-col {
+    /* Título · copy · botón: un gap común ⇒ equidistante respecto al texto central */
+    .hero-left-stack {
       display: flex;
       flex-direction: column;
-      gap: clamp(18px, 3.8vh, 40px);
+      align-items: flex-start;
+      gap: var(--hero-pitch-gap);
     }
 
     .hero-flags-fixed {
@@ -320,12 +326,11 @@
         bottom: auto;
         left: auto;
         width: 100%;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: center;
         text-align: center;
-        gap: clamp(20px, 4vh, 36px);
       }
-      .hero-lead-col {
+      .hero-left-stack {
         align-items: center;
       }
       .hero-flags-fixed {
@@ -355,7 +360,7 @@
     }
     .hero-title-main {
       display: block;
-      font-size: clamp(26px, 4.2vw, 40px);
+      font-size: var(--hero-title-main-fs);
       letter-spacing: -0.03em;
       color: #fff;
       font-weight: 700;
@@ -518,8 +523,11 @@
       }
     }
 
-    /* Muy angosto: sin subtítulo visual, más aire en el hero */
+    /* Muy angosto: subtítulo oculto; titular menor → gap proporcional via variable */
     @media (max-width: 420px) {
+      .hero-stage {
+        --hero-title-main-fs: clamp(22px, 6.5vw, 30px);
+      }
       .hero-title-sub {
         position: absolute;
         width: 1px;
@@ -537,15 +545,9 @@
       .hero-stage {
         gap: 22px;
       }
-      .hero-lead-col {
-        gap: 22px;
-      }
       .hero-title {
         margin: 0;
         line-height: 1.18;
-      }
-      .hero-title-main {
-        font-size: clamp(22px, 6.5vw, 30px);
       }
       .hero-sub {
         max-width: none;
@@ -652,7 +654,7 @@
 
   <div class="hero-stage">
     <div class="hero-left">
-      <div class="hero-lead-col">
+      <div class="hero-left-stack">
         <h1 class="hero-title">
           <span class="hero-title-main">Latam Banks Monitor</span>
           <span class="hero-title-sub">Financial Information</span>
@@ -660,11 +662,11 @@
         <p class="hero-sub">
           Explore balance sheets, P&amp;L, credit quality and rankings built on official supervisory data.
         </p>
-      </div>
-      <div class="hero-copy-actions hero-actions-row">
-        <form class="hero-enter-form" action="./dashboard.html" method="get">
-          <button type="submit" class="btn-navy">Enter Monitor</button>
-        </form>
+        <div class="hero-copy-actions hero-actions-row">
+          <form class="hero-enter-form" action="./dashboard.html" method="get">
+            <button type="submit" class="btn-navy">Enter Monitor</button>
+          </form>
+        </div>
       </div>
     </div>
     <aside class="hero-flags-fixed" aria-label="Country selection">
