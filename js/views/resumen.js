@@ -82,7 +82,8 @@ export function refreshKPIs() {
     <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">P&amp;L detail (CUIF r1)</div><div class="kpi-val">Income Statement tab</div><div class="kpi-sub">Main lines: interest, fees, operating income/expenses, credit losses, tax.</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF mora D+E</div><div class="kpi-sub">NPL en Resumen: suma 140435/440, 140820/825, 141020/025 y 141225 sobre colocación 140000 (análogo al +90d CMF Chile, distinta fuente).</div></div>`;
+    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">CUIF mora D+E</div><div class="kpi-sub">NPL en Resumen: suma 140435/440, 140820/825, 141020/025 y 141225 sobre colocación 140000 (análogo al +90d CMF Chile, distinta fuente).</div></div>
+    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Calificaciones (referencia)</div><div class="kpi-val">Davivienda, Scotiabank Colpatria y Banco Caja Social: AAA</div><div class="kpi-sub">Davivienda es AAA; Scotiabank Colpatria también es AAA; Banco Caja Social también lo es. Más bancos y perspectivas en la pestaña Banking System.</div></div>`;
     return;
   }
 

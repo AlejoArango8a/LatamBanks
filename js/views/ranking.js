@@ -26,13 +26,6 @@ function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/** Texto mostrado en celda Rating (Colombia = escala nacional local). */
-function formatRatingCellCo(rating) {
-  if (!rating || rating === '—') return '—';
-  if (datasetIsoCountry() !== 'CO') return rating;
-  return `${rating}<span style="font-size:9px;color:var(--text3);font-weight:600;"> (col)</span>`;
-}
-
 export function getCBRatings() {
   const base = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
   try {
@@ -205,7 +198,7 @@ export function renderCBTable() {
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
       <td class="cb-col-rating" style="text-align:center;">
-        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${formatRatingCellCo(rating)}${negSup}</span>
+        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}${negSup}</span>
       </td>
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>

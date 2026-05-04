@@ -113,7 +113,7 @@ export const FELLER_RATINGS = {
   66: 'AA',
 };
 
-/** Fitch / BRC — largo plazo escala nacional (notación app: sin “(col)” en la celda). codigo_entidad CUIF. */
+/** Fitch / BRC — largo plazo escala nacional. codigo_entidad CUIF. */
 export const BANK_RATINGS_CO = Object.freeze({
   10_001: 'AAA', // Grupo Aval (sintético cliente)
   1: 'AAA',     // Banco Popular
@@ -123,29 +123,29 @@ export const BANK_RATINGS_CO = Object.freeze({
   9: 'AAA',     // Citibank
   12: 'AA+',    // GNB Sudameris (BRC)
   13: 'AAA',    // BBVA Colombia
-  19: 'AAA',    // Scotiabank Colpatria — AAA (col)
+  19: 'AAA',    // Scotiabank Colpatria
   23: 'AAA',    // Banco de Occidente
-  32: 'AAA',    // Banco Caja Social BCSC — AAA (col)
+  32: 'AAA',    // Banco Caja Social BCSC
   40: 'AAA',    // Banco Agrario (corte CENIT 1040)
   43: 'AAA',    // Banco Agrario (CUIF habitual app)
   46: 'AA',     // Banco Unión (antes Giros y Finanzas)
   48: 'A+',     // Banco Contactar
   49: 'AAA',    // AV Villas
-  51: 'AAA',   // Davivienda — AAA (col); perspectiva negativa → META
+  51: 'AAA',   // Davivienda; perspectiva negativa → META
   53: 'AA',     // Banco W
   54: 'AAA',    // Bancien
   55: 'AA+',    // Finandina
   56: 'AAA',    // Falabella
   57: 'A-',     // Pichincha
   58: 'AA',     // Coopcentral
-  59: 'AA-',   // Bancamía — AA- (col)
+  59: 'AA-',   // Bancamía
   60: 'AA+',    // Mundo Mujer
   61: 'AA-',    // Bancoomeva / Coomeva
   64: 'AAA',    // J.P. Morgan (CUIF habitual en app)
   71: 'AAA',    // J.P. Morgan (CENIT 1071 → codigo_entidad en algunos cortes)
-  65: 'AAA',   // Banco Santander de Negocios — AAA (col)
+  65: 'AAA',   // Banco Santander de Negocios
   66: 'AAA',    // BTG Pactual Colombia
-  67: 'AAA',   // Mibanco / Mi Banco — AAA (col)
+  67: 'AAA',   // Mibanco / Mi Banco
   69: 'AA',     // Serfinanza
   70: 'A+',     // Lulo Bank
 });
