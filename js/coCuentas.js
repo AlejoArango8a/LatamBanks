@@ -102,22 +102,90 @@ export const BAL_CO_SECTIONS = {
   ],
 };
 
-/** P&L — cuentas r1 (6 dígitos); paralelo al detalle Chile (520…590). */
-export const R1_CO_ROWS = [
-  { l: 'Net interest income', c: '520000', cls: '' },
-  { l: 'Net monetary correction (UVR / similar)', c: '525000', cls: '' },
-  { l: 'Net fee and commission income', c: '530000', cls: '' },
-  { l: 'Net financial result', c: '540000', cls: '' },
-  { l: 'Total operating income', c: '550000', cls: 'hl' },
-  { l: 'Personnel expenses', c: '462000', cls: 'i1' },
-  { l: 'Administrative expenses', c: '464000', cls: 'i1' },
-  { l: 'Total operating expenses', c: '560000', cls: 'hl' },
-  { l: 'Operating result before credit losses', c: '570000', cls: '' },
-  { l: 'Credit loss expense', c: '470000', cls: 'i1' },
-  { l: 'Operating result', c: '580000', cls: 'hl' },
-  { l: 'Income tax', c: '480000', cls: 'i1' },
-  { l: 'Net income (loss)', c: '590000', cls: 'hl' },
-];
+/** Sentinels for CUIF P&L subtotal lines (not chart codes). */
+export const CO_R1_SENT_CLASS4_TOTAL = '!C4';
+export const CO_R1_SENT_CLASS5_OPS = '!C5';
+
+const CO_R1_RESULT_PREFIXES = new Set(['570', '580', '590']);
+
+function coPlGroupLabel(plan, pref3) {
+  const p = plan || {};
+  const key000 = `${pref3}000`;
+  if (p[key000]) return p[key000];
+  const any = Object.keys(p).find(k => coCuentaNorm6(k).startsWith(pref3));
+  return any ? p[any] : `Account group ${pref3}xxx`;
+}
+
+function coCollectPlPrefixesFromPlan(planKeys) {
+  const p4 = new Set();
+  const p5 = new Set();
+  for (const cu of planKeys || []) {
+    const n = coCuentaNorm6(cu);
+    if (n.length !== 6) continue;
+    if (n[0] === '4') p4.add(n.slice(0, 3));
+    if (n[0] === '5') p5.add(n.slice(0, 3));
+  }
+  return { p4, p5 };
+}
+
+function coAugmentPrefixesFromR1(p4, p5, r1, lastP, bankSet) {
+  if (!r1 || !lastP || !bankSet?.size) return;
+  for (const row of r1) {
+    if (row.periodo !== lastP || !bankSet.has(Number(row.ins_cod))) continue;
+    const n = coCuentaNorm6(row.cuenta);
+    if (n.length !== 6) continue;
+    if (n[0] === '4') p4.add(n.slice(0, 3));
+    if (n[0] === '5') p5.add(n.slice(0, 3));
+  }
+}
+
+/**
+ * Income Statement rows for Colombia: CUIF clase 4 (ingresos) y clase 5 (gastos) por grupo (3 dígitos),
+ * más subtotales publicados típicos 570/580/590. Alineado con infer_tipo en colombia_loader (4,5 → r1).
+ */
+export function coPlStatementRows() {
+  const plan = ST.planCuentas || {};
+  const { p4: p4a, p5: p5a } = coCollectPlPrefixesFromPlan(Object.keys(plan));
+  const p4 = new Set(p4a);
+  const p5 = new Set(p5a);
+  const bankSet = new Set([...ST.selected].map(Number));
+  coAugmentPrefixesFromR1(p4, p5, ST._series?.r1, ST._lastP, bankSet);
+
+  const sorted4 = [...p4].sort((a, b) => Number(a) - Number(b));
+  const p5detail = [...p5].filter(p => !CO_R1_RESULT_PREFIXES.has(p)).sort((a, b) => Number(a) - Number(b));
+
+  const out = [];
+
+  out.push({ section: true, l: 'Income (class 4 · CUIF)' });
+  for (const pref of sorted4) {
+    out.push({ l: coPlGroupLabel(plan, pref), c: `${pref}000`, cls: 'i1' });
+  }
+  out.push({ l: 'Total income (class 4)', c: CO_R1_SENT_CLASS4_TOTAL, cls: 'hl' });
+
+  out.push({ section: true, l: 'Expenses (class 5 · CUIF)' });
+  for (const pref of p5detail) {
+    out.push({ l: coPlGroupLabel(plan, pref), c: `${pref}000`, cls: 'i1' });
+  }
+  out.push({
+    l: 'Total expenses (class 5, excl. result lines 570–590)',
+    c: CO_R1_SENT_CLASS5_OPS,
+    cls: 'hl',
+  });
+
+  const fallbacks = {
+    '570000': 'Operating result before credit losses',
+    '580000': 'Operating result',
+    '590000': 'Net income (loss)',
+  };
+  out.push({ section: true, l: 'Reported subtotals (CUIF)' });
+  for (const c of ['570000', '580000', '590000']) {
+    const pref = c.slice(0, 3);
+    const lbl = plan[c] || fallbacks[c] || coPlGroupLabel(plan, pref);
+    out.push({ l: lbl, c, cls: 'hl' });
+  }
+
+  return out;
+}
 
 /** b1: totales publicados solo por código exacto; el resto se agrega por familia CUIF. */
 const CO_B1_HEADLINE_EXACT = new Set(['100000', '200000', '300000']);
@@ -171,6 +239,23 @@ export function coR1NormMatchesRow(norm, sectionCode) {
 }
 
 export function coSumR1PlRow(r1RowsSameBankPeriod, sectionCode) {
+  if (sectionCode === CO_R1_SENT_CLASS4_TOTAL) {
+    return r1RowsSameBankPeriod.reduce((s, r) => {
+      const n = coCuentaNorm6(r.cuenta);
+      if (n.length === 6 && n[0] === '4') return s + (Number(r.monto_total) || 0);
+      return s;
+    }, 0);
+  }
+  if (sectionCode === CO_R1_SENT_CLASS5_OPS) {
+    const skip = n =>
+      n.startsWith('570') || n.startsWith('580') || n.startsWith('590');
+    return r1RowsSameBankPeriod.reduce((s, r) => {
+      const n = coCuentaNorm6(r.cuenta);
+      if (n.length !== 6 || n[0] !== '5' || skip(n)) return s;
+      return s + (Number(r.monto_total) || 0);
+    }, 0);
+  }
+
   const c = coCuentaNorm6(sectionCode);
   const rows = r1RowsSameBankPeriod.map(r => ({ r, n: coCuentaNorm6(r.cuenta) }));
   if (CO_R1_HEADLINE.has(c)) {
@@ -203,13 +288,13 @@ export function coB1AccountsForRun() {
 }
 
 export function coR1AccountsForRun() {
-  const prefixes = new Set(R1_CO_ROWS.map(r => coCuentaNorm6(r.c).slice(0, 3)));
-  const out = new Set(R1_CO_ROWS.map(r => r.c));
+  const out = new Set();
   for (const cu of Object.keys(ST.planCuentas || {})) {
     const n = coCuentaNorm6(cu);
     if (n.length !== 6) continue;
-    if (prefixes.has(n.slice(0, 3))) out.add(n);
+    if (n[0] === '4' || n[0] === '5') out.add(n);
   }
+  for (const x of ['570000', '580000', '590000']) out.add(x);
   return [...out];
 }
 

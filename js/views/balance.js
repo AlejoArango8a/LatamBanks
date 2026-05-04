@@ -5,7 +5,7 @@ import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon14';
 import { sumRows } from '../api.js?v=bmon14';
-import { BAL_CO_SECTIONS, R1_CO_ROWS, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon14';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon14';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -230,7 +230,7 @@ export function renderResTable(m) {
     {l:'Income Tax',                       c:'480000000', cls:'i1'},
     {l:'NET INCOME (LOSS)',                c:'590000000', cls:'hl'},
   ];
-  const r1Rows = datasetIsoCountry() === 'CO' ? R1_CO_ROWS : R1_ROWS;
+  const r1Rows = datasetIsoCountry() === 'CO' ? coPlStatementRows() : R1_ROWS;
 
   if (ST._series && ST._series.r1 && ST._lastP) {
     const r1    = ST._series.r1;
@@ -253,6 +253,10 @@ export function renderResTable(m) {
     });
     html += `</tr></thead><tbody>`;
     r1Rows.forEach(row => {
+      if (row.section) {
+        html += `<tr><td colspan="${1 + n}" class="pl-section">${row.l}</td></tr>`;
+        return;
+      }
       html += `<tr><td class="${row.cls}">${row.l}</td>`;
       banks.forEach(code => {
         const v = getVal(row.c, code);
