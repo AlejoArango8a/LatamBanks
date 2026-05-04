@@ -5,7 +5,7 @@ import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=
 import { bankColor } from '../config.js?v=bmon14';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon14';
 import { sumRows } from '../api.js?v=bmon14';
-import { BAL_CO_SECTIONS, R1_CO_ROWS } from '../coCuentas.js?v=bmon14';
+import { BAL_CO_SECTIONS, R1_CO_ROWS, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon14';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -105,15 +105,22 @@ export function showBalTab(sec, bankCode) {
   if (!rows) return;
 
   const isCO = datasetIsoCountry() === 'CO';
+  const sameIns = (row, code) => Number(row.ins_cod) === Number(code);
 
-  const b1Map = new Map();
-  ST._b1.forEach(r => {
-    if (r.periodo !== ST._lastP) return;
-    const key = `${r.cuenta}|${r.ins_cod}`;
-    if (!b1Map.has(key)) b1Map.set(key, []);
-    b1Map.get(key).push(r);
-  });
-  const getRows = (cuenta, code) => b1Map.get(`${cuenta}|${code}`) || [];
+  let b1Map = null;
+  let getRows = null;
+  if (!isCO) {
+    b1Map = new Map();
+    ST._b1.forEach(r => {
+      if (r.periodo !== ST._lastP) return;
+      const key = `${r.cuenta}|${r.ins_cod}`;
+      if (!b1Map.has(key)) b1Map.set(key, []);
+      b1Map.get(key).push(r);
+    });
+    getRows = (cuenta, code) => b1Map.get(`${cuenta}|${code}`) || [];
+  }
+
+  const b1Period = isCO ? ST._b1.filter(r => r.periodo === ST._lastP) : null;
 
   if (banks.length === 1) {
     const code = banks[0];
@@ -124,8 +131,8 @@ export function showBalTab(sec, bankCode) {
         <th class="r">${amtLabel}</th>
       </tr></thead><tbody>`;
       rows.forEach(row => {
-        const bankRows = getRows(row.c, code);
-        const tot = bankRows.reduce((s, r) => s + (r.monto_total || 0), 0);
+        const slice = b1Period.filter(r => sameIns(r, code));
+        const tot = coSumB1BalanceRow(slice, row.c);
         const neg = tot < 0 ? 'neg' : '';
         html += `<tr>
         <td class="cod">${row.c}</td>
@@ -182,7 +189,9 @@ export function showBalTab(sec, bankCode) {
     rows.forEach(row => {
       html += `<tr><td class="${row.cls}">${row.l}</td>`;
       banks.forEach(code => {
-        const tot = getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
+        const tot = isCO
+          ? coSumB1BalanceRow(b1Period.filter(r => sameIns(r, code)), row.c)
+          : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
         const neg = tot < 0 ? 'neg' : '';
         html += `<td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}">${fmtKPI(tot)}</td>`;
       });
@@ -226,9 +235,12 @@ export function renderResTable(m) {
   if (ST._series && ST._series.r1 && ST._lastP) {
     const r1    = ST._series.r1;
     const lastP = ST._lastP;
-    const getVal = (cuenta, code) =>
-      r1.filter(r => r.cuenta === cuenta && r.ins_cod === code && r.periodo === lastP)
-        .reduce((s, r) => s + (r.monto_total || 0), 0);
+    const isCOPl = datasetIsoCountry() === 'CO';
+    const getVal = (cuenta, code) => {
+      const slice = r1.filter(r => r.periodo === lastP && Number(r.ins_cod) === Number(code));
+      if (isCOPl) return coSumR1PlRow(slice, cuenta);
+      return slice.filter(r => r.cuenta === cuenta).reduce((s, r) => s + (r.monto_total || 0), 0);
+    };
 
     const n = banks.length;
     const descPct = 32;

@@ -2,6 +2,8 @@
 // Colombia CUIF — 6 dígitos (clasificación financiera típica SFC)
 // Derivado de datos reales datos_financieros CO (prioridad cobertura b1/r1).
 // ============================================================
+import { ST } from './state.js?v=bmon14';
+
 export const CO_CUIF = {
   activos: '100000',
   colocaciones: '140000',
@@ -117,18 +119,98 @@ export const R1_CO_ROWS = [
   { l: 'Net income (loss)', c: '590000', cls: 'hl' },
 ];
 
+/** b1: totales publicados solo por código exacto; el resto se agrega por familia CUIF. */
+const CO_B1_HEADLINE_EXACT = new Set(['100000', '200000', '300000']);
+
+/**
+ * ¿La cuenta normalizada (6 dígitos) aporta a la fila del balance CO `sectionCode`?
+ * Evita solapes (210 vs 2105/2107, 240 vs 243/244, 310 vs 311).
+ */
+export function coB1NormMatchesBalanceRow(norm, sectionCode) {
+  const c = coCuentaNorm6(sectionCode);
+  const n = coCuentaNorm6(norm);
+  if (!c || !n || n.length !== 6) return false;
+  if (CO_B1_HEADLINE_EXACT.has(c)) return n === c;
+  if (n === c) return true;
+  const special = {
+    '210000': x => x.startsWith('210') && !x.startsWith('2105') && !x.startsWith('2107'),
+    '240000': x => x.startsWith('240') && !x.startsWith('243') && !x.startsWith('244'),
+    '310000': x => x === '310000' || (x.startsWith('310') && !x.startsWith('311')),
+    '210500': x => x.startsWith('2105'),
+    '210700': x => x.startsWith('2107'),
+  };
+  if (special[c]) return special[c](n);
+  if (c.length === 6 && c.endsWith('000')) return n.startsWith(c.slice(0, 3));
+  return n.startsWith(c);
+}
+
+/** Suma monto_total b1 CO para una fila del layout (un banco · un periodo). */
+export function coSumB1BalanceRow(b1RowsSameBankPeriod, sectionCode) {
+  const c = coCuentaNorm6(sectionCode);
+  const rows = b1RowsSameBankPeriod.map(r => ({ r, n: coCuentaNorm6(r.cuenta) }));
+  if (CO_B1_HEADLINE_EXACT.has(c)) {
+    return rows.filter(({ n }) => n === c).reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+  }
+  const exact = rows.filter(({ n }) => n === c).reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+  if (Math.abs(exact) > 1e-9) return exact;
+  return rows
+    .filter(({ n }) => coB1NormMatchesBalanceRow(n, c))
+    .reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+}
+
+/** r1: subtotales CUIF — si no hay fila agregada, sumar por prefijo de 3 dígitos. */
+const CO_R1_HEADLINE = new Set(['550000', '560000', '580000', '590000']);
+
+export function coR1NormMatchesRow(norm, sectionCode) {
+  const c = coCuentaNorm6(sectionCode);
+  const n = coCuentaNorm6(norm);
+  if (!c || !n || n.length !== 6) return false;
+  if (n === c) return true;
+  if (c.length === 6 && c.endsWith('000')) return n.startsWith(c.slice(0, 3));
+  return n.startsWith(c);
+}
+
+export function coSumR1PlRow(r1RowsSameBankPeriod, sectionCode) {
+  const c = coCuentaNorm6(sectionCode);
+  const rows = r1RowsSameBankPeriod.map(r => ({ r, n: coCuentaNorm6(r.cuenta) }));
+  if (CO_R1_HEADLINE.has(c)) {
+    const exact = rows.filter(({ n }) => n === c).reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+    if (Math.abs(exact) > 1e-9) return exact;
+    return rows.filter(({ n }) => n.startsWith(c.slice(0, 3))).reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+  }
+  const exact = rows.filter(({ n }) => n === c).reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+  if (Math.abs(exact) > 1e-9) return exact;
+  return rows
+    .filter(({ n }) => coR1NormMatchesRow(n, c))
+    .reduce((s, { r }) => s + (Number(r.monto_total) || 0), 0);
+}
+
 /** b1/r1 únicos a pedir en run() Colombia — mantener sync con las tablas anteriores. */
 export function coB1AccountsForRun() {
-  const all = [
+  const base = [
     ...BAL_CO_SECTIONS.assets.map(r => r.c),
     ...BAL_CO_SECTIONS.liabilities.map(r => r.c),
     ...BAL_CO_SECTIONS.equity.map(r => r.c),
   ];
-  return [...new Set(all)];
+  const out = new Set(base);
+  for (const cu of Object.keys(ST.planCuentas || {})) {
+    const n = coCuentaNorm6(cu);
+    if (n.length !== 6) continue;
+    const d = n[0];
+    if (d === '1' || d === '2' || d === '3') out.add(n);
+  }
+  return [...out];
 }
 
 export function coR1AccountsForRun() {
-  return [...new Set(R1_CO_ROWS.map(r => r.c))];
+  const prefixes = new Set(R1_CO_ROWS.map(r => coCuentaNorm6(r.c).slice(0, 3)));
+  const out = new Set(R1_CO_ROWS.map(r => r.c));
+  for (const cu of Object.keys(ST.planCuentas || {})) {
+    const n = coCuentaNorm6(cu);
+    if (n.length !== 6) continue;
+    if (prefixes.has(n.slice(0, 3))) out.add(n);
+  }
+  return [...out];
 }
 
 /** Account Explorer sidebar — CUIF 6 dígitos (familias alineadas con el plan cargado CO). */
