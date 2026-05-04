@@ -493,9 +493,10 @@ export function showResChart(tipo) {
   const titleEl = document.querySelector('#tab-resumen .panel-title');
   if (titleEl) titleEl.textContent = 'Banking System Evolution';
 
-  const map = datasetIsoCountry() === 'CO'
-    ? { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ Deterioro %', customkpi:'📌 Custom account' }
-    : { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account' };
+  const map = {
+    activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds',
+    pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account',
+  };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
   });
@@ -599,9 +600,10 @@ export function showResChart(tipo) {
   const tableEl    = document.getElementById('resChartTable');
   const tableTitleEl = document.getElementById('resChartTableTitle');
   if (panel && tableEl) {
-    const metricLabels = datasetIsoCountry() === 'CO'
-      ? { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'Deterioro / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account' }
-      : { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account' };
+    const metricLabels = {
+      activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income',
+      mora:'NPL / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account',
+    };
     if (tableTitleEl) {
       if (tipo === 'customkpi') {
         const saved = resolveCustomKpiForRun();

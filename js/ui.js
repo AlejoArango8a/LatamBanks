@@ -269,11 +269,11 @@ export function toggleSection(id) {
   if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
 }
 
-/** Etiqueta del botón mora/deterioro en la barra del gráfico Resumen (CO vs CL). */
+/** Etiqueta del botón mora/deterioro en la barra del gráfico Resumen (misma UX CO/CL: NPL %). */
 export function syncResumenMoraChartButton() {
   const moraBtn = document.getElementById('btnResChartMora');
   if (!moraBtn) return;
-  moraBtn.textContent = ST.country === 'colombia' ? '⚠️ Deterioro %' : '⚠️ NPL %';
+  moraBtn.textContent = '⚠️ NPL %';
 }
 
 // ---- Country overlay / dataset switch ----

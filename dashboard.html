@@ -309,8 +309,8 @@ body.light .ccy-toggle-opt.ccy-on.ccy-l { color:#0369a1; }
 .status-dot.error  { background:var(--red); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 #loadingBar {
-  position:absolute; top:0; left:0; right:0; height:3px;
-  display:none; z-index:45; overflow:hidden;
+  position:absolute; bottom:0; left:0; right:0; height:3px;
+  display:none; z-index:55; overflow:hidden; pointer-events:none;
 }
 #loadingBar::after {
   content:''; display:block; height:100%;
@@ -795,6 +795,7 @@ body.light .kpi-custom-badge {
     </div>
 
     <div class="topbar-right">
+      <div class="status-pill status" title="Data status" id="statusPill"><span class="status-dot idle" id="sDot"></span><span id="sTxt"></span></div>
       <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span id="switchCLP" class="ccy-toggle-opt ccy-l" title="Local currency">CLP</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
       <div class="dashboard-theme-toggle" onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
@@ -804,6 +805,7 @@ body.light .kpi-custom-badge {
         <span id="switchLight" style="padding:3px 10px;border-radius:16px;background:var(--accent);color:#fff;transition:all 0.2s;">☀</span>
       </div>
     </div>
+    <div id="loadingBar"></div>
   </div>
 
   <div class="body">
@@ -881,7 +883,6 @@ body.light .kpi-custom-badge {
 
     <!-- MAIN -->
     <main class="main" id="main">
-      <div id="loadingBar"></div>
       <div class="loading-screen" id="loadingScreen">
         <div class="ls-inner">
           <div class="ls-title">ALM BTG <span>·</span> Banks Monitor</div>
