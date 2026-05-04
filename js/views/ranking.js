@@ -200,9 +200,6 @@ export function renderCBTable() {
       ? `Perspectiva: ${metaCo.outlook}. ${metaCo.agency}. ${metaCo.analysis}`
       : '';
     const tipAttr = tip ? ` title="${escapeAttr(tip)}"` : '';
-    const negSup = metaCo?.outlook === 'Negativa'
-      ? `<span style="color:var(--red);font-size:10px;vertical-align:super;margin-left:1px;" title="Perspectiva negativa">−</span>`
-      : '';
     html += `<tr style="${rowStyle}transition:background 0.1s;cursor:pointer;"
       onclick="loadBankFromTable(${b.code})"
       onmouseover="this.style.background='${isBTG ? 'rgba(37,99,235,0.14)' : 'rgba(56,189,248,0.06)'}'"
@@ -212,7 +209,7 @@ export function renderCBTable() {
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
       <td class="cb-col-rating" style="text-align:center;">
-        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}${negSup}</span>
+        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}</span>
       </td>
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>
