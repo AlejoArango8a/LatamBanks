@@ -115,8 +115,7 @@ export function refreshKPIs() {
     <div class="kpi red"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Leverage ${m.patrimonio ? (m.totalAssets / m.patrimonio).toFixed(1) + 'x' : '—'}</div></div>`;
 
     document.getElementById('kpiResultados').innerHTML = `
-    <div class="kpi blue"><div class="kpi-label">Net Income · 590000</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi" style="grid-column:1/-1;"><div class="kpi-label">P&amp;L detail (CUIF r1)</div><div class="kpi-val">Income Statement tab</div><div class="kpi-sub">Main lines: interest, fees, operating income/expenses, credit losses, tax.</div></div>`;
+    <div class="kpi blue"><div class="kpi-label">Net Income · 590000</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
     <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">Deterioro (148·149)</div><div class="kpi-sub">Key Data: suma del activo en cuentas 148### y 149### (deterioro) sobre colocación bruta 140000.</div></div>
