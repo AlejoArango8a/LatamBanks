@@ -430,6 +430,43 @@ export function syncCurrencyToggleUI() {
   usdEl.classList.toggle('ccy-on', isUsd);
 }
 
+/**
+ * Repinta KPIs, patrimonio en sidebar, gráficos y tablas que dependen de fmtKPI / TRM.
+ * Tras cargar ST.usdRate debe llamarse si la vista está en USD; también al cambiar moneda.
+ */
+export function refreshMoneyDenominatedUI() {
+  if (typeof window.refreshKPIs === 'function') window.refreshKPIs();
+  fillBankList();
+  if (ST._series && typeof window.showResChart === 'function') {
+    window.showResChart(ST._lastResChart || 'patrimonio');
+  }
+  if (ST._b1 && typeof window.showBalTab === 'function') {
+    window.showBalTab(ST._lastBalTab || 'assets');
+  }
+  if (ST._resTableData && typeof window.renderResTable === 'function') {
+    window.renderResTable(ST._resTableData);
+  } else if (ST._series?.r1 && datasetIsoCountry() === 'CO' && typeof window.renderResTable === 'function') {
+    window.renderResTable(null);
+  }
+  if (ST._kpiRaw && ST.country !== 'colombia' && typeof window.renderCalidad === 'function') {
+    const m = ST._kpiRaw;
+    const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);
+    const carSub  = sumRows(ST._c1 || [], '852000000', ST._lastP);
+    const carInc  = sumRows(ST._c1 || [], '853000000', ST._lastP) + sumRows(ST._c1 || [], '855000000', ST._lastP);
+    window.renderCalidad({
+      carNorm, carSub, carInc, mora90: m.mora90, colocaciones: m.colocaciones,
+      castigos: sumRows(ST._c1 || [], '813000000', ST._lastP),
+      recup:    sumRows(ST._c1 || [], '814000000', ST._lastP),
+    });
+  }
+  if (ST.exp?.selected && typeof window.expSelect === 'function') window.expSelect(ST.exp.selected);
+  if (ST._cbData && typeof window.renderCBTable === 'function') window.renderCBTable();
+  if (ST._avAccount && document.getElementById('avResultTable') && typeof window.runAccountView === 'function') {
+    window.runAccountView();
+  }
+  syncFinStatementPanelLabels();
+}
+
 export function toggleCurrency() {
   if (ST.currency === 'CLP') {
     if (!ST.usdRate) { alert('No se pudo obtener la tasa de cambio USD. Intenta nuevamente.'); return; }
@@ -438,25 +475,7 @@ export function toggleCurrency() {
     ST.currency = 'CLP';
   }
   syncCurrencyToggleUI();
-  window.refreshKPIs();
-  fillBankList();
-  if (ST._series) window.showResChart(ST._lastResChart || 'patrimonio');
-  if (ST._b1)     window.showBalTab(ST._lastBalTab || 'assets');
-  if (ST._resTableData) window.renderResTable(ST._resTableData);
-  else if (ST._series?.r1 && datasetIsoCountry() === 'CO') window.renderResTable(null);
-  if (ST._kpiRaw && ST.country !== 'colombia') {
-    const m = ST._kpiRaw;
-    const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);
-    const carSub  = sumRows(ST._c1 || [], '852000000', ST._lastP);
-    const carInc  = sumRows(ST._c1 || [], '853000000', ST._lastP) + sumRows(ST._c1 || [], '855000000', ST._lastP);
-    window.renderCalidad({ carNorm, carSub, carInc, mora90: m.mora90, colocaciones: m.colocaciones,
-      castigos: sumRows(ST._c1 || [], '813000000', ST._lastP),
-      recup:    sumRows(ST._c1 || [], '814000000', ST._lastP) });
-  }
-  if (ST.exp.selected) window.expSelect(ST.exp.selected);
-  if (ST._cbData) window.renderCBTable();
-  if (ST._avAccount && document.getElementById('avResultTable')) window.runAccountView();
-  syncFinStatementPanelLabels();
+  refreshMoneyDenominatedUI();
 }
 
 // ---- Font ----

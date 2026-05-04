@@ -23,7 +23,7 @@ import {
   showTab, loadBankFromTable, goHome, toggleSidebar, toggleSection, selectCountry,
   syncCountryFlagsVisual,
   syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
-  fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI,
+  fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI, refreshMoneyDenominatedUI,
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
 } from './ui.js?v=bmon14';
@@ -105,6 +105,7 @@ async function switchCountryDataset() {
   try {
     await fetchAndApplyBootstrap();
     fillPeriodSelectors();
+    await fetchUSDRate().catch(() => {});
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
@@ -126,7 +127,6 @@ async function switchCountryDataset() {
     await run();
     refreshBarLabelsToggleButtons();
     setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} períodos`);
-    fetchUSDRate().catch(() => {});
 
     const activeTab = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
     if (activeTab === 'chileanbanks') await renderChileanBanks();
@@ -162,6 +162,7 @@ async function init() {
     clearTimeout(wakeTimer);
 
     fillPeriodSelectors();
+    await fetchUSDRate().catch(() => {});
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
@@ -180,8 +181,6 @@ async function init() {
     showTab('resumen');
     refreshBarLabelsToggleButtons();
     trackVisit();
-
-    await fetchUSDRate().catch(() => {});
 
     setInterval(() => fetch(`${API_BASE}/health`).catch(() => {}), 14 * 60 * 1000);
 
@@ -259,6 +258,7 @@ window.selectCountry    = selectCountry;
 window.toggleTheme      = toggleTheme;
 window.toggleBarLabels  = toggleBarLabels;
 window.toggleCurrency   = toggleCurrency;
+window.refreshMoneyDenominatedUI = refreshMoneyDenominatedUI;
 window.convertAmt       = convertAmt;
 window.setFont          = setFont;
 window.changeFontSize   = changeFontSize;
