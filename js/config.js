@@ -113,19 +113,41 @@ export const FELLER_RATINGS = {
   66: 'AA',
 };
 
-/** Fitch Ratings, escala nacional Colombia (AAA col.) — codigo_entidad CUIF tipo 1. */
+/** Fitch / BRC — largo plazo escala nacional (notación app: sin “(col)” en la celda). codigo_entidad CUIF. */
 export const BANK_RATINGS_CO = Object.freeze({
-  7: 'AAA',  // Bancolombia
-  2: 'AAA',  // Banco de Bogotá
-  51: 'AAA', // Davivienda
-  13: 'AAA', // BBVA Colombia (reafirmación nov 2023)
-  43: 'AAA', // Banco Agrario (CUIF)
-  40: 'AAA', // Banco Agrario (código alterno en algunos cortes)
-  66: 'AAA', // BTG Pactual Colombia
-  64: 'AAA', // JP Morgan Colombia
-  9: 'AAA',  // Citibank Colombia
-  23: 'AAA', // Banco de Occidente
-  1: 'AAA',  // Banco Popular
+  10_001: 'AAA', // Grupo Aval (sintético cliente)
+  1: 'AAA',     // Banco Popular
+  2: 'AAA',     // Banco de Bogotá
+  6: 'AAA',     // Banco Itaú
+  7: 'AAA',     // Bancolombia
+  9: 'AAA',     // Citibank
+  12: 'AA+',    // GNB Sudameris (BRC)
+  13: 'AAA',    // BBVA Colombia
+  19: 'AAA',    // Scotiabank Colpatria
+  23: 'AAA',    // Banco de Occidente
+  32: 'AAA',    // Banco Caja Social BCSC
+  40: 'AAA',    // Banco Agrario (corte CENIT 1040)
+  43: 'AAA',    // Banco Agrario (CUIF habitual app)
+  46: 'AA',     // Banco Unión (antes Giros y Finanzas)
+  48: 'A+',     // Banco Contactar
+  49: 'AAA',    // AV Villas
+  51: 'AAA',    // Davivienda
+  53: 'AA',     // Banco W
+  54: 'AAA',    // Bancien
+  55: 'AA+',    // Finandina
+  56: 'AAA',    // Falabella
+  57: 'A-',     // Pichincha
+  58: 'AA',     // Coopcentral
+  59: 'AA-',    // Bancamía
+  60: 'AA+',    // Mundo Mujer
+  61: 'AA-',    // Bancoomeva / Coomeva
+  64: 'AAA',    // J.P. Morgan (CUIF habitual en app)
+  71: 'AAA',    // J.P. Morgan (CENIT 1071 → codigo_entidad en algunos cortes)
+  65: 'AAA',    // Banco Santander de Negocios
+  66: 'AAA',    // BTG Pactual Colombia
+  67: 'AAA',    // Mi Banco (Mibanco)
+  69: 'AA',     // Serfinanza
+  70: 'A+',     // Lulo Bank
 });
 
 export const RATING_COLORS = {
