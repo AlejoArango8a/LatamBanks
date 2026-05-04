@@ -42,13 +42,19 @@ function customKpiTileHtml(m) {
     const short = d.length > 56 ? `${d.slice(0, 56)}…` : d;
     sub = `<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${escHtml(ck.cuenta)}</span> · ${escHtml(short || '—')} · <span style="font-size:9px;text-transform:uppercase;color:var(--text3);">${escHtml(ck.tipo || '')}</span>`;
   } else {
-    sub = 'Click to choose any plan account';
+    sub = 'Elegí una cuenta del plan · click para abrir el selector';
   }
-  return `<div class="kpi kpi-custom kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data">
-    <div class="kpi-label">Custom account</div>
+  return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data — click para cambiar cuenta">
+    <div class="kpi-label"><span class="kpi-custom-badge">CUSTOM</span> cuenta libre</div>
     <div class="kpi-val">${val}</div>
     <div class="kpi-sub" style="line-height:1.35;">${sub}</div>
   </div>`;
+}
+
+function syncResChartCustomBtn() {
+  const btn = document.getElementById('btnResChartCustom');
+  if (!btn) return;
+  btn.style.display = resolveCustomKpiForRun() ? '' : 'none';
 }
 
 let runAbortController = null;
@@ -116,6 +122,8 @@ export function refreshKPIs() {
     document.getElementById('kpiCalidad').innerHTML = `
     <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">Deterioro (148·149)</div><div class="kpi-sub">Key Data: suma del activo en cuentas 148### y 149### (deterioro) sobre colocación bruta 140000.</div></div>
     <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Calificaciones (referencia)</div><div class="kpi-val">Davivienda, Scotiabank Colpatria y Banco Caja Social: AAA</div><div class="kpi-sub">Davivienda es AAA; Scotiabank Colpatria también es AAA; Banco Caja Social también lo es. Más bancos y perspectivas en la pestaña Banking System.</div></div>`;
+    syncResChartCustomBtn();
+    syncKpiResumenActive(ST._lastResChart || 'patrimonio');
     return;
   }
 
@@ -171,6 +179,8 @@ export function refreshKPIs() {
     <div class="kpi yellow"><div class="kpi-label">Total Operating Income</div><div class="kpi-val">${fmtKPI(m.totalIng)}</div><div class="kpi-sub">Fees ${fmtKPI(m.ingComis)}</div></div>
     <div class="kpi red"><div class="kpi-label">Credit Losses</div><div class="kpi-val">${fmtKPI(Math.abs(m.perdCred))}</div><div class="kpi-sub">${fmtP(Math.abs(m.perdCred), m.totalIng)} of income</div></div>
   `;
+  syncResChartCustomBtn();
+  syncKpiResumenActive(ST._lastResChart || 'patrimonio');
 }
 
 // ---- Main data-fetch and render loop ----
@@ -459,7 +469,7 @@ export async function run() {
 // Key Data tile order in #kpiResumen (refreshKPIs HTML)
 const KPI_RESUMEN_IDX = {
   activos: 0, coloc: 1, dep_vista: 2, dep_plazo: 3, bonos: 4,
-  pasivos: 5, patrimonio: 6, utilidad: 7, roe: 8, mora: 9,
+  pasivos: 5, patrimonio: 6, utilidad: 7, roe: 8, mora: 9, customkpi: 10,
 };
 
 function syncKpiResumenActive(tipo) {
@@ -472,6 +482,10 @@ function syncKpiResumenActive(tipo) {
 // ---- Resumen chart ----
 export function showResChart(tipo) {
   abortROEFetch();
+  if (tipo === 'customkpi' && !resolveCustomKpiForRun()) {
+    showResChart('patrimonio');
+    return;
+  }
   ST._lastResChart = tipo;
   if (tipo === 'roe') {
     showROEChart();
@@ -488,8 +502,8 @@ export function showResChart(tipo) {
   if (titleEl) titleEl.textContent = 'Banking System Evolution';
 
   const map = datasetIsoCountry() === 'CO'
-    ? { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ Deterioro %' }
-    : { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %' };
+    ? { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ Deterioro %', customkpi:'📌 Custom account' }
+    : { activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds', pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account' };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
   });
@@ -553,6 +567,21 @@ export function showResChart(tipo) {
         return { label: bankName(code), data, color };
       });
     }
+  } else if (tipo === 'customkpi') {
+    const saved = resolveCustomKpiForRun();
+    const t = getTipo(saved.cuenta);
+    const rows = t === 'b1' ? b1 : t === 'r1' ? r1 : c1;
+    const cuenta = saved.cuenta;
+    const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
+    series = banks.map((code, i) => {
+      const color = bankColor(code, i);
+      const data = sparseData(periodos.map(p =>
+        rows.filter(r => sameIns(r, code) && r.cuenta === cuenta && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
+      ));
+      return { label: bankName(code), data, color };
+    });
+    chartOpts = undefined;
   } else {
     const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
     const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
@@ -579,9 +608,18 @@ export function showResChart(tipo) {
   const tableTitleEl = document.getElementById('resChartTableTitle');
   if (panel && tableEl) {
     const metricLabels = datasetIsoCountry() === 'CO'
-      ? { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'Deterioro / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' }
-      : { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds' };
-    if (tableTitleEl) tableTitleEl.textContent = metricLabels[tipo] || tipo;
+      ? { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'Deterioro / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account' }
+      : { activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income', mora:'NPL (% of total loans)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account' };
+    if (tableTitleEl) {
+      if (tipo === 'customkpi') {
+        const saved = resolveCustomKpiForRun();
+        const tt = getTipo(saved.cuenta);
+        const short = (saved.descripcion || '').trim();
+        tableTitleEl.textContent = short ? `${short} · ${saved.cuenta} (${tt})` : `Account ${saved.cuenta} (${tt})`;
+      } else {
+        tableTitleEl.textContent = metricLabels[tipo] || tipo;
+      }
+    }
     panel.style.display = 'block';
 
     let html = `<table class="tbl" style="white-space:nowrap;font-size:12px;"><thead><tr>

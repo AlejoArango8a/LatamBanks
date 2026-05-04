@@ -49,6 +49,17 @@ function rubroTitle(d) {
   return `Rubro ${d}`;
 }
 
+/** Primeros 3 dígitos como subfamilia (CL 9 dígitos / CO 6 dígitos). */
+function subFamilyKey(cuenta) {
+  const c = String(cuenta).replace(/\D/g, '');
+  if (c.length >= 3) return c.slice(0, 3);
+  return c || '?';
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
 let modalMounted = false;
 
 function ensureModal() {
@@ -65,7 +76,9 @@ function ensureModal() {
         </div>
         <button type="button" class="custom-kpi-close" id="customKpiClose" aria-label="Cerrar">×</button>
       </div>
-      <input type="search" id="customKpiSearch" class="custom-kpi-search" placeholder="Buscar por código o descripción…" autocomplete="off" />
+      <div class="custom-kpi-search-wrap">
+        <input type="search" id="customKpiSearch" class="custom-kpi-search" placeholder="Buscar por código o descripción…" autocomplete="off" />
+      </div>
       <div class="custom-kpi-actions">
         <button type="button" class="custom-kpi-clear" id="customKpiClear">Borrar selección</button>
       </div>
@@ -80,6 +93,7 @@ function ensureModal() {
   document.getElementById('customKpiClose').addEventListener('click', closeCustomKpiPicker);
   document.getElementById('customKpiClear').addEventListener('click', () => {
     clearCustomKpi();
+    if (ST._lastResChart === 'customkpi') ST._lastResChart = 'patrimonio';
     closeCustomKpiPicker();
     if (typeof window.run === 'function') window.run();
   });
@@ -89,8 +103,8 @@ function ensureModal() {
 
 function onCustomKpiKeydown(e) {
   if (e.key !== 'Escape') return;
-  const el = document.getElementById('customKpiModal');
-  if (el && el.style.display === 'flex') closeCustomKpiPicker();
+  const modal = document.getElementById('customKpiModal');
+  if (modal && modal.style.display === 'flex') closeCustomKpiPicker();
 }
 
 /** Cuenta válida para fetch: existe en el plan cargado. */
@@ -126,41 +140,61 @@ function renderPlanList() {
   if (!list) return;
 
   const q = (document.getElementById('customKpiSearch').value || '').trim().toLowerCase();
+  const searching = q.length > 0;
+
   const entries = Object.entries(ST.planCuentas).sort((a, b) =>
     a[0].localeCompare(b[0], undefined, { numeric: true }),
   );
 
-  const filtered = !q
+  const filtered = !searching
     ? entries
     : entries.filter(([c, d]) => {
         const dl = (d || '').toLowerCase();
         return c.toLowerCase().includes(q) || dl.includes(q);
       });
 
+  /** rubro -> Map(prefix -> rows) */
   const byRubro = new Map();
   for (const [c, d] of filtered) {
-    const digit = (c[0] || '?');
-    if (!byRubro.has(digit)) byRubro.set(digit, []);
-    byRubro.get(digit).push([c, d]);
+    const digit = c[0] || '?';
+    const pref = subFamilyKey(c);
+    if (!byRubro.has(digit)) byRubro.set(digit, new Map());
+    const pm = byRubro.get(digit);
+    if (!pm.has(pref)) pm.set(pref, []);
+    pm.get(pref).push([c, d]);
   }
 
-  const order = [...byRubro.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const rubroOrder = [...byRubro.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
   let html = '';
-  for (const digit of order) {
-    const rows = byRubro.get(digit);
-    html += `<div class="custom-kpi-group">
-      <div class="custom-kpi-group-h">${digit} — ${rubroTitle(digit)}</div>`;
-    for (const [cuenta, desc] of rows) {
-      const label = toSentenceCase(desc || getExpLabel(cuenta) || cuenta);
-      const tipo = getTipo(cuenta);
-      html += `<button type="button" class="custom-kpi-row" data-cuenta="${String(cuenta).replace(/"/g, '&quot;')}">
-        <span class="custom-kpi-code">${cuenta}</span>
-        <span class="custom-kpi-desc">${label}</span>
-        <span class="custom-kpi-tipo">${tipo}</span>
+  for (const digit of rubroOrder) {
+    const prefixMap = byRubro.get(digit);
+    let total = 0;
+    prefixMap.forEach(rows => { total += rows.length; });
+
+    const rubroOpen = searching ? ' open' : '';
+
+    html += `<details class="custom-kpi-rubro-details"${rubroOpen}><summary class="custom-kpi-rubro-sum">${digit} — ${escAttr(rubroTitle(digit))} <span class="custom-kpi-count">${total}</span></summary><div class="custom-kpi-rubro-inner">`;
+
+    const prefKeys = [...prefixMap.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    for (const pref of prefKeys) {
+      const rows = prefixMap.get(pref);
+      const prefOpen = searching ? ' open' : '';
+
+      html += `<details class="custom-kpi-pref-details"${prefOpen}><summary class="custom-kpi-pref-sum">${escAttr(pref)} · ${rows.length} cuenta(s)</summary><div class="custom-kpi-pref-rows">`;
+      for (const [cuenta, desc] of rows) {
+        const label = toSentenceCase(desc || getExpLabel(cuenta) || cuenta);
+        const tipo = getTipo(cuenta);
+        html += `<button type="button" class="custom-kpi-row" data-cuenta="${escAttr(cuenta)}">
+        <span class="custom-kpi-code">${escAttr(cuenta)}</span>
+        <span class="custom-kpi-desc">${escAttr(label)}</span>
+        <span class="custom-kpi-tipo">${escAttr(tipo)}</span>
       </button>`;
+      }
+      html += '</div></details>';
     }
-    html += '</div>';
+
+    html += '</div></details>';
   }
 
   if (!filtered.length) {
@@ -175,6 +209,7 @@ function renderPlanList() {
       const descripcion = ST.planCuentas[cuenta] || '';
       saveCustomKpi(cuenta, descripcion);
       closeCustomKpiPicker();
+      ST._lastResChart = 'customkpi';
       if (typeof window.run === 'function') window.run();
     });
   });

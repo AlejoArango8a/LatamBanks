@@ -488,9 +488,31 @@ body.light #sidebarPeriodPick.sidebar-disabled {
   background:var(--bg3); color:var(--text2); font-size:20px; line-height:1; cursor:pointer;
 }
 .custom-kpi-close:hover { background:var(--bg4); color:var(--text); }
+.custom-kpi-search-wrap {
+  flex-shrink:0; padding:10px 16px 6px; box-sizing:border-box; min-width:0;
+}
 .custom-kpi-search {
-  margin:10px 16px 6px; padding:10px 12px; font-size:13px; font-family:var(--sans);
+  display:block; width:100%; max-width:100%; box-sizing:border-box;
+  margin:0; padding:10px 12px; font-size:13px; font-family:var(--sans);
   border:1px solid var(--border2); border-radius:6px; background:var(--bg3); color:var(--text);
+}
+.custom-kpi-rubro-details, .custom-kpi-pref-details {
+  border:1px solid var(--border); border-radius:6px; margin-bottom:6px; background:var(--bg3);
+  overflow:hidden;
+}
+.custom-kpi-rubro-sum, .custom-kpi-pref-sum {
+  list-style:none; cursor:pointer; font-size:11px; font-weight:600; color:var(--text);
+  padding:10px 12px; display:flex; align-items:center; gap:8px;
+  user-select:none;
+}
+.custom-kpi-rubro-sum::-webkit-details-marker, .custom-kpi-pref-sum::-webkit-details-marker { display:none; }
+.custom-kpi-rubro-inner { padding:0 6px 8px 8px; }
+.custom-kpi-pref-details { margin:4px 0 4px 6px; }
+.custom-kpi-pref-sum { font-size:10px; font-weight:600; color:var(--text2); padding:8px 10px; }
+.custom-kpi-pref-rows { padding:0 4px 6px; }
+.custom-kpi-count {
+  margin-left:auto; font-family:var(--mono); font-size:9px; color:var(--text3);
+  background:var(--bg2); padding:2px 6px; border-radius:4px;
 }
 .custom-kpi-actions { padding:0 16px 8px; }
 .custom-kpi-clear {
@@ -602,6 +624,21 @@ body.light .custom-kpi-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.12); }
 .kpi-btn { cursor:pointer; transition:transform 0.1s, box-shadow 0.1s; }
 .kpi-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
 .kpi-btn.kpi-active { box-shadow:0 0 0 2px var(--accent); }
+.kpi.kpi-custom-tile {
+  background:linear-gradient(160deg, rgba(168,85,247,0.14), var(--bg2) 55%);
+  border:1px dashed rgba(167,139,250,0.65);
+  border-radius:8px;
+}
+.kpi.kpi-custom-tile::after {
+  height:3px;
+  background:linear-gradient(90deg, #a855f7, #6366f1, #22d3ee);
+}
+.kpi.kpi-custom-tile .kpi-label { color:#c4b5fd; font-weight:700; letter-spacing:0.04em; }
+.kpi-custom-badge {
+  display:inline-block; padding:1px 6px; border-radius:3px;
+  font-size:8px; font-weight:800; letter-spacing:0.12em;
+  background:rgba(168,85,247,0.35); color:#f5f3ff; vertical-align:middle;
+}
 
 /* PANEL */
 .panel { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
@@ -919,6 +956,7 @@ body.light .custom-kpi-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.12); }
                   <button class="rcbtn" onclick="showResChart('utilidad')">💰 Net Income</button>
                   <button class="rcbtn" onclick="showROEChart()">📈 Annual ROE</button>
                   <button type="button" class="rcbtn" id="btnResChartMora" onclick="showResChart('mora')">⚠️ NPL %</button>
+                  <button type="button" class="rcbtn" id="btnResChartCustom" style="display:none;" onclick="showResChart('customkpi')">📌 Custom account</button>
                 </div>
                 <div style="display:flex;gap:3px;flex-shrink:0;">
                   <button type="button" id="btnLabels" class="lbl123-btn state-auto" onclick="toggleBarLabels()" title=""></button>
