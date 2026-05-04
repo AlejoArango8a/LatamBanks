@@ -42,9 +42,9 @@ function customKpiTileHtml(m) {
     const short = d.length > 56 ? `${d.slice(0, 56)}…` : d;
     sub = `<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${escHtml(ck.cuenta)}</span> · ${escHtml(short || '—')} · <span style="font-size:9px;text-transform:uppercase;color:var(--text3);">${escHtml(ck.tipo || '')}</span>`;
   } else {
-    sub = 'Elegí una cuenta del plan · click para abrir el selector';
+    sub = 'Choose any plan account · click to open the picker';
   }
-  return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data — click para cambiar cuenta">
+  return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data — click to change account">
     <div class="kpi-label kpi-custom-label-row"><span class="kpi-custom-badge">Custom</span><span class="kpi-custom-heading">Custom Account</span></div>
     <div class="kpi-val">${val}</div>
     <div class="kpi-sub" style="line-height:1.35;">${sub}</div>
