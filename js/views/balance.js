@@ -169,7 +169,12 @@ export function showBalTab(sec, bankCode) {
     document.getElementById('balTable').innerHTML = html;
   } else {
     document.getElementById('balBankTabs').innerHTML = '';
-    let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Descripción</th>`;
+    const n = banks.length;
+    const descPct = 32;
+    const bankPct = (100 - descPct) / n;
+    let html = `<div style="overflow-x:auto"><table class="tbl" style="table-layout:fixed;width:100%;min-width:${280 + n * 100}px;"><colgroup><col style="width:${descPct}%">`;
+    banks.forEach(() => { html += `<col style="width:${bankPct}%">`; });
+    html += `</colgroup><thead><tr><th>Descripción</th>`;
     banks.forEach((code, i) => {
       html += `<th class="r" style="color:${bankColor(code, i)}">${bankName(code)}</th>`;
     });
@@ -225,7 +230,12 @@ export function renderResTable(m) {
       r1.filter(r => r.cuenta === cuenta && r.ins_cod === code && r.periodo === lastP)
         .reduce((s, r) => s + (r.monto_total || 0), 0);
 
-    let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Concepto</th>`;
+    const n = banks.length;
+    const descPct = 32;
+    const bankPct = (100 - descPct) / n;
+    let html = `<div style="overflow-x:auto"><table class="tbl" style="table-layout:fixed;width:100%;min-width:${280 + n * 100}px;"><colgroup><col style="width:${descPct}%">`;
+    banks.forEach(() => { html += `<col style="width:${bankPct}%">`; });
+    html += `</colgroup><thead><tr><th>Concepto</th>`;
     banks.forEach((code, i) => {
       html += `<th class="r" style="color:${bankColor(code, i)}">${bankName(code)}</th>`;
     });

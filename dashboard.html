@@ -116,6 +116,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   #expTree { max-height: 200px; overflow-y: auto; }
   .rcbtn { font-size: 10px; padding: 4px 8px; }
   .chart-canvas { max-height: 220px !important; }
+
+  /* Theme (light/dark) control — hide on narrow viewports */
+  .dashboard-theme-toggle { display: none !important; }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
@@ -669,7 +672,7 @@ body.light #sidebarPeriodPick.sidebar-disabled {
 
     <div class="topbar-right">
       <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span id="switchCLP" class="ccy-toggle-opt ccy-l" title="Local currency">CLP</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
-      <div onclick="toggleTheme()" style="
+      <div class="dashboard-theme-toggle" onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
         background:var(--bg3);border:1px solid var(--border2);
         border-radius:20px;padding:2px;font-family:var(--mono);font-size:11px;font-weight:500;">

@@ -6,7 +6,8 @@ export const CO_CUIF = {
   activos: '100000',
   colocaciones: '140000',
   pasivos: '200000',
-  patrimonio: '300000',
+  /** Total equity for KPIs / ranking: CUIF rollup 380000 (class 300000 is often non-additive in open data). */
+  patrimonio: '380000',
   /** Depósitos en cuenta corriente (CUIF nombre estándar: “DEPOSITOS EN CUENTA CORRIENTE”, cuenta típica 210500). */
   depVista: '210500',
   /** Certificados de depósito a término (“CERTIFICADOS DE DEPOSITO A TERMINO”, típico 210700). */
@@ -82,14 +83,14 @@ export const BAL_CO_SECTIONS = {
     { c: '290000', l: 'Other liabilities', cls: 'i1' },
   ],
   equity: [
-    { c: '300000', l: 'Total equity', cls: 'hl' },
+    { c: '380000', l: 'Total equity', cls: 'hl' },
+    { c: '300000', l: 'Equity (class 3·000)', cls: 'i1' },
     { c: '310000', l: 'Capital / aportes sociales', cls: 'i1' },
     { c: '311000', l: 'Paid-in capital', cls: 'i2' },
     { c: '320000', l: 'Reserves', cls: 'i1' },
     { c: '330000', l: 'OCI and equity adjustments', cls: 'i1' },
     { c: '340000', l: 'Retained earnings (prior periods)', cls: 'i1' },
     { c: '350000', l: 'Current year result', cls: 'i1' },
-    { c: '380000', l: 'Equity attributable to owners (rollup)', cls: 'hl' },
   ],
 };
 

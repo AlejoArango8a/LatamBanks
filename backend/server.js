@@ -122,15 +122,17 @@ app.get('/api/bootstrap', async (req, res) => {
     try {
       if (country === 'CL') {
         patrimonioRows = await query(
-          `SELECT ins_cod::int, monto_total::bigint FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000' AND periodo = $2`,
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000' AND periodo = $2
+           GROUP BY ins_cod`,
           [country, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'CO') {
-        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '300000').trim();
+        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '380000').trim();
         patrimonioRows = await query(
-          `SELECT ins_cod::int, monto_total::bigint FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3`,
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
+           GROUP BY ins_cod`,
           [country, eqCuenta, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       }

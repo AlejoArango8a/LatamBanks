@@ -49,7 +49,8 @@ function applyBootstrapPayload(j) {
   if (Array.isArray(j.patrimonioRows) && j.patrimonioRows.length) {
     const patMap = {};
     j.patrimonioRows.forEach(row => {
-      patMap[row.ins_cod] = (patMap[row.ins_cod] || 0) + row.monto_total;
+      const cod = Number(row.ins_cod);
+      patMap[cod] = (patMap[cod] || 0) + row.monto_total;
     });
     ST._patrimonioMap     = patMap;
     ST._patrimonioRanking = Object.keys(patMap).map(Number).filter(c => c !== 999)
