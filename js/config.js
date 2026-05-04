@@ -113,6 +113,21 @@ export const FELLER_RATINGS = {
   66: 'AA',
 };
 
+/** Fitch Ratings, escala nacional Colombia (AAA col.) — codigo_entidad CUIF tipo 1. */
+export const BANK_RATINGS_CO = Object.freeze({
+  7: 'AAA',  // Bancolombia
+  2: 'AAA',  // Banco de Bogotá
+  51: 'AAA', // Davivienda
+  13: 'AAA', // BBVA Colombia (reafirmación nov 2023)
+  43: 'AAA', // Banco Agrario (CUIF)
+  40: 'AAA', // Banco Agrario (código alterno en algunos cortes)
+  66: 'AAA', // BTG Pactual Colombia
+  64: 'AAA', // JP Morgan Colombia
+  9: 'AAA',  // Citibank Colombia
+  23: 'AAA', // Banco de Occidente
+  1: 'AAA',  // Banco Popular
+});
+
 export const RATING_COLORS = {
   'AAA': '#059669', 'AA+': '#10b981', 'AA': '#34d399', 'AA-': '#6ee7b7',
   'A+': '#f59e0b', 'A': '#fbbf24', 'A-': '#fcd34d',

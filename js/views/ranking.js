@@ -17,16 +17,17 @@ function wireCbExportButton() {
   const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System' : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, RATING_COLORS } from '../config.js?v=bmon14';
+import { FELLER_RATINGS, BANK_RATINGS_CO, RATING_COLORS } from '../config.js?v=bmon14';
 import { CO_CUIF } from '../coCuentas.js?v=bmon14';
 import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon14';
 import { apiDatos } from '../api.js?v=bmon14';
 
 export function getCBRatings() {
+  const base = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
   try {
     const stored = JSON.parse(localStorage.getItem('cbRatings') || '{}');
-    return { ...FELLER_RATINGS, ...stored };
-  } catch { return { ...FELLER_RATINGS }; }
+    return { ...base, ...stored };
+  } catch { return { ...base }; }
 }
 
 export function saveCBRating(code, val) {
@@ -225,18 +226,23 @@ export function renderRatingsEditor() {
   const RATING_OPTIONS = ['AAA','AA+','AA','AA-','A+','A','A-','BBB+','BBB','BB+','BB','—'];
   const stored = getCBRatings();
   const banks  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999).sort((a, b) => a - b);
+  const defaultMap = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
 
+  const ratingColHdr = datasetIsoCountry() === 'CO' ? 'Rating (Fitch)' : 'Rating (Feller Rate)';
   let html = `<table class="tbl"><thead><tr>
     <th>Bank</th>
-    <th style="text-align:center;">Rating (Feller Rate)</th>
+    <th style="text-align:center;">${ratingColHdr}</th>
     <th style="text-align:center;">Source</th>
   </tr></thead><tbody>`;
 
   banks.forEach(code => {
     const name      = bankName(code);
     const rating    = stored[code] || '—';
-    const isDefault = FELLER_RATINGS[code] !== undefined;
+    const isDefault = defaultMap[code] !== undefined;
     const rColor    = RATING_COLORS[rating] || 'var(--text3)';
+    const sourceLbl = isDefault
+      ? (datasetIsoCountry() === 'CO' ? 'Fitch Ratings' : 'Feller Rate')
+      : '✏️ Manual';
     html += `<tr>
       <td style="font-weight:500;">${name}</td>
       <td style="text-align:center;">
@@ -247,7 +253,7 @@ export function renderRatingsEditor() {
           ${RATING_OPTIONS.map(r => `<option value="${r}" ${r === rating ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
-      <td style="text-align:center;font-size:11px;color:var(--text3);">${isDefault ? 'Feller Rate' : '✏️ Manual'}</td>
+      <td style="text-align:center;font-size:11px;color:var(--text3);">${sourceLbl}</td>
     </tr>`;
   });
   html += '</tbody></table>';

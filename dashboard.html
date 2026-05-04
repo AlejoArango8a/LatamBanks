@@ -125,6 +125,29 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   #cbTable .cb-col-assets,
   #cbTable .cb-col-ni,
   #cbTable .cb-col-loanseq { display: none !important; }
+
+  /* Anchos equilibrados: Rating alinea con Bank / Equity / Loans en pantalla angosta */
+  #cbTable .tbl-banking-system {
+    table-layout: fixed !important;
+  }
+  #cbTable .tbl-banking-system th.cb-col-bank,
+  #cbTable .tbl-banking-system td.cb-col-bank {
+    width: 30% !important;
+  }
+  #cbTable .tbl-banking-system th.cb-col-rating,
+  #cbTable .tbl-banking-system td.cb-col-rating {
+    width: 23.333% !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  #cbTable .tbl-banking-system th.cb-col-equity,
+  #cbTable .tbl-banking-system td.cb-col-equity {
+    width: 23.333% !important;
+  }
+  #cbTable .tbl-banking-system th.cb-col-loans,
+  #cbTable .tbl-banking-system td.cb-col-loans {
+    width: 23.333% !important;
+  }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
