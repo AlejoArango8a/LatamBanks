@@ -1,33 +1,35 @@
 // ============================================================
-// CUSTOM KEY DATA — cuenta del plan por país (modal + localStorage)
+// CUSTOM KEY DATA — cuenta del plan por país (modal; solo en memoria, se pierde al recargar)
 // ============================================================
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
 import { getTipo, toSentenceCase, getExpLabel } from '../format.js?v=bmon14';
 
-const LS_KEYS = { CO: 'kpiCustomCuenta_CO', CL: 'kpiCustomCuenta_CL' };
+const LEGACY_LS_KEYS = ['kpiCustomCuenta_CO', 'kpiCustomCuenta_CL'];
 
-function storageKey() {
-  return LS_KEYS[datasetIsoCountry()] || LS_KEYS.CL;
-}
+/** @type {{ cuenta: string, descripcion: string } | null} */
+let sessionCustomKpi = null;
+
+(function clearLegacyCustomKpiStorage() {
+  try {
+    for (const k of LEGACY_LS_KEYS) localStorage.removeItem(k);
+  } catch { /* noop */ }
+})();
 
 export function getSavedCustomKpi() {
-  try {
-    const raw = localStorage.getItem(storageKey());
-    if (!raw) return null;
-    const o = JSON.parse(raw);
-    if (!o || typeof o.cuenta !== 'string' || !String(o.cuenta).trim()) return null;
-    return { cuenta: String(o.cuenta).trim(), descripcion: String(o.descripcion || '') };
-  } catch {
+  if (!sessionCustomKpi || typeof sessionCustomKpi.cuenta !== 'string' || !String(sessionCustomKpi.cuenta).trim())
     return null;
-  }
+  return {
+    cuenta: String(sessionCustomKpi.cuenta).trim(),
+    descripcion: String(sessionCustomKpi.descripcion || ''),
+  };
 }
 
 export function saveCustomKpi(cuenta, descripcion) {
-  localStorage.setItem(storageKey(), JSON.stringify({ cuenta, descripcion }));
+  sessionCustomKpi = { cuenta: String(cuenta || '').trim(), descripcion: String(descripcion || '') };
 }
 
 export function clearCustomKpi() {
-  localStorage.removeItem(storageKey());
+  sessionCustomKpi = null;
 }
 
 const RUBRO_LABEL = {
