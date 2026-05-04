@@ -4,12 +4,52 @@
 import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
 import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw } from '../format.js?v=bmon14';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon14';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon14';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon14';
 import { expSelect, abortExplorerFetch, getExpAccounts } from './explorer.js?v=bmon14';
 import { setStatus, showErr } from '../utils.js?v=bmon14';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon14';
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;');
+}
+
+function computeCustomKpiSnapshot(b1, r1, c1, firstBank, lastP) {
+  const saved = resolveCustomKpiForRun();
+  if (!saved) return null;
+  const tipo = getTipo(saved.cuenta);
+  const rows = tipo === 'b1' ? b1 : tipo === 'r1' ? r1 : c1;
+  const monto = sumRows(rows.filter(r => r.ins_cod === firstBank), saved.cuenta, lastP);
+  return {
+    cuenta: saved.cuenta,
+    descripcion: ST.planCuentas[saved.cuenta] || saved.descripcion || '',
+    tipo,
+    monto,
+  };
+}
+
+function customKpiTileHtml(m) {
+  const ck = m.customKpi;
+  const val = ck && ck.monto != null && Number.isFinite(ck.monto) ? fmtKPI(ck.monto) : '—';
+  let sub;
+  if (ck?.cuenta) {
+    const d = (ck.descripcion || '').trim();
+    const short = d.length > 56 ? `${d.slice(0, 56)}…` : d;
+    sub = `<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${escHtml(ck.cuenta)}</span> · ${escHtml(short || '—')} · <span style="font-size:9px;text-transform:uppercase;color:var(--text3);">${escHtml(ck.tipo || '')}</span>`;
+  } else {
+    sub = 'Click to choose any plan account';
+  }
+  return `<div class="kpi kpi-custom kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data">
+    <div class="kpi-label">Custom account</div>
+    <div class="kpi-val">${val}</div>
+    <div class="kpi-sub" style="line-height:1.35;">${sub}</div>
+  </div>`;
+}
 
 let runAbortController = null;
 let roeAbortController = null;
@@ -60,7 +100,8 @@ export function refreshKPIs() {
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL (deteriorated)</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>`;
+    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL (deteriorated)</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>
+    ${customKpiTileHtml(m)}`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -114,6 +155,7 @@ export function refreshKPIs() {
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
     <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d / Loans</div><div class="kpi-val">${m.colocaciones ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false) : '—'}</div><div class="kpi-sub">CMF NPL vs total loans (${fmtKPI(m.mora90)} · loans ${fmtKPI(m.colocaciones)})</div></div>
+    ${customKpiTileHtml(m)}
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
@@ -184,8 +226,18 @@ export async function run() {
     if (datasetIsoCountry() === 'CO') {
       const B1_BASE = coB1AccountsForRun();
       const deterioroC = coDeterioroActivoCuentasFromPlan(Object.keys(ST.planCuentas || {}));
-      const B1_CO = [...new Set([...B1_BASE, ...deterioroC])];
-      const R1_CO = coR1AccountsForRun();
+      const customCO  = resolveCustomKpiForRun();
+      const customTipo = customCO ? getTipo(customCO.cuenta) : null;
+      const B1_CO = [...new Set([
+        ...B1_BASE,
+        ...deterioroC,
+        ...(customTipo === 'b1' && customCO ? [customCO.cuenta] : []),
+      ])];
+      const R1_CO = [...new Set([
+        ...coR1AccountsForRun(),
+        ...(customTipo === 'r1' && customCO ? [customCO.cuenta] : []),
+      ])];
+      const C1_CUENTAS_CO = customTipo === 'c1' && customCO ? [customCO.cuenta] : [];
 
       runAbortController?.abort();
       abortExplorerFetch();
@@ -193,11 +245,13 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run CO] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
+      const [b1, r1, c1] = await Promise.all([
         fetchData('b1', B1_CO, periodos, banks, signal),
         fetchData('r1', R1_CO, periodos, banks, signal),
+        C1_CUENTAS_CO.length
+          ? fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
+          : Promise.resolve([]),
       ]);
-      const c1 = [];
       if (signal.aborted) return;
 
       const firstBank = ST.selectedOrder[0] || banks[0];
@@ -217,6 +271,7 @@ export async function run() {
       const utilidad     = r1v(CO_CUIF.utilidadNet);
       const b1RowsFirst  = b1.filter(r => r.ins_cod === firstBank);
       const mora90       = coMoraNumerator(b1RowsFirst, lastP);
+      const customKpi    = computeCustomKpiSnapshot(b1, r1, c1, firstBank, lastP);
 
       ST._kpiRaw = {
         totalAssets,
@@ -228,6 +283,7 @@ export async function run() {
         patrimonio,
         utilidad,
         mora90,
+        customKpi,
         pasivos: b1v(CO_CUIF.pasivos),
         ingresoNeto: null,
         totalIng: null,
@@ -247,7 +303,7 @@ export async function run() {
       showResChart(ST._lastResChart || 'patrimonio');
 
       ST._b1    = b1;
-      ST._c1    = null;
+      ST._c1    = c1.length ? c1 : null;
       ST._lastP = lastP;
       ST._resTableData = null;
 
@@ -265,21 +321,30 @@ export async function run() {
       return;
     }
 
-    const B1_CUENTAS = ['100000000','105000000','107000000','110000000','120000000','130000000',
+    const customCL = resolveCustomKpiForRun();
+    const ct = customCL ? getTipo(customCL.cuenta) : null;
+    const B1_CUENTAS_LIST = [
+      '100000000','105000000','107000000','110000000','120000000','130000000',
       '140000000','144000000','145000000','146000000','148000000','149000000',
       '150000000','160000000','170000000','175000000','185000000','190000000','195000000',
       '200000000','207000000','210000000','230000000','240000000','241000000','242000000',
       '243000000','244000000','245000000','246000000','250000000','255000000','260000000',
       '270000000','285000000','290000000','300000000','310000000','311000000','312000000',
-      '320000000','330000000','340000000','350000000','380000000','390000000','500000000','505000000','510000000'];
-
-    const R1_CUENTAS = ['520000000','525000000','530000000','540000000','550000000',
+      '320000000','330000000','340000000','350000000','380000000','390000000','500000000','505000000','510000000',
+    ];
+    const R1_CUENTAS_LIST = [
+      '520000000','525000000','530000000','540000000','550000000',
       '560000000','570000000','580000000','590000000','462000000','464000000',
-      '466000000','468000000','469000000','470000000','480000000'];
-
-    const C1_CUENTAS = ['851000000','852000000','853000000','854000000','855000000',
+      '466000000','468000000','469000000','470000000','480000000',
+    ];
+    const C1_CUENTAS_LIST = [
+      '851000000','852000000','853000000','854000000','855000000',
       '857000000','857100000','857200000','857300000','857400000',
-      '813000000','814000000'];
+      '813000000','814000000',
+    ];
+    const B1_CUENTAS = [...new Set([...B1_CUENTAS_LIST, ...(ct === 'b1' && customCL ? [customCL.cuenta] : [])])];
+    const R1_CUENTAS = [...new Set([...R1_CUENTAS_LIST, ...(ct === 'r1' && customCL ? [customCL.cuenta] : [])])];
+    const C1_CUENTAS = [...new Set([...C1_CUENTAS_LIST, ...(ct === 'c1' && customCL ? [customCL.cuenta] : [])])];
 
     console.log('[run] fetching data — periodos:', periodos.length, 'banks:', banks);
     runAbortController?.abort();
@@ -324,9 +389,12 @@ export async function run() {
     const resOp        = r1v('580000000');
     const impuesto     = r1v('480000000');
 
+    const customKpi = computeCustomKpiSnapshot(b1, r1, c1, firstBank, lastP);
+
     ST._kpiRaw = {
       totalAssets, colocaciones, depositos, depVista, depPlazo, bonos,
       patrimonio, utilidad, mora90,
+      customKpi,
       pasivos: b1v('200000000'), ingresoNeto, totalIng, lastP,
       perdCred, impuesto, resOp, totalGas, resOpA, ingComis, ingresoReaj, resFin,
     };

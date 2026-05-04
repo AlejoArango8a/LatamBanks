@@ -16,6 +16,7 @@ import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, 
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon14';
 import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon14';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon14';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon14';
 
 // UI
 import {
@@ -248,6 +249,7 @@ window.updateRating       = updateRating;
 // Config tab
 window.populateConfig   = populateConfig;
 window.loadVisitStats   = loadVisitStats;
+window.openCustomKpiPicker = openCustomKpiPicker;
 
 // UI
 window.fillBankList     = fillBankList;
