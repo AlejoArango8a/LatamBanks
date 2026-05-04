@@ -178,6 +178,32 @@ export function toSentenceCase(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
+/** Escape for text / HTML body. */
+export function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Escape for double-quoted HTML attributes. */
+export function escapeAttr(s) {
+  return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+/**
+ * Colombia Income Statement — sentence-case label, ellipsis via CSS, full text on hover.
+ * Section headers: no casing change (English UI strings).
+ */
+export function coIncomeStatementConceptHtml(label, isSection) {
+  if (isSection) return escapeHtml(String(label ?? ''));
+  const raw = String(label ?? '').trim();
+  if (!raw) return '—';
+  const full = toSentenceCase(raw);
+  return `<span class="res-pl-concept" title="${escapeAttr(full)}">${escapeHtml(full)}</span>`;
+}
+
 // ---- Account type resolver ----
 export function getTipo(code) {
   const p = code[0];

@@ -3,7 +3,7 @@
 // ============================================================
 import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon14';
 import { bankColor } from '../config.js?v=bmon14';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw } from '../format.js?v=bmon14';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon14';
 import { sumRows } from '../api.js?v=bmon14';
 import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon14';
 
@@ -254,10 +254,13 @@ export function renderResTable(m) {
     html += `</tr></thead><tbody>`;
     r1Rows.forEach(row => {
       if (row.section) {
-        html += `<tr><td colspan="${1 + n}" class="pl-section">${row.l}</td></tr>`;
+        html += `<tr><td colspan="${1 + n}" class="pl-section">${escapeHtml(row.l)}</td></tr>`;
         return;
       }
-      html += `<tr><td class="${row.cls}">${row.l}</td>`;
+      const conceptTd = isCOPl
+        ? `<td class="${row.cls} res-pl-concept-td">${coIncomeStatementConceptHtml(row.l, false)}</td>`
+        : `<td class="${row.cls}">${row.l}</td>`;
+      html += `<tr>${conceptTd}`;
       banks.forEach(code => {
         const v = getVal(row.c, code);
         html += `<td class="r ${v < 0 ? 'neg' : ''} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td>`;
@@ -269,10 +272,18 @@ export function renderResTable(m) {
     document.getElementById('resTable').innerHTML = html;
   } else {
     const colLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
+    const isCOPl = datasetIsoCountry() === 'CO';
     let html = `<table class="tbl"><thead><tr><th>Concepto</th><th class="r">${colLabel}</th></tr></thead><tbody>`;
     r1Rows.forEach(row => {
+      if (row.section) {
+        html += `<tr><td colspan="2" class="pl-section">${escapeHtml(row.l)}</td></tr>`;
+        return;
+      }
       const v = m[row.c] || 0;
-      html += `<tr><td class="${row.cls}">${row.l}</td><td class="r ${v < 0 ? 'neg' : 'pos'} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td></tr>`;
+      const conceptTd = isCOPl
+        ? `<td class="${row.cls} res-pl-concept-td">${coIncomeStatementConceptHtml(row.l, false)}</td>`
+        : `<td class="${row.cls}">${row.l}</td>`;
+      html += `<tr>${conceptTd}<td class="r ${v < 0 ? 'neg' : 'pos'} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td></tr>`;
     });
     html += `</tbody></table>`;
     document.getElementById('resTable').innerHTML = html;
