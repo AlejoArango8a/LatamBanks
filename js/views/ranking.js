@@ -83,8 +83,17 @@ export async function renderChileanBanks() {
 
     const actK = isCO ? CO_CUIF.activos : '100000000';
     const eqK  = isCO ? CO_CUIF.patrimonio : '300000000';
-    const getVal       = (bank, cuenta) => rows.filter(r => r.ins_cod === bank && r.cuenta === cuenta).reduce((s, r) => s + (r.monto_total || 0), 0);
-    const getIncomeVal = (bank, periodo) => incomeRows.filter(r => r.ins_cod === bank && r.periodo === periodo).reduce((s, r) => s + (r.monto_total || 0), 0);
+    const getVal = (bank, cuenta) => {
+      const bc = Number(bank);
+      const cs = String(cuenta).trim();
+      return rows
+        .filter(r => Number(r.ins_cod) === bc && String(r.cuenta).trim() === cs)
+        .reduce((s, r) => s + (Number(r.monto_total) || 0), 0);
+    };
+    const getIncomeVal = (bank, periodo) =>
+      incomeRows
+        .filter(r => Number(r.ins_cod) === Number(bank) && r.periodo === periodo)
+        .reduce((s, r) => s + (Number(r.monto_total) || 0), 0);
     const getNetIncome12M = bank => {
       const ytdNow = getIncomeVal(bank, lastP);
       if (lastPMonth === '12') return ytdNow;
@@ -142,16 +151,16 @@ export function renderCBTable() {
   const thStyleL = thStyle + 'text-align:left;';
   const arrow    = c => col === c ? (dir === 1 ? ' ↑' : ' ↓') : ' ↕';
 
-  let html = `<div style="overflow-x:auto"><table class="tbl" style="table-layout:fixed;width:100%;">
+  let html = `<div style="overflow-x:auto"><table class="tbl tbl-banking-system" style="table-layout:fixed;width:100%;">
     <thead><tr style="background:var(--bg4);">
-      <th style="${thStyle}width:4%;text-align:center;">#</th>
-      <th style="${thStyleL}width:22%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
-      <th style="${thStyle}width:7%;text-align:center;" onclick="sortCBBy('rating')">Rating${arrow('rating')}</th>
-      <th class="r" style="${thStyle}width:14%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
-      <th class="r" style="${thStyle}width:13%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
-      <th class="r" style="${thStyle}width:13%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
-      <th class="r" style="${thStyle}width:14%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
-      <th class="r" style="${thStyle}width:13%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
+      <th class="cb-col-rank" style="${thStyle}width:4%;text-align:center;">#</th>
+      <th class="cb-col-bank" style="${thStyleL}width:22%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
+      <th class="cb-col-rating" style="${thStyle}width:7%;text-align:center;" onclick="sortCBBy('rating')">Rating${arrow('rating')}</th>
+      <th class="cb-col-assets r" style="${thStyle}width:14%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
+      <th class="cb-col-equity r" style="${thStyle}width:13%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
+      <th class="cb-col-loans r" style="${thStyle}width:13%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
+      <th class="cb-col-ni r" style="${thStyle}width:14%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
+      <th class="cb-col-loanseq r" style="${thStyle}width:13%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
     </tr></thead>
     <tbody>`;
 
@@ -171,18 +180,18 @@ export function renderCBTable() {
       onclick="loadBankFromTable(${b.code})"
       onmouseover="this.style.background='${isBTG ? 'rgba(37,99,235,0.14)' : 'rgba(56,189,248,0.06)'}'"
       onmouseout="this.style.background='${isBTG ? 'rgba(37,99,235,0.08)' : 'transparent'}'">
-      <td style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);">${rowIdx + 1}</td>
-      <td style="${nameStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <td class="cb-col-rank" style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);">${rowIdx + 1}</td>
+      <td class="cb-col-bank" style="${nameStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
-      <td style="text-align:center;">
+      <td class="cb-col-rating" style="text-align:center;">
         <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};">${rating}</span>
       </td>
-      <td class="r">${fmtKPIDecimal(b.assets)}</td>
-      <td class="r">${fmtKPIDecimal(b.loans)}</td>
-      <td class="r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>
-      <td class="r" style="color:${niColor};font-weight:600;">${b.netIncome12 !== 0 ? fmtKPIDecimal(b.netIncome12) : '—'}</td>
-      <td class="r" style="color:var(--text2);font-family:var(--mono);">${loansEq}</td>
+      <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
+      <td class="cb-col-equity r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>
+      <td class="cb-col-loans r">${fmtKPIDecimal(b.loans)}</td>
+      <td class="cb-col-ni r" style="color:${niColor};font-weight:600;">${b.netIncome12 !== 0 ? fmtKPIDecimal(b.netIncome12) : '—'}</td>
+      <td class="cb-col-loanseq r" style="color:var(--text2);font-family:var(--mono);">${loansEq}</td>
     </tr>`;
   });
 
@@ -195,14 +204,14 @@ export function renderCBTable() {
   const totNiColor = tot.netIncome12 >= 0 ? 'var(--green)' : 'var(--red)';
 
   html += `<tr style="background:var(--bg4);border-top:2px solid var(--border2);border-left:3px solid transparent;">
-    <td></td>
-    <td style="font-weight:700;color:var(--white);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;">System Total</td>
-    <td></td>
-    <td class="r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.assets)}</td>
-    <td class="r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.loans)}</td>
-    <td class="r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.equity)}</td>
-    <td class="r" style="font-weight:700;color:${totNiColor};">${fmtKPIDecimal(tot.netIncome12)}</td>
-    <td class="r" style="font-weight:700;color:var(--text2);font-family:var(--mono);">${totLoansEq}</td>
+    <td class="cb-col-rank"></td>
+    <td class="cb-col-bank" style="font-weight:700;color:var(--white);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;">System Total</td>
+    <td class="cb-col-rating"></td>
+    <td class="cb-col-assets r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.assets)}</td>
+    <td class="cb-col-equity r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.equity)}</td>
+    <td class="cb-col-loans r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.loans)}</td>
+    <td class="cb-col-ni r" style="font-weight:700;color:${totNiColor};">${fmtKPIDecimal(tot.netIncome12)}</td>
+    <td class="cb-col-loanseq r" style="font-weight:700;color:var(--text2);font-family:var(--mono);">${totLoansEq}</td>
   </tr>`;
 
   html += '</tbody></table></div>';

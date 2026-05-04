@@ -119,6 +119,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
 
   /* Theme (light/dark) control — hide on narrow viewports */
   .dashboard-theme-toggle { display: none !important; }
+
+  /* Banking System: solo Bank, Rating, Equity, Loans (orden lectura móvil) */
+  #cbTable .cb-col-rank,
+  #cbTable .cb-col-assets,
+  #cbTable .cb-col-ni,
+  #cbTable .cb-col-loanseq { display: none !important; }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }

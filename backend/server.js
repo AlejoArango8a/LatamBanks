@@ -128,7 +128,7 @@ app.get('/api/bootstrap', async (req, res) => {
           [country, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'CO') {
-        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '380000').trim();
+        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '300000').trim();
         patrimonioRows = await query(
           `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
            WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3

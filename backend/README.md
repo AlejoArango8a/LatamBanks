@@ -21,7 +21,7 @@ En el servicio Web → **Environment**:
 |----------|--------|
 | `COCKROACH_URL` | Connection string de CockroachDB Serverless (formato postgresql://...) |
 | `FRONTEND_URLS` | Orígenes CORS permitidos. Ej: `https://alejoarango8a.github.io` (separados por coma) |
-| `CO_EQUITY_CUENTA` | (Opcional) Cuenta b1 CUIF Colombia (6 dígitos) para patrimonio en bootstrap; por defecto `380000` |
+| `CO_EQUITY_CUENTA` | (Opcional) Cuenta b1 CUIF Colombia (6 dígitos) para patrimonio en bootstrap; por defecto `300000` |
 
 
 ## Despliegue
