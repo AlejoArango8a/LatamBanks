@@ -181,7 +181,12 @@ export function refreshKPIs() {
   syncKpiResumenActive(ST._lastResChart || 'patrimonio');
 }
 
-function setRunLoadingBar(on) {
+/** Top loading strip · oculta si el overlay de arranque (#loadingScreen) sigue visible */
+export function setRunLoadingBar(on) {
+  if (on) {
+    const ls = document.getElementById('loadingScreen');
+    if (ls && getComputedStyle(ls).display !== 'none') return;
+  }
   const bar = document.getElementById('loadingBar');
   const row = document.getElementById('loadingBarRow');
   if (bar) bar.style.display = on ? 'block' : 'none';

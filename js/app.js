@@ -60,6 +60,20 @@ function applyBootstrapPayload(j) {
   if (datasetIsoCountry() === 'CO') patchColombiaGrupoAvalBootstrap();
 }
 
+/** Same full-screen loader as initial bootstrap (#loadingScreen · centered bars). */
+function setDashboardLoadingOverlay(visible, message) {
+  const el = document.getElementById('loadingScreen');
+  if (!el) return;
+  if (visible) {
+    el.style.display = 'flex';
+    if (message) setLsMsg(message);
+    const retry = document.getElementById('lsRetryBtn');
+    if (retry) retry.style.display = 'none';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 function applyCountryFromUrl() {
   try {
     const raw = new URLSearchParams(location.search).get('country');
@@ -97,7 +111,8 @@ async function switchCountryDataset() {
   ST._avTreeExpanded = {};
   ST._avGroup = '';
   showErr('');
-  setStatus('loading', 'Actualizando datos…');
+  setStatus('loading', 'Updating data…');
+  setDashboardLoadingOverlay(true, 'Switching country — loading data and charts…');
   try {
     await fetchAndApplyBootstrap();
     fillPeriodSelectors();
@@ -122,16 +137,17 @@ async function switchCountryDataset() {
 
     await run();
     refreshBarLabelsToggleButtons();
-    setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} períodos`);
+    setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} periods`);
 
     const activeTab = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
     if (activeTab === 'chileanbanks') await renderChileanBanks();
     else if (activeTab === 'accountview') initAccountView();
   } catch (e) {
-    setStatus('error', 'Actualización país');
+    setStatus('error', 'Country update');
     showErr(e.message || String(e));
     console.error('[switchCountryDataset]', e);
   } finally {
+    setDashboardLoadingOverlay(false);
     syncCurrencyToggleUI();
     syncFinStatementPanelLabels();
     syncResumenMoraChartButton();
@@ -163,7 +179,7 @@ async function init() {
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
-    setLsMsg('Listo');
+    setLsMsg('Ready');
     document.getElementById('loadingScreen').style.display = 'none';
     setStatus('ok', `${datasetIsoCountry()} · ${ST.periodos.length} periods available`);
 
@@ -186,9 +202,9 @@ async function init() {
     clearTimeout(wakeTimer);
     setStatus('error', 'Connection error');
     const msg = e.name === 'AbortError'
-      ? 'Timeout: el servidor tardó demasiado. Reintenta en unos segundos.'
+      ? 'Timeout: the server took too long. Try again in a few seconds.'
       : `Error: ${e.message}`;
-    setLsMsg('No se pudo conectar al servidor.');
+    setLsMsg('Could not connect to the server.');
     showErr(msg);
     const retryBtn = document.getElementById('lsRetryBtn');
     if (retryBtn) retryBtn.style.display = 'block';

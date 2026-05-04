@@ -124,6 +124,7 @@
     .nav-brand-text {
       text-decoration: none;
       color: inherit;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       gap: clamp(2px, 0.8vw, 4px);
@@ -218,7 +219,8 @@
       width: 100%;
       max-width: none;
       margin: 0;
-      padding: 24px clamp(28px, 5vw, 48px) 28px clamp(28px, 7vw, 96px);
+      /* Más aire vertical: reparte el contenido en la altura útil del viewport */
+      padding: clamp(28px, 7vh, 72px) clamp(28px, 5vw, 48px) clamp(36px, 8vh, 80px) clamp(28px, 7vw, 96px);
       box-sizing: border-box;
     }
     @media (max-width: 880px) {
@@ -241,6 +243,11 @@
       max-width: min(960px, 100%);
       padding: 0;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(12px, 2vh, 28px);
+      min-height: min(72vh, 820px);
     }
 
     .hero-copy {
@@ -251,14 +258,14 @@
         "lead flags"
         "actions flags";
       column-gap: clamp(28px, 5vw, 72px);
-      row-gap: 20px;
+      row-gap: clamp(22px, 4vh, 40px);
       align-items: start;
     }
     .hero-lead-col {
       grid-area: lead;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: clamp(20px, 3.5vh, 40px);
     }
     .hero-flags-col {
       grid-area: flags;
@@ -271,6 +278,9 @@
       margin-top: 0;
     }
     @media (max-width: 880px) {
+      .hero-grid {
+        min-height: 0;
+      }
       .hero-copy {
         text-align: center;
         grid-template-columns: 1fr;
@@ -282,6 +292,35 @@
       .hero-flags-col {
         justify-self: center;
         width: 100%;
+      }
+    }
+
+    /* Pantallas amplias: banderas centradas en el ancho disponible */
+    @media (min-width: 1024px) {
+      .hero-copy {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "lead"
+          "flags"
+          "actions";
+      }
+      .hero-flags-col {
+        justify-self: center;
+        width: 100%;
+        max-width: min(560px, 100%);
+      }
+      .hero-copy .flags-zone {
+        margin-inline: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .hero-copy .flags-row {
+        margin-inline: auto;
+      }
+      .hero-lead-col {
+        max-width: min(680px, 100%);
       }
     }
 
@@ -309,7 +348,7 @@
 
     /* Título hero en dos líneas — mismo azul soberio que el banner */
     .hero-title {
-      margin: -25px 0 0 0;
+      margin: 0;
       max-width: min(680px, 100%);
       line-height: 1.2;
       font-family: inherit;
@@ -608,10 +647,10 @@
 <div class="landing-bg-veil" aria-hidden="true"></div>
 
 <nav>
-  <a class="nav-logo" href="/" title="BTG Pactual">
+  <a class="nav-logo" href="./index.html" title="Reload page" onclick="event.preventDefault(); location.reload();">
     <img src="assets/LogoBTG-SinFondoBlanco.png" alt="BTG Pactual" />
   </a>
-  <a class="nav-brand-text" href="/">
+  <a class="nav-brand-text" href="./index.html" title="Reload page" onclick="event.preventDefault(); location.reload();">
     <span class="nav-brand-title">ALM Latam</span>
     <span class="nav-brand-sub">Financial Dashboards</span>
   </a>
