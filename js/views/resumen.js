@@ -34,9 +34,7 @@ export function refreshKPIs() {
     const moraLbl = m.colocaciones && Number.isFinite(m.mora90)
       ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false)
       : '—';
-    const moraSub = !m.colocaciones
-      ? '—'
-      : `Cuentas 148·149 vs colocación 140000 (${fmtKPI(m.mora90)} · ${fmtKPI(m.colocaciones)})`;
+    const moraSub = !m.colocaciones ? '—' : 'Total Deteriorated Loans vs Total Loans';
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
@@ -62,7 +60,7 @@ export function refreshKPIs() {
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">Total Deteriorated Loans vs Total Loans</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>`;
+    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL (deteriorated)</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
