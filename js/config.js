@@ -123,29 +123,29 @@ export const BANK_RATINGS_CO = Object.freeze({
   9: 'AAA',     // Citibank
   12: 'AA+',    // GNB Sudameris (BRC)
   13: 'AAA',    // BBVA Colombia
-  19: 'AAA',    // Scotiabank Colpatria
+  19: 'AAA',    // Scotiabank Colpatria — AAA (col)
   23: 'AAA',    // Banco de Occidente
-  32: 'AAA',    // Banco Caja Social BCSC
+  32: 'AAA',    // Banco Caja Social BCSC — AAA (col)
   40: 'AAA',    // Banco Agrario (corte CENIT 1040)
   43: 'AAA',    // Banco Agrario (CUIF habitual app)
   46: 'AA',     // Banco Unión (antes Giros y Finanzas)
   48: 'A+',     // Banco Contactar
   49: 'AAA',    // AV Villas
-  51: 'AAA',    // Davivienda
+  51: 'AAA',   // Davivienda — AAA (col); perspectiva negativa → META
   53: 'AA',     // Banco W
   54: 'AAA',    // Bancien
   55: 'AA+',    // Finandina
   56: 'AAA',    // Falabella
   57: 'A-',     // Pichincha
   58: 'AA',     // Coopcentral
-  59: 'AA-',    // Bancamía
+  59: 'AA-',   // Bancamía — AA- (col)
   60: 'AA+',    // Mundo Mujer
   61: 'AA-',    // Bancoomeva / Coomeva
   64: 'AAA',    // J.P. Morgan (CUIF habitual en app)
   71: 'AAA',    // J.P. Morgan (CENIT 1071 → codigo_entidad en algunos cortes)
-  65: 'AAA',    // Banco Santander de Negocios
+  65: 'AAA',   // Banco Santander de Negocios — AAA (col)
   66: 'AAA',    // BTG Pactual Colombia
-  67: 'AAA',    // Mi Banco (Mibanco)
+  67: 'AAA',   // Mibanco / Mi Banco — AAA (col)
   69: 'AA',     // Serfinanza
   70: 'A+',     // Lulo Bank
 });
