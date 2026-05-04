@@ -8,7 +8,6 @@ import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, peri
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon14';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon14';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon14';
-import { expSelect, abortExplorerFetch, getExpAccounts } from './explorer.js?v=bmon14';
 import { setStatus, showErr } from '../utils.js?v=bmon14';
 import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon14';
 
@@ -225,7 +224,6 @@ export async function run() {
 
   const isTrimestral = periodos.length < todosLosPeriodos.length;
   ST.lastPeriodo = lastP;
-  ST.exp.hierarchy = null;
 
   const rangeLabel = periodLabel(todosLosPeriodos[0]) + ' — ' + periodLabel(lastP);
   document.getElementById('rangePill').textContent = rangeLabel + (isTrimestral ? ' · trimestral' : '');
@@ -250,7 +248,6 @@ export async function run() {
       const C1_CUENTAS_CO = customTipo === 'c1' && customCO ? [customCO.cuenta] : [];
 
       runAbortController?.abort();
-      abortExplorerFetch();
       runAbortController = new AbortController();
       const signal = runAbortController.signal;
 
@@ -326,8 +323,6 @@ export async function run() {
       document.getElementById('dashContent').style.display = 'flex';
       if (_bar) _bar.style.display = 'none';
       setStatus('ok', `Colombia CUIF · ${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s)`);
-      const expPick = ST.exp.selected;
-      if (expPick && getExpAccounts().includes(expPick)) await expSelect(expPick);
       return;
     }
 
@@ -358,7 +353,6 @@ export async function run() {
 
     console.log('[run] fetching data — periodos:', periodos.length, 'banks:', banks);
     runAbortController?.abort();
-    abortExplorerFetch();
     runAbortController = new AbortController();
     const signal = runAbortController.signal;
 
@@ -448,8 +442,6 @@ export async function run() {
     if (_bar) _bar.style.display = 'none';
     setStatus('ok', `${periodos.length} periods${isTrimestral ? ' (quarterly)' : ''} · ${ST.selected.size} bank(s) · ${periodLabel(todosLosPeriodos[0])} → ${periodLabel(lastP)}`);
 
-    const expPick = ST.exp.selected;
-    if (expPick && getExpAccounts().includes(expPick)) await expSelect(expPick);
     const hi = document.getElementById('headerInfo');
     if (hi) hi.textContent = rangeLabel;
 

@@ -112,8 +112,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
 
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .g2 { grid-template-columns: 1fr; }
-  #tab-explorador > div { grid-template-columns: 1fr !important; }
-  #expTree { max-height: 200px; overflow-y: auto; }
   .rcbtn { font-size: 10px; padding: 4px 8px; }
   .chart-canvas { max-height: 220px !important; }
 
@@ -736,31 +734,6 @@ body.light .kpi-custom-badge {
 .empty { text-align:center; padding:40px; color:var(--text3); }
 .empty-icon { font-size:28px; opacity:0.3; margin-bottom:8px; }
 
-/* EXPLORER */
-.exp-node {
-  display:flex; align-items:center; gap:8px;
-  padding:7px 10px; border-radius:4px;
-  cursor:pointer; border:none; background:none;
-  width:100%; text-align:left; font-family:var(--sans);
-  transition:background 0.1s;
-}
-.exp-node:hover { background:var(--bg3); }
-.exp-node.active { background:rgba(56,189,248,0.07); }
-.exp-cod { font-family:var(--mono); font-size:9px; color:var(--text3); width:78px; flex-shrink:0; }
-.exp-lbl { font-size:13px; flex:1; color:var(--text); font-family:var(--sans); }
-.exp-val { font-family:var(--sans); font-size:11px; color:var(--text2); flex-shrink:0; }
-.exp-arr { font-size:11px; color:var(--text3); flex-shrink:0; margin-left:4px; }
-.breadcrumb { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:12px; }
-.bc-item {
-  padding:2px 8px; background:var(--bg3);
-  border:1px solid var(--border); border-radius:3px;
-  font-size:11px; color:var(--text2); cursor:pointer;
-  transition:all 0.1s;
-}
-.bc-item:hover { color:var(--accent); border-color:var(--border2); }
-.bc-item.cur { color:var(--white); cursor:default; }
-.bc-sep { color:var(--text3); font-size:10px; }
-
 /* CHART LEGEND */
 .legend { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; justify-content:center; }
 .leg-item { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text2); }
@@ -807,7 +780,6 @@ body.light .kpi-custom-badge {
         <button type="button" class="tab primary" data-tab="chileanbanks" onclick="showTab('chileanbanks')">Banking System</button>
         <div style="width:1px;background:var(--border);margin:10px 6px;flex-shrink:0;opacity:0.4;"></div>
         <button type="button" class="tab secondary" data-tab="accountview" onclick="showTab('accountview')">Account View</button>
-        <button type="button" class="tab secondary" data-tab="explorador" onclick="showTab('explorador')">Account Explorer</button>
         <button type="button" class="tab secondary" data-tab="balance" onclick="showTab('balance')">Balance Sheet</button>
         <button type="button" class="tab secondary" data-tab="resultados" onclick="showTab('resultados')">Income Statement</button>
         <button type="button" class="tab" data-tab="config" onclick="showTab('config')" style="margin-left:auto;">⚙ Config</button>
@@ -1155,65 +1127,6 @@ body.light .kpi-custom-badge {
               <!-- Results -->
               <div id="avTable"></div>
             </div>
-          </div>
-        </div>
-
-        <!-- EXPLORADOR -->
-        <div id="tab-explorador" style="display:none;">
-          <div style="display:grid;grid-template-columns:minmax(200px,280px) 1fr;gap:14px;min-height:500px;min-width:0;">
-
-            <!-- Left: account list -->
-            <div class="panel" style="overflow:hidden;">
-              <div class="panel-head"><div class="panel-title">Accounts</div></div>
-              <div style="overflow-y:auto;max-height:calc(100vh - 180px);" id="expTree"></div>
-            </div>
-
-            <!-- Right: chart + sub-accounts -->
-            <div style="display:flex;flex-direction:column;gap:20px;">
-              <div id="expResult" style="display:none;">
-                <div class="panel">
-                  <div class="panel-head">
-                    <div>
-                      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);" id="expCode"></div>
-                      <div style="font-size:15px;font-weight:600;color:var(--white);" id="expName"></div>
-                      <div style="font-size:11px;color:var(--text2);" id="expType"></div>
-                    </div>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                      <button type="button" id="btnExpLabels" class="lbl123-btn state-auto" onclick="toggleBarLabels()" title=""></button>
-                      <button id="expBackBtn" onclick="expGoBack()" style="display:none;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans);">← Back</button>
-                    </div>
-                  </div>
-                  <div class="panel-body">
-                    <div class="legend" id="expLegend"></div>
-                    <div class="chart-wrap"><canvas class="chart-canvas" id="chartExp" height="200"></canvas></div>
-                  </div>
-                </div>
-
-                <!-- Sub-accounts tree -->
-                <div class="panel" id="expSubPanel" style="display:none;">
-                  <div class="panel-head">
-                    <div><div class="panel-title" id="expSubTitle">Sub-accounts</div><div class="panel-sub">Click to drill down · 3 levels</div></div>
-                    <button onclick="exportTableById('expSubList','Sub_accounts')" title="Export to Excel" style="padding:4px 8px;border:1px solid var(--border);background:var(--bg3);color:var(--green);border-radius:4px;cursor:pointer;font-size:11px;">⬇ xlsx</button>
-                  </div>
-                  <div id="expSubList"></div>
-                </div>
-
-                <!-- Table -->
-                <div class="panel">
-                  <div class="panel-head">
-                    <div><div class="panel-title">Last period values</div></div>
-                    <button onclick="exportTableById('expTable','Last_Period_Values')" title="Export to Excel" style="padding:4px 8px;border:1px solid var(--border);background:var(--bg3);color:var(--green);border-radius:4px;cursor:pointer;font-size:11px;">⬇ xlsx</button>
-                  </div>
-                  <div class="panel-body" id="expTable"></div>
-                </div>
-              </div>
-
-              <!-- Placeholder when nothing selected -->
-              <div id="expPlaceholder" class="panel" style="display:flex;align-items:center;justify-content:center;min-height:300px;">
-                <div class="empty"><div class="empty-icon">👈</div><p>Select an account from the list</p></div>
-              </div>
-            </div>
-
           </div>
         </div>
 

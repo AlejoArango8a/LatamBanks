@@ -12,7 +12,6 @@ import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
 } from './views/balance.js?v=bmon14';
-import { initExplorer, expSelect, expGoBack, expTreeToggle, toggleExpSubFilter, sortExpSubBy, renderExpGrid } from './views/explorer.js?v=bmon14';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon14';
 import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon14';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon14';
@@ -94,11 +93,6 @@ async function switchCountryDataset() {
   ST._c1 = null;
   ST._cbData = null;
   ST._resTableData = null;
-  ST.exp.hierarchy = null;
-  ST.exp.selected = null;
-  ST.exp.history = [];
-  ST._expRenderTree = null;
-  ST._expTreeExpanded = {};
   ST._avAccount = null;
   ST._avTreeExpanded = {};
   ST._avGroup = '';
@@ -133,7 +127,6 @@ async function switchCountryDataset() {
     const activeTab = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
     if (activeTab === 'chileanbanks') await renderChileanBanks();
     else if (activeTab === 'accountview') initAccountView();
-    else if (activeTab === 'explorador' && Object.keys(ST.planCuentas).length > 0) initExplorer();
   } catch (e) {
     setStatus('error', 'Actualización país');
     showErr(e.message || String(e));
@@ -221,14 +214,6 @@ window.renderResTable  = renderResTable;
 window.selectResBank   = selectResBank;
 window.renderCalidad   = renderCalidad;
 window.renderComparativo = renderComparativo;
-
-// Explorer
-window.initExplorer       = initExplorer;
-window.expSelect          = expSelect;
-window.expGoBack          = expGoBack;
-window.expTreeToggle      = expTreeToggle;
-window.toggleExpSubFilter = toggleExpSubFilter;
-window.sortExpSubBy       = sortExpSubBy;
 
 // Account View
 window.initAccountView  = initAccountView;

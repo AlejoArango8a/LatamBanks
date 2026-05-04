@@ -173,7 +173,7 @@ export function initTopbarTabsOverflow() {
 
 // ---- Tab routing ----
 export function showTab(tab) {
-  ['resumen','chileanbanks','accountview','balance','resultados','comparativo','explorador','config'].forEach(t => {
+  ['resumen','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -183,7 +183,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', explorador:'Account Explorer', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -209,7 +209,6 @@ export function showTab(tab) {
   if (tab === 'resumen' && ST._series) {
     requestAnimationFrame(() => window.showResChart(ST._lastResChart || 'activos'));
   }
-  if (tab === 'explorador' && Object.keys(ST.planCuentas).length > 0) window.initExplorer();
   if (tab === 'config')       { window.populateConfig(); window.loadVisitStats(); }
   if (tab === 'chileanbanks') window.renderChileanBanks();
   if (tab === 'accountview')  window.initAccountView();
@@ -398,7 +397,6 @@ export function toggleBarLabels() {
   refreshBarLabelsToggleButtons();
 
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
-  if (ST.exp.selected) window.expSelect(ST.exp.selected);
 }
 
 // ---- Currency ----
@@ -473,7 +471,6 @@ export function refreshMoneyDenominatedUI() {
       recup:    sumRows(ST._c1 || [], '814000000', ST._lastP),
     });
   }
-  if (ST.exp?.selected && typeof window.expSelect === 'function') window.expSelect(ST.exp.selected);
   if (ST._cbData && typeof window.renderCBTable === 'function') window.renderCBTable();
   if (ST._avAccount && document.getElementById('avResultTable') && typeof window.runAccountView === 'function') {
     window.runAccountView();

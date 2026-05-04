@@ -13,7 +13,6 @@ export const ST = {
   data: {},
   planCuentas: {},
   lastPeriodo: null,
-  exp: { hierarchy: null, path: [], selected: null, history: [] },
 
   // UI prefs (set immediately so boot code can reference them)
   theme: 'light',
@@ -27,9 +26,6 @@ export const ST = {
   _avAccount: null,
   _avGroup: '',
   _avTreeExpanded: {},
-
-  // Explorer state
-  _expSubFilter: true,
 };
 
 /** Código país para API y BD (bootstrap /datos): CL | CO */
