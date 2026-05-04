@@ -26,19 +26,33 @@ function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
+/** Overrides por jurisdicción: el mismo `codigo` numérico es otro banco en CL vs CO. */
+function cbRatingsStorageKey() {
+  return datasetIsoCountry() === 'CO' ? 'cbRatings_CO' : 'cbRatings_CL';
+}
+
 export function getCBRatings() {
   const base = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
+  const key = cbRatingsStorageKey();
   try {
-    const stored = JSON.parse(localStorage.getItem('cbRatings') || '{}');
+    let raw = localStorage.getItem(key);
+    if (!raw && datasetIsoCountry() === 'CL') {
+      const legacy = localStorage.getItem('cbRatings');
+      if (legacy) {
+        raw = legacy;
+        localStorage.setItem(key, legacy);
+      }
+    }
+    const stored = JSON.parse(raw || '{}');
     return { ...base, ...stored };
   } catch { return { ...base }; }
 }
 
 export function saveCBRating(code, val) {
   try {
-    const stored = JSON.parse(localStorage.getItem('cbRatings') || '{}');
+    const stored = JSON.parse(localStorage.getItem(cbRatingsStorageKey()) || '{}');
     if (val) stored[code] = val; else delete stored[code];
-    localStorage.setItem('cbRatings', JSON.stringify(stored));
+    localStorage.setItem(cbRatingsStorageKey(), JSON.stringify(stored));
   } catch {}
 }
 

@@ -113,78 +113,79 @@ export const FELLER_RATINGS = {
   66: 'AA',
 };
 
-/** Fitch / BRC — largo plazo escala nacional. codigo_entidad CUIF. */
+/**
+ * Fitch / BRC — escala nacional largo plazo.
+ * Claves = `instituciones.codigo` del bootstrap CO (mismo codigo_entidad CUIF / Socrata).
+ */
 export const BANK_RATINGS_CO = Object.freeze({
   10_001: 'AAA', // Grupo Aval (sintético cliente)
-  1: 'AAA',     // Banco Popular
-  2: 'AAA',     // Banco de Bogotá
-  6: 'AAA',     // Banco Itaú
+  1: 'AAA',     // Banco de Bogotá
+  2: 'AAA',     // Banco Popular
+  6: 'AAA',     // Itaú
   7: 'AAA',     // Bancolombia
   9: 'AAA',     // Citibank
-  12: 'AA+',    // GNB Sudameris (BRC)
+  12: 'AA+',    // GNB Sudameris
   13: 'AAA',    // BBVA Colombia
-  19: 'AAA',    // Scotiabank Colpatria
   23: 'AAA',    // Banco de Occidente
-  32: 'AAA',    // Banco Caja Social BCSC
-  40: 'AAA',    // Banco Agrario (corte CENIT 1040)
-  43: 'AAA',    // Banco Agrario (CUIF habitual app)
-  46: 'AA',     // Banco Unión (antes Giros y Finanzas)
-  48: 'A+',     // Banco Contactar
+  30: 'AAA',    // Banco Caja Social
+  39: 'AAA',    // Banco Davivienda
+  42: 'AAA',    // Scotiabank Colpatria
+  43: 'AAA',    // Banco Agrario
   49: 'AAA',    // AV Villas
-  51: 'AAA',   // Davivienda; perspectiva negativa → META
+  51: 'AAA',    // Bancien
+  52: 'AA-',    // Bancamía
   53: 'AA',     // Banco W
-  54: 'AAA',    // Bancien
+  54: 'AA-',    // Coomeva
   55: 'AA+',    // Finandina
   56: 'AAA',    // Falabella
   57: 'A-',     // Pichincha
   58: 'AA',     // Coopcentral
-  59: 'AA-',   // Bancamía
+  59: 'AAA',    // Banco Santander
   60: 'AA+',    // Mundo Mujer
-  61: 'AA-',    // Bancoomeva / Coomeva
-  64: 'AAA',    // J.P. Morgan (CUIF habitual en app)
-  71: 'AAA',    // J.P. Morgan (CENIT 1071 → codigo_entidad en algunos cortes)
-  65: 'AAA',   // Banco Santander de Negocios
+  62: 'AAA',    // Mi Banco
+  63: 'AA',     // Serfinanza
+  64: 'AAA',    // J.P. Morgan
+  65: 'A+',     // Lulo Bank
   66: 'AAA',    // BTG Pactual Colombia
-  67: 'AAA',   // Mibanco / Mi Banco
-  69: 'AA',     // Serfinanza
-  70: 'A+',     // Lulo Bank
+  67: 'AA',     // Banco Unión
+  68: 'A+',     // Banco Contactar
 });
 
 /**
  * Perspectiva, calificadora y síntesis analítica (solo CO). Tooltip en Banking System y Config.
  */
 export const BANK_RATINGS_CO_META = Object.freeze({
-  51: {
+  39: {
     outlook: 'Negativa',
     agency: 'Fitch / BRC',
     analysis:
       'Mantiene la nota máxima nacional por su sólida posición competitiva, aunque la perspectiva es negativa reflejando el entorno soberano de Colombia.',
   },
-  19: {
+  42: {
     outlook: 'Estable',
     agency: 'Fitch / BRC',
     analysis:
       'Ratificado en la categoría más alta gracias al soporte estratégico de su casa matriz (The Bank of Nova Scotia) y su robusta capacidad de pago.',
   },
-  32: {
+  30: {
     outlook: 'Estable',
     agency: 'BRC Ratings',
     analysis:
       'Por 15 años consecutivos ha mantenido la máxima nota local, destacando su resiliencia y fuerte enfoque en el sector de ahorro popular.',
   },
-  65: {
+  59: {
     outlook: 'Estable',
     agency: 'Fitch Ratings',
     analysis:
       'Fitch afirmó su nota en marzo de 2026. El banco ha mejorado su perfil financiero y calidad de cartera (mora de 3,2%).',
   },
-  67: {
+  62: {
     outlook: 'Estable',
     agency: 'Fitch Ratings',
     analysis:
       'En abril de 2026 recibió su sexta calificación AAA consecutiva. Es considerado de importancia estratégica para el Grupo Credicorp.',
   },
-  59: {
+  52: {
     outlook: 'Estable',
     agency: 'BRC Ratings',
     analysis:
