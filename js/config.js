@@ -150,6 +150,48 @@ export const BANK_RATINGS_CO = Object.freeze({
   70: 'A+',     // Lulo Bank
 });
 
+/**
+ * Perspectiva, calificadora y síntesis analítica (solo CO). Tooltip en Banking System y Config.
+ */
+export const BANK_RATINGS_CO_META = Object.freeze({
+  51: {
+    outlook: 'Negativa',
+    agency: 'Fitch / BRC',
+    analysis:
+      'Mantiene la nota máxima nacional por su sólida posición competitiva, aunque la perspectiva es negativa reflejando el entorno soberano de Colombia.',
+  },
+  19: {
+    outlook: 'Estable',
+    agency: 'Fitch / BRC',
+    analysis:
+      'Ratificado en la categoría más alta gracias al soporte estratégico de su casa matriz (The Bank of Nova Scotia) y su robusta capacidad de pago.',
+  },
+  32: {
+    outlook: 'Estable',
+    agency: 'BRC Ratings',
+    analysis:
+      'Por 15 años consecutivos ha mantenido la máxima nota local, destacando su resiliencia y fuerte enfoque en el sector de ahorro popular.',
+  },
+  65: {
+    outlook: 'Estable',
+    agency: 'Fitch Ratings',
+    analysis:
+      'Fitch afirmó su nota en marzo de 2026. El banco ha mejorado su perfil financiero y calidad de cartera (mora de 3,2%).',
+  },
+  67: {
+    outlook: 'Estable',
+    agency: 'Fitch Ratings',
+    analysis:
+      'En abril de 2026 recibió su sexta calificación AAA consecutiva. Es considerado de importancia estratégica para el Grupo Credicorp.',
+  },
+  59: {
+    outlook: 'Estable',
+    agency: 'BRC Ratings',
+    analysis:
+      'Subió su calificación a inicios de 2026. Es un grado de inversión muy alto, reflejando una excelente gestión en el nicho de microfinanzas.',
+  },
+});
+
 export const RATING_COLORS = {
   'AAA': '#059669', 'AA+': '#10b981', 'AA': '#34d399', 'AA-': '#6ee7b7',
   'A+': '#f59e0b', 'A': '#fbbf24', 'A-': '#fcd34d',

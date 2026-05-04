@@ -17,10 +17,14 @@ function wireCbExportButton() {
   const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System' : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, RATING_COLORS } from '../config.js?v=bmon14';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon14';
 import { CO_CUIF } from '../coCuentas.js?v=bmon14';
 import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon14';
 import { apiDatos } from '../api.js?v=bmon14';
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
 
 export function getCBRatings() {
   const base = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
@@ -177,6 +181,14 @@ export function renderCBTable() {
       ? 'background:rgba(37,99,235,0.08);border-left:3px solid #2563eb;'
       : 'border-left:3px solid transparent;';
     const nameStyle = isBTG ? 'font-weight:700;color:#2563eb;' : 'font-weight:500;color:var(--text);';
+    const metaCo = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[b.code] : null;
+    const tip = metaCo
+      ? `Perspectiva: ${metaCo.outlook}. ${metaCo.agency}. ${metaCo.analysis}`
+      : '';
+    const tipAttr = tip ? ` title="${escapeAttr(tip)}"` : '';
+    const negSup = metaCo?.outlook === 'Negativa'
+      ? `<span style="color:var(--red);font-size:10px;vertical-align:super;margin-left:1px;" title="Perspectiva negativa">−</span>`
+      : '';
     html += `<tr style="${rowStyle}transition:background 0.1s;cursor:pointer;"
       onclick="loadBankFromTable(${b.code})"
       onmouseover="this.style.background='${isBTG ? 'rgba(37,99,235,0.14)' : 'rgba(56,189,248,0.06)'}'"
@@ -186,7 +198,7 @@ export function renderCBTable() {
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
       <td class="cb-col-rating" style="text-align:center;">
-        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};">${rating}</span>
+        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}${negSup}</span>
       </td>
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>
@@ -229,10 +241,11 @@ export function renderRatingsEditor() {
   const defaultMap = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
 
   const ratingColHdr = datasetIsoCountry() === 'CO' ? 'Rating (Fitch)' : 'Rating (Feller Rate)';
+  const sourceColHdr = datasetIsoCountry() === 'CO' ? 'Calificadora · perspectiva' : 'Source';
   let html = `<table class="tbl"><thead><tr>
     <th>Bank</th>
     <th style="text-align:center;">${ratingColHdr}</th>
-    <th style="text-align:center;">Source</th>
+    <th style="text-align:center;">${sourceColHdr}</th>
   </tr></thead><tbody>`;
 
   banks.forEach(code => {
@@ -240,9 +253,13 @@ export function renderRatingsEditor() {
     const rating    = stored[code] || '—';
     const isDefault = defaultMap[code] !== undefined;
     const rColor    = RATING_COLORS[rating] || 'var(--text3)';
-    const sourceLbl = isDefault
-      ? (datasetIsoCountry() === 'CO' ? 'Fitch Ratings' : 'Feller Rate')
-      : '✏️ Manual';
+    const meta      = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[code] : null;
+    const sourceLbl = !isDefault
+      ? '✏️ Manual'
+      : meta
+        ? `${meta.agency} · ${meta.outlook}`
+        : (datasetIsoCountry() === 'CO' ? 'Referencia CO' : 'Feller Rate');
+    const sourceTip = meta ? escapeAttr(meta.analysis) : '';
     html += `<tr>
       <td style="font-weight:500;">${name}</td>
       <td style="text-align:center;">
@@ -253,7 +270,7 @@ export function renderRatingsEditor() {
           ${RATING_OPTIONS.map(r => `<option value="${r}" ${r === rating ? 'selected' : ''}>${r}</option>`).join('')}
         </select>
       </td>
-      <td style="text-align:center;font-size:11px;color:var(--text3);">${sourceLbl}</td>
+      <td style="text-align:center;font-size:11px;color:var(--text3);" ${sourceTip ? `title="${sourceTip}"` : ''}>${sourceLbl}</td>
     </tr>`;
   });
   html += '</tbody></table>';
