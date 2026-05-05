@@ -56,6 +56,12 @@ pip install -r requirements.txt
 
 4. El script sube todo a CockroachDB automáticamente
 
+**¿Doble clic y “no pasa nada”?** El diálogo para elegir el ZIP a veces abre **detrás** del navegador u otras apps (revisa la barra de tareas). Además, al ejecutar desde el Explorador a veces **`python`** no está en el PATH; el `.bat` probado antes **`py -3`**. Como alternativa, en esta carpeta:
+
+```
+py -3 cargar_zip.py "C:\ruta\completa\al_archivo.zip"
+```
+
 ---
 
 ## Colombia — CUIF (Superfinanciera · datos.gov.co)

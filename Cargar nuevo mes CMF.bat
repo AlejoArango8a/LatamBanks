@@ -1,72 +1,103 @@
 @echo off
+setlocal EnableDelayedExpansion
+title Carga CMF — Latam Banks
 chcp 65001 >nul
 cd /d "%~dp0"
 
 echo.
-echo  ╔══════════════════════════════════════════════╗
-echo  ║      ALM BTG — Carga de datos CMF            ║
-echo  ╚══════════════════════════════════════════════╝
+echo  ============================================================
+echo    ALM BTG — Carga de datos CMF (Chile)
+echo  ============================================================
 echo.
 
-:: ── Verificar que Python está instalado ─────────────────────────────────────
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo  ERROR: Python no está instalado o no está en el PATH.
-    echo  Descárgalo desde https://www.python.org
-    echo.
-    pause
-    exit /b 1
+:: --- Python: en Windows, al abrir un .bat desde el Explorador a veces no
+::     esta "python" en el PATH; el launcher "py -3" suele funcionar igual.
+set "PY_CMD="
+where py >nul 2>&1
+if not errorlevel 1 (
+  py -3 --version >nul 2>&1
+  if not errorlevel 1 set "PY_CMD=py -3"
 )
+if not defined PY_CMD (
+  where python >nul 2>&1
+  if not errorlevel 1 (
+    python --version >nul 2>&1
+    if not errorlevel 1 set "PY_CMD=python"
+  )
+)
+if not defined PY_CMD (
+  echo  ERROR: No se encontro Python ^(ni "py -3" ni "python"^).
+  echo  Instala Python desde https://www.python.org
+  echo  y marca "Add python.exe to PATH", o usa "py launcher".
+  echo.
+  pause
+  exit /b 1
+)
+echo  Usando: !PY_CMD!
+echo.
 
-:: ── Verificar que existe el archivo .env con credenciales ───────────────────
 if not exist ".env" (
-    echo  ERROR: No se encontró el archivo .env con las credenciales.
-    echo.
-    echo  Pasos para crearlo:
-    echo    1. Busca el archivo ".env.example" en esta carpeta
-    echo    2. Duplicalo y renombralo a ".env"
-    echo    3. Abrelo con el Bloc de notas y pega tu COCKROACH_URL
-    echo.
-    pause
-    exit /b 1
+  echo  ERROR: No se encontro el archivo .env con las credenciales.
+  echo.
+  echo  Pasos:
+  echo    1. Busca ".env.example" en esta carpeta
+  echo    2. Copialo y renombralo a ".env"
+  echo    3. Abrelo y pega tu COCKROACH_URL
+  echo.
+  pause
+  exit /b 1
 )
 
-:: ── Abrir selector de archivo ZIP ───────────────────────────────────────────
-echo  Selecciona el archivo ZIP descargado desde la CMF...
+echo  Se abrira el selector de archivos para el ZIP de la CMF.
+echo  Si no ves ninguna ventana, revisa la barra de tareas:
+echo  a veces el dialogo queda DETRAS de otras ventanas.
 echo.
 
-for /f "usebackq delims=" %%F in (`powershell -noprofile -command ^
-    "Add-Type -AssemblyName System.Windows.Forms; ^
-     $d = New-Object System.Windows.Forms.OpenFileDialog; ^
-     $d.Title = 'Selecciona el ZIP de la CMF'; ^
-     $d.Filter = 'Archivos ZIP|*.zip'; ^
-     $d.InitialDirectory = [Environment]::GetFolderPath('UserProfile') + '\Downloads'; ^
-     if ($d.ShowDialog() -eq 'OK') { $d.FileName } else { 'CANCELADO' }"`) do set "ZIP_PATH=%%F"
+set "ZIP_PATH="
+for /f "usebackq delims=" %%F in (`powershell -noprofile -sta -command "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Selecciona el ZIP de la CMF'; $d.Filter = 'Archivos ZIP|*.zip'; $d.InitialDirectory = [Environment]::GetFolderPath('UserProfile') + '\\Downloads'; if ($d.ShowDialog() -eq 'OK') { $d.FileName } else { 'CANCELADO' }"`) do set "ZIP_PATH=%%F"
 
-if "%ZIP_PATH%"=="CANCELADO" (
-    echo  Operación cancelada.
-    echo.
-    pause
-    exit /b 0
+if "!ZIP_PATH!"=="" (
+  echo  ERROR: No se obtuvo ninguna ruta del archivo ^(dialogo vacio o fallo de PowerShell^).
+  echo  Alternativa: abre CMD en esta carpeta y ejecuta:
+  echo    !PY_CMD! cargar_zip.py "C:\\ruta\\completa\\archivo.zip"
+  echo.
+  pause
+  exit /b 1
 )
 
-echo  Archivo seleccionado: %ZIP_PATH%
+if /i "!ZIP_PATH!"=="CANCELADO" (
+  echo  Operacion cancelada.
+  echo.
+  pause
+  exit /b 0
+)
+
+if not exist "!ZIP_PATH!" (
+  echo  ERROR: El archivo no existe:
+  echo    !ZIP_PATH!
+  echo.
+  pause
+  exit /b 1
+)
+
+echo  Archivo seleccionado:
+echo    !ZIP_PATH!
 echo.
-echo  ─────────────────────────────────────────────────
+echo  --------------------------------------------------------
 echo  Iniciando carga en CockroachDB...
-echo  ─────────────────────────────────────────────────
+echo  --------------------------------------------------------
 echo.
 
-:: ── Ejecutar el script de carga ─────────────────────────────────────────────
-python cargar_zip.py "%ZIP_PATH%"
+!PY_CMD! cargar_zip.py "!ZIP_PATH!"
 
 echo.
-echo  ─────────────────────────────────────────────────
+echo  --------------------------------------------------------
 if errorlevel 1 (
-    echo  Hubo un error durante la carga. Revisa los mensajes arriba.
+  echo  Hubo un error durante la carga. Revisa los mensajes arriba.
 ) else (
-    echo  Carga completada exitosamente.
+  echo  Carga completada correctamente ^(salida sin error^).
 )
-echo  ─────────────────────────────────────────────────
+echo  --------------------------------------------------------
 echo.
 pause
+endlocal
