@@ -3,6 +3,14 @@ const cors    = require('cors');
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// Registro único de países (fuente de verdad compartida con el frontend y los loaders).
+const REGISTRY = require('../paises.json');
+// ISO de países en producción (los únicos que la API sirve hoy).
+const LIVE_ISOS = new Set(
+  Object.values(REGISTRY.paises).filter((p) => p.status === 'live').map((p) => p.iso),
+);
+const DEFAULT_ISO = REGISTRY.paises[REGISTRY.default].iso;
+
 const app = express();
 
 // Body parser — handle both Vercel pre-parsed and raw stream bodies
@@ -55,10 +63,13 @@ const pool = new Pool({
 
 pool.on('error', (err) => console.error('DB pool error:', err));
 
-/** CL = CMF Chile, CO = CUIF Colombia (columna country en tablas maestras). */
+/**
+ * Normaliza el país recibido al ISO de un país en producción (ver paises.json).
+ * Cualquier valor desconocido cae al país por defecto (hoy CL), igual que antes.
+ */
 function resolveDatasetCountry(input) {
-  const s = String(input ?? 'CL').toUpperCase().trim();
-  return s === 'CO' ? 'CO' : 'CL';
+  const s = String(input ?? DEFAULT_ISO).toUpperCase().trim();
+  return LIVE_ISOS.has(s) ? s : DEFAULT_ISO;
 }
 
 // Helper: ejecuta una query y devuelve las filas

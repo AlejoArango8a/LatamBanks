@@ -1,6 +1,8 @@
 // ============================================================
 // STATE — single source of truth for mutable app state
 // ============================================================
+import { paisIso, paisCurrency } from './paises.js?v=bmon16';
+
 export const ST = {
   /** Active dataset jurisdiction (bootstrap sets Chile; clears cache when switching live backends). */
   country: 'chile',
@@ -28,21 +30,17 @@ export const ST = {
   _avTreeExpanded: {},
 };
 
-/** Código país para API y BD (bootstrap /datos): CL | CO */
+/** Código país para API y BD (bootstrap /datos): CL | CO … (según paises.json) */
 export function datasetIsoCountry() {
-  return ST.country === 'colombia' ? 'CO' : 'CL';
+  return paisIso(ST.country);
 }
 
 /**
- * ISO 4217 label for the local-currency side of the topbar toggle (per active dashboard).
- * Chile → CLP, Colombia → COP; extend when more jurisdictions go live.
+ * ISO 4217 de la moneda local del dashboard activo (para el toggle de la barra).
+ * Se toma del registro de países (paises.json).
  */
 export function reportingLocalCurrencyISO() {
-  if (ST.country === 'colombia') return 'COP';
-  if (ST.country === 'chile') return 'CLP';
-  if (ST.country === 'peru') return 'PEN';
-  if (ST.country === 'uruguay') return 'UYU';
-  return 'Local';
+  return paisCurrency(ST.country);
 }
 
 // Chart instances (canvas Chart.js objects if needed in future)

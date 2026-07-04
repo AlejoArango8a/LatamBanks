@@ -1,21 +1,22 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon15';
-import { ST, datasetIsoCountry } from './state.js?v=bmon15';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon15';
-import { fetchWithTimeout } from './api.js?v=bmon15';
+import { API_BASE } from './config.js?v=bmon16';
+import { ST, datasetIsoCountry } from './state.js?v=bmon16';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon16';
+import { fetchWithTimeout } from './api.js?v=bmon16';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon16';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon15';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon16';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon15';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon15';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon15';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon15';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon15';
+} from './views/balance.js?v=bmon16';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon16';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon16';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon16';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon16';
 
 // UI
 import {
@@ -27,11 +28,11 @@ import {
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
-} from './ui.js?v=bmon15';
+} from './ui.js?v=bmon16';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon15';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon15';
+import { exportTableById, exportChartTable } from './export.js?v=bmon16';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon16';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -79,10 +80,10 @@ function applyCountryFromUrl() {
     const raw = new URLSearchParams(location.search).get('country');
     const z = String(raw || '').trim().toLowerCase();
     if (!z) return;
-    if (['colombia', 'co'].includes(z)) ST.country = 'colombia';
-    else if (['chile', 'cl'].includes(z)) ST.country = 'chile';
+    const key = resolveCountryKey(z);
+    if (key && pais(key).status === 'live') ST.country = key;
     const overlay = document.getElementById('countryOverlay');
-    if (overlay && (ST.country === 'chile' || ST.country === 'colombia'))
+    if (overlay && pais(ST.country).status === 'live')
       overlay.style.display = 'none';
     syncCountryFlagsVisual(ST.country);
   } catch (_) { /* noop */ }
@@ -161,6 +162,7 @@ async function init() {
   try {
     setStatus('loading', 'Connecting...');
     setLsMsg('Connecting to server...');
+    await loadPaises();          // registro único de países (respaldo interno si falla)
     applyCountryFromUrl();
     syncCurrencyToggleUI();
     syncResumenMoraChartButton();

@@ -1,15 +1,15 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon15';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon15';
-import { bankColor } from '../config.js?v=bmon15';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon15';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon15';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon15';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon15';
-import { setStatus, showErr } from '../utils.js?v=bmon15';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon15';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon16';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon16';
+import { bankColor } from '../config.js?v=bmon16';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon16';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon16';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon16';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon16';
+import { setStatus, showErr } from '../utils.js?v=bmon16';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon16';
 
 function escHtml(s) {
   return String(s)

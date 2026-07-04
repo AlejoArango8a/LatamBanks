@@ -1,8 +1,9 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon15';
-import { periodLabel } from './format.js?v=bmon15';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon16';
+import { periodLabel } from './format.js?v=bmon16';
+import { paisLocale } from './paises.js?v=bmon16';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;
@@ -60,7 +61,7 @@ export function addMetaSheet(wb) {
   const today      = new Date();
   const todayStr   = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
   const localIso = reportingLocalCurrencyISO();
-  const rateLocale = ST.country === 'colombia' ? 'es-CO' : 'es-CL';
+  const rateLocale = paisLocale(ST.country);
   const currencyMeta = ST.currency === 'USD' && ST.usdRate
     ? `USD (1 USD ≈ $${Math.round(ST.usdRate).toLocaleString(rateLocale)} ${localIso})`
     : `${localIso} (MM$, as reported)`;

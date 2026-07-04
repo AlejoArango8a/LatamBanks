@@ -1,14 +1,11 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon15';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon16';
+import { paisSystemName } from '../paises.js?v=bmon16';
 
 function bankingSystemPanelTitle() {
-  if (ST.country === 'colombia') return 'Colombian Banking System';
-  if (ST.country === 'chile') return 'Chilean Banking System';
-  if (ST.country === 'peru') return 'Peruvian Banking System';
-  if (ST.country === 'uruguay') return 'Uruguayan Banking System';
-  return 'Banking System';
+  return paisSystemName(ST.country);
 }
 
 function wireCbExportButton() {
@@ -17,10 +14,10 @@ function wireCbExportButton() {
   const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System' : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon15';
-import { CO_CUIF } from '../coCuentas.js?v=bmon15';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon15';
-import { apiDatos } from '../api.js?v=bmon15';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon16';
+import { CO_CUIF } from '../coCuentas.js?v=bmon16';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon16';
+import { apiDatos } from '../api.js?v=bmon16';
 
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
