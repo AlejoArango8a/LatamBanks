@@ -1,7 +1,7 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon14';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon15';
 
 function bankingSystemPanelTitle() {
   if (ST.country === 'colombia') return 'Colombian Banking System';
@@ -17,10 +17,10 @@ function wireCbExportButton() {
   const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System' : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon14';
-import { CO_CUIF } from '../coCuentas.js?v=bmon14';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon14';
-import { apiDatos } from '../api.js?v=bmon14';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon15';
+import { CO_CUIF } from '../coCuentas.js?v=bmon15';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon15';
+import { apiDatos } from '../api.js?v=bmon15';
 
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');

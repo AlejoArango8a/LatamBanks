@@ -1,0 +1,22 @@
+-- =============================================================================
+-- 004 — Tarea A: detección de cambios de esquema
+-- =============================================================================
+-- Cambio ADITIVO y retrocompatible. No modifica datos existentes de Chile (CL)
+-- ni Colombia (CO), ni cambia claves primarias.
+--
+-- Qué hace:
+--   Agrega la columna `detalle` (JSONB) a carga_log para guardar el reporte de
+--   anomalías de esquema que detecten los loaders (cuentas nuevas o cuentas
+--   principales que desaparecen/cambian de número).
+--
+-- Nota: `carga_log.estado` ya es TEXT, así que puede tomar el valor
+--   'alerta_esquema' (además de 'ok') sin ningún cambio de tipo.
+--
+-- Cómo aplicar (una sola vez) en CockroachDB:
+--   - Consola SQL de CockroachDB Cloud: pega y ejecuta el ALTER de abajo, o
+--   - cockroach sql: \i migrations/004_carga_log_add_detalle.sql
+--
+-- Es idempotente: si ya se aplicó, IF NOT EXISTS evita error al re-ejecutar.
+-- =============================================================================
+
+ALTER TABLE carga_log ADD COLUMN IF NOT EXISTS detalle JSONB;

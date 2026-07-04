@@ -37,6 +37,8 @@ from dotenv import load_dotenv
 import psycopg2
 import psycopg2.extras
 
+from schema_guard import detect_schema_changes, get_known_accounts, record_schema_result
+
 load_dotenv(Path(__file__).parent / ".env")
 
 COCKROACH_URL = os.environ.get("COCKROACH_URL", "")
@@ -227,6 +229,22 @@ def bump_carga_log(conn, counts_by_periodo: dict[str, int]):
     conn.commit()
 
 
+def accounts_by_periodo(tuples: list[tuple]) -> dict[str, set]:
+    """{periodo: set(cuentas)} a partir de las tuplas listas para insertar."""
+    out: defaultdict[str, set] = defaultdict(set)
+    for t in tuples:
+        out[t[1]].add(t[4])
+    return out
+
+
+def run_schema_guard(conn, tuples, periodos, known_accounts):
+    """Vigía de esquema (Tarea A) por período. Llamar DESPUÉS de bump_carga_log."""
+    by_p = accounts_by_periodo(tuples)
+    for p in sorted(periodos):
+        report = detect_schema_changes(COUNTRY, p, by_p.get(p, set()), known_accounts)
+        record_schema_result(conn, COUNTRY, p, report)
+
+
 def fetch_window_rows(where_extra: str) -> list[dict]:
     where = BASE_SOQL_WHERE + " AND " + where_extra
     collected: list[dict] = []
@@ -264,6 +282,7 @@ def get_loaded(conn) -> set[str]:
 def run_historical(conn, years: tuple[int, int] | None = None):
     start_year = years[0] if years else 2022
     end_year = years[1] if years else date.today().year
+    known_accounts = get_known_accounts(conn, COUNTRY)  # línea base = último período ya cargado (antes de insertar)
     upsert_institutions(conn)
     upsert_plan_cuentas(conn)
     for yr in range(start_year, end_year + 1):
@@ -287,6 +306,7 @@ def run_historical(conn, years: tuple[int, int] | None = None):
             log.warning("Filas omitidas (error parseo): %s", len(skipped))
         ingest_tuple_batch(conn, tuples)
         bump_carga_log(conn, dict(counts))
+        run_schema_guard(conn, tuples, counts.keys(), known_accounts)
         log.info("Año %s — %s filas, %s períodos distintos", yr, len(tuples), len(counts))
 
 
@@ -299,6 +319,7 @@ def run_incremental(conn):
     loaded = get_loaded(conn)
     max_loaded = max(loaded, default="")
 
+    known_accounts = get_known_accounts(conn, COUNTRY)  # línea base = último período ya cargado (antes de insertar)
     upsert_institutions(conn)
     upsert_plan_cuentas(conn)
 
@@ -339,6 +360,7 @@ def run_incremental(conn):
     ingest_tuple_batch(conn, tuples)
     new_counts = {p: c for p, c in counts.items() if (not max_loaded or p > max_loaded)}
     bump_carga_log(conn, new_counts)
+    run_schema_guard(conn, tuples, new_counts.keys(), known_accounts)
     log.info(
         "Incremental CO — filas %s, períodos tocados %s, nuevos en carga_log %s",
         len(tuples),

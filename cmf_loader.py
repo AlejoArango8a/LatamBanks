@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 import psycopg2
 import psycopg2.extras
 
+from schema_guard import detect_schema_changes, get_known_accounts, record_schema_result
+
 # Carga automáticamente el archivo .env si existe en la raíz del proyecto
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -138,6 +140,8 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
 
     cur = conn.cursor()
 
+    known_accounts = get_known_accounts(conn, 'CL')  # línea base = último período ya cargado (antes de insertar)
+
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         names = zf.namelist()
 
@@ -242,6 +246,10 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
             ('CL', periodo, file_count, "ok"),
         )
         conn.commit()
+
+        incoming_accounts = {t[4] for t in all_tuples}
+        report = detect_schema_changes('CL', periodo, incoming_accounts, known_accounts)
+        record_schema_result(conn, 'CL', periodo, report)
 
         log.info(f"  ✓ Período {periodo} completado — {file_count} archivos, {len(all_tuples)} filas")
         return file_count

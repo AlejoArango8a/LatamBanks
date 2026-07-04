@@ -1,11 +1,11 @@
 // ============================================================
 // CONFIG TAB — settings panel, visit counter, period/bank info
 // ============================================================
-import { ST } from '../state.js?v=bmon14';
-import { API_BASE } from '../config.js?v=bmon14';
-import { MESES } from '../config.js?v=bmon14';
-import { bankName, periodLabel } from '../format.js?v=bmon14';
-import { fetchWithTimeout } from '../api.js?v=bmon14';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon15';
+import { API_BASE } from '../config.js?v=bmon15';
+import { MESES } from '../config.js?v=bmon15';
+import { bankName, periodLabel } from '../format.js?v=bmon15';
+import { fetchWithTimeout } from '../api.js?v=bmon15';
 
 export function populateConfig() {
   const statusEl = document.getElementById('configStatus');
@@ -38,6 +38,59 @@ export function populateConfig() {
       .filter(([c]) => parseInt(c) !== 999)
       .map(([c]) => `<span style="color:var(--text)">${String(c).padStart(3, '0')}</span> ${bankName(parseInt(c))}`)
       .join(' &nbsp;·&nbsp; ');
+  }
+
+  loadSchemaAlerts();
+}
+
+// ============================================================
+// Tarea A — Alertas de cambio de estructura (por mes) del país activo
+// ============================================================
+export async function loadSchemaAlerts() {
+  const el = document.getElementById('schemaAlerts');
+  if (!el) return;
+  try {
+    const country = datasetIsoCountry();
+    const r = await fetchWithTimeout(`${API_BASE}/api/schema-alerts?country=${country}`, {}, 8000);
+    if (!r.ok) throw new Error(`status ${r.status}`);
+    const j = await r.json();
+
+    const alerts = (j.ok && Array.isArray(j.alerts))
+      ? j.alerts.filter(a => a.estado === 'alerta_esquema')
+      : [];
+
+    if (!alerts.length) {
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);">
+        <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+        No structural changes detected.</div>`;
+      return;
+    }
+
+    el.innerHTML = alerts.map(a => {
+      const d = a.detalle || {};
+      const faltantes = Array.isArray(d.criticas_faltantes) ? d.criticas_faltantes : [];
+      const nn = d.n_nuevas ?? 0;
+      const nd = d.n_desaparecidas ?? 0;
+
+      const criticalLine = faltantes.length
+        ? `<div style="color:#f87171;font-size:12px;margin-top:6px;">Missing key accounts:
+             <span style="font-family:var(--mono);">${faltantes.join(', ')}</span></div>`
+        : '';
+
+      return `<div style="border:1px solid var(--border);border-left:3px solid #f59e0b;border-radius:6px;padding:12px;margin-bottom:10px;background:var(--bg2);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#0b0b0b;background:#f59e0b;border-radius:4px;padding:2px 6px;">ALERT</span>
+          <span style="font-weight:600;color:var(--white);">${periodLabel(a.periodo)}</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.periodo}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text);margin-top:8px;line-height:1.5;">${d.resumen || 'Structural change detected.'}</div>
+        ${criticalLine}
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">New accounts: ${nn} &nbsp;·&nbsp; Disappeared: ${nd}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text3);">Could not load alerts: ${e.message}</div>`;
+    console.warn('loadSchemaAlerts:', e.message);
   }
 }
 

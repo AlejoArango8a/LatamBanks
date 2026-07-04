@@ -1207,6 +1207,19 @@ body.light .kpi-custom-badge {
               </div>
             </div>
 
+            <!-- Data structure alerts (Tarea A) -->
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Data Structure Alerts</div></div>
+              <div class="panel-body">
+                <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5;">
+                  Automatic checks flag months where key accounts disappeared or the account structure changed significantly. Data is always loaded; the months below are just worth reviewing.
+                </div>
+                <div id="schemaAlerts">
+                  <div style="font-size:12px;color:var(--text3);">Loading…</div>
+                </div>
+              </div>
+            </div>
+
             <!-- Visit counter -->
             <div class="panel">
               <div class="panel-head"><div class="panel-title">Usage Statistics</div></div>
@@ -1241,7 +1254,7 @@ body.light .kpi-custom-badge {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon14"></script>
+<script type="module" src="js/app.js?v=bmon15"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

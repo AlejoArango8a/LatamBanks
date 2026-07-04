@@ -1,21 +1,21 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon14';
-import { ST, datasetIsoCountry } from './state.js?v=bmon14';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon14';
-import { fetchWithTimeout } from './api.js?v=bmon14';
+import { API_BASE } from './config.js?v=bmon15';
+import { ST, datasetIsoCountry } from './state.js?v=bmon15';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon15';
+import { fetchWithTimeout } from './api.js?v=bmon15';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon14';
+import { run, refreshKPIs, showResChart, showROEChart } from './views/resumen.js?v=bmon15';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon14';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon14';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon14';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon14';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon14';
+} from './views/balance.js?v=bmon15';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon15';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon15';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon15';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon15';
 
 // UI
 import {
@@ -27,11 +27,11 @@ import {
   setFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
-} from './ui.js?v=bmon14';
+} from './ui.js?v=bmon15';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon14';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon14';
+import { exportTableById, exportChartTable } from './export.js?v=bmon15';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon15';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];

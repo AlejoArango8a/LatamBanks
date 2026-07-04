@@ -332,6 +332,28 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/schema-alerts — alertas de cambio de esquema por país
+// Query: ?country=CL|CO. Lee carga_log.detalle (JSON) donde el loader
+// (schema_guard) registró una anomalía. Orden: más reciente primero.
+// ============================================================
+app.get('/api/schema-alerts', async (req, res) => {
+  try {
+    const country = resolveDatasetCountry(req.query.country);
+    const rows = await query(
+      `SELECT periodo, estado, detalle
+       FROM carga_log
+       WHERE country = $1 AND detalle IS NOT NULL
+       ORDER BY periodo DESC`,
+      [country],
+    );
+    res.json({ ok: true, country, alerts: rows });
+  } catch (e) {
+    console.error('/api/schema-alerts error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // GEO (server-side) — evita CORS del navegador a ipapi.co
 // ============================================================
 app.get('/api/geo', async (req, res) => {
