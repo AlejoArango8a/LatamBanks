@@ -14,13 +14,13 @@ app.use(express.urlencoded({ extended: false }));
 
 // ============================================================
 // CORS — cerrado por defecto; abre solo los orígenes en FRONTEND_URLS.
-// Para debug puntual en Render: CORS_OPEN=1 (nunca dejar en producción).
+// Para pruebas locales: CORS_OPEN=1 (nunca dejar activo en producción).
 // ============================================================
 const useOpenCors = (process.env.CORS_OPEN || '0') !== '0';
 if (useOpenCors) {
   app.use(cors({ origin: true, maxAge: 3600 }));
 } else {
-  const DEFAULT_FRONTEND = 'https://alejoarango8a.github.io,https://latambanks.vercel.app,https://latam-banks.vercel.app';
+  const DEFAULT_FRONTEND = 'https://latambanks.vercel.app,https://latam-banks.vercel.app';
   const origins = (process.env.FRONTEND_URLS || DEFAULT_FRONTEND)
     .split(',')
     .map((s) => s.trim())
@@ -443,7 +443,7 @@ app.use((err, req, res, next) => {
 });
 
 // ============================================================
-// START — solo cuando se ejecuta directamente (local/Render)
+// START — solo cuando se ejecuta directamente (local)
 // En Vercel, el módulo se importa desde api/index.js y no escucha
 // ============================================================
 if (require.main === module) {

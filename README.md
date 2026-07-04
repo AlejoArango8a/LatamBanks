@@ -20,11 +20,11 @@ migrations/                 SQL multi-país: ver `001_country_multijurisdiction.
 .env                        Tus credenciales (no se sube a GitHub)
 .env.example                Plantilla para crear el .env
 requirements.txt            Dependencias Python
-backend/                    API Express (Node.js) desplegada en Render
+backend/                    API Express (Node.js), desplegada en Vercel como serverless (api/index.js)
 assets/                     Logos e imágenes del dashboard
 ```
 
-El frontend modular cachea bundles con una query **`?v=bmon…`** en los `<script type="module">` y en imports entre módulos: al desplegar en Vercel/GitHub Pages, sube la versión si cambió el código para evitar rutas viejas guardadas por el navegador.
+El frontend modular cachea bundles con una query **`?v=bmon…`** en los `<script type="module">` y en imports entre módulos: al desplegar en Vercel, sube la versión si cambió el código para evitar rutas viejas guardadas por el navegador.
 
 ---
 
@@ -78,7 +78,7 @@ py -3 cargar_zip.py "C:\ruta\completa\al_archivo.zip"
 
 3. Opcional — **GitHub Actions** mes a mes: archivo  
    `.github/workflows/colombia-cuif-monthly.yml`. Configura el secret **`COCKROACH_URL`** en el repositorio.
-4. Opcional — en Render (backend), variable **`CO_EQUITY_CUENTA`**: cuenta de balance CUIF de 6 dígitos para ranking de patrimonio cuando `country=CO` en `/api/bootstrap`.
+4. Opcional — en Vercel (backend), variable **`CO_EQUITY_CUENTA`**: cuenta de balance CUIF de 6 dígitos para ranking de patrimonio cuando `country=CO` en `/api/bootstrap`.
 
 El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los KPI principales del resumen siguen usando códigos **CMF Chile** hasta definir el mapeo CUIF→vistas.
 
@@ -88,8 +88,8 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 
 | Capa | Tecnología | Hosting |
 |------|-----------|---------|
-| Frontend | `dashboard.html` + ES modules (`js/`) | GitHub Pages / Vercel |
-| Backend | Express / Node.js | Render |
+| Frontend | `dashboard.html` + ES modules (`js/`) | Vercel |
+| Backend | Express / Node.js (serverless `api/index.js`) | Vercel |
 | Base de datos | CockroachDB Serverless | AWS us-east-1 |
 | ETL | Python (`cmf_loader.py`, `colombia_loader.py`) | Local / GitHub Actions |
 

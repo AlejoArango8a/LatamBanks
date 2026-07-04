@@ -13,24 +13,21 @@ API Express que sirve los datos financieros desde CockroachDB al dashboard.
 | `/api/visits` | GET | Total de visitas globales y desglose por país |
 | `/api/visits` | POST | Registra una visita con código y nombre de país |
 
-## Variables de entorno en Render
+## Variables de entorno en Vercel
 
-En el servicio Web → **Environment**:
+En **Project Settings → Environment Variables**:
 
 | Variable | Valor |
 |----------|--------|
 | `COCKROACH_URL` | Connection string de CockroachDB Serverless (formato postgresql://...) |
-| `FRONTEND_URLS` | Orígenes CORS permitidos. Ej: `https://alejoarango8a.github.io` (separados por coma) |
+| `FRONTEND_URLS` | Orígenes CORS permitidos. Ej: `https://latambanks.vercel.app` (separados por coma) |
 | `CO_EQUITY_CUENTA` | (Opcional) Cuenta b1 CUIF Colombia (6 dígitos) para patrimonio en bootstrap; por defecto `300000` |
 
 
 ## Despliegue
 
-El deploy es automático: cada `git push` a `main` dispara un nuevo deploy en Render.
-
-- **Start Command:** `node server.js`
-- **Build Command:** `npm install`
-- **Root Directory:** `backend`
+Desplegado en **Vercel** como función serverless: `api/index.js` importa esta app Express.
+El deploy es automático: cada `git push` a `main` dispara un nuevo deploy en Vercel.
 
 ## Probar local
 

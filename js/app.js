@@ -165,7 +165,7 @@ async function init() {
     syncCurrencyToggleUI();
     syncResumenMoraChartButton();
 
-    // The server may be cold-starting (Render free tier sleeps after inactivity).
+    // The serverless API (Vercel) may be cold-starting on the first request.
     // Show a friendly message after 6 seconds so the user knows it's still working.
     wakeTimer = setTimeout(() => {
       setLsMsg('Server is waking up — this can take up to 60 s on first load...');
