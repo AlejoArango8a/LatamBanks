@@ -512,6 +512,21 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(100, 160, 255, 0.35);
     }
 
+    /* Pantallas amplias (PC): banderas más grandes y con más aire entre ellas */
+    @media (min-width: 1024px) {
+      .flags-row {
+        max-width: min(100%, 760px);
+        gap: clamp(28px, 3vw, 48px);
+      }
+      .flag-btn {
+        width: 92px;
+        height: 92px;
+      }
+      .flag-caption {
+        font-size: 11px;
+      }
+    }
+
     /* Celulares: banderas más chicas; rejilla 4 columnas equidistantes */
     @media (max-width: 520px) {
       .flags-row {
