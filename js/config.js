@@ -1,6 +1,8 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
+import { datasetIsoCountry } from './state.js?v=bmon29';
+
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
 export const API_BASE =
@@ -68,6 +70,8 @@ function brandColorByName(name) {
  */
 export const bankColor = (code, i, name = '') => {
   if (isBtgCode(code)) return btgBlue();
+  const byLogo = logoBrandColor(datasetIsoCountry(), code);
+  if (byLogo) return byLogo;
   if (BANK_COLORS[code]) return BANK_COLORS[code];
   const byBrand = brandColorByName(name);
   if (byBrand) return byBrand;
@@ -181,6 +185,20 @@ const BRAND_TEXT_COLORS = {
   'bnp':           '#00925A',
   'xp':            '#888888',
 };
+
+/**
+ * Concrete brand color (hex) from the bank's logo, or null when there is no
+ * mapped logo, the logo is BTG (theme-aware, handled elsewhere), or the slug
+ * has no color entry. Safe for charts (never returns a CSS var).
+ */
+export function logoBrandColor(iso, code) {
+  const key = iso === 'BR'
+    ? `BR-${String(code).padStart(8, '0')}`
+    : `${iso}-${code}`;
+  const slug = LOGO_SLUGS[key];
+  if (!slug || slug === 'btg') return null;
+  return BRAND_TEXT_COLORS[slug] || null;
+}
 
 /**
  * Returns the brand text color for a bank, or null if BTG
