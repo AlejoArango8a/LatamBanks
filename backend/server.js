@@ -28,7 +28,7 @@ const useOpenCors = (process.env.CORS_OPEN || '0') !== '0';
 if (useOpenCors) {
   app.use(cors({ origin: true, maxAge: 3600 }));
 } else {
-  const DEFAULT_FRONTEND = 'https://latambanks.vercel.app,https://latam-banks.vercel.app';
+  const DEFAULT_FRONTEND = 'https://latambanks.vercel.app,https://latam-banks.vercel.app,https://latambanks.co,https://www.latambanks.co';
   const origins = (process.env.FRONTEND_URLS || DEFAULT_FRONTEND)
     .split(',')
     .map((s) => s.trim())
