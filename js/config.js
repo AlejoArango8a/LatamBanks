@@ -123,13 +123,33 @@ export const LOGO_SLUGS = {
   'BR-58160789': 'safra',
   'BR-01181521': 'sicredi',
   'BR-01522368': 'bnp',
+  'BR-33264668': 'xp',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */
 export function bankLogoUrl(iso, code) {
-  const slug = LOGO_SLUGS[`${iso}-${code}`];
+  // Backend casts codigo::int, so BR codes like '00000000' arrive as 0.
+  // Re-pad to 8 digits so keys match LOGO_SLUGS entries.
+  const key = iso === 'BR'
+    ? `BR-${String(code).padStart(8, '0')}`
+    : `${iso}-${code}`;
+  const slug = LOGO_SLUGS[key];
   return slug ? `assets/logo-${slug}.png` : null;
 }
+
+/**
+ * Per-logo max-height overrides (px). Default is 42px.
+ * Slugs that need a custom size are listed here.
+ */
+export const LOGO_SIZES = {
+  'bradesco':    52,
+  'itau':        52,
+  'hsbc':        54,
+  'consorcio':   52,
+  'ripley':      52,
+  'safra':       68,
+  'jpmorgan':    68,
+};
 
 export const BANK_NAMES = {
   1:   'Banco de Chile',

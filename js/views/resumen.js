@@ -1,39 +1,29 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon24';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon24';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon24';
-import { bankColor, btgBlue, bankLogoUrl } from '../config.js?v=bmon24';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon24';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon24';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon24';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon24';
-import { setStatus, showErr } from '../utils.js?v=bmon24';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon24';
-
-const _FALLBACK_BANK_ICON = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none"
-  stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
-  style="color:var(--text3);">
-  <path d="M3 21h18"/><path d="M3 10h18"/>
-  <path d="M5 6l7-3 7 3"/>
-  <rect x="4"  y="10" width="4" height="11"/>
-  <rect x="10" y="10" width="4" height="11"/>
-  <rect x="16" y="10" width="4" height="11"/>
-</svg>`;
+import { ST, datasetIsoCountry } from '../state.js?v=bmon25';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon25';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon25';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES } from '../config.js?v=bmon25';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon25';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon25';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon25';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon25';
+import { setStatus, showErr } from '../utils.js?v=bmon25';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon25';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
   if (!el) return;
   const url = bankLogoUrl(iso, code);
-  if (url) {
-    el.innerHTML = `<img src="${url}" alt=""
-      style="max-height:42px;max-width:115px;object-fit:contain;"
-      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-      <span style="display:none;align-items:center;">${_FALLBACK_BANK_ICON}</span>`;
-  } else {
-    el.innerHTML = `<span style="display:flex;align-items:center;">${_FALLBACK_BANK_ICON}</span>`;
-  }
+  const fallback = 'assets/logo-generico.png';
+  // Derive slug from URL to look up any size override
+  const slug = url ? url.replace('assets/logo-', '').replace('.png', '') : null;
+  const h = (slug && LOGO_SIZES[slug]) || 42;
+  const w = Math.max(120, h * 3);
+  const imgStyle = `max-height:${h}px;max-width:${w}px;object-fit:contain;`;
+  el.innerHTML = `<img src="${url || fallback}" alt="" style="${imgStyle}"
+    onerror="this.onerror=null;this.src='${fallback}';">`;
 }
 
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
