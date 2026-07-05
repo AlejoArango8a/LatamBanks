@@ -119,26 +119,54 @@ def _norm_set(country: str, accounts) -> set[str]:
 # ============================================================
 # LECTURA DE CUENTAS CONOCIDAS
 # ============================================================
-def get_known_accounts(conn, country: str) -> set[str]:
-    """Cuentas que tuvieron datos en el ÚLTIMO período ya cargado del país.
+def get_known_accounts(
+    conn,
+    country: str,
+    tipos: tuple[str, ...] | None = None,
+    before_periodo: str | None = None,
+) -> set[str]:
+    """Cuentas que tuvieron datos en el período de referencia del país.
 
     Es la línea base para comparar el período entrante (comparación
     período-contra-período, de bajo ruido). Se compara contra lo que realmente
-    tuvo datos el mes anterior, no contra el catálogo completo de plan_cuentas
+    tuvo datos el período anterior, no contra el catálogo completo de plan_cuentas
     (que siempre es mucho más grande que un mes puntual).
+
+    `tipos`: si se pasa, restringe la línea base a esos `tipo` (ej. ('b1','r1')
+    para vigilar SOLO el reporte Resumo de Brasil e ignorar los reportes de
+    detalle Ativo/Passivo/DRE, que tienen muchas más cuentas y dispararían
+    falsas alertas). CL/CO no pasan `tipos` y no se ven afectados.
+
+    `before_periodo`: si se pasa, toma como referencia el último período
+    ESTRICTAMENTE ANTERIOR a ese valor. Importante para el backfill histórico:
+    la base del primer trimestre debe ser el trimestre cronológicamente previo
+    (usualmente inexistente → 'baseline'), no el período más nuevo ya cargado
+    (que provocaría una falsa alerta al comparar viejo Cosif contra el nuevo).
 
     Llamar ANTES de insertar el nuevo período en datos_financieros.
     """
     cur = conn.cursor()
-    cur.execute("SELECT max(periodo) FROM datos_financieros WHERE country = %s", (country,))
+    conds = ["country = %s"]
+    params: list = [country]
+    if tipos:
+        conds.append("tipo = ANY(%s)")
+        params.append(list(tipos))
+    if before_periodo:
+        conds.append("periodo < %s")
+        params.append(before_periodo)
+    where = " AND ".join(conds)
+    cur.execute(f"SELECT max(periodo) FROM datos_financieros WHERE {where}", params)
     row = cur.fetchone()
     last_p = row[0] if row else None
     if not last_p:
         return set()
-    cur.execute(
-        "SELECT DISTINCT cuenta FROM datos_financieros WHERE country = %s AND periodo = %s",
-        (country, last_p),
-    )
+    conds2 = ["country = %s", "periodo = %s"]
+    params2: list = [country, last_p]
+    if tipos:
+        conds2.append("tipo = ANY(%s)")
+        params2.append(list(tipos))
+    where2 = " AND ".join(conds2)
+    cur.execute(f"SELECT DISTINCT cuenta FROM datos_financieros WHERE {where2}", params2)
     return _norm_set(country, (r[0] for r in cur.fetchall()))
 
 

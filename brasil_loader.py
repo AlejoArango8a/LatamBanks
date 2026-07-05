@@ -76,6 +76,23 @@ RELATORIO = "1"
 BATCH_ROWS = 500
 FIRST_YEAR = 2022  # alineado con Chile/Colombia; extensible con --year para años previos
 
+# Reportes IF.data a cargar por trimestre.
+#   ("1", None)      -> Resumo: se etiqueta con el tipo inferido (b1/r1); NO cambia.
+#   detalle          -> cada reporte va con su propio `tipo` para no pisar al Resumo
+#                       (comparten algunos códigos Conta, ej. 78186 = Patrimônio).
+# Los reportes de detalle solo se guardan para bancos operativos (es_banco), para
+# no inflar la base con ~2000 instituciones que no mostramos en detalle.
+REPORTS: list[tuple[str, str | None]] = [
+    ("1", None),        # Resumo  (indicadores principales)
+    ("2", "br_ativo"),  # Ativo   (composición del activo)
+    ("3", "br_pasivo"), # Passivo (composición del pasivo + depósitos)
+    ("4", "br_dre"),    # DRE     (estado de resultados)
+]
+
+# Tipos del Resumo: única fuente que vigila el schema_guard (Tarea A). Los reportes
+# de detalle tienen muchas más cuentas y dispararían falsas alertas si se vigilaran.
+RESUMO_TIPOS = ("b1", "r1")
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -142,12 +159,12 @@ def infer_tipo(nome_coluna: str) -> str:
     return "b1"
 
 
-def row_to_tuple(rec: dict[str, Any]) -> tuple:
+def row_to_tuple(rec: dict[str, Any], tipo_override: str | None = None) -> tuple:
     ins = int(str(rec["CodInst"]).strip())
     periodo = str(rec["AnoMes"]).strip()
     cuenta = str(rec.get("Conta") or "").strip()
     nome = str(rec.get("NomeColuna") or "").strip()
-    tipo = infer_tipo(nome)
+    tipo = tipo_override or infer_tipo(nome)
     saldo = float(rec.get("Saldo") or 0)
     monto = int(round(saldo))
     return (COUNTRY, periodo, tipo, ins, cuenta, 0, 0, 0, 0, monto)
@@ -247,21 +264,6 @@ def bump_carga_log(conn, counts_by_periodo: dict[str, int]) -> None:
     conn.commit()
 
 
-def accounts_by_periodo(tuples: list[tuple]) -> dict[str, set]:
-    out: defaultdict[str, set] = defaultdict(set)
-    for t in tuples:
-        out[t[1]].add(t[4])
-    return out
-
-
-def run_schema_guard(conn, tuples, periodos, known_accounts) -> None:
-    """Vigía de esquema (Tarea A) por período. Llamar DESPUÉS de bump_carga_log."""
-    by_p = accounts_by_periodo(tuples)
-    for p in sorted(periodos):
-        report = detect_schema_changes(COUNTRY, p, by_p.get(p, set()), known_accounts)
-        record_schema_result(conn, COUNTRY, p, report)
-
-
 # ============================================================
 # PERÍODOS (trimestrales)
 # ============================================================
@@ -303,30 +305,49 @@ def _process_quarters(conn, quarters: list[str], known_accounts: set[str]) -> No
     cod_insts: set[str] = set()
     for p in quarters:
         log.info("Trimestre %s ...", p)
-        recs = olinda_get(p)
-        if not recs:
+        all_tuples: list[tuple] = []
+        resumo_accounts: set[str] = set()
+        total_rows = 0
+        for rel, tipo_override in REPORTS:
+            try:
+                recs = olinda_get(p, relatorio=rel)
+            except (HTTPError, URLError) as e:
+                log.warning("  [%s] relatorio %s error de red: %s (se omite)", p, rel, e)
+                continue
+            if not recs:
+                log.info("  [%s] relatorio %s sin datos", p, rel)
+                continue
+            collect_plan(recs, plan)
+            es_resumo = rel == "1"
+            for r in recs:
+                ci = str(r.get("CodInst"))
+                # El Resumo se guarda completo (todas las instituciones); los reportes
+                # de detalle solo para bancos operativos (es_banco).
+                if not es_resumo and not is_bank(ci):
+                    continue
+                try:
+                    t = row_to_tuple(r, tipo_override)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("  fila omitida: %s", e)
+                    continue
+                all_tuples.append(t)
+                total_rows += 1
+                cod_insts.add(ci)
+                if es_resumo:
+                    resumo_accounts.add(t[4])
+        if not all_tuples:
             log.warning("  sin datos para %s (se omite)", p)
             continue
-        collect_plan(recs, plan)
-        tuples = []
-        counts: defaultdict[str, int] = defaultdict(int)
-        for r in recs:
-            try:
-                t = row_to_tuple(r)
-            except Exception as e:  # noqa: BLE001
-                log.warning("  fila omitida: %s", e)
-                continue
-            tuples.append(t)
-            counts[t[1]] += 1
-            cod_insts.add(str(r.get("CodInst")))
-        ingest_tuple_batch(conn, tuples)
-        bump_carga_log(conn, dict(counts))
-        run_schema_guard(conn, tuples, counts.keys(), known_accounts)
-        # La base para el siguiente trimestre es lo que acabamos de cargar.
-        by_p = accounts_by_periodo(tuples)
-        if by_p.get(p):
-            known_accounts = by_p[p]
-        log.info("  %s — %s filas", p, len(tuples))
+        ingest_tuple_batch(conn, all_tuples)
+        bump_carga_log(conn, {p: total_rows})
+        # schema_guard (Tarea A) SOLO sobre el Resumo: comparar el detalle
+        # dispararía falsas alertas por su gran volumen de cuentas.
+        report = detect_schema_changes(COUNTRY, p, resumo_accounts, known_accounts)
+        record_schema_result(conn, COUNTRY, p, report)
+        # La base para el siguiente trimestre es el Resumo que acabamos de cargar.
+        if resumo_accounts:
+            known_accounts = resumo_accounts
+        log.info("  %s — %s filas (Resumo + detalle)", p, total_rows)
     upsert_institutions(conn, cod_insts)
     upsert_plan_cuentas(conn, plan)
 
@@ -334,8 +355,12 @@ def _process_quarters(conn, quarters: list[str], known_accounts: set[str]) -> No
 def run_historical(conn, years: tuple[int, int] | None = None) -> None:
     y0 = years[0] if years else FIRST_YEAR
     y1 = years[1] if years else date.today().year
-    known_accounts = get_known_accounts(conn, COUNTRY)  # línea base antes de insertar
-    _process_quarters(conn, quarters_in_range(y0, y1), known_accounts)
+    quarters = quarters_in_range(y0, y1)
+    first_q = quarters[0] if quarters else None
+    # Base = Resumo del trimestre cronológicamente anterior al primero a cargar
+    # (evita falsas alertas al re-correr el histórico con datos nuevos ya presentes).
+    known_accounts = get_known_accounts(conn, COUNTRY, tipos=RESUMO_TIPOS, before_periodo=first_q)
+    _process_quarters(conn, quarters, known_accounts)
 
 
 def run_incremental(conn) -> None:
@@ -351,7 +376,8 @@ def run_incremental(conn) -> None:
     y0 = int(max_loaded[:4]) if max_loaded else FIRST_YEAR
     y1 = int(latest[:4])
     pending = [q for q in quarters_in_range(y0, y1) if q > max_loaded and q <= latest]
-    known_accounts = get_known_accounts(conn, COUNTRY)
+    first_q = pending[0] if pending else None
+    known_accounts = get_known_accounts(conn, COUNTRY, tipos=RESUMO_TIPOS, before_periodo=first_q)
     _process_quarters(conn, pending, known_accounts)
 
 
