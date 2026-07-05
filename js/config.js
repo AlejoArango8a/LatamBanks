@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon29';
+import { datasetIsoCountry } from './state.js?v=bmon30';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -143,47 +143,51 @@ export function bankLogoUrl(iso, code) {
 }
 
 /**
- * Primary brand colors by logo slug.
- * Used for the bank name text in the top banner.
- * 'btg' is intentionally absent — handled via theme-aware btgBlue().
+ * Primary brand colors by logo slug — sampled directly from the actual PNG
+ * files in assets/ (dominant saturated color). 'btg' is intentionally absent
+ * (handled via theme-aware btgBlue()). Monochrome/black logos (bancolombia,
+ * safra, xp) fall back to a neutral dark; jpmorgan uses its bronze/brown brand.
  */
 const BRAND_TEXT_COLORS = {
   // Chile
-  'bancochile':    '#CC0000',
-  'bancoestado':   '#2E7D32',
-  'scotiabank':    '#DD1534',
-  'bci':           '#E1001A',
-  'bice':          '#004B8D',
-  'hsbc':          '#DB0011',
-  'santander':     '#EC0000',
-  'itau':          '#F75F01',
-  'jpmorgan':      '#1565C0',
-  'falabella':     '#1B998B',
-  'ripley':        '#7C3AED',
-  'consorcio':     '#1565C0',
-  'tanner':        '#E8333B',
-  'internacional': '#005BAC',
+  'bancochile':    '#0A1464',
+  'bancoestado':   '#EC6707',
+  'scotiabank':    '#E82820',
+  'bci':           '#F01028',
+  'bice':          '#003868',
+  'hsbc':          '#F5333B',
+  'santander':     '#F80000',
+  'itau':          '#302080',
+  'jpmorgan':      '#6B4423',
+  'falabella':     '#AEC400',
+  'ripley':        '#582880',
+  'consorcio':     '#102951',
+  'tanner':        '#00A8F0',
+  'internacional': '#0068A0',
   // Colombia
-  'bancolombia':   '#C78B00',
-  'bogota':        '#E8192C',
-  'popular':       '#007A33',
-  'citibank':      '#1A73E8',
-  'bbva':          '#004A97',
-  'occidente':     '#1565C0',
-  'davivienda':    '#D40012',
-  'aval':          '#003DA5',
-  'lulo':          '#00A550',
+  'bancolombia':   '#3A3A3A',
+  'bogota':        '#E81820',
+  'popular':       '#088038',
+  'citibank':      '#002870',
+  'bbva':          '#005098',
+  'occidente':     '#0890D8',
+  'davivienda':    '#F80000',
+  'aval':          '#2058A8',
+  'lulo':          '#AEC400',
   'gnbsudameris':  '#1565C0',
   // Brasil
-  'bradesco':      '#CC092F',
-  'bancodobrasil': '#D4A017',
-  'caixaeconomica':'#EF7D00',
-  'ubs':           '#E60028',
-  'nubank':        '#820AD1',
-  'safra':         '#8B1A1A',
-  'sicredi':       '#007A33',
-  'bnp':           '#00925A',
-  'xp':            '#888888',
+  'bradesco':      '#E81828',
+  'bancodobrasil': '#303088',
+  'caixaeconomica':'#0068B8',
+  'ubs':           '#E00000',
+  'nubank':        '#681878',
+  'safra':         '#3A3A3A',
+  'sicredi':       '#F0A818',
+  'bnp':           '#00A868',
+  'xp':            '#1F1F1F',
+  // Extras present in assets/
+  'barclays':      '#00A8F0',
+  'ing':           '#FF6200',
 };
 
 /**

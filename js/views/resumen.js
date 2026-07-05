@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon29';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon29';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon29';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon29';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon29';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon29';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon29';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon29';
-import { setStatus, showErr } from '../utils.js?v=bmon29';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon29';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon30';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon30';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon30';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon30';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon30';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon30';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon30';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon30';
+import { setStatus, showErr } from '../utils.js?v=bmon30';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon30';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
