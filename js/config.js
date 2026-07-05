@@ -109,6 +109,7 @@ export const LOGO_SLUGS = {
   'CO-64':       'jpmorgan',
   'CO-65':       'lulo',
   'CO-66':       'btg',
+  'CO-10001':    'aval',
   // Brasil (BR) — ISPB (CodInst IF.data)
   'BR-30306294': 'btg',
   'BR-90400888': 'santander',
@@ -142,13 +143,18 @@ export function bankLogoUrl(iso, code) {
  * Slugs that need a custom size are listed here.
  */
 export const LOGO_SIZES = {
-  'bradesco':    52,
-  'itau':        52,
-  'hsbc':        54,
-  'consorcio':   52,
-  'ripley':      52,
-  'safra':       68,
-  'jpmorgan':    68,
+  'bancodobrasil': 52,
+  'caixaeconomica': 72,
+  'bradesco':      52,
+  'itau':          62,
+  'hsbc':          54,
+  'consorcio':     52,
+  'ripley':        52,
+  'safra':         68,
+  'jpmorgan':      82,
+  'bancolombia':   72,
+  'bogota':        56,
+  'popular':       72,
 };
 
 export const BANK_NAMES = {
