@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon19';
-import { paisSystemName } from '../paises.js?v=bmon19';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon20';
+import { paisSystemName } from '../paises.js?v=bmon20';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -16,11 +16,11 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon19';
-import { CO_CUIF } from '../coCuentas.js?v=bmon19';
-import { BR_KPI } from '../brCuentas.js?v=bmon19';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon19';
-import { apiDatos } from '../api.js?v=bmon19';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon20';
+import { CO_CUIF } from '../coCuentas.js?v=bmon20';
+import { BR_KPI } from '../brCuentas.js?v=bmon20';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon20';
+import { apiDatos } from '../api.js?v=bmon20';
 
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -197,7 +197,7 @@ export function renderCBTable() {
     const rowStyle = isBTG
       ? 'background:rgba(37,99,235,0.08);border-left:3px solid #2563eb;'
       : 'border-left:3px solid transparent;';
-    const nameStyle = isBTG ? 'font-weight:700;color:#2563eb;' : 'font-weight:500;color:var(--text);';
+    const nameStyle = isBTG ? 'font-weight:700;color:#001E62;' : 'font-weight:500;color:var(--text);'; // #001E62 = azul logo BTG
     const metaCo = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[b.code] : null;
     const tip = metaCo
       ? `Perspectiva: ${metaCo.outlook}. ${metaCo.agency}. ${metaCo.analysis}`

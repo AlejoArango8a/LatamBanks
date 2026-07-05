@@ -1,10 +1,10 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon19';
-import { accountViewLevel } from '../coCuentas.js?v=bmon19';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon19';
-import { apiDatos } from '../api.js?v=bmon19';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon20';
+import { accountViewLevel } from '../coCuentas.js?v=bmon20';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon20';
+import { apiDatos } from '../api.js?v=bmon20';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 
@@ -286,7 +286,7 @@ export async function runAccountView() {
         ? 'background:rgba(37,99,235,0.07);border-left:3px solid #2563eb;'
         : `border-left:3px solid transparent;`;
       html += `<tr style="${rowStyle}">
-        <td style="font-weight:${isBTG ? '700' : '500'};color:${isBTG ? '#2563eb' : 'var(--text)'};">
+        <td style="font-weight:${isBTG ? '700' : '500'};color:${isBTG ? '#001E62' : 'var(--text)'};">
           ${isBTG ? '★ ' : ''}${b.name}</td>
         <td class="r">${fmtKPIDecimal(b.v1)}</td>
         <td class="r">${fmtKPIDecimal(b.v2)}</td>
