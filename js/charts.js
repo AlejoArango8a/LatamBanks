@@ -1,8 +1,8 @@
 // ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon18';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon18';
+import { ST, CHART_STATE } from './state.js?v=bmon19';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon19';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);

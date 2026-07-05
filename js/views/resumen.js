@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon18';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon18';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon18';
-import { bankColor } from '../config.js?v=bmon18';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon18';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon18';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon18';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon18';
-import { setStatus, showErr } from '../utils.js?v=bmon18';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon18';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon19';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon19';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon19';
+import { bankColor } from '../config.js?v=bmon19';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon19';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon19';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon19';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon19';
+import { setStatus, showErr } from '../utils.js?v=bmon19';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon19';
 
 function escHtml(s) {
   return String(s)
