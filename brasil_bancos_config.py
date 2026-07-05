@@ -29,6 +29,7 @@ EXCLUIR: set[str] = {
     "07707650",  # Aymoré CFI (financiera grupo Santander)
     "46743943",  # Redecard SCD (procesadora, grupo Itaú)
     "31597552",  # Banco Clássico (family office con licencia bancaria, no banco comercial)
+    "50585090",  # Banco BMG Consignado (subsidiaria de consignado — duplica grupo BMG 61186680)
 }
 
 # Nombres "bonitos" para CodInst cuyo nombre oficial en el CSV es largo o poco claro.
@@ -41,3 +42,15 @@ RENOMBRAR: dict[str, str] = {
     "60779196": "Crefisa",
     "33987793": "Banco UBS Brasil",
 }
+
+# ── Limpieza de nombres (usadas por brasil_banks.py) ─────────────────────────
+# Siglas que deben mantenerse en MAYÚSCULAS aunque el resto del nombre vaya
+# en Title Case. Editar aquí si aparecen siglas nuevas.
+SIGLAS: set[str] = {
+    "S.A.", "S/A", "BTG", "XP", "UBS", "BB", "BMG", "ABC", "BBVA", "KEB",
+    "ABN", "AMRO", "BNP", "JP", "J.P.", "BNDES", "C6", "BV", "BS2", "PAN",
+    "MUFG", "BOCOM", "BBM", "ING", "BOFA", "HS",
+}
+
+# Preposiciones portuguesas que van en minúscula salvo que sean la primera palabra.
+MINUSCULAS: set[str] = {"do", "de", "da", "dos", "das", "e"}

@@ -30,7 +30,7 @@ import logging
 import urllib.request
 from pathlib import Path
 
-from brasil_bancos_config import EXCLUIR, RENOMBRAR
+from brasil_bancos_config import EXCLUIR, RENOMBRAR, SIGLAS, MINUSCULAS
 
 import re
 
@@ -61,11 +61,39 @@ _cache: dict[str, tuple[dict[str, str], dict[str, str]]] | None = None
 
 
 _SA_SUFFIX = re.compile(r"\s+S\.?/?A\.?$", re.IGNORECASE)
+_BANCO_MULTIPLO = re.compile(r"\s*[-–]?\s*banco m[úu]ltiplo\s*", re.IGNORECASE)
 
 
-def _clean_name(name: str) -> str:
+def quitar_banco_multiplo(nombre: str) -> str:
+    """Quita 'Banco Múltiplo' (con o sin guion) de donde aparezca en el nombre."""
+    resultado = _BANCO_MULTIPLO.sub(" ", nombre)
+    resultado = re.sub(r"\s+", " ", resultado).strip(" -–")
+    return resultado
+
+
+def _clean_name(nombre: str) -> str:
     """Quita el sufijo 'S.A.' / 'S/A' del final del nombre."""
-    return _SA_SUFFIX.sub("", name).strip()
+    return _SA_SUFFIX.sub("", nombre).strip()
+
+
+# Conjunto de siglas en MAYÚSCULAS para comparación rápida (sin puntos).
+_SIGLAS_UPPER = {s.upper().replace(".", "") for s in SIGLAS}
+
+
+def title_case_banco(nombre: str) -> str:
+    """Convierte a Title Case preservando siglas y poniendo preposiciones en minúscula."""
+    palabras = nombre.split()
+    out = []
+    for i, w in enumerate(palabras):
+        w_cmp = w.upper().replace(".", "")
+        if w_cmp in _SIGLAS_UPPER:
+            # Preservar la forma original de la sigla (con puntos si los trae)
+            out.append(w.upper())
+        elif w.lower() in MINUSCULAS and i != 0:
+            out.append(w.lower())
+        else:
+            out.append(w.capitalize())
+    return " ".join(out)
 
 
 def _norm8(cod_inst: object) -> str:
@@ -119,20 +147,24 @@ def _data() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def name_for(cod_inst: object) -> str:
-    """Nombre oficial (CSV/ISPB), respaldo manual, o provisional 'Instituição <ISPB>'.
+    """Nombre limpio para mostrar en el dashboard.
 
-    Los nombres del diccionario RENOMBRAR (brasil_bancos_config.py) tienen
-    prioridad sobre el CSV para dar nombres más limpios a instituciones concretas.
+    Orden de resolución:
+      1. Si está en RENOMBRAR → devolver tal cual, sin limpiar nada.
+      2. Si no → nombre del CSV, luego aplicar en cadena:
+         a. quitar_banco_multiplo()
+         b. _clean_name()           (quita S.A. / S/A del final)
+         c. title_case_banco()      (Title Case con siglas y preposiciones)
     """
     key8 = _norm8(cod_inst)
     if not key8:
         return "Instituição desconhecida"
-    # 1) Nombre curado del config (prioridad máxima, ya es bonito)
+    # 1) Nombre curado del config (prioridad máxima, ya es bonito — no limpiar)
     if key8 in RENOMBRAR:
         return RENOMBRAR[key8]
-    # 2) Nombre oficial del CSV de ISPB / respaldo manual, sin el "S.A." del final
+    # 2) Nombre del CSV → cadena de limpieza
     raw = _data()[0].get(key8) or f"Instituição {key8}"
-    return _clean_name(raw)
+    return title_case_banco(_clean_name(quitar_banco_multiplo(raw)))
 
 
 def is_bank(cod_inst: object) -> bool:
@@ -153,6 +185,9 @@ def is_bank(cod_inst: object) -> bool:
     if not name:
         return False
     upper = name.upper()
+    # Regla automática: excluir cualquier banco "em liquidação" (o variantes)
+    if "LIQUIDA" in upper:
+        return False
     if "HOLDING" in upper:
         return False
     if types.get(key8, "") in BANK_TYPES:
@@ -162,26 +197,26 @@ def is_bank(cod_inst: object) -> bool:
 
 if __name__ == "__main__":  # prueba rápida
     logging.basicConfig(level=logging.INFO)
-    # Bancos a mostrar (deben salir is_bank=True con nombre limpio)
-    mostrar = [
-        ("00000000", "Banco do Brasil"),
-        ("60746948", "Bradesco"),
-        ("60701190", "Itaú Unibanco"),
-        ("18236120", "Nubank"),
-        ("00655522", "APE Poupex"),
-        ("60779196", "Crefisa"),
-        ("33987793", "Banco UBS Brasil"),
+
+    print("--- RENOMBRAR (deben salir tal cual, sin limpiar) ---")
+    for c, esperado in [("60701190", "Itaú"), ("90400888", "Santander Brasil"), ("18236120", "Nubank")]:
+        print(f"  {c} | {name_for(c)!r:30} | esperado={esperado!r}")
+
+    print("\n--- quitar_banco_multiplo + title_case (casos del .md) ---")
+    casos = [
+        "Kirton Bank S.A. - Banco Múltiplo",
+        "Goldman Sachs do Brasil Banco Múltiplo S.A.",
+        "BANK OF CHINA (BRASIL) BANCO MÚLTIPLO S/A",
+        "PICPAY BANK - BANCO MÚLTIPLO S.A",
+        "OURIBANK S.A. BANCO MÚLTIPLO",
+        "BANCO KEB HANA DO BRASIL S.A.",
+        "BANCO SANTANDER (BRASIL) S.A.",
     ]
-    # Excluidos (deben salir is_bank=False)
-    excluidos = [
-        ("60872504", "Itaú Holding"),
-        ("33657248", "BNDES"),
-        ("30680829", "Nu Financeira"),
-        ("01425787", "Redecard"),
-    ]
-    print("--- DEBEN SER banco=True ---")
-    for c, etiqueta in mostrar:
-        print(f"  {c} | banco={is_bank(c)!s:<5} | nombre={name_for(c)!r:40} | esperado={etiqueta!r}")
-    print("--- DEBEN SER banco=False ---")
-    for c, etiqueta in excluidos:
-        print(f"  {c} | banco={is_bank(c)!s:<5} | nombre={name_for(c)!r:40} | esperado excluido={etiqueta!r}")
+    for nombre in casos:
+        resultado = title_case_banco(_clean_name(quitar_banco_multiplo(nombre)))
+        print(f"  {nombre!r:55} -> {resultado!r}")
+
+    print("\n--- EXCLUIR (deben salir is_bank=False) ---")
+    for c, etiqueta in [("60872504", "Itaú Holding"), ("33657248", "BNDES"),
+                        ("50585090", "BMG Consignado"), ("58497702", "LetsBank liquidación")]:
+        print(f"  {c} | banco={is_bank(c)!s:<5} | {name_for(c)!r:45} | {etiqueta}")
