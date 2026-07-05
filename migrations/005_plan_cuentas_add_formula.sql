@@ -1,0 +1,28 @@
+-- =============================================================================
+-- 005 — Brasil: respaldo de códigos Cosif oficiales por cuenta
+-- =============================================================================
+-- Cambio ADITIVO y retrocompatible. No modifica datos existentes de Chile (CL)
+-- ni Colombia (CO), ni cambia claves primarias.
+--
+-- Qué hace:
+--   Agrega la columna `formula` (TEXT) a plan_cuentas para guardar el campo
+--   DescricaoColuna de IF.data (Brasil): la composición de cuentas contables
+--   Cosif oficiales que forman cada concepto del reporte, por ejemplo
+--   Ativo Total = "[1000000009] + [2000000008]".
+--
+-- Por qué:
+--   El código `Conta` de IF.data cambió por completo con el nuevo plan Cosif de
+--   marzo/2025 (Resolución CMN 4.966/2021). Guardar la fórmula de cuentas Cosif
+--   oficiales deja un rastro auditable para mapear el "DE/PARA" contra los
+--   catálogos oficiales del Banco Central, sin depender solo del nombre.
+--
+-- CL/CO quedan con formula = NULL (no aplica).
+--
+-- Cómo aplicar (una sola vez) en CockroachDB:
+--   - Consola SQL de CockroachDB Cloud: pega y ejecuta el ALTER de abajo, o
+--   - cockroach sql: \i migrations/005_plan_cuentas_add_formula.sql
+--
+-- Es idempotente: si ya se aplicó, IF NOT EXISTS evita error al re-ejecutar.
+-- =============================================================================
+
+ALTER TABLE plan_cuentas ADD COLUMN IF NOT EXISTS formula TEXT;

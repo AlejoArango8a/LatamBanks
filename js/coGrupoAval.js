@@ -2,7 +2,7 @@
 // Colombia — Grupo Aval consolidado (cliente)
 // Código sintético CUIF: suma lineal de los 4 bancos miembro.
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon16';
+import { ST, datasetIsoCountry } from './state.js?v=bmon17';
 
 /** codigo_entidad que no debe colisionar con bancos reales (CUIF usa enteros bajos). */
 export const CO_GRUPO_AVAL_SYNTHETIC_CODE = 10_001;

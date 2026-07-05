@@ -1,15 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon16';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon16';
-import { bankColor } from '../config.js?v=bmon16';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon16';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon16';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon16';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon16';
-import { setStatus, showErr } from '../utils.js?v=bmon16';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon16';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon17';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon17';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon17';
+import { bankColor } from '../config.js?v=bmon17';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon17';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon17';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon17';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon17';
+import { setStatus, showErr } from '../utils.js?v=bmon17';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon17';
 
 function escHtml(s) {
   return String(s)
@@ -68,6 +69,59 @@ export function refreshKPIs() {
   if (!ST._kpiRaw?.lastP) return;
   const m          = ST._kpiRaw;
   const lastMonth  = parseInt(String(m.lastP).slice(4, 6), 10);
+
+  if (datasetIsoCountry() === 'BR') {
+    if (!(lastMonth >= 1 && lastMonth <= 12)) return;
+    // Brasil es trimestral: el mes de cierre es 3/6/9/12 y el Lucro Líquido es
+    // acumulado del año (YTD), así que la anualización util × (12/mes) es válida.
+    const utilAnualizada = m.utilidad ? m.utilidad * (12 / lastMonth) : 0;
+    const roe        = m.patrimonio && m.utilidad ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
+    const trimestre  = Math.round(lastMonth / 3);
+    const roeSubLabel = `Q${trimestre} YTD × ${(12 / lastMonth).toFixed(2).replace(/\.00$/, '')}`;
+    const firstBank  = ST.selectedOrder[0];
+    const bankLabel  = firstBank ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:6px;">${bankName(firstBank)}</span>` : '';
+
+    const header     = document.getElementById('bankHeader');
+    const headerName = document.getElementById('bankHeaderName');
+    const headerSub  = document.getElementById('bankHeaderSub');
+    if (header && firstBank) {
+      const color = bankColor(firstBank, 0);
+      header.style.display = 'block';
+      header.style.borderLeftColor = color;
+      headerName.textContent = bankName(firstBank);
+      headerName.style.color = color;
+      const others = ST.selectedOrder.slice(1).map(c => bankName(c));
+      headerSub.textContent = others.length
+        ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
+        : `Last period: ${periodLabel(m.lastP)}`;
+    } else if (header) header.style.display = 'none';
+
+    document.getElementById('kpiResumen').innerHTML = `
+    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
+    <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Credit Portfolio</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
+    <div class="kpi yellow kpi-btn" onclick="showResChart('captacoes')"><div class="kpi-label">Funding (Captações)</div><div class="kpi-val">${fmtKPI(m.captacoes)}</div><div class="kpi-sub">${fmtP(m.captacoes, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('tvm')"><div class="kpi-label">Securities (TVM)</div><div class="kpi-val">${fmtKPI(m.tvm)}</div><div class="kpi-sub">${m.tvm ? fmtP(m.tvm, m.totalAssets) + ' of assets' : 'from 2025 plan'}</div></div>
+    <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
+    <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
+    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
+    ${customKpiTileHtml(m)}`;
+
+    document.getElementById('kpiBalance').innerHTML = `
+    <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
+    <div class="kpi green"><div class="kpi-label">Credit Portfolio</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Funding</div><div class="kpi-val">${fmtKPI(m.captacoes)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Leverage ${m.patrimonio ? (m.totalAssets / m.patrimonio).toFixed(1) + 'x' : '—'}</div></div>`;
+
+    document.getElementById('kpiResultados').innerHTML = `
+    <div class="kpi blue"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>`;
+
+    document.getElementById('kpiCalidad').innerHTML = `
+    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Brazil · IF.data (BCB)</div><div class="kpi-val">Summary report only</div><div class="kpi-sub">Los datos de Brasil provienen del Relatorio 1 (Resumo) de IF.data. El desglose de balance, estado de resultados y calidad de cartera se agregará con los Relatorios 2–5. El cambio de plan de cuentas de marzo-2025 queda registrado en la pestaña Config.</div></div>`;
+    syncResChartCustomBtn();
+    syncKpiResumenActive(ST._lastResChart || 'patrimonio');
+    return;
+  }
 
   if (datasetIsoCountry() === 'CO') {
     if (!(lastMonth >= 1 && lastMonth <= 12)) return;
@@ -241,6 +295,69 @@ export async function run() {
   const banks = [...ST.selected];
 
   try {
+    if (datasetIsoCountry() === 'BR') {
+      const R1_SET = new Set(brR1AccountsForRun());
+      const customBR   = resolveCustomKpiForRun();
+      const customIsR1 = customBR ? R1_SET.has(String(customBR.cuenta)) : false;
+      const B1_BR = [...new Set([
+        ...brB1AccountsForRun(),
+        ...(customBR && !customIsR1 ? [String(customBR.cuenta)] : []),
+      ])];
+      const R1_BR = [...new Set([
+        ...brR1AccountsForRun(),
+        ...(customBR && customIsR1 ? [String(customBR.cuenta)] : []),
+      ])];
+
+      runAbortController?.abort();
+      runAbortController = new AbortController();
+      const signal = runAbortController.signal;
+
+      console.log('[run BR] fetching — periodos:', periodos.length, 'banks:', banks);
+      const [b1, r1] = await Promise.all([
+        fetchData('b1', B1_BR, periodos, banks, signal),
+        fetchData('r1', R1_BR, periodos, banks, signal),
+      ]);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+
+      const firstBank = ST.selectedOrder[0] || banks[0];
+      const b1First = b1.filter(r => r.ins_cod === firstBank);
+      const r1First = r1.filter(r => r.ins_cod === firstBank);
+
+      const totalAssets  = brSum(b1First, BR_KPI.activos, lastP);
+      const colocaciones = brSum(b1First, BR_KPI.colocaciones, lastP);
+      const captacoes    = brSum(b1First, BR_KPI.captacoes, lastP);
+      const pasivos      = brSum(b1First, BR_KPI.pasivos, lastP);
+      const patrimonio   = brSum(b1First, BR_KPI.patrimonio, lastP);
+      const tvm          = brSum(b1First, BR_KPI.tvm, lastP);
+      const utilidad     = brSum(r1First, BR_KPI.utilidad, lastP);
+      const customKpi    = computeCustomKpiSnapshot(b1, r1, [], firstBank, lastP);
+
+      ST._kpiRaw = {
+        totalAssets, colocaciones, captacoes, tvm,
+        pasivos, patrimonio, utilidad,
+        depositos: captacoes, depVista: null, depPlazo: null, bonos: null,
+        mora90: null, customKpi, ingresoNeto: null, totalIng: null,
+        lastP, perdCred: null, impuesto: null, resOp: null, totalGas: null,
+        resOpA: null, ingComis: null, ingresoReaj: null, resFin: null,
+      };
+      refreshKPIs();
+
+      ST._series = { periodos, b1, r1, c1: [] };
+      showResChart(ST._lastResChart || 'patrimonio');
+
+      ST._b1 = b1;
+      ST._lastP = lastP;
+      ST._resTableData = null;
+
+      const hi = document.getElementById('headerInfo');
+      if (hi) hi.textContent = rangeLabel;
+
+      document.getElementById('dashContent').style.display = 'flex';
+      setRunLoadingBar(false);
+      setStatus('ok', `Brazil IF.data · ${periodos.length} quarters · ${ST.selected.size} bank(s)`);
+      return;
+    }
+
     if (datasetIsoCountry() === 'CO') {
       const B1_BASE = coB1AccountsForRun();
       const deterioroC = coDeterioroActivoCuentasFromPlan(Object.keys(ST.planCuentas || {}));
@@ -480,8 +597,15 @@ const KPI_RESUMEN_IDX = {
   pasivos: 5, patrimonio: 6, utilidad: 7, roe: 8, mora: 9, customkpi: 10,
 };
 
+// Brasil tiene menos tiles y otro orden (sin depósitos ni NPL).
+const KPI_RESUMEN_IDX_BR = {
+  activos: 0, coloc: 1, captacoes: 2, tvm: 3, pasivos: 4,
+  patrimonio: 5, utilidad: 6, roe: 7, customkpi: 8,
+};
+
 function syncKpiResumenActive(tipo) {
-  const idx = KPI_RESUMEN_IDX[tipo];
+  const idxMap = datasetIsoCountry() === 'BR' ? KPI_RESUMEN_IDX_BR : KPI_RESUMEN_IDX;
+  const idx = idxMap[tipo];
   document.querySelectorAll('#kpiResumen .kpi-btn').forEach((el, i) => {
     el.classList.toggle('kpi-active', idx !== undefined && i === idx);
   });
@@ -511,6 +635,7 @@ export function showResChart(tipo) {
 
   const map = {
     activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds',
+    captacoes:'🏦 Funding', tvm:'📄 Securities',
     pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account',
   };
   document.querySelectorAll('.rcbtn').forEach(b => {
@@ -523,7 +648,17 @@ export function showResChart(tipo) {
   const { periodos, b1, r1, c1 } = ST._series;
   const banks = [...ST.selected];
 
-  const cuentaMap = datasetIsoCountry() === 'CO'
+  const cuentaMap = datasetIsoCountry() === 'BR'
+    ? {
+      activos:    { rows: b1, cuentas: BR_KPI.activos },
+      coloc:      { rows: b1, cuentas: BR_KPI.colocaciones },
+      captacoes:  { rows: b1, cuentas: BR_KPI.captacoes },
+      tvm:        { rows: b1, cuentas: BR_KPI.tvm },
+      pasivos:    { rows: b1, cuentas: BR_KPI.pasivos },
+      patrimonio: { rows: b1, cuentas: BR_KPI.patrimonio },
+      utilidad:   { rows: r1, cuentas: BR_KPI.utilidad },
+    }
+    : datasetIsoCountry() === 'CO'
     ? {
       activos:    { rows: b1, cuenta: CO_CUIF.activos },
       coloc:      { rows: b1, cuenta: CO_CUIF.colocaciones },
@@ -592,12 +727,14 @@ export function showResChart(tipo) {
     });
     chartOpts = undefined;
   } else {
-    const { rows, cuenta } = cuentaMap[tipo] || cuentaMap.activos;
+    const entry = cuentaMap[tipo] || cuentaMap.activos;
+    const rows = entry.rows;
+    const codeSet = new Set(entry.cuentas || [entry.cuenta]);
     const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
     series = banks.map((code, i) => {
       const color = bankColor(code, i);
       const data  = sparseData(periodos.map(p =>
-        rows.filter(r => sameIns(r, code) && r.cuenta === cuenta && r.periodo === p)
+        rows.filter(r => sameIns(r, code) && codeSet.has(r.cuenta) && r.periodo === p)
             .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
       ));
       return { label: bankName(code), data, color };
@@ -618,6 +755,7 @@ export function showResChart(tipo) {
   if (panel && tableEl) {
     const metricLabels = {
       activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income',
+      captacoes:'Funding (Captações)', tvm:'Securities (TVM)',
       mora:'NPL / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account',
     };
     if (tableTitleEl) {
@@ -700,12 +838,13 @@ export async function showROEChart() {
     }
     const allBanks  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
 
-    const eqCuenta = datasetIsoCountry() === 'CO' ? CO_CUIF.patrimonio : '300000000';
-    const utCuenta = datasetIsoCountry() === 'CO' ? CO_CUIF.utilidadNet : '590000000';
+    const isoROE = datasetIsoCountry();
+    const eqCuentas = isoROE === 'BR' ? BR_KPI.patrimonio : isoROE === 'CO' ? [CO_CUIF.patrimonio] : ['300000000'];
+    const utCuentas = isoROE === 'BR' ? BR_KPI.utilidad   : isoROE === 'CO' ? [CO_CUIF.utilidadNet] : ['590000000'];
 
     const [rows, equityRows] = await Promise.all([
-      apiDatos({ tipo: 'r1', cuentas: [utCuenta], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
-      apiDatos({ tipo: 'b1', cuentas: [eqCuenta], periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
+      apiDatos({ tipo: 'r1', cuentas: utCuentas, periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
+      apiDatos({ tipo: 'b1', cuentas: eqCuentas, periodos: [lastP], bancos: allBanks, select: 'ins_cod,monto_total' }, signal),
     ]);
     if (signal.aborted) return;
 
@@ -728,7 +867,7 @@ export async function showROEChart() {
       Annualized (Month ${lastMonth} × ${Math.round(12 / lastMonth)}) · ${periodLabel(lastP)}</div>`;
     html += '<div style="display:flex;flex-direction:column;gap:5px;">';
     bankROEs.forEach(b => {
-      const isBTG  = b.code === (datasetIsoCountry() === 'CO' ? 66 : 59);
+      const isBTG  = b.code === (isoROE === 'CO' ? 66 : isoROE === 'BR' ? 30306294 : 59);
       const pct    = Math.abs(b.roe) / maxAbs * 100;
       const color  = b.roe >= 0 ? (isBTG ? '#2563eb' : 'var(--accent)') : 'var(--red)';
       html += `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;"

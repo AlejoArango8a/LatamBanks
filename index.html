@@ -428,11 +428,11 @@
 
     .flags-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       width: 100%;
-      max-width: min(100%, 440px);
+      max-width: min(100%, 560px);
       margin-inline: auto;
-      gap: clamp(16px, 3vw, 28px);
+      gap: clamp(12px, 2.4vw, 24px);
       justify-items: center;
       align-items: start;
     }
@@ -515,13 +515,13 @@
     /* Celulares: banderas más chicas; rejilla 4 columnas equidistantes */
     @media (max-width: 520px) {
       .flags-row {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         max-width: 100%;
-        gap: clamp(8px, 2.5vw, 14px);
+        gap: clamp(6px, 2vw, 12px);
       }
       .flag-btn {
-        width: clamp(38px, 10.5vw, 52px);
-        height: clamp(38px, 10.5vw, 52px);
+        width: clamp(34px, 9.5vw, 48px);
+        height: clamp(34px, 9.5vw, 48px);
         border-width: 1.5px;
       }
       .flag-entry {
@@ -696,6 +696,12 @@
             </a>
           </div>
           <div class="flag-entry">
+            <a class="hero-flag-hit" href="./dashboard.html?country=brasil" title="Open Brazil monitor" aria-label="Brazil: open monitor">
+              <span class="flag-btn"><img src="assets/Brasil%20flag.png" alt="" /></span>
+              <span class="flag-caption live">Brazil · live</span>
+            </a>
+          </div>
+          <div class="flag-entry">
             <span class="flag-btn is-disabled" title="Coming soon">
               <img src="assets/Peru%20flag.png" alt="Peru" />
             </span>
@@ -716,7 +722,7 @@
 <div class="page-bottom">
 <div class="stats-ribbon">
   <div class="stats-ribbon-inner">
-    <div class="stats-stat"><strong>2</strong><span>countries live</span></div>
+    <div class="stats-stat"><strong>3</strong><span>countries live</span></div>
     <div class="stats-stat"><strong>40+</strong><span>banks monitored</span></div>
     <div class="stats-stat"><strong>4M+</strong><span>data points indexed</span></div>
     <div class="stats-stat stats-stat-roadmap stats-stat-roadmap--off"><strong>50+</strong><span>months of history</span></div>

@@ -35,7 +35,7 @@
       "systemName": "Brazilian Banking System",
       "currency": "BRL",
       "locale": "pt-BR",
-      "status": "coming_soon",
+      "status": "live",
       "frequency": "quarterly",
       "source": "BCB (Olinda / IF.data)",
       "flag": "assets/Brasil flag.png",

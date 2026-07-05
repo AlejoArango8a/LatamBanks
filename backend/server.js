@@ -103,11 +103,18 @@ app.get('/api/bootstrap', async (req, res) => {
     const country = resolveDatasetCountry(req.query.country);
     const [periodosRows, institucionesRaw, planCuentas] = await Promise.all([
       query(
-        "SELECT periodo FROM carga_log WHERE estado = 'ok' AND country = $1 ORDER BY periodo ASC",
+        // 'alerta_esquema' también trae datos cargados (Tarea A): solo marca un
+        // cambio de estructura, no un fallo. Se incluye para no ocultar el período.
+        "SELECT periodo FROM carga_log WHERE estado IN ('ok', 'alerta_esquema') AND country = $1 ORDER BY periodo ASC",
         [country],
       ),
       query(
-        'SELECT codigo::int, razon_social FROM instituciones WHERE country = $1 ORDER BY codigo ASC',
+        // BR: solo bancos operativos (es_banco). La fuente IF.data mezcla holdings,
+        // bancos de fomento e instituições de pagamento; se filtran para el ranking.
+        // CL/CO no usan es_banco (queda NULL) y no se ven afectados.
+        `SELECT codigo::int, razon_social FROM instituciones WHERE country = $1${
+          country === 'BR' ? ' AND es_banco IS TRUE' : ''
+        } ORDER BY codigo ASC`,
         [country],
       ),
       query(
@@ -145,6 +152,15 @@ app.get('/api/bootstrap', async (req, res) => {
            WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
            GROUP BY ins_cod`,
           [country, eqCuenta, lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      } else if (country === 'BR') {
+        // Patrimônio Líquido: código viejo (≤dic-2024) + nuevo (≥mar-2025).
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = ANY($2) AND periodo = $3
+             AND ins_cod IN (SELECT codigo FROM instituciones WHERE country = $1 AND es_banco IS TRUE)
+           GROUP BY ins_cod`,
+          [country, ['78186', '140246'], lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       }
     } catch (e) {

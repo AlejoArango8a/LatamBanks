@@ -65,18 +65,38 @@ CRITICAL_ACCOUNTS: dict[str, list[str]] = {
         "250000",  # Bonos / títulos de deuda
         "590000",  # Utilidad neta
     ],
+    # Brasil (IF.data, Relatorio 1): los códigos `Conta` NO son estables — el
+    # cambio de plan Cosif de mar-2025 los renumeró por completo (ej. Ativo Total
+    # 78182 -> 140220). Por eso NO listamos cuentas críticas por código fijo aquí:
+    # cualquier código fijo daría falsas alarmas permanentes tras la frontera.
+    # Para Brasil el detector correcto es el UMBRAL RELATIVO de abajo, que dispara
+    # cuando desaparece la mayoría de las cuentas de un período al siguiente.
+    "BR": [],
 }
 
 # Cómo normalizar un número de cuenta antes de comparar (por país).
 # CO usa códigos CUIF de 6 dígitos; CL usa 9 dígitos exactos.
+# BR usa el código `Conta` del reporte IF.data tal cual (numérico, longitud variable).
 _NORMALIZERS = {
     "CO": lambda c: re.sub(r"\D", "", str(c or ""))[:6],
     "CL": lambda c: str(c or "").strip(),
+    "BR": lambda c: str(c or "").strip(),
 }
 
 # Umbral secundario: si aparecen/desaparecen más de esta cantidad de cuentas,
 # se considera cambio estructural aunque no falte ninguna crítica.
 STRUCTURAL_CHANGE_THRESHOLD = 25
+
+# Umbral RELATIVO (universal): si desaparece esta fracción (o más) de las cuentas
+# que existían el período anterior, se considera cambio estructural aunque el
+# número absoluto sea pequeño. Pensado para fuentes con pocas cuentas por período
+# (ej. Brasil IF.data Relatorio 1, ~7 cuentas): en mar-2025 desaparece casi todo
+# el set anterior. Inofensivo para CL/CO, que nunca pierden la mitad en un mes.
+STRUCTURAL_CHANGE_REL = 0.5
+
+# Mínimo de cuentas conocidas para aplicar el umbral relativo (evita ruido cuando
+# la línea base es diminuta).
+_REL_MIN_KNOWN = 3
 
 # Máximo de cuentas a listar dentro del JSON (para no inflar carga_log.detalle).
 _MAX_LIST = 50
@@ -165,10 +185,14 @@ def detect_schema_changes(
     nuevas = sorted(incoming - known)
     desaparecidas = sorted(known - incoming)
 
+    frac_desaparecidas = (len(desaparecidas) / len(known)) if known else 0.0
+    salto_relativo = len(known) >= _REL_MIN_KNOWN and frac_desaparecidas >= STRUCTURAL_CHANGE_REL
+
     is_structural = (
         bool(criticas_faltantes)
         or len(nuevas) > STRUCTURAL_CHANGE_THRESHOLD
         or len(desaparecidas) > STRUCTURAL_CHANGE_THRESHOLD
+        or salto_relativo
     )
 
     partes = []
@@ -177,9 +201,14 @@ def detect_schema_changes(
             f"Faltan {len(criticas_faltantes)} cuenta(s) crítica(s): "
             + ", ".join(criticas_faltantes)
         )
+    if salto_relativo:
+        partes.append(
+            f"desapareció el {round(frac_desaparecidas * 100)}% de las cuentas del período previo "
+            f"(posible cambio de plan de cuentas)"
+        )
     if nuevas:
         partes.append(f"aparecieron {len(nuevas)} cuenta(s) nueva(s)")
-    if desaparecidas:
+    if desaparecidas and not salto_relativo:
         partes.append(f"desaparecieron {len(desaparecidas)} cuenta(s)")
     resumen = ("; ".join(partes) + ".") if partes else "Sin cambios estructurales."
 
@@ -190,6 +219,7 @@ def detect_schema_changes(
         "criticas_faltantes": criticas_faltantes,
         "n_nuevas": len(nuevas),
         "n_desaparecidas": len(desaparecidas),
+        "pct_desaparecidas": round(frac_desaparecidas * 100, 1),
         "nuevas": nuevas[:_MAX_LIST],
         "desaparecidas": desaparecidas[:_MAX_LIST],
         "truncado": len(nuevas) > _MAX_LIST or len(desaparecidas) > _MAX_LIST,

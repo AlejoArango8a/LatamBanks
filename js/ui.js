@@ -2,12 +2,12 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon16';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon16';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon16';
-import { setStatus, showErr } from './utils.js?v=bmon16';
-import { sumRows } from './api.js?v=bmon16';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon16';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon17';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon17';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon17';
+import { setStatus, showErr } from './utils.js?v=bmon17';
+import { sumRows } from './api.js?v=bmon17';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon17';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -278,7 +278,7 @@ export function syncResumenMoraChartButton() {
 
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
-  const flags = { chile: 'flagChile', colombia: 'flagColombia', peru: 'flagPeru', uruguay: 'flagUruguay' };
+  const flags = { chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil', peru: 'flagPeru', uruguay: 'flagUruguay' };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -310,8 +310,17 @@ export function selectCountry(country) {
     return;
   }
 
-  const names    = { colombia:'Colombia', peru:'Perú', uruguay:'Uruguay' };
-  const flagImgs = { colombia:'flagColombia', peru:'flagPeru', uruguay:'flagUruguay' };
+  if (country === 'brasil') {
+    ST.country = 'brasil';
+    if (overlay) overlay.style.display = 'none';
+    syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
+    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+    return;
+  }
+
+  const names    = { peru:'Perú', uruguay:'Uruguay' };
+  const flagImgs = { peru:'flagPeru', uruguay:'flagUruguay' };
   if (overlay) {
     const nameEl = document.getElementById('countryOverlayName');
     const imgBtn = document.getElementById(flagImgs[country]);
@@ -411,6 +420,18 @@ export async function fetchUSDRate() {
         const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
         ST.usdDate = d.toISOString().slice(0, 10);
         const txt = `1 USD ≈ $${Math.round(ST.usdRate).toLocaleString('es-CO')} COP · ${ST.usdDate}`;
+        if (sbl) sbl.textContent = txt;
+      }
+      return;
+    }
+    if (ST.country === 'brasil') {
+      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await resp.json();
+      if (data.result === 'success' && data.rates && data.rates.BRL) {
+        ST.usdRate = Number(data.rates.BRL);
+        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
+        ST.usdDate = d.toISOString().slice(0, 10);
+        const txt = `1 USD ≈ R$${ST.usdRate.toFixed(2)} BRL · ${ST.usdDate}`;
         if (sbl) sbl.textContent = txt;
       }
       return;

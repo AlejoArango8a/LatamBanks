@@ -1,0 +1,21 @@
+-- =============================================================================
+-- 006 — Marca de "banco operativo" para el ranking del sistema (Brasil)
+-- =============================================================================
+-- Cambio ADITIVO y retrocompatible. No afecta Chile (CL) ni Colombia (CO): la
+-- columna queda NULL para ellos y el backend solo la usa para filtrar Brasil.
+--
+-- Por qué:
+--   La fuente IF.data (TipoInstituicao=3, Conglomerado Financeiro) mezcla bancos
+--   operativos con holdings, bancos de fomento e instituições de pagamento. Para
+--   el ranking de "sistema bancário" queremos SOLO bancos operativos. El loader
+--   clasifica cada institución con brasil_banks.is_bank() y guarda el resultado
+--   aquí; el bootstrap filtra `es_banco IS TRUE` únicamente cuando country='BR'.
+--
+-- Cómo aplicar (una sola vez) en CockroachDB:
+--   - Consola SQL de CockroachDB Cloud: pega y ejecuta el ALTER de abajo, o
+--   - cockroach sql: \i migrations/006_instituciones_add_es_banco.sql
+--
+-- Es idempotente: IF NOT EXISTS evita error al re-ejecutar.
+-- =============================================================================
+
+ALTER TABLE instituciones ADD COLUMN IF NOT EXISTS es_banco BOOL;
