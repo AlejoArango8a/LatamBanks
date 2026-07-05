@@ -35,6 +35,7 @@ EXCLUIR: set[str] = {
 # Nombres "bonitos" para CodInst cuyo nombre oficial en el CSV es largo o poco claro.
 # El CSV de ISPB sigue siendo la fuente para todo lo que no esté aquí.
 RENOMBRAR: dict[str, str] = {
+    "30306294": "Banco BTG",
     "60701190": "Itaú",
     "90400888": "Santander Brasil",
     "18236120": "Nubank",

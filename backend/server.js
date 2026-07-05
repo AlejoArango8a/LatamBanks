@@ -162,6 +162,24 @@ app.get('/api/bootstrap', async (req, res) => {
            GROUP BY ins_cod`,
           [country, ['78186', '140246'], lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+
+        // Filtro mínimo: ~USD 150M de patrimônio.
+        // Umbral en BRL usando tipo de cambio conservador (5 BRL/USD → 750 M BRL).
+        // Excluye bancos muy pequeños sin importar fluctuaciones del real.
+        const BR_MIN_PATRIMONIO_BRL = 750_000_000;
+        const bancosConPatrimonio = new Set(
+          patrimonioRows
+            .filter(r => r.monto_total >= BR_MIN_PATRIMONIO_BRL)
+            .map(r => r.ins_cod),
+        );
+        // Preservar bancos sin dato de patrimônio en el último período (edge case)
+        // solo si ya pasaron el filtro es_banco; los que tienen dato y no llegan, se van.
+        const tienenDato = new Set(patrimonioRows.map(r => r.ins_cod));
+        instituciones.splice(
+          0,
+          instituciones.length,
+          ...instituciones.filter(i => !tienenDato.has(i.codigo) || bancosConPatrimonio.has(i.codigo)),
+        );
       }
     } catch (e) {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);

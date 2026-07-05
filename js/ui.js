@@ -74,7 +74,8 @@ export function fillBankList() {
   });
 
   if (ST.selected.size === 0) {
-    const prefer = datasetIsoCountry() === 'CO' ? 66 : 59;
+    const iso = datasetIsoCountry();
+    const prefer = iso === 'BR' ? 30306294 : iso === 'CO' ? 66 : 59;
     const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
   }
