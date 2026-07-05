@@ -74,6 +74,37 @@ export const bankColor = (code, i, name = '') => {
   return CHART_COLORS[i % CHART_COLORS.length];
 };
 
+// ---- Logo slugs ----
+// Mapea "ISO-codigo" → slug de archivo en assets/logo-{slug}.png
+// Un slug por marca visual; bancos de la misma marca en distintos países apuntan al mismo archivo.
+export const LOGO_SLUGS = {
+  // Chile (CL)
+  'CL-14':       'scotiabank',
+  'CL-16':       'bci',
+  'CL-31':       'hsbc',
+  'CL-37':       'santander',
+  'CL-59':       'btg',
+  // Colombia (CO)
+  'CO-13':       'bbva',
+  'CO-39':       'davivienda',
+  'CO-42':       'scotiabank',
+  'CO-59':       'santander',
+  'CO-66':       'btg',
+  // Brasil (BR)
+  'BR-30306294': 'btg',
+  'BR-90400888': 'santander',
+  'BR-60746948': 'bradesco',
+  'BR-00000000': 'bancodobrasil',
+  'BR-00360305': 'caixaeconomica',
+  'BR-33987793': 'ubs',
+};
+
+/** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */
+export function bankLogoUrl(iso, code) {
+  const slug = LOGO_SLUGS[`${iso}-${code}`];
+  return slug ? `assets/logo-${slug}.png` : null;
+}
+
 export const BANK_NAMES = {
   1:   'Banco de Chile',
   9:   'Banco Internacional',

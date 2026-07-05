@@ -1,16 +1,40 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon23';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon23';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon23';
-import { bankColor, btgBlue } from '../config.js?v=bmon23';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon23';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon23';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon23';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon23';
-import { setStatus, showErr } from '../utils.js?v=bmon23';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon23';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon24';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon24';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon24';
+import { bankColor, btgBlue, bankLogoUrl } from '../config.js?v=bmon24';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon24';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon24';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon24';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon24';
+import { setStatus, showErr } from '../utils.js?v=bmon24';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon24';
+
+const _FALLBACK_BANK_ICON = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+  style="color:var(--text3);">
+  <path d="M3 21h18"/><path d="M3 10h18"/>
+  <path d="M5 6l7-3 7 3"/>
+  <rect x="4"  y="10" width="4" height="11"/>
+  <rect x="10" y="10" width="4" height="11"/>
+  <rect x="16" y="10" width="4" height="11"/>
+</svg>`;
+
+function _setBannerLogo(iso, code) {
+  const el = document.getElementById('bankHeaderLogo');
+  if (!el) return;
+  const url = bankLogoUrl(iso, code);
+  if (url) {
+    el.innerHTML = `<img src="${url}" alt=""
+      style="max-height:52px;max-width:140px;object-fit:contain;"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <span style="display:none;align-items:center;">${_FALLBACK_BANK_ICON}</span>`;
+  } else {
+    el.innerHTML = `<span style="display:flex;align-items:center;">${_FALLBACK_BANK_ICON}</span>`;
+  }
+}
 
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
 
@@ -87,7 +111,7 @@ export function refreshKPIs() {
     const headerSub  = document.getElementById('bankHeaderSub');
     if (header && firstBank) {
       const color = bankColor(firstBank, 0, bankName(firstBank));
-      header.style.display = 'block';
+      header.style.display = 'flex';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
       headerName.style.color = btgBlue();
@@ -95,6 +119,7 @@ export function refreshKPIs() {
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
         : `Last period: ${periodLabel(m.lastP)}`;
+      _setBannerLogo('BR', firstBank);
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
@@ -134,7 +159,7 @@ export function refreshKPIs() {
     const headerSub  = document.getElementById('bankHeaderSub');
     if (header && firstBank) {
       const color = bankColor(firstBank, 0, bankName(firstBank));
-      header.style.display = 'block';
+      header.style.display = 'flex';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
       headerName.style.color = btgBlue();
@@ -142,6 +167,7 @@ export function refreshKPIs() {
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
         : `Last period: ${periodLabel(m.lastP)}`;
+      _setBannerLogo('CO', firstBank);
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
@@ -179,7 +205,7 @@ export function refreshKPIs() {
   const headerSub  = document.getElementById('bankHeaderSub');
   if (header && firstBank) {
     const color = bankColor(firstBank, 0, bankName(firstBank));
-    header.style.display = 'block';
+    header.style.display = 'flex';
     header.style.borderLeftColor = color;
     headerName.textContent = bankName(firstBank);
     headerName.style.color = btgBlue();
@@ -187,6 +213,7 @@ export function refreshKPIs() {
     headerSub.textContent = others.length
       ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
       : `Last period: ${periodLabel(m.lastP)}`;
+    _setBannerLogo('CL', firstBank);
   } else if (header) {
     header.style.display = 'none';
   }
