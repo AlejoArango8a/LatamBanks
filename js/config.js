@@ -78,25 +78,51 @@ export const bankColor = (code, i, name = '') => {
 // Mapea "ISO-codigo" → slug de archivo en assets/logo-{slug}.png
 // Un slug por marca visual; bancos de la misma marca en distintos países apuntan al mismo archivo.
 export const LOGO_SLUGS = {
-  // Chile (CL)
+  // Chile (CL) — código CMF
+  'CL-1':        'bancochile',
+  'CL-9':        'internacional',
+  'CL-12':       'bancoestado',
   'CL-14':       'scotiabank',
   'CL-16':       'bci',
+  'CL-28':       'bice',
   'CL-31':       'hsbc',
   'CL-37':       'santander',
+  'CL-39':       'itau',
+  'CL-41':       'jpmorgan',
+  'CL-51':       'falabella',
+  'CL-53':       'ripley',
+  'CL-55':       'consorcio',
   'CL-59':       'btg',
-  // Colombia (CO)
+  'CL-62':       'tanner',
+  // Colombia (CO) — código CUIF
+  'CO-1':        'bogota',
+  'CO-2':        'popular',
+  'CO-6':        'itau',
+  'CO-7':        'bancolombia',
+  'CO-9':        'citibank',
   'CO-13':       'bbva',
+  'CO-23':       'occidente',
   'CO-39':       'davivienda',
   'CO-42':       'scotiabank',
+  'CO-56':       'falabella',
   'CO-59':       'santander',
+  'CO-64':       'jpmorgan',
+  'CO-65':       'lulo',
   'CO-66':       'btg',
-  // Brasil (BR)
+  // Brasil (BR) — ISPB (CodInst IF.data)
   'BR-30306294': 'btg',
   'BR-90400888': 'santander',
+  'BR-60701190': 'itau',
   'BR-60746948': 'bradesco',
   'BR-00000000': 'bancodobrasil',
   'BR-00360305': 'caixaeconomica',
   'BR-33987793': 'ubs',
+  'BR-18236120': 'nubank',
+  'BR-33479023': 'citibank',
+  'BR-33172537': 'jpmorgan',
+  'BR-58160789': 'safra',
+  'BR-01181521': 'sicredi',
+  'BR-01522368': 'bnp',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */
