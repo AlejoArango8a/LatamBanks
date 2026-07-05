@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon26';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon26';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon26';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES } from '../config.js?v=bmon26';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon26';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon26';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon26';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon26';
-import { setStatus, showErr } from '../utils.js?v=bmon26';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon26';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon27';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon27';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon27';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon27';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon27';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon27';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon27';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon27';
+import { setStatus, showErr } from '../utils.js?v=bmon27';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon27';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
@@ -104,7 +104,7 @@ export function refreshKPIs() {
       header.style.display = 'flex';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = btgBlue();
+      headerName.style.color = bankBrandTextColor('BR', firstBank) ?? btgBlue();
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -152,7 +152,7 @@ export function refreshKPIs() {
       header.style.display = 'flex';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = btgBlue();
+      headerName.style.color = bankBrandTextColor('CO', firstBank) ?? btgBlue();
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -198,7 +198,7 @@ export function refreshKPIs() {
     header.style.display = 'flex';
     header.style.borderLeftColor = color;
     headerName.textContent = bankName(firstBank);
-    headerName.style.color = btgBlue();
+    headerName.style.color = bankBrandTextColor('CL', firstBank) ?? btgBlue();
     const others = ST.selectedOrder.slice(1).map(c => bankName(c));
     headerSub.textContent = others.length
       ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`

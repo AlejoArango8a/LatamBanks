@@ -139,6 +139,63 @@ export function bankLogoUrl(iso, code) {
 }
 
 /**
+ * Primary brand colors by logo slug.
+ * Used for the bank name text in the top banner.
+ * 'btg' is intentionally absent — handled via theme-aware btgBlue().
+ */
+const BRAND_TEXT_COLORS = {
+  // Chile
+  'bancochile':    '#CC0000',
+  'bancoestado':   '#2E7D32',
+  'scotiabank':    '#DD1534',
+  'bci':           '#E1001A',
+  'bice':          '#004B8D',
+  'hsbc':          '#DB0011',
+  'santander':     '#EC0000',
+  'itau':          '#F75F01',
+  'jpmorgan':      '#1565C0',
+  'falabella':     '#1B998B',
+  'ripley':        '#7C3AED',
+  'consorcio':     '#1565C0',
+  'tanner':        '#E8333B',
+  'internacional': '#005BAC',
+  // Colombia
+  'bancolombia':   '#C78B00',
+  'bogota':        '#E8192C',
+  'popular':       '#007A33',
+  'citibank':      '#1A73E8',
+  'bbva':          '#004A97',
+  'occidente':     '#1565C0',
+  'davivienda':    '#D40012',
+  'aval':          '#003DA5',
+  'lulo':          '#00A550',
+  'gnbsudameris':  '#1565C0',
+  // Brasil
+  'bradesco':      '#CC092F',
+  'bancodobrasil': '#D4A017',
+  'caixaeconomica':'#EF7D00',
+  'ubs':           '#E60028',
+  'nubank':        '#820AD1',
+  'safra':         '#8B1A1A',
+  'sicredi':       '#007A33',
+  'bnp':           '#00925A',
+  'xp':            '#888888',
+};
+
+/**
+ * Returns the brand text color for a bank, or null if BTG
+ * (caller should then use btgBlue()) or unknown slug (use var(--white)).
+ */
+export function bankBrandTextColor(iso, code) {
+  const key = iso === 'BR'
+    ? `BR-${String(code).padStart(8, '0')}`
+    : `${iso}-${code}`;
+  const slug = LOGO_SLUGS[key];
+  if (!slug || slug === 'btg') return null;
+  return BRAND_TEXT_COLORS[slug] ?? 'var(--white)';
+}
+
+/**
  * Per-logo max-height overrides (px). Default is 42px.
  * Slugs that need a custom size are listed here.
  */
