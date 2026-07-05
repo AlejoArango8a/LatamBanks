@@ -28,11 +28,14 @@ EXCLUIR: set[str] = {
     "47193149",  # Santander Leasing (leasing de grupo)
     "07707650",  # Aymoré CFI (financiera grupo Santander)
     "46743943",  # Redecard SCD (procesadora, grupo Itaú)
+    "31597552",  # Banco Clássico (family office con licencia bancaria, no banco comercial)
 }
 
 # Nombres "bonitos" para CodInst cuyo nombre oficial en el CSV es largo o poco claro.
 # El CSV de ISPB sigue siendo la fuente para todo lo que no esté aquí.
 RENOMBRAR: dict[str, str] = {
+    "60701190": "Itaú",
+    "90400888": "Santander Brasil",
     "18236120": "Nubank",
     "00655522": "APE Poupex",
     "60779196": "Crefisa",

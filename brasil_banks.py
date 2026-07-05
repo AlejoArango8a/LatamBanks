@@ -32,6 +32,8 @@ from pathlib import Path
 
 from brasil_bancos_config import EXCLUIR, RENOMBRAR
 
+import re
+
 log = logging.getLogger(__name__)
 
 CSV_URL = "https://raw.githubusercontent.com/guibranco/BancosBrasileiros/main/data/bancos.csv"
@@ -56,6 +58,14 @@ BANK_TYPES = {
 }
 
 _cache: dict[str, tuple[dict[str, str], dict[str, str]]] | None = None
+
+
+_SA_SUFFIX = re.compile(r"\s+S\.?/?A\.?$", re.IGNORECASE)
+
+
+def _clean_name(name: str) -> str:
+    """Quita el sufijo 'S.A.' / 'S/A' del final del nombre."""
+    return _SA_SUFFIX.sub("", name).strip()
 
 
 def _norm8(cod_inst: object) -> str:
@@ -117,11 +127,12 @@ def name_for(cod_inst: object) -> str:
     key8 = _norm8(cod_inst)
     if not key8:
         return "Instituição desconhecida"
-    # 1) Nombre curado del config (prioridad máxima)
+    # 1) Nombre curado del config (prioridad máxima, ya es bonito)
     if key8 in RENOMBRAR:
         return RENOMBRAR[key8]
-    # 2) Nombre oficial del CSV de ISPB / respaldo manual
-    return _data()[0].get(key8) or f"Instituição {key8}"
+    # 2) Nombre oficial del CSV de ISPB / respaldo manual, sin el "S.A." del final
+    raw = _data()[0].get(key8) or f"Instituição {key8}"
+    return _clean_name(raw)
 
 
 def is_bank(cod_inst: object) -> bool:
