@@ -30,6 +30,8 @@ import logging
 import urllib.request
 from pathlib import Path
 
+from brasil_bancos_config import EXCLUIR, RENOMBRAR
+
 log = logging.getLogger(__name__)
 
 CSV_URL = "https://raw.githubusercontent.com/guibranco/BancosBrasileiros/main/data/bancos.csv"
@@ -107,28 +109,37 @@ def _data() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def name_for(cod_inst: object) -> str:
-    """Nombre oficial (CSV/ISPB), respaldo manual, o provisional 'Instituição <ISPB>'."""
+    """Nombre oficial (CSV/ISPB), respaldo manual, o provisional 'Instituição <ISPB>'.
+
+    Los nombres del diccionario RENOMBRAR (brasil_bancos_config.py) tienen
+    prioridad sobre el CSV para dar nombres más limpios a instituciones concretas.
+    """
     key8 = _norm8(cod_inst)
     if not key8:
         return "Instituição desconhecida"
+    # 1) Nombre curado del config (prioridad máxima)
+    if key8 in RENOMBRAR:
+        return RENOMBRAR[key8]
+    # 2) Nombre oficial del CSV de ISPB / respaldo manual
     return _data()[0].get(key8) or f"Instituição {key8}"
 
 
 def is_bank(cod_inst: object) -> bool:
-    """¿Es un banco operativo? (para el ranking del 'sistema bancário').
+    """¿Debe aparecer este banco en el ranking del sistema bancário brasileño?
 
-    Criterio robusto (el cadastro oficial TCB del BCB está caído):
-      - Incluye si el 'Type' del CSV es de banco, o si el nombre oficial empieza
-        por "Banco"/"Banrisul"/etc. o es la Caixa (cubre Banco XP, J.P. Morgan,
-        BNDES, que a veces no traen 'Type' en el CSV).
-      - Excluye holdings (nombre con "Holding") para no duplicar al banco operativo.
-      - Excluye instituciones sin identificar (nombre provisional) y no-bancos
-        (instituições de pagamento, corretoras, financeiras, etc.).
+    Aplica primero las reglas explícitas de brasil_bancos_config.py:
+      - EXCLUIR → siempre False (holdings, fomento, procesadoras, duplicados).
+      - RENOMBRAR → siempre True (lista curada de los 32 bancos a mostrar).
+    Para el resto usa la heurística del CSV (Type + nombre) como antes.
     """
-    names, types = _data()
     key8 = _norm8(cod_inst)
+    if key8 in EXCLUIR:
+        return False
+    if key8 in RENOMBRAR:
+        return True
+    names, types = _data()
     name = names.get(key8, "")
-    if not name:  # sin identificar en el CSV/respaldo → no lo contamos como banco
+    if not name:
         return False
     upper = name.upper()
     if "HOLDING" in upper:
@@ -140,6 +151,26 @@ def is_bank(cod_inst: object) -> bool:
 
 if __name__ == "__main__":  # prueba rápida
     logging.basicConfig(level=logging.INFO)
-    for c in ("00000000", "60701190", "60872504", "58160789", "33657248",
-              "01425787", "30680829", "02332886", "33264668", "18236120", "999999"):
-        print(f"{c} -> banco={is_bank(c)!s:<5} | {name_for(c)}")
+    # Bancos a mostrar (deben salir is_bank=True con nombre limpio)
+    mostrar = [
+        ("00000000", "Banco do Brasil"),
+        ("60746948", "Bradesco"),
+        ("60701190", "Itaú Unibanco"),
+        ("18236120", "Nubank"),
+        ("00655522", "APE Poupex"),
+        ("60779196", "Crefisa"),
+        ("33987793", "Banco UBS Brasil"),
+    ]
+    # Excluidos (deben salir is_bank=False)
+    excluidos = [
+        ("60872504", "Itaú Holding"),
+        ("33657248", "BNDES"),
+        ("30680829", "Nu Financeira"),
+        ("01425787", "Redecard"),
+    ]
+    print("--- DEBEN SER banco=True ---")
+    for c, etiqueta in mostrar:
+        print(f"  {c} | banco={is_bank(c)!s:<5} | nombre={name_for(c)!r:40} | esperado={etiqueta!r}")
+    print("--- DEBEN SER banco=False ---")
+    for c, etiqueta in excluidos:
+        print(f"  {c} | banco={is_bank(c)!s:<5} | nombre={name_for(c)!r:40} | esperado excluido={etiqueta!r}")
