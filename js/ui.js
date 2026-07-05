@@ -2,12 +2,12 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon27';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon27';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon27';
-import { setStatus, showErr } from './utils.js?v=bmon27';
-import { sumRows } from './api.js?v=bmon27';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon27';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon28';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon28';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon28';
+import { setStatus, showErr } from './utils.js?v=bmon28';
+import { sumRows } from './api.js?v=bmon28';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon28';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -79,9 +79,36 @@ export function fillBankList() {
     const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
   }
+  syncCompareToggleUI();
 }
 
 export function toggleBank(c, on) {
+  // Individual mode (compare OFF): one bank at a time — selecting replaces the rest.
+  if (!ST.compareMode) {
+    if (on) {
+      ST.selected.clear();
+      ST.selectedOrder = [];
+      ST.selected.add(c);
+      ST.selectedOrder.push(c);
+    } else {
+      // Don't allow leaving zero banks selected in individual mode.
+      if (ST.selected.size <= 1) {
+        fillBankList();
+        return;
+      }
+      ST.selected.delete(c);
+      ST.selectedOrder = ST.selectedOrder.filter(x => x !== c);
+    }
+    document.getElementById('bankLimitMsg').style.display = 'none';
+    fillBankList();
+    if (ST.selected.size > 0 && ST.periodos.length > 0) {
+      clearTimeout(ST._autoRunTimer);
+      ST._autoRunTimer = setTimeout(() => window.run(), 300);
+    }
+    return;
+  }
+
+  // Compare mode (compare ON): multi-selection up to 5.
   if (on && ST.selected.size >= 5 && !ST.selected.has(c)) {
     document.getElementById('bankLimitMsg').style.display = 'block';
     setTimeout(() => document.getElementById('bankLimitMsg').style.display = 'none', 3000);
@@ -118,6 +145,44 @@ export function selAll(on) {
     ranked.slice(0, 5).forEach(c => { ST.selected.add(c); ST.selectedOrder.push(c); });
   }
   fillBankList();
+}
+
+/** Reflect ST.compareMode on the toggle switch UI. */
+export function syncCompareToggleUI() {
+  const el = document.getElementById('compareToggle');
+  if (!el) return;
+  el.classList.toggle('on', !!ST.compareMode);
+  el.setAttribute('aria-checked', ST.compareMode ? 'true' : 'false');
+}
+
+/**
+ * Switch between individual (single-select) and compare (multi-select) modes.
+ * Turning OFF collapses the selection to a single bank (the highlighted BTG if
+ * present, otherwise the first selected) and re-runs.
+ */
+export function setCompareMode(on) {
+  ST.compareMode = !!on;
+  if (!ST.compareMode && ST.selected.size > 1) {
+    const iso  = datasetIsoCountry();
+    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 30306294 : 59;
+    const keep = ST.selected.has(btg) ? btg : ST.selectedOrder[0];
+    ST.selected.clear();
+    ST.selectedOrder = [];
+    ST.selected.add(keep);
+    ST.selectedOrder.push(keep);
+    document.getElementById('bankLimitMsg').style.display = 'none';
+    fillBankList();
+    if (ST.periodos.length > 0) {
+      clearTimeout(ST._autoRunTimer);
+      ST._autoRunTimer = setTimeout(() => window.run(), 300);
+    }
+  }
+  syncCompareToggleUI();
+}
+
+/** onclick handler for the Compare toggle (flips current mode). */
+export function toggleCompareMode() {
+  setCompareMode(!ST.compareMode);
 }
 
 // ---- Tab bar scroll hint + fade (narrow viewports) ----

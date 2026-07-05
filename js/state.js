@@ -1,7 +1,7 @@
 // ============================================================
 // STATE — single source of truth for mutable app state
 // ============================================================
-import { paisIso, paisCurrency } from './paises.js?v=bmon27';
+import { paisIso, paisCurrency } from './paises.js?v=bmon28';
 
 export const ST = {
   /** Active dataset jurisdiction (bootstrap sets Chile; clears cache when switching live backends). */
@@ -10,6 +10,7 @@ export const ST = {
   bancos: {},
   selected: new Set(),
   selectedOrder: [],
+  compareMode: false,
   desde: null,
   hasta: null,
   data: {},
