@@ -28,7 +28,7 @@ function _setBannerLogo(iso, code) {
   const url = bankLogoUrl(iso, code);
   if (url) {
     el.innerHTML = `<img src="${url}" alt=""
-      style="max-height:52px;max-width:140px;object-fit:contain;"
+      style="max-height:42px;max-width:115px;object-fit:contain;"
       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
       <span style="display:none;align-items:center;">${_FALLBACK_BANK_ICON}</span>`;
   } else {
