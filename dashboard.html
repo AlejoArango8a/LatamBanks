@@ -936,10 +936,9 @@ body.light .kpi-custom-badge {
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:#001E62;flex-shrink:0;">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1" y="9" width="3" height="8" rx="1" fill="white"/>
-                <rect x="6" y="5" width="3" height="12" rx="1" fill="white"/>
-                <rect x="11" y="2" width="3" height="15" rx="1" fill="white"/>
-                <rect x="16" y="6" width="1" height="11" rx="0.5" fill="white" opacity="0.5"/>
+                <rect x="1"  y="10" width="4" height="7" rx="1" fill="white"/>
+                <rect x="7"  y="5"  width="4" height="12" rx="1" fill="white"/>
+                <rect x="13" y="1"  width="4" height="16" rx="1" fill="white"/>
               </svg>
             </span>
             <span style="font-size:20px;font-weight:500;color:var(--white);">Financial highlights</span>
@@ -951,9 +950,21 @@ body.light .kpi-custom-badge {
           <div id="bankIdentityBar" style="display:none;">
             <span id="bankNameFallback"></span>
           </div>
+          <!-- Historical evolution heading (outside the chart card) -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:#001E62;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="1,13 5,8 9,10 13,5 17,2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <polyline points="13,2 17,2 17,6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </span>
+            <div>
+              <div id="chartSectionTitle" style="font-size:20px;font-weight:500;color:var(--white);">Historical evolution</div>
+              <div id="chartSectionSub" style="font-size:12px;color:var(--text2);margin-top:2px;">Key indicators for selected period range</div>
+            </div>
+          </div>
           <div class="panel">
             <div class="panel-head">
-              <div><div class="panel-title">Banking System Evolution</div><div class="panel-sub">Key indicators for selected period range</div></div>
               <div style="display:flex;gap:6px;align-items:center;">
                 <div class="period-pill" id="rangePill"></div>
                 <button onclick="exportChartTable()" title="Export to Excel" style="padding:4px 8px;border:1px solid var(--border);background:var(--bg3);color:var(--green);border-radius:4px;cursor:pointer;font-size:11px;">⬇ xlsx</button>
@@ -1266,7 +1277,7 @@ body.light .kpi-custom-badge {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon22"></script>
+<script type="module" src="js/app.js?v=bmon23"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

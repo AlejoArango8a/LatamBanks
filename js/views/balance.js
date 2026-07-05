@@ -1,11 +1,11 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon22';
-import { bankColor } from '../config.js?v=bmon22';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon22';
-import { sumRows } from '../api.js?v=bmon22';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon22';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon23';
+import { bankColor } from '../config.js?v=bmon23';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon23';
+import { sumRows } from '../api.js?v=bmon23';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon23';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -80,7 +80,7 @@ export function renderBankTabs(containerId, activeCode, onSelect) {
   if (!container) return;
   if (banks.length <= 1) { container.innerHTML = ''; return; }
   container.innerHTML = banks.map((code, i) => {
-    const color  = bankColor(code, i);
+    const color  = bankColor(code, i, bankName(code));
     const active = code === activeCode;
     return `<button onclick="${onSelect}(${code})" style="
       padding:3px 10px;border-radius:3px;font-size:11px;cursor:pointer;
@@ -183,7 +183,7 @@ export function showBalTab(sec, bankCode) {
     banks.forEach(() => { html += `<col style="width:${bankPct}%">`; });
     html += `</colgroup><thead><tr><th>Descripción</th>`;
     banks.forEach((code, i) => {
-      html += `<th class="r" style="color:${bankColor(code, i)}">${bankName(code)}</th>`;
+      html += `<th class="r" style="color:${bankColor(code, i, bankName(code))}">${bankName(code)}</th>`;
     });
     html += `</tr></thead><tbody>`;
     rows.forEach(row => {
@@ -249,7 +249,7 @@ export function renderResTable(m) {
     banks.forEach(() => { html += `<col style="width:${bankPct}%">`; });
     html += `</colgroup><thead><tr><th>Concepto</th>`;
     banks.forEach((code, i) => {
-      html += `<th class="r" style="color:${bankColor(code, i)}">${bankName(code)}</th>`;
+      html += `<th class="r" style="color:${bankColor(code, i, bankName(code))}">${bankName(code)}</th>`;
     });
     html += `</tr></thead><tbody>`;
     r1Rows.forEach(row => {

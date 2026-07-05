@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon22';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon22';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon22';
-import { bankColor, btgBlue } from '../config.js?v=bmon22';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon22';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon22';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon22';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon22';
-import { setStatus, showErr } from '../utils.js?v=bmon22';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon22';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon23';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon23';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon23';
+import { bankColor, btgBlue } from '../config.js?v=bmon23';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon23';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon23';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon23';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon23';
+import { setStatus, showErr } from '../utils.js?v=bmon23';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon23';
 
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
 
@@ -86,7 +86,7 @@ export function refreshKPIs() {
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
     if (header && firstBank) {
-      const color = bankColor(firstBank, 0);
+      const color = bankColor(firstBank, 0, bankName(firstBank));
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
@@ -133,7 +133,7 @@ export function refreshKPIs() {
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
     if (header && firstBank) {
-      const color = bankColor(firstBank, 0);
+      const color = bankColor(firstBank, 0, bankName(firstBank));
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
@@ -178,7 +178,7 @@ export function refreshKPIs() {
   const headerName = document.getElementById('bankHeaderName');
   const headerSub  = document.getElementById('bankHeaderSub');
   if (header && firstBank) {
-    const color = bankColor(firstBank, 0);
+    const color = bankColor(firstBank, 0, bankName(firstBank));
     header.style.display = 'block';
     header.style.borderLeftColor = color;
     headerName.textContent = bankName(firstBank);
@@ -614,8 +614,10 @@ export function showResChart(tipo) {
   if (roeWrap)   roeWrap.style.display   = 'none';
   const dataTable = document.getElementById('resChartTablePanel');
   if (dataTable && ST._lastResChart) dataTable.style.display = 'block';
-  const titleEl = document.querySelector('#tab-resumen .panel-title');
-  if (titleEl) titleEl.textContent = 'Banking System Evolution';
+  const titleEl = document.getElementById('chartSectionTitle');
+  const subEl   = document.getElementById('chartSectionSub');
+  if (titleEl) titleEl.textContent = 'Historical evolution';
+  if (subEl)   subEl.textContent   = 'Key indicators for selected period range';
 
   const map = {
     activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds',
@@ -673,7 +675,7 @@ export function showResChart(tipo) {
     chartOpts = { valueScale: 'percent' };
     if (datasetIsoCountry() === 'CO') {
       series = banks.map((code, i) => {
-        const color = bankColor(code, i);
+        const color = bankColor(code, i, bankName(code));
         const data = periodos.map(p => {
           const rowsB = b1.filter(r => sameIns(r, code));
           const moraAbs = coMoraNumerator(rowsB, p);
@@ -684,7 +686,7 @@ export function showResChart(tipo) {
       });
     } else {
       series = banks.map((code, i) => {
-        const color = bankColor(code, i);
+        const color = bankColor(code, i, bankName(code));
         const data = periodos.map(p => {
           const moraAbs = c1.filter(r => sameIns(r, code) && r.cuenta === '857000000' && r.periodo === p)
             .reduce((s, r) => s + (r.monto_total || 0), 0);
@@ -702,7 +704,7 @@ export function showResChart(tipo) {
     const cuenta = saved.cuenta;
     const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
     series = banks.map((code, i) => {
-      const color = bankColor(code, i);
+      const color = bankColor(code, i, bankName(code));
       const data = sparseData(periodos.map(p =>
         rows.filter(r => sameIns(r, code) && r.cuenta === cuenta && r.periodo === p)
           .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
@@ -716,7 +718,7 @@ export function showResChart(tipo) {
     const codeSet = new Set(entry.cuentas || [entry.cuenta]);
     const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
     series = banks.map((code, i) => {
-      const color = bankColor(code, i);
+      const color = bankColor(code, i, bankName(code));
       const data  = sparseData(periodos.map(p =>
         rows.filter(r => sameIns(r, code) && codeSet.has(r.cuenta) && r.periodo === p)
             .reduce((s, r) => s + (r.monto_total || 0), 0) / 1e9 * usdFactor
@@ -796,8 +798,10 @@ export async function showROEChart() {
     b.classList.toggle('active', b.textContent.trim() === '📈 Annual ROE');
   });
   syncKpiResumenActive('roe');
-  const titleEl = document.querySelector('#tab-resumen .panel-title');
+  const titleEl = document.getElementById('chartSectionTitle');
+  const subEl   = document.getElementById('chartSectionSub');
   if (titleEl) titleEl.textContent = 'Annual ROE — All Banks';
+  if (subEl)   subEl.textContent   = 'Annualized return on equity · all active banks';
 
   abortROEFetch();
   roeAbortController = new AbortController();

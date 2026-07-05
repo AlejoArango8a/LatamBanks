@@ -37,9 +37,41 @@ export const btgRgba = (a = 0.08) => (_isLightTheme() ? `rgba(6,38,80,${a})` : `
 const BTG_CODES = new Set([59, 66, 30306294]);
 export const isBtgCode = (code) => BTG_CODES.has(Number(code));
 
-export const bankColor = (code, i) => {
+// Colores de marca compartidos entre países, indexados por fragmento de nombre en minúsculas.
+// Permite que Santander Chile y Santander Brasil usen el mismo rojo, etc.
+const BRAND_COLORS = new Map([
+  ['santander', '#F70000'],
+  ['itaú',      '#F75F01'],
+  ['itau',      '#F75F01'],
+  ['scotiabank','#6E0308'],
+  ['jp morgan', '#382106'],
+  ['jpmorgan',  '#382106'],
+  ['j.p. morgan','#382106'],
+  ['citibank',  '#1A73E8'],
+  ['bbva',      '#004A97'],
+  ['hsbc',      '#DB0011'],
+  ['bradesco',  '#BE1931'],
+]);
+
+function brandColorByName(name) {
+  if (!name) return null;
+  const lower = name.toLowerCase();
+  for (const [key, color] of BRAND_COLORS) {
+    if (lower.includes(key)) return color;
+  }
+  return null;
+}
+
+/**
+ * bankColor(code, i, name?)
+ * name es opcional: cuando se pasa, permite emparejar colores de marca entre países.
+ */
+export const bankColor = (code, i, name = '') => {
   if (isBtgCode(code)) return btgBlue();
-  return BANK_COLORS[code] ?? CHART_COLORS[i % CHART_COLORS.length];
+  if (BANK_COLORS[code]) return BANK_COLORS[code];
+  const byBrand = brandColorByName(name);
+  if (byBrand) return byBrand;
+  return CHART_COLORS[i % CHART_COLORS.length];
 };
 
 export const BANK_NAMES = {
