@@ -27,9 +27,18 @@ export const BANK_COLORS = {
 
 export const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','#34d399','#e879f9','#4ade80'];
 
+// Azul de marca BTG. En tema claro se usa el navy corporativo (#062650);
+// en tema oscuro un azul más brillante para conservar contraste sobre el fondo.
+const _isLightTheme = () => document.body.classList.contains('light');
+export const BTG_BLUE_LIGHT = '#062650';
+export const BTG_BLUE_DARK  = '#2563eb';
+export const btgBlue = () => (_isLightTheme() ? BTG_BLUE_LIGHT : BTG_BLUE_DARK);
+export const btgRgba = (a = 0.08) => (_isLightTheme() ? `rgba(6,38,80,${a})` : `rgba(37,99,235,${a})`);
+const BTG_CODES = new Set([59, 66, 30306294]);
+export const isBtgCode = (code) => BTG_CODES.has(Number(code));
+
 export const bankColor = (code, i) => {
-  const c = Number(code);
-  if (c === 59 || c === 66 || c === 30306294) return BANK_COLORS[59];
+  if (isBtgCode(code)) return btgBlue();
   return BANK_COLORS[code] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
 

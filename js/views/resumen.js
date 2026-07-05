@@ -1,18 +1,17 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon20';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon20';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon20';
-import { bankColor } from '../config.js?v=bmon20';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon20';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon20';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon20';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon20';
-import { setStatus, showErr } from '../utils.js?v=bmon20';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon20';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon21';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon21';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon21';
+import { bankColor, btgBlue } from '../config.js?v=bmon21';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon21';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon21';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon21';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon21';
+import { setStatus, showErr } from '../utils.js?v=bmon21';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon21';
 
-const BTG_TEXT_BLUE = '#001E62'; // azul del logo BTG (assets/LogoBTG-SinFondo.png)
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
 
 function escHtml(s) {
@@ -92,7 +91,7 @@ export function refreshKPIs() {
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = firstBank === btgCodeForIso() ? BTG_TEXT_BLUE : color;
+      headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -100,10 +99,10 @@ export function refreshKPIs() {
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>`;
+    <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Net Income (YTD)</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -140,7 +139,7 @@ export function refreshKPIs() {
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = firstBank === btgCodeForIso() ? BTG_TEXT_BLUE : color;
+      headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -148,10 +147,10 @@ export function refreshKPIs() {
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>`;
+    <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Net Income</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -186,7 +185,7 @@ export function refreshKPIs() {
     header.style.display = 'block';
     header.style.borderLeftColor = color;
     headerName.textContent = bankName(firstBank);
-    headerName.style.color = firstBank === btgCodeForIso() ? BTG_TEXT_BLUE : color;
+    headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
     const others = ST.selectedOrder.slice(1).map(c => bankName(c));
     headerSub.textContent = others.length
       ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -196,10 +195,10 @@ export function refreshKPIs() {
   }
 
   document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Net Income</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
@@ -598,6 +597,10 @@ function syncKpiResumenActive(tipo) {
 // ---- Resumen chart ----
 export function showResChart(tipo) {
   abortROEFetch();
+  // Brasil (Resumo) no tiene dato confiable para estos cortes: caer a Equity.
+  if (datasetIsoCountry() === 'BR' && ['dep_vista', 'dep_plazo', 'bonos', 'mora'].includes(tipo)) {
+    tipo = 'patrimonio';
+  }
   if (tipo === 'customkpi' && !resolveCustomKpiForRun()) {
     showResChart('patrimonio');
     return;
@@ -853,11 +856,11 @@ export async function showROEChart() {
     bankROEs.forEach(b => {
       const isBTG  = b.code === (isoROE === 'CO' ? 66 : isoROE === 'BR' ? 30306294 : 59);
       const pct    = Math.abs(b.roe) / maxAbs * 100;
-      const color  = b.roe >= 0 ? (isBTG ? '#2563eb' : 'var(--accent)') : 'var(--red)';
+      const color  = b.roe >= 0 ? (isBTG ? btgBlue() : 'var(--accent)') : 'var(--red)';
       html += `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;"
         onclick="loadBankFromTable(${b.code})" title="Load ${b.name}">
         <div style="width:150px;font-size:12px;font-weight:${isBTG ? '700' : '400'};
-          color:${isBTG ? BTG_TEXT_BLUE : 'var(--text)'};text-align:right;flex-shrink:0;
+          color:${isBTG ? btgBlue() : 'var(--text)'};text-align:right;flex-shrink:0;
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
         <div style="flex:1;background:var(--bg3);border-radius:3px;height:18px;">
           <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;opacity:0.85;"></div>

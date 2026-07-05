@@ -2,12 +2,12 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon20';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon20';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon20';
-import { setStatus, showErr } from './utils.js?v=bmon20';
-import { sumRows } from './api.js?v=bmon20';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon20';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon21';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon21';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon21';
+import { setStatus, showErr } from './utils.js?v=bmon21';
+import { sumRows } from './api.js?v=bmon21';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon21';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -174,6 +174,7 @@ export function initTopbarTabsOverflow() {
 
 // ---- Tab routing ----
 export function showTab(tab) {
+  if (datasetIsoCountry() === 'BR' && BR_DISABLED_TABS.includes(tab)) return;
   ['resumen','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
@@ -277,6 +278,40 @@ export function syncResumenMoraChartButton() {
   moraBtn.textContent = '⚠️ NPL %';
 }
 
+// Cuentas del gráfico "Banking System Evolution" sin dato confiable en el
+// Resumo de Brasil (IF.data). Se deshabilitan sus botones cuando el país activo
+// es Brasil para no mostrar valores incorrectos.
+const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+export function syncCountryChartButtons() {
+  const isBR = datasetIsoCountry() === 'BR';
+  BR_DISABLED_CHART_BTNS.forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = isBR;
+    btn.classList.toggle('rcbtn-disabled', isBR);
+    if (isBR) btn.title = 'Sin dato confiable para Brasil por ahora';
+    else btn.removeAttribute('title');
+  });
+}
+
+// Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
+const BR_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
+export function syncCountryDisabledTabs() {
+  const isBR = datasetIsoCountry() === 'BR';
+  BR_DISABLED_TABS.forEach(t => {
+    const btn = document.querySelector(`.tab[data-tab="${t}"]`);
+    if (!btn) return;
+    btn.disabled = isBR;
+    btn.classList.toggle('tab-disabled', isBR);
+    if (isBR) btn.title = 'No disponible para Brasil todavía';
+    else btn.removeAttribute('title');
+  });
+  if (isBR) {
+    const active = document.querySelector('.tab.active')?.getAttribute('data-tab');
+    if (BR_DISABLED_TABS.includes(active)) showTab('resumen');
+  }
+}
+
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
   const flags = { chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil', peru: 'flagPeru', uruguay: 'flagUruguay' };
@@ -298,7 +333,7 @@ export function selectCountry(country) {
     ST.country = 'chile';
     syncCurrencyToggleUI();
     syncResumenMoraChartButton();
-    if (prev === 'colombia') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+    if (prev !== 'chile') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
 
@@ -371,6 +406,9 @@ export function toggleTheme() {
     lightBtn.style.color      = 'var(--text3)';
   }
   syncBrandLogoByTheme();
+  // Re-render KPIs/encabezado y gráfico para que el color de marca BTG
+  // (navy en claro, azul brillante en oscuro) se aplique al nuevo tema.
+  if (typeof window.refreshKPIs === 'function') window.refreshKPIs();
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
 }
 

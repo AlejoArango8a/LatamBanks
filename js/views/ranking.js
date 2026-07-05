@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon20';
-import { paisSystemName } from '../paises.js?v=bmon20';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon21';
+import { paisSystemName } from '../paises.js?v=bmon21';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -16,11 +16,11 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS } from '../config.js?v=bmon20';
-import { CO_CUIF } from '../coCuentas.js?v=bmon20';
-import { BR_KPI } from '../brCuentas.js?v=bmon20';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon20';
-import { apiDatos } from '../api.js?v=bmon20';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon21';
+import { CO_CUIF } from '../coCuentas.js?v=bmon21';
+import { BR_KPI } from '../brCuentas.js?v=bmon21';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon21';
+import { apiDatos } from '../api.js?v=bmon21';
 
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -195,9 +195,9 @@ export function renderCBTable() {
     b.loansEq      = b.equity ? b.loans / b.equity : 0;
     const niColor  = b.netIncome12 >= 0 ? 'var(--green)' : 'var(--red)';
     const rowStyle = isBTG
-      ? 'background:rgba(37,99,235,0.08);border-left:3px solid #2563eb;'
+      ? `background:${btgRgba(0.08)};border-left:3px solid ${btgBlue()};`
       : 'border-left:3px solid transparent;';
-    const nameStyle = isBTG ? 'font-weight:700;color:#001E62;' : 'font-weight:500;color:var(--text);'; // #001E62 = azul logo BTG
+    const nameStyle = isBTG ? `font-weight:700;color:${btgBlue()};` : 'font-weight:500;color:var(--text);';
     const metaCo = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[b.code] : null;
     const tip = metaCo
       ? `Perspectiva: ${metaCo.outlook}. ${metaCo.agency}. ${metaCo.analysis}`
@@ -205,8 +205,8 @@ export function renderCBTable() {
     const tipAttr = tip ? ` title="${escapeAttr(tip)}"` : '';
     html += `<tr style="${rowStyle}transition:background 0.1s;cursor:pointer;"
       onclick="loadBankFromTable(${b.code})"
-      onmouseover="this.style.background='${isBTG ? 'rgba(37,99,235,0.14)' : 'rgba(56,189,248,0.06)'}'"
-      onmouseout="this.style.background='${isBTG ? 'rgba(37,99,235,0.08)' : 'transparent'}'">
+      onmouseover="this.style.background='${isBTG ? btgRgba(0.14) : 'rgba(56,189,248,0.06)'}'"
+      onmouseout="this.style.background='${isBTG ? btgRgba(0.08) : 'transparent'}'">
       <td class="cb-col-rank" style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);">${rowIdx + 1}</td>
       <td class="cb-col-bank" style="${nameStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${isBTG ? '★ ' : ''}${b.name}
@@ -215,7 +215,7 @@ export function renderCBTable() {
         <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}</span>
       </td>
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
-      <td class="cb-col-equity r" style="font-weight:600;${isBTG ? 'color:#2563eb;' : ''}">${fmtKPIDecimal(b.equity)}</td>
+      <td class="cb-col-equity r" style="font-weight:600;${isBTG ? `color:${btgBlue()};` : ''}">${fmtKPIDecimal(b.equity)}</td>
       <td class="cb-col-loans r">${fmtKPIDecimal(b.loans)}</td>
       <td class="cb-col-ni r" style="color:${niColor};font-weight:600;">${b.netIncome12 !== 0 ? fmtKPIDecimal(b.netIncome12) : '—'}</td>
       <td class="cb-col-loanseq r" style="color:var(--text2);font-family:var(--mono);">${loansEq}</td>

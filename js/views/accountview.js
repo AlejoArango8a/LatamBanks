@@ -1,10 +1,11 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon20';
-import { accountViewLevel } from '../coCuentas.js?v=bmon20';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon20';
-import { apiDatos } from '../api.js?v=bmon20';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon21';
+import { accountViewLevel } from '../coCuentas.js?v=bmon21';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon21';
+import { apiDatos } from '../api.js?v=bmon21';
+import { btgBlue, btgRgba } from '../config.js?v=bmon21';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 
@@ -283,10 +284,10 @@ export async function runAccountView() {
       const dp         = b.v1 !== 0 ? ((b.v2 - b.v1) / Math.abs(b.v1) * 100) : null;
       const deltaColor = dv > 0 ? 'var(--green)' : dv < 0 ? 'var(--red)' : 'var(--text3)';
       const rowStyle   = isBTG
-        ? 'background:rgba(37,99,235,0.07);border-left:3px solid #2563eb;'
+        ? `background:${btgRgba(0.07)};border-left:3px solid ${btgBlue()};`
         : `border-left:3px solid transparent;`;
       html += `<tr style="${rowStyle}">
-        <td style="font-weight:${isBTG ? '700' : '500'};color:${isBTG ? '#001E62' : 'var(--text)'};">
+        <td style="font-weight:${isBTG ? '700' : '500'};color:${isBTG ? btgBlue() : 'var(--text)'};">
           ${isBTG ? '★ ' : ''}${b.name}</td>
         <td class="r">${fmtKPIDecimal(b.v1)}</td>
         <td class="r">${fmtKPIDecimal(b.v2)}</td>
