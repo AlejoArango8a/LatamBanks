@@ -21,6 +21,7 @@ export const BANK_COLORS = {
   59: '#2563eb',
   62: '#00A9E4',
   66: '#2563eb',
+  30306294: '#2563eb',
   10001: '#047857',
 };
 
@@ -28,7 +29,7 @@ export const CHART_COLORS = ['#38bdf8','#f59e0b','#f87171','#a78bfa','#fb923c','
 
 export const bankColor = (code, i) => {
   const c = Number(code);
-  if (c === 59 || c === 66) return BANK_COLORS[59];
+  if (c === 59 || c === 66 || c === 30306294) return BANK_COLORS[59];
   return BANK_COLORS[code] ?? CHART_COLORS[i % CHART_COLORS.length];
 };
 

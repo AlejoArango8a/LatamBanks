@@ -1,9 +1,9 @@
 // ============================================================
 // API — network layer and data-access helpers
 // ============================================================
-import { API_BASE } from './config.js?v=bmon17';
-import { ST, datasetIsoCountry } from './state.js?v=bmon17';
-import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.js?v=bmon17';
+import { API_BASE } from './config.js?v=bmon18';
+import { ST, datasetIsoCountry } from './state.js?v=bmon18';
+import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.js?v=bmon18';
 
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();

@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon17';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon17';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon17';
-import { bankColor } from '../config.js?v=bmon17';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon17';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon17';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon17';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon17';
-import { setStatus, showErr } from '../utils.js?v=bmon17';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon17';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon18';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon18';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon18';
+import { bankColor } from '../config.js?v=bmon18';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon18';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon18';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon18';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon18';
+import { setStatus, showErr } from '../utils.js?v=bmon18';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon18';
 
 function escHtml(s) {
   return String(s)
@@ -97,15 +97,10 @@ export function refreshKPIs() {
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Credit Portfolio</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
-    <div class="kpi yellow kpi-btn" onclick="showResChart('captacoes')"><div class="kpi-label">Funding (Captações)</div><div class="kpi-val">${fmtKPI(m.captacoes)}</div><div class="kpi-sub">${fmtP(m.captacoes, m.totalAssets)} of assets</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('tvm')"><div class="kpi-label">Securities (TVM)</div><div class="kpi-val">${fmtKPI(m.tvm)}</div><div class="kpi-sub">${m.tvm ? fmtP(m.tvm, m.totalAssets) + ' of assets' : 'from 2025 plan'}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    ${customKpiTileHtml(m)}`;
+    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -150,17 +145,10 @@ export function refreshKPIs() {
     } else if (header) header.style.display = 'none';
 
     document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
-    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_vista')"><div class="kpi-label">Demand Deposits</div><div class="kpi-val">${fmtKPI(m.depVista)}</div><div class="kpi-sub">${fmtP(m.depVista, m.depositos)} of deposits</div></div>
-    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_plazo')"><div class="kpi-label">Time Deposits</div><div class="kpi-val">${fmtKPI(m.depPlazo)}</div><div class="kpi-sub">${fmtP(m.depPlazo, m.depositos)} of deposits</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('bonos')"><div class="kpi-label">Issued Bonds</div><div class="kpi-val">${fmtKPI(m.bonos)}</div><div class="kpi-sub">${fmtP(m.bonos, m.totalAssets)} of assets</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
-    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL (deteriorated)</div><div class="kpi-val">${moraLbl}</div><div class="kpi-sub">${moraSub}</div></div>
-    ${customKpiTileHtml(m)}`;
+    <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -205,17 +193,10 @@ export function refreshKPIs() {
   }
 
   document.getElementById('kpiResumen').innerHTML = `
-    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
-    <div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-label">Loans</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of assets</div></div>
-    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_vista')"><div class="kpi-label">Demand Deposits</div><div class="kpi-val">${fmtKPI(m.depVista)}</div><div class="kpi-sub">${fmtP(m.depVista, m.depositos)} of deposits</div></div>
-    <div class="kpi yellow kpi-btn" onclick="showResChart('dep_plazo')"><div class="kpi-label">Time Deposits</div><div class="kpi-val">${fmtKPI(m.depPlazo)}</div><div class="kpi-sub">${fmtP(m.depPlazo, m.depositos)} of deposits</div></div>
-    <div class="kpi blue kpi-btn" onclick="showResChart('bonos')"><div class="kpi-label">Issued Bonds</div><div class="kpi-val">${fmtKPI(m.bonos)}</div><div class="kpi-sub">${fmtP(m.bonos, m.totalAssets)} of assets</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('pasivos')"><div class="kpi-label">Total Liabilities</div><div class="kpi-val">${fmtKPI(m.pasivos)}</div><div class="kpi-sub">${fmtP(m.pasivos, m.totalAssets)} of assets</div></div>
     <div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div>
+    <div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-label">Total Assets ${bankLabel}</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div>
     <div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-label">Net Income</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>
     <div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-label">Annual ROE</div><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div>
-    <div class="kpi red kpi-btn" onclick="showResChart('mora')"><div class="kpi-label">NPL +90d / Loans</div><div class="kpi-val">${m.colocaciones ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false) : '—'}</div><div class="kpi-sub">CMF NPL vs total loans (${fmtKPI(m.mora90)} · loans ${fmtKPI(m.colocaciones)})</div></div>
-    ${customKpiTileHtml(m)}
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
@@ -592,15 +573,15 @@ export async function run() {
 }
 
 // Key Data tile order in #kpiResumen (refreshKPIs HTML)
+// Key Data: 4 tiles en orden Equity, Total Assets, Net Income, Annual ROE.
+// Los demás tipos de gráfico (loans, deposits, NPL, custom, etc.) siguen
+// disponibles en la barra de botones del gráfico; simplemente no resaltan tile.
 const KPI_RESUMEN_IDX = {
-  activos: 0, coloc: 1, dep_vista: 2, dep_plazo: 3, bonos: 4,
-  pasivos: 5, patrimonio: 6, utilidad: 7, roe: 8, mora: 9, customkpi: 10,
+  patrimonio: 0, activos: 1, utilidad: 2, roe: 3,
 };
 
-// Brasil tiene menos tiles y otro orden (sin depósitos ni NPL).
 const KPI_RESUMEN_IDX_BR = {
-  activos: 0, coloc: 1, captacoes: 2, tvm: 3, pasivos: 4,
-  patrimonio: 5, utilidad: 6, roe: 7, customkpi: 8,
+  patrimonio: 0, activos: 1, utilidad: 2, roe: 3,
 };
 
 function syncKpiResumenActive(tipo) {
