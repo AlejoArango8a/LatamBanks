@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon21';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon21';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon21';
-import { bankColor, btgBlue } from '../config.js?v=bmon21';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon21';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon21';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon21';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon21';
-import { setStatus, showErr } from '../utils.js?v=bmon21';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon21';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon22';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon22';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon22';
+import { bankColor, btgBlue } from '../config.js?v=bmon22';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon22';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon22';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon22';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon22';
+import { setStatus, showErr } from '../utils.js?v=bmon22';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon22';
 
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
 
@@ -81,7 +81,6 @@ export function refreshKPIs() {
     const trimestre  = Math.round(lastMonth / 3);
     const roeSubLabel = `Q${trimestre} YTD × ${(12 / lastMonth).toFixed(2).replace(/\.00$/, '')}`;
     const firstBank  = ST.selectedOrder[0];
-    const bankLabel  = firstBank ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:6px;">${bankName(firstBank)}</span>` : '';
 
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
@@ -91,7 +90,7 @@ export function refreshKPIs() {
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
+      headerName.style.color = btgBlue();
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -126,7 +125,6 @@ export function refreshKPIs() {
     const roe        = m.patrimonio && m.utilidad ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
     const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
     const firstBank  = ST.selectedOrder[0];
-    const bankLabel  = firstBank ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:6px;">${bankName(firstBank)}</span>` : '';
     const moraLbl = m.colocaciones && Number.isFinite(m.mora90)
       ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false)
       : '—';
@@ -139,7 +137,7 @@ export function refreshKPIs() {
       header.style.display = 'block';
       header.style.borderLeftColor = color;
       headerName.textContent = bankName(firstBank);
-      headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
+      headerName.style.color = btgBlue();
       const others = ST.selectedOrder.slice(1).map(c => bankName(c));
       headerSub.textContent = others.length
         ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`
@@ -175,7 +173,6 @@ export function refreshKPIs() {
   const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
 
   const firstBank  = ST.selectedOrder[0];
-  const bankLabel  = firstBank ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:6px;">${bankName(firstBank)}</span>` : '';
 
   const header     = document.getElementById('bankHeader');
   const headerName = document.getElementById('bankHeaderName');
@@ -185,7 +182,7 @@ export function refreshKPIs() {
     header.style.display = 'block';
     header.style.borderLeftColor = color;
     headerName.textContent = bankName(firstBank);
-    headerName.style.color = firstBank === btgCodeForIso() ? btgBlue() : color;
+    headerName.style.color = btgBlue();
     const others = ST.selectedOrder.slice(1).map(c => bankName(c));
     headerSub.textContent = others.length
       ? `Compared with: ${others.join(', ')} · ${periodLabel(m.lastP)}`

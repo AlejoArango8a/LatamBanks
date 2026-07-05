@@ -618,15 +618,7 @@ body.light .custom-kpi-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.12); }
   border-radius:6px; padding:12px 14px;
   position:relative; overflow:hidden;
 }
-.kpi::after {
-  content:''; position:absolute;
-  top:0; left:0; right:0; height:2px;
-}
-.kpi.blue::after  { background:var(--accent); }
-.kpi.green::after { background:var(--green); }
-.kpi.red::after   { background:var(--red); }
-.kpi.yellow::after{ background:var(--yellow); }
-.kpi.purple::after{ background:var(--purple); }
+.kpi::after { content:none; }
 .kpi-label { font-size:10px; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px; }
 .kpi-val { font-family:var(--sans); font-size:19px; font-weight:600; color:var(--white); line-height:1; }
 .kpi-sub { font-size:11px; color:var(--text3); margin-top:4px; font-family:var(--sans); }
@@ -814,7 +806,7 @@ body.light .kpi-custom-badge {
     </div>
 
     <div class="topbar-right">
-      <div class="status-pill status" title="Data status" id="statusPill"><span class="status-dot idle" id="sDot"></span><span id="sTxt"></span></div>
+      <div class="status-pill status" title="Data status" id="statusPill" style="display:none;"><span class="status-dot idle" id="sDot"></span><span id="sTxt"></span></div>
       <div class="ccy-toggle" onclick="toggleCurrency()" role="group" aria-label="Reporting currency"><span id="switchCLP" class="ccy-toggle-opt ccy-l" title="Local currency">CLP</span><span lang="en" id="switchUSD" class="ccy-toggle-opt ccy-u">USD</span></div>
       <div class="dashboard-theme-toggle" onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:0;cursor:pointer;
@@ -935,15 +927,25 @@ body.light .kpi-custom-badge {
         <!-- RESUMEN -->
         <div id="tab-resumen">
           <!-- Bank header -->
-          <div id="bankHeader" style="display:none;margin-bottom:24px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;border-left:4px solid var(--accent);">
+          <div id="bankHeader" style="display:none;margin-bottom:38px;padding:14px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;border-left:4px solid var(--accent);">
             <div style="font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Analyzing</div>
             <div id="bankHeaderName" style="font-size:22px;font-weight:700;color:var(--white);line-height:1.1;"></div>
             <div id="bankHeaderSub" style="font-size:12px;color:var(--text2);margin-top:3px;"></div>
           </div>
 
-          <div style="font-size:14px;font-family:var(--mono);color:var(--text);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px;padding-left:2px;">Key Numbers</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:#001E62;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="9" width="3" height="8" rx="1" fill="white"/>
+                <rect x="6" y="5" width="3" height="12" rx="1" fill="white"/>
+                <rect x="11" y="2" width="3" height="15" rx="1" fill="white"/>
+                <rect x="16" y="6" width="1" height="11" rx="0.5" fill="white" opacity="0.5"/>
+              </svg>
+            </span>
+            <span style="font-size:20px;font-weight:500;color:var(--white);">Financial highlights</span>
+          </div>
           <div class="kpi-grid" id="kpiResumen"></div>
-          <div style="margin-bottom:24px;"></div>
+          <div style="margin-bottom:38px;"></div>
 
           <!-- Remove old identity bar -->
           <div id="bankIdentityBar" style="display:none;">
@@ -1264,7 +1266,7 @@ body.light .kpi-custom-badge {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon21"></script>
+<script type="module" src="js/app.js?v=bmon22"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
