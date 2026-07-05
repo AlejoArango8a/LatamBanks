@@ -109,7 +109,7 @@ export function refreshKPIs() {
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
-    if (header && firstBank) {
+    if (header && firstBank != null) {
       const color = bankColor(firstBank, 0, bankName(firstBank));
       header.style.display = 'flex';
       header.style.borderLeftColor = color;
@@ -157,7 +157,7 @@ export function refreshKPIs() {
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
-    if (header && firstBank) {
+    if (header && firstBank != null) {
       const color = bankColor(firstBank, 0, bankName(firstBank));
       header.style.display = 'flex';
       header.style.borderLeftColor = color;
@@ -203,7 +203,7 @@ export function refreshKPIs() {
   const header     = document.getElementById('bankHeader');
   const headerName = document.getElementById('bankHeaderName');
   const headerSub  = document.getElementById('bankHeaderSub');
-  if (header && firstBank) {
+  if (header && firstBank != null) {
     const color = bankColor(firstBank, 0, bankName(firstBank));
     header.style.display = 'flex';
     header.style.borderLeftColor = color;
