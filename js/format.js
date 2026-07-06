@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon36';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon36';
-import { ST } from './state.js?v=bmon36';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon37';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon37';
+import { ST } from './state.js?v=bmon37';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -158,8 +158,15 @@ export function polishColombianBankDisplay(raw) {
 
 export function bankName(code) {
   const fromApi = ST.bancos[code];
-  if (ST.country === 'brasil' && Number(code) === 30306294) return 'BTG Pactual Brasil';
-  if (ST.country === 'brasil' && Number(code) === 92702067) return 'Banrisul';
+  if (ST.country === 'brasil' && Number(code) === 1000080336) return 'BTG Pactual Brasil';
+  if (ST.country === 'brasil' && Number(code) === 1000080154) return 'Banrisul';
+  if (ST.country === 'brasil') {
+    // El razon_social del rebuild IF.data viene como "ITAU - PRUDENCIAL",
+    // "BB - PRUDENCIAL", etc. Se quita el sufijo del nivel de consolidación
+    // para mostrar el nombre limpio (sin hardcodear nombres por banco).
+    const raw = fromApi || `Bank ${code}`;
+    return raw.replace(/\s*-\s*PRUDENCIAL\s*$/i, '').trim();
+  }
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
     const ins = Number(code);

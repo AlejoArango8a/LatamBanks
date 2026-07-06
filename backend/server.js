@@ -109,12 +109,11 @@ app.get('/api/bootstrap', async (req, res) => {
         [country],
       ),
       query(
-        // BR: solo bancos operativos (es_banco). La fuente IF.data mezcla holdings,
-        // bancos de fomento e instituições de pagamento; se filtran para el ranking.
-        // CL/CO no usan es_banco (queda NULL) y no se ven afectados.
-        `SELECT codigo::int, razon_social FROM instituciones WHERE country = $1${
-          country === 'BR' ? ' AND es_banco IS TRUE' : ''
-        } ORDER BY codigo ASC`,
+        // BR (rebuild IF.data prudencial): se carga el universo completo
+        // (~1.366 entidades). El recorte a un ranking manejable se hace por el
+        // piso de Patrimônio Líquido de más abajo, no por es_banco (que el
+        // nuevo loader ya no setea). CL/CO no se ven afectados.
+        'SELECT codigo::int, razon_social FROM instituciones WHERE country = $1 ORDER BY codigo ASC',
         [country],
       ),
       query(
@@ -154,31 +153,33 @@ app.get('/api/bootstrap', async (req, res) => {
           [country, eqCuenta, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'BR') {
-        // Patrimônio Líquido: código viejo (≤dic-2024) + nuevo (≥mar-2025).
+        // Patrimônio Líquido. El rebuild IF.data guarda todo con tipo='p' y
+        // usa el código nuevo Cosif 140246 (se mantiene 78186 por compat. con
+        // datos viejos si los hubiera). Ya no se filtra por es_banco: el
+        // universo completo se recorta por el piso de patrimônio de abajo.
         patrimonioRows = await query(
           `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = ANY($2) AND periodo = $3
-             AND ins_cod IN (SELECT codigo FROM instituciones WHERE country = $1 AND es_banco IS TRUE)
+           WHERE country = $1 AND tipo = 'p' AND cuenta = ANY($2) AND periodo = $3
            GROUP BY ins_cod`,
           [country, ['78186', '140246'], lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
 
-        // Filtro mínimo: ~USD 150M de patrimônio.
-        // Umbral en BRL usando tipo de cambio conservador (5 BRL/USD → 750 M BRL).
-        // Excluye bancos muy pequeños sin importar fluctuaciones del real.
-        const BR_MIN_PATRIMONIO_BRL = 750_000_000;
-        const bancosConPatrimonio = new Set(
-          patrimonioRows
-            .filter(r => r.monto_total >= BR_MIN_PATRIMONIO_BRL)
+        // Diseño (Sección 1 de la spec): la base guarda el universo prudencial
+        // completo (~1.400 entidades) y el dashboard filtra al TOP-50 por
+        // Patrimônio Líquido del último período. Se recorta acá para no volcar
+        // ~1.400 entidades al selector (incluidas cooperativas y entidades sin
+        // dato de equity). Ordena por PL desc y toma las 50 mayores.
+        const BR_TOP_N = 50;
+        const topCodes = new Set(
+          [...patrimonioRows]
+            .sort((a, b) => b.monto_total - a.monto_total)
+            .slice(0, BR_TOP_N)
             .map(r => r.ins_cod),
         );
-        // Preservar bancos sin dato de patrimônio en el último período (edge case)
-        // solo si ya pasaron el filtro es_banco; los que tienen dato y no llegan, se van.
-        const tienenDato = new Set(patrimonioRows.map(r => r.ins_cod));
         instituciones.splice(
           0,
           instituciones.length,
-          ...instituciones.filter(i => !tienenDato.has(i.codigo) || bancosConPatrimonio.has(i.codigo)),
+          ...instituciones.filter(i => topCodes.has(i.codigo)),
         );
       }
     } catch (e) {
@@ -220,6 +221,12 @@ app.post('/api/datos', async (req, res) => {
     if (!Array.isArray(periodos) || !periodos.length) return res.status(400).json({ ok: false, error: 'Requerido: periodos[]' });
     if (!Array.isArray(cuentas)  || !cuentas.length)  return res.status(400).json({ ok: false, error: 'Requerido: cuentas[]' });
 
+    // BR (rebuild IF.data): todos los datos se guardan con tipo='p'. El frontend
+    // sigue pidiendo 'b1'/'r1' (categorías lógicas por cuenta), así que aquí se
+    // colapsan a un único 'p'. Las cuentas del request ya distinguen balance vs
+    // resultado, por lo que no hay colisión. CL/CO conservan sus tipos.
+    const effectiveTipos = country === 'BR' ? ['p'] : tiposList;
+
     const NUMERIC_COLS = new Set(['ins_cod','monto_total','monto_clp','monto_uf','monto_tc','monto_ext']);
     const cols = selectCols
       ? selectCols.split(',').map(c => c.trim()).filter(c => ALLOWED_COLS.has(c))
@@ -228,7 +235,7 @@ app.post('/api/datos', async (req, res) => {
     // Castear columnas numéricas para que pg las devuelva como números, no strings
     const selectStr = cols.map(c => NUMERIC_COLS.has(c) ? `${c}::bigint AS ${c}` : c).join(', ');
 
-    const tipoPromises = tiposList.map(t => {
+    const tipoPromises = effectiveTipos.map(t => {
       const params = [country, t, periodos, cuentas];
       let sql = `SELECT ${selectStr} FROM datos_financieros
                  WHERE country = $1

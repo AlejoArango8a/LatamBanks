@@ -1,50 +1,24 @@
 #!/usr/bin/env python3
 """
-brasil_loader.py — ETL IF.data Brasil (Banco Central / API Olinda OData) → CockroachDB.
+brasil_loader.py — ETL Banco Central do Brasil (IF.data) -> CockroachDB
+Nivel: Conglomerados Prudenciais e Instituições Independentes.
+LatamBanks — country='BR'
 
-Fuente: https://olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata/IfDataValores
-Filtros: TipoInstituicao=3 (conglomerados/independentes), Relatorio=1 (Resumo).
-Frecuencia: TRIMESTRAL (AnoMes termina en 03, 06, 09, 12).
-
-Qué capturamos por fila:
-  - CodInst  -> ins_cod (BIGINT)         identificador de la institución (base do CNPJ)
-  - AnoMes   -> periodo (YYYYMM)
-  - Conta    -> cuenta (TEXT)            código de la columna del reporte (¡cambia en mar-2025!)
-  - NomeColuna     -> plan_cuentas.descripcion   nombre legible del concepto
-  - DescricaoColuna-> plan_cuentas.formula       cuentas Cosif oficiales que lo componen (auditoría DE/PARA)
-  - Saldo    -> monto_total (BIGINT)
-
-Diseño de la cuenta (acordado con el usuario):
-  Guardamos `Conta` crudo (fiel a la fuente). El nuevo plan Cosif de mar-2025
-  (Resolución CMN 4.966/2021) renumeró las cuentas: el schema_guard (Tarea A)
-  detecta esa frontera vía umbral relativo y la deja registrada como alerta.
-  DescricaoColuna queda como respaldo auditable contra los catálogos oficiales
-  del BCB (completo_contas_2025.pdf vs completo_contas.pdf).
-
-Requiere:
-  - Variable .env COCKROACH_URL
-  - migrations/001..004 aplicadas + 005_plan_cuentas_add_formula.sql (para `formula`)
-
-Uso:
-  python brasil_loader.py --dry-run                 # SOLO LECTURA: no escribe en BD
-  python brasil_loader.py --dry-run --quarters 202409,202412,202503,202506
-  python brasil_loader.py --historical              # 2013..trimestre actual
-  python brasil_loader.py --historical --year 2025  # solo un año civil
-  python brasil_loader.py --incremental             # trimestres nuevos
-  python brasil_loader.py --institutions-plan       # solo instituciones + plan (último trimestre)
+Modos:
+  (sin flags)          Modo automático: carga solo los trimestres del catálogo
+                        que todavía no estén en carga_log. Uso normal en cron.
+  --quarter AAAAMM      Carga (o recarga) un trimestre puntual.
+  --all                 Carga (o recarga) todos los trimestres del catálogo.
+  --wipe                Borra TODO Brasil antes de cargar. Usar SOLO una vez,
+                        en la reconstrucción inicial, combinado con --quarter
+                        o --all.
 """
-
-from __future__ import annotations
-
 import argparse
 import json
 import logging
 import os
-import sys
-from collections import defaultdict
-from datetime import date
+import time
 from pathlib import Path
-from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -53,448 +27,244 @@ from dotenv import load_dotenv
 import psycopg2
 import psycopg2.extras
 
-from schema_guard import detect_schema_changes, get_known_accounts, record_schema_result
-from brasil_banks import name_for, is_bank
-
-# Evita UnicodeEncodeError al imprimir acentos en consolas Windows (cp1252).
-try:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
-except Exception:
-    pass
-
 load_dotenv(Path(__file__).parent / ".env")
-
-COCKROACH_URL = os.environ.get("COCKROACH_URL", "")
-OLINDA_BASE = (
-    "https://olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata/"
-    "IfDataValores(AnoMes=@AnoMes,TipoInstituicao=@TipoInstituicao,Relatorio=@Relatorio)"
-)
-
+COCKROACH_URL = os.environ["COCKROACH_URL"]
 COUNTRY = "BR"
-TIPO_INSTITUICAO = 3
-RELATORIO = "1"
-BATCH_ROWS = 500
-FIRST_YEAR = 2022  # alineado con Chile/Colombia; extensible con --year para años previos
+BATCH = 500
 
-# Reportes IF.data a cargar por trimestre.
-#   ("1", None)      -> Resumo: se etiqueta con el tipo inferido (b1/r1); NO cambia.
-#   detalle          -> cada reporte va con su propio `tipo` para no pisar al Resumo
-#                       (comparten algunos códigos Conta, ej. 78186 = Patrimônio).
-# Los reportes de detalle solo se guardan para bancos operativos (es_banco), para
-# no inflar la base con ~2000 instituciones que no mostramos en detalle.
-REPORTS: list[tuple[str, str | None]] = [
-    ("1", None),        # Resumo  (indicadores principales)
-    ("2", "br_ativo"),  # Ativo   (composición del activo)
-    ("3", "br_pasivo"), # Passivo (composición del pasivo + depósitos)
-    ("4", "br_dre"),    # DRE     (estado de resultados)
-]
+PORTAL = "https://www3.bcb.gov.br/ifdata/rest"
+OLINDA = "https://olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata"
+DICT_RELATORIOS = ["1", "2", "3", "4", "5"]  # Resumo, Ativo, Passivo, Resultado, Capital
 
-# Tipos del Resumo: única fuente que vigila el schema_guard (Tarea A). Los reportes
-# de detalle tienen muchas más cuentas y dispararían falsas alertas si se vigilaran.
-RESUMO_TIPOS = ("b1", "r1")
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
-log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger("brasil_loader")
 
 
-# ============================================================
-# CONEXIÓN Y FUENTE
-# ============================================================
-def conn_get():
-    return psycopg2.connect(COCKROACH_URL)
+# ---------------------------------------------------------------------------
+# HTTP helpers (con reintentos — el portal no es un endpoint documentado y
+# puede ser inestable)
+# ---------------------------------------------------------------------------
+def http_json(url, retries=3, backoff=5):
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "LatamBanksBR/1.0"})
+            with urlopen(req, timeout=180) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except (HTTPError, URLError, TimeoutError) as e:
+            last_err = e
+            log.warning("intento %d/%d fallo para %s: %s", attempt, retries, url, e)
+            if attempt < retries:
+                time.sleep(backoff * attempt)
+    raise last_err
 
 
-def olinda_get(
-    ano_mes: str,
-    tipo_inst: int = TIPO_INSTITUICAO,
-    relatorio: str = RELATORIO,
-    cod_inst: str | None = None,
-    top: int | None = None,
-) -> list[dict[str, Any]]:
-    """GET a la API Olinda; devuelve la lista data['value']."""
-    q = (
-        f"?@AnoMes={ano_mes}&@TipoInstituicao={tipo_inst}&@Relatorio='{relatorio}'"
-        f"&$format=json"
-    )
-    if cod_inst:
-        q += "&$filter=" + quote(f"CodInst eq '{cod_inst}'", safe="'")
-    if top:
-        q += f"&$top={top}"
-    url = OLINDA_BASE + q
-    req = Request(url, headers={"User-Agent": "LatamBanksBrasilLoader/1.0"})
-    try:
-        with urlopen(req, timeout=180) as r:
-            raw = r.read().decode("utf-8")
-    except HTTPError as e:
-        log.error("Olinda HTTP %s — %s", e.code, e.read()[:500])
-        raise
-    except URLError as e:
-        log.error("Olinda URL error: %s", e.reason)
-        raise
-    data = json.loads(raw)
-    value = data.get("value")
-    if not isinstance(value, list):
-        raise RuntimeError(f"Olinda esperaba 'value' lista, halló {type(value)}")
-    return value
+def portal_file(f):
+    return http_json(f"{PORTAL}/arquivos?nomeArquivo=" + quote(f, safe="/:._-"))
 
 
-# ============================================================
-# PARSEO
-# ============================================================
-def infer_tipo(nome_coluna: str) -> str:
-    """Clasifica el renglón: r1 = resultado (estado de resultados), b1 = balance.
+def list_quarters():
+    # NOTA: el nombre del endpoint asume catálogo 2025-2030. Si el Banco
+    # Central publica un catálogo nuevo después de 2030, este endpoint podría
+    # cambiar de nombre — revisar si algún día deja de devolver trimestres
+    # nuevos.
+    return http_json(f"{PORTAL}/relatorios2025a2030")  # [{dt, files:[{f}]}]
 
-    En el Relatorio 1 la única línea de resultado es "Lucro Líquido"; el resto son
-    de balance. OJO: no usamos la palabra "resultado" como disparador porque
-    colisiona con "Resultados de Exercícios Futuros" (una cuenta de PASIVO del
-    Cosif viejo). La detección amplia de resultados llegará con los Relatorios 2-5
-    y su tabla de equivalencias.
+
+# ---------------------------------------------------------------------------
+# Diccionario de cuentas (Olinda) — corrección respecto al handoff original:
+# se consultan varias instituciones de tipos TCB distintos, elegidas del
+# propio cadastro del trimestre, en vez de depender de un solo banco.
+# ---------------------------------------------------------------------------
+def pick_reference_codinst(cadastro, keep=("30306294",)):
     """
-    n = (nome_coluna or "").lower()
-    if "lucro" in n or "prejuízo" in n or "prejuizo" in n:
-        return "r1"
-    return "b1"
-
-
-def row_to_tuple(rec: dict[str, Any], tipo_override: str | None = None) -> tuple:
-    ins = int(str(rec["CodInst"]).strip())
-    periodo = str(rec["AnoMes"]).strip()
-    cuenta = str(rec.get("Conta") or "").strip()
-    nome = str(rec.get("NomeColuna") or "").strip()
-    tipo = tipo_override or infer_tipo(nome)
-    saldo = float(rec.get("Saldo") or 0)
-    monto = int(round(saldo))
-    return (COUNTRY, periodo, tipo, ins, cuenta, 0, 0, 0, 0, monto)
-
-
-def collect_plan(records: list[dict], plan: dict[str, tuple[str, str]]) -> None:
-    """Acumula {Conta: (NomeColuna, DescricaoColuna)} a partir de los registros."""
-    for r in records:
-        c = str(r.get("Conta") or "").strip()
-        if not c:
+    Selecciona un CodInst real por cada tipo TCB distinto para maximizar la
+    cobertura del diccionario de cuentas. Prioriza instituciones
+    independientes (c4=='I'), cuyo c0 YA es su CodInst individual válido en
+    Olinda. Los conglomerados prudenciais (c4=='C') tienen código '1000...'
+    que NO es un CodInst válido en Olinda, así que se excluyen de esta
+    selección (siguen cargándose normalmente en datos_financieros).
+    `keep` = CodInst ya confirmados que siempre se incluyen (BTG por defecto,
+    validado en sesión anterior).
+    """
+    seen_tcb = set()
+    refs = list(keep)
+    for e in cadastro:
+        if str(e.get("c4") or "").strip() != "I":
             continue
-        nome = str(r.get("NomeColuna") or "").strip()
-        formula = str(r.get("DescricaoColuna") or "").strip()
-        plan[c] = (nome, formula)
+        tcb = str(e.get("c3") or "").strip()
+        cod = str(e.get("c0") or "").strip()
+        if tcb and tcb not in seen_tcb and cod:
+            seen_tcb.add(tcb)
+            refs.append(cod)
+    return refs
 
 
-# ============================================================
-# UPSERTS
-# ============================================================
-def upsert_institutions(conn, cod_insts: set[str]) -> None:
-    if not cod_insts:
-        return
-    tuples = []
-    for ci in cod_insts:
-        try:
-            code = int(str(ci).strip())
-        except ValueError:
-            continue
-        tuples.append((COUNTRY, code, name_for(ci), is_bank(ci)))
-    cur = conn.cursor()
-    for i in range(0, len(tuples), BATCH_ROWS):
-        psycopg2.extras.execute_values(
-            cur,
-            "INSERT INTO instituciones (country, codigo, razon_social, es_banco) VALUES %s "
-            "ON CONFLICT (country, codigo) DO UPDATE SET "
-            "razon_social = EXCLUDED.razon_social, es_banco = EXCLUDED.es_banco",
-            tuples[i : i + BATCH_ROWS],
-        )
-    conn.commit()
-    log.info("Instituciones BR upsert — %s instituciones", len(tuples))
-
-
-def upsert_plan_cuentas(conn, plan: dict[str, tuple[str, str]]) -> None:
-    if not plan:
-        return
-    tuples = [(COUNTRY, c, (nome or c), (formula or None)) for c, (nome, formula) in plan.items()]
-    cur = conn.cursor()
-    for i in range(0, len(tuples), BATCH_ROWS):
-        psycopg2.extras.execute_values(
-            cur,
-            "INSERT INTO plan_cuentas (country, cuenta, descripcion, formula) VALUES %s "
-            "ON CONFLICT (country, cuenta) DO UPDATE SET "
-            "descripcion = EXCLUDED.descripcion, formula = EXCLUDED.formula",
-            tuples[i : i + BATCH_ROWS],
-        )
-    conn.commit()
-    log.info("Plan de cuentas BR upsert — %s cuentas (con fórmula Cosif)", len(tuples))
-
-
-INSERT_DATOS = (
-    "INSERT INTO datos_financieros "
-    "(country, periodo, tipo, ins_cod, cuenta, monto_clp, monto_uf, monto_tc, monto_ext, monto_total) "
-    "VALUES %s "
-    "ON CONFLICT (country, periodo, tipo, ins_cod, cuenta) DO UPDATE SET "
-    "monto_clp = EXCLUDED.monto_clp, monto_uf = EXCLUDED.monto_uf, "
-    "monto_tc = EXCLUDED.monto_tc, monto_ext = EXCLUDED.monto_ext, "
-    "monto_total = EXCLUDED.monto_total"
-)
-
-
-def ingest_tuple_batch(conn, tuples: list[tuple]) -> None:
-    if not tuples:
-        return
-    # De-dup por clave primaria (country, periodo, tipo, ins_cod, cuenta): la
-    # fuente Olinda a veces repite la misma fila dentro de un trimestre, y un
-    # INSERT ... ON CONFLICT no puede afectar la misma fila dos veces en un solo
-    # statement (CardinalityViolation). Nos quedamos con la última ocurrencia.
-    dedup: dict[tuple, tuple] = {}
-    for t in tuples:
-        dedup[(t[0], t[1], t[2], t[3], t[4])] = t
-    rows = list(dedup.values())
-    cur = conn.cursor()
-    for i in range(0, len(rows), BATCH_ROWS):
-        psycopg2.extras.execute_values(cur, INSERT_DATOS, rows[i : i + BATCH_ROWS])
-    conn.commit()
-
-
-def bump_carga_log(conn, counts_by_periodo: dict[str, int]) -> None:
-    cur = conn.cursor()
-    for p, nrows in sorted(counts_by_periodo.items()):
-        cur.execute(
-            "INSERT INTO carga_log (country, periodo, archivos_procesados, estado) VALUES (%s, %s, %s, %s) "
-            "ON CONFLICT (country, periodo) DO UPDATE SET "
-            "archivos_procesados = EXCLUDED.archivos_procesados, estado = 'ok'",
-            (COUNTRY, p, nrows, "ok"),
-        )
-    conn.commit()
-
-
-# ============================================================
-# PERÍODOS (trimestrales)
-# ============================================================
-def quarters_in_range(y0: int, y1: int) -> list[str]:
-    out: list[str] = []
-    for y in range(y0, y1 + 1):
-        for m in (3, 6, 9, 12):
-            out.append(f"{y:04d}{m:02d}")
-    return out
-
-
-def latest_available_quarter() -> str | None:
-    """Busca el trimestre más reciente con datos (probando de más nuevo a más viejo)."""
-    today = date.today()
-    for y in (today.year, today.year - 1):
-        for m in (12, 9, 6, 3):
-            if y == today.year and m > ((today.month - 1) // 3) * 3 + 3:
-                continue
-            p = f"{y:04d}{m:02d}"
+def build_dictionary(anomes, cadastro):
+    codinsts = pick_reference_codinst(cadastro)
+    d = {}
+    for rel in DICT_RELATORIOS:
+        for cod in codinsts:
+            url = (
+                f"{OLINDA}/IfDataValores(AnoMes={anomes},TipoInstituicao=3,Relatorio='{rel}')"
+                f"?$filter=CodInst%20eq%20'{cod}'&$format=json"
+            )
             try:
-                if olinda_get(p, top=1):
-                    return p
-            except (HTTPError, URLError):
-                continue
-    return None
+                for row in http_json(url).get("value", []):
+                    c = str(row.get("Conta") or "").strip()
+                    if c and c not in d:
+                        d[c] = str(row.get("NomeColuna") or "").strip()
+            except Exception as e:
+                log.warning("diccionario rel=%s cod=%s: %s", rel, cod, e)
+    log.info(
+        "Diccionario de cuentas: %d códigos mapeados (de %d instituciones de referencia: %s)",
+        len(d), len(codinsts), codinsts,
+    )
+    return d
 
 
-def get_loaded(conn) -> set[str]:
+# ---------------------------------------------------------------------------
+# DB helpers
+# ---------------------------------------------------------------------------
+def upsert(conn, table, cols, updates, conflict, rows):
+    if not rows:
+        return
     cur = conn.cursor()
-    cur.execute("SELECT periodo FROM carga_log WHERE country = %s AND estado = 'ok'", (COUNTRY,))
-    return {r[0] for r in cur.fetchall()}
+    sql = (
+        f"INSERT INTO {table} ({','.join(cols)}) VALUES %s "
+        f"ON CONFLICT ({','.join(conflict)}) DO UPDATE SET "
+        + ", ".join(f"{c}=EXCLUDED.{c}" for c in updates)
+    )
+    for i in range(0, len(rows), BATCH):
+        psycopg2.extras.execute_values(cur, sql, rows[i : i + BATCH])
+    conn.commit()
 
 
-# ============================================================
-# MODOS
-# ============================================================
-def _process_quarters(conn, quarters: list[str], known_accounts: set[str]) -> None:
-    plan: dict[str, tuple[str, str]] = {}
-    cod_insts: set[str] = set()
-    for p in quarters:
-        log.info("Trimestre %s ...", p)
-        all_tuples: list[tuple] = []
-        resumo_accounts: set[str] = set()
-        total_rows = 0
-        for rel, tipo_override in REPORTS:
+def wipe_brazil(conn):
+    cur = conn.cursor()
+    for t in ("datos_financieros", "instituciones", "plan_cuentas", "carga_log"):
+        cur.execute(f"DELETE FROM {t} WHERE country=%s", (COUNTRY,))
+    conn.commit()
+    log.info("Brasil borrado por completo (solo country='BR').")
+
+
+def get_loaded_periods(conn):
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT periodo FROM carga_log WHERE country=%s AND estado='ok'", (COUNTRY,)
+    )
+    return {row[0] for row in cur.fetchall()}
+
+
+# ---------------------------------------------------------------------------
+# Carga de un trimestre
+# ---------------------------------------------------------------------------
+def load_quarter(conn, dt, files, diccion):
+    fmap = {f["f"].split("/")[-1]: f["f"] for f in files}
+    cadastro = portal_file(fmap[f"cadastro{dt}_1009.json"])
+    dados = portal_file(fmap[f"dados{dt}_1.json"])
+
+    valid = {str(e.get("c0")).strip() for e in cadastro if e.get("c0") is not None}
+
+    inst = [
+        (COUNTRY, str(e["c0"]).strip(), str(e.get("c2") or "").strip())
+        for e in cadastro
+        if e.get("c0") is not None
+    ]
+    upsert(
+        conn, "instituciones", ["country", "codigo", "razon_social"],
+        ["razon_social"], ["country", "codigo"], inst,
+    )
+
+    datos, contas = [], set()
+    for ent in dados.get("values", []):
+        e = str(ent.get("e")).strip()
+        if e not in valid:  # solo universo prudencial + independientes
+            continue
+        for it in ent.get("v", []):
+            conta = str(it.get("i")).strip()
+            val = it.get("v") or 0
             try:
-                recs = olinda_get(p, relatorio=rel)
-            except (HTTPError, URLError) as e:
-                log.warning("  [%s] relatorio %s error de red: %s (se omite)", p, rel, e)
-                continue
-            if not recs:
-                log.info("  [%s] relatorio %s sin datos", p, rel)
-                continue
-            collect_plan(recs, plan)
-            es_resumo = rel == "1"
-            for r in recs:
-                ci = str(r.get("CodInst"))
-                # El Resumo se guarda completo (todas las instituciones); los reportes
-                # de detalle solo para bancos operativos (es_banco).
-                if not es_resumo and not is_bank(ci):
-                    continue
-                try:
-                    t = row_to_tuple(r, tipo_override)
-                except Exception as e:  # noqa: BLE001
-                    log.warning("  fila omitida: %s", e)
-                    continue
-                all_tuples.append(t)
-                total_rows += 1
-                cod_insts.add(ci)
-                if es_resumo:
-                    resumo_accounts.add(t[4])
-        if not all_tuples:
-            log.warning("  sin datos para %s (se omite)", p)
-            continue
-        ingest_tuple_batch(conn, all_tuples)
-        bump_carga_log(conn, {p: total_rows})
-        # schema_guard (Tarea A) SOLO sobre el Resumo: comparar el detalle
-        # dispararía falsas alertas por su gran volumen de cuentas.
-        report = detect_schema_changes(COUNTRY, p, resumo_accounts, known_accounts)
-        record_schema_result(conn, COUNTRY, p, report)
-        # La base para el siguiente trimestre es el Resumo que acabamos de cargar.
-        if resumo_accounts:
-            known_accounts = resumo_accounts
-        log.info("  %s — %s filas (Resumo + detalle)", p, total_rows)
-    upsert_institutions(conn, cod_insts)
-    upsert_plan_cuentas(conn, plan)
+                val = int(round(float(val)))  # monto_total suele ser bigint
+            except (TypeError, ValueError):
+                val = 0
+            datos.append((COUNTRY, str(dt), "p", e, conta, 0, 0, 0, 0, val))
+            contas.add(conta)
+
+    plan = [(COUNTRY, c, diccion.get(c, c)) for c in contas]
+    upsert(
+        conn, "plan_cuentas", ["country", "cuenta", "descripcion"],
+        ["descripcion"], ["country", "cuenta"], plan,
+    )
+    upsert(
+        conn, "datos_financieros",
+        ["country", "periodo", "tipo", "ins_cod", "cuenta",
+         "monto_clp", "monto_uf", "monto_tc", "monto_ext", "monto_total"],
+        ["monto_total"],
+        ["country", "periodo", "tipo", "ins_cod", "cuenta"], datos,
+    )
+    upsert(
+        conn, "carga_log", ["country", "periodo", "archivos_procesados", "estado"],
+        ["archivos_procesados", "estado"], ["country", "periodo"],
+        [(COUNTRY, str(dt), len(valid), "ok")],
+    )
+    log.info("dt=%s cargado: %s entidades, %s filas de datos", dt, len(valid), len(datos))
 
 
-def run_historical(conn, years: tuple[int, int] | None = None) -> None:
-    y0 = years[0] if years else FIRST_YEAR
-    y1 = years[1] if years else date.today().year
-    quarters = quarters_in_range(y0, y1)
-    first_q = quarters[0] if quarters else None
-    # Base = Resumo del trimestre cronológicamente anterior al primero a cargar
-    # (evita falsas alertas al re-correr el histórico con datos nuevos ya presentes).
-    known_accounts = get_known_accounts(conn, COUNTRY, tipos=RESUMO_TIPOS, before_periodo=first_q)
-    _process_quarters(conn, quarters, known_accounts)
-
-
-def run_incremental(conn) -> None:
-    latest = latest_available_quarter()
-    if not latest:
-        log.error("No pude determinar el último trimestre disponible en Olinda.")
-        return
-    loaded = get_loaded(conn)
-    max_loaded = max(loaded, default="")
-    if latest <= max_loaded:
-        log.info("Nada nuevo: último cargado BR=%s, último disponible=%s", max_loaded, latest)
-        return
-    y0 = int(max_loaded[:4]) if max_loaded else FIRST_YEAR
-    y1 = int(latest[:4])
-    pending = [q for q in quarters_in_range(y0, y1) if q > max_loaded and q <= latest]
-    first_q = pending[0] if pending else None
-    known_accounts = get_known_accounts(conn, COUNTRY, tipos=RESUMO_TIPOS, before_periodo=first_q)
-    _process_quarters(conn, pending, known_accounts)
-
-
-def run_institutions_plan(conn) -> None:
-    latest = latest_available_quarter()
-    if not latest:
-        log.error("No pude determinar el último trimestre disponible en Olinda.")
-        return
-    recs = olinda_get(latest)
-    plan: dict[str, tuple[str, str]] = {}
-    collect_plan(recs, plan)
-    cod_insts = {str(r.get("CodInst")) for r in recs}
-    upsert_institutions(conn, cod_insts)
-    upsert_plan_cuentas(conn, plan)
-
-
-# ============================================================
-# DRY-RUN (solo lectura, no toca la BD)
-# ============================================================
-def run_dryrun(quarters: list[str]) -> None:
-    print("\n" + "=" * 74)
-    print("  DRY-RUN Brasil — SOLO LECTURA (no se escribe en la base de datos)")
-    print("  TipoInstituicao=3 · Relatorio=1 · trimestres:", ", ".join(quarters))
-    print("=" * 74)
-
-    prev_accounts: set[str] | None = None
-    prev_periodo = ""
-    for p in quarters:
-        try:
-            recs = olinda_get(p)
-        except (HTTPError, URLError) as e:
-            print(f"\n[{p}] ERROR de red: {e}")
-            continue
-        if not recs:
-            print(f"\n[{p}] sin datos.")
-            continue
-
-        insts = {str(r.get("CodInst")) for r in recs}
-        accounts = {str(r.get("Conta") or "").strip() for r in recs if r.get("Conta")}
-        tuples = [row_to_tuple(r) for r in recs]
-        by_tipo = defaultdict(int)
-        for t in tuples:
-            by_tipo[t[2]] += 1
-
-        print(f"\n[{p}]  registros={len(recs)}  instituciones={len(insts)}  "
-              f"cuentas_distintas={len(accounts)}  tipos={dict(by_tipo)}")
-
-        # Muestra BTG (30306294) para ver conceptos + fórmula Cosif.
-        btg = [r for r in recs if str(r.get("CodInst")) == "30306294"]
-        if btg:
-            print("   BTG Pactual (Conta | tipo | NomeColuna | fórmula Cosif | Saldo):")
-            for r in sorted(btg, key=lambda x: str(x.get("Conta"))):
-                nome = str(r.get("NomeColuna") or "")
-                print(f"     {str(r.get('Conta')):>7} | {infer_tipo(nome):<3} | {nome[:26]:<26} "
-                      f"| {str(r.get('DescricaoColuna') or '')[:30]:<30} | {r.get('Saldo')}")
-
-        # Vista previa del schema_guard (Tarea A) período-contra-período.
-        if prev_accounts is not None:
-            report = detect_schema_changes(COUNTRY, p, accounts, prev_accounts)
-            marca = "🚨 ALERTA" if report["status"] == "structural_change" else "· ok"
-            print(f"   schema_guard vs {prev_periodo}: {marca} — {report['resumen']}")
-            if report["status"] == "structural_change":
-                print(f"       desaparecieron: {report['desaparecidas']}")
-                print(f"       aparecieron:    {report['nuevas']}")
-        prev_accounts = accounts
-        prev_periodo = p
-
-    print("\n" + "=" * 74)
-    print("  Fin del dry-run. Nada se escribió en la BD.")
-    print("=" * 74)
-
-
-# ============================================================
-# CLI
-# ============================================================
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
-        description="Carga IF.data Brasil (Olinda) → datos_financieros country=BR"
-    )
-    parser.add_argument("--historical", action="store_true", help="Trimestres FIRST_YEAR..hoy")
-    parser.add_argument("--incremental", action="store_true", help="Trimestres nuevos")
-    parser.add_argument("--institutions-plan", action="store_true", help="Solo instituciones + plan")
-    parser.add_argument("--dry-run", action="store_true", help="Solo lectura; no escribe en BD")
-    parser.add_argument("--year", type=int, help="Con --historical: solo ese año civil")
-    parser.add_argument(
-        "--quarters",
-        type=str,
-        help="Con --dry-run: lista YYYYMM separada por comas (default alrededor de mar-2025)",
-    )
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--wipe", action="store_true",
+                     help="Borrar TODO Brasil antes de cargar. Usar solo una vez.")
+    ap.add_argument("--quarter", help="Cargar/recargar UN trimestre puntual AAAAMM")
+    ap.add_argument("--all", action="store_true",
+                     help="Cargar/recargar TODOS los trimestres del catálogo")
+    args = ap.parse_args()
 
-    if args.dry_run:
-        if args.quarters:
-            quarters = [q.strip() for q in args.quarters.split(",") if q.strip()]
-        else:
-            quarters = ["202409", "202412", "202503", "202506"]
-        run_dryrun(quarters)
-        return
-
-    if args.year and not args.historical:
-        parser.error("--historical es obligatorio para usar --year")
-
-    modes = sum([bool(args.historical), bool(args.incremental), bool(args.institutions_plan)])
-    if modes != 1:
-        parser.error("Elige uno: --historical | --incremental | --institutions-plan | --dry-run")
-
-    conn = conn_get()
+    conn = psycopg2.connect(COCKROACH_URL)
     try:
-        if args.institutions_plan:
-            run_institutions_plan(conn)
-        elif args.incremental:
-            run_incremental(conn)
-        elif args.historical:
-            if args.year:
-                run_historical(conn, years=(args.year, args.year))
-            else:
-                run_historical(conn)
+        if args.wipe:
+            wipe_brazil(conn)
+
+        quarters = list_quarters()
+        if not quarters:
+            log.error("Catálogo vacío o inaccesible.")
+            return
+
+        if args.quarter:
+            target = [q for q in quarters if str(q["dt"]) == args.quarter]
+        elif args.all:
+            target = quarters
+        else:
+            # Modo automático (default): solo lo que falta. Este es el modo
+            # que corre en GitHub Actions una vez terminada la reconstrucción.
+            loaded = get_loaded_periods(conn)
+            target = [q for q in quarters if str(q["dt"]) not in loaded]
+            if not target:
+                log.info("Brasil al día (%d trimestres cargados). Nada nuevo.", len(loaded))
+                return
+            log.info(
+                "Modo automático: %d trimestre(s) nuevo(s): %s",
+                len(target), [q["dt"] for q in target],
+            )
+
+        if not target:
+            log.error("Nada que cargar (revisa --quarter/--all o el catálogo).")
+            return
+
+        # El diccionario de cuentas se construye UNA sola vez por corrida,
+        # usando el cadastro del trimestre más reciente del catálogo (no
+        # necesariamente el primero de `target`), para tener el set de
+        # cuentas más actualizado disponible.
+        ultimo = quarters[-1]
+        fmap_dic = {f["f"].split("/")[-1]: f["f"] for f in ultimo["files"]}
+        cadastro_dic = portal_file(fmap_dic[f"cadastro{ultimo['dt']}_1009.json"])
+        diccion = build_dictionary(ultimo["dt"], cadastro_dic)
+
+        for q in target:
+            load_quarter(conn, q["dt"], q["files"], diccion)
     finally:
         conn.close()
 

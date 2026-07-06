@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon36';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon36';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon36';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon36';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon36';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon36';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon36';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon36';
-import { setStatus, showErr } from '../utils.js?v=bmon36';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon36';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon37';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon37';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon37';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon37';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon37';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon37';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon37';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon37';
+import { setStatus, showErr } from '../utils.js?v=bmon37';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon37';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
@@ -25,7 +25,7 @@ function _setBannerLogo(iso, code) {
     onerror="this.onerror=null;this.src='${generic}';">`;
 }
 
-const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
+const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 1000080336 : 59);
 
 function escHtml(s) {
   return String(s)
@@ -871,7 +871,7 @@ export async function showROEChart() {
       Annualized (Month ${lastMonth} × ${Math.round(12 / lastMonth)}) · ${periodLabel(lastP)}</div>`;
     html += '<div style="display:flex;flex-direction:column;gap:5px;">';
     bankROEs.forEach(b => {
-      const isBTG  = b.code === (isoROE === 'CO' ? 66 : isoROE === 'BR' ? 30306294 : 59);
+      const isBTG  = b.code === (isoROE === 'CO' ? 66 : isoROE === 'BR' ? 1000080336 : 59);
       const pct    = Math.abs(b.roe) / maxAbs * 100;
       const color  = b.roe >= 0 ? (isBTG ? btgBlue() : 'var(--accent)') : 'var(--red)';
       html += `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;"

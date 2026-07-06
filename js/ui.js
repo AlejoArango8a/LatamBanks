@@ -2,12 +2,12 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon36';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon36';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon36';
-import { setStatus, showErr } from './utils.js?v=bmon36';
-import { sumRows } from './api.js?v=bmon36';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon36';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon37';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon37';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon37';
+import { setStatus, showErr } from './utils.js?v=bmon37';
+import { sumRows } from './api.js?v=bmon37';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon37';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -75,7 +75,7 @@ export function fillBankList() {
 
   if (ST.selected.size === 0) {
     const iso = datasetIsoCountry();
-    const prefer = iso === 'BR' ? 30306294 : iso === 'CO' ? 66 : 59;
+    const prefer = iso === 'BR' ? 1000080336 : iso === 'CO' ? 66 : 59;
     const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
   }
@@ -164,7 +164,7 @@ export function setCompareMode(on) {
   ST.compareMode = !!on;
   if (!ST.compareMode && ST.selected.size > 1) {
     const iso  = datasetIsoCountry();
-    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 30306294 : 59;
+    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 1000080336 : 59;
     const keep = ST.selected.has(btg) ? btg : ST.selectedOrder[0];
     ST.selected.clear();
     ST.selectedOrder = [];

@@ -1,0 +1,20 @@
+name: Brasil - Auto Update
+on:
+  schedule:
+    - cron: "0 12 1 * *"   # día 1 de cada mes, 12:00 UTC
+  workflow_dispatch: {}     # permite correrlo manualmente desde GitHub
+
+jobs:
+  update-brasil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar dependencias
+        run: pip install psycopg2-binary python-dotenv
+      - name: Correr loader en modo automático
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+        run: python brasil_loader.py

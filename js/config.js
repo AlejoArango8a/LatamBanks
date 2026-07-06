@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon36';
+import { datasetIsoCountry } from './state.js?v=bmon37';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -23,7 +23,7 @@ export const BANK_COLORS = {
   59: '#2563eb',
   62: '#00A9E4',
   66: '#2563eb',
-  30306294: '#2563eb',
+  1000080336: '#2563eb',
   10001: '#047857',
 };
 
@@ -36,7 +36,7 @@ export const BTG_BLUE_LIGHT = '#062650';
 export const BTG_BLUE_DARK  = '#2563eb';
 export const btgBlue = () => (_isLightTheme() ? BTG_BLUE_LIGHT : BTG_BLUE_DARK);
 export const btgRgba = (a = 0.08) => (_isLightTheme() ? `rgba(6,38,80,${a})` : `rgba(37,99,235,${a})`);
-const BTG_CODES = new Set([59, 66, 30306294]);
+const BTG_CODES = new Set([59, 66, 1000080336]);
 export const isBtgCode = (code) => BTG_CODES.has(Number(code));
 
 // Colores de marca compartidos entre países, indexados por fragmento de nombre en minúsculas.
@@ -120,23 +120,26 @@ export const LOGO_SLUGS = {
   'CO-66':       'btg',
   'CO-10001':    'aval',
   // Brasil (BR) — ISPB (CodInst IF.data)
-  'BR-30306294': 'btg',
-  'BR-90400888': 'santander',
-  'BR-60701190': 'itau',
-  'BR-60746948': 'bradesco',
-  'BR-00000000': 'bancodobrasil',
-  'BR-00360305': 'caixaeconomica',
-  'BR-33987793': 'ubs',
-  'BR-18236120': 'nubank',
-  'BR-33479023': 'citibank',
-  'BR-33172537': 'jpmorgan',
-  'BR-58160789': 'safra',
-  'BR-01181521': 'sicredi',
-  'BR-01522368': 'bnp',
-  'BR-33264668': 'xp',
-  'BR-92702067': 'banrisul',
-  'BR-59588111': 'votorantim',
-  'BR-07237373': 'nordeste',
+  // Códigos prudenciais (c0 = '1000...') del rebuild IF.data (Conglomerados
+  // Prudenciais e Instituições Independentes). Reemplazan los CNPJ individuales
+  // que usaba el nivel de consolidación viejo.
+  'BR-1000080336': 'btg',
+  'BR-1000080185': 'santander',
+  'BR-1000080099': 'itau',
+  'BR-1000080075': 'bradesco',
+  'BR-1000080329': 'bancodobrasil',
+  'BR-1000080738': 'caixaeconomica',
+  'BR-1000080219': 'ubs',
+  'BR-1000084693': 'nubank',
+  'BR-1000080192': 'citibank',
+  'BR-1000080116': 'jpmorgan',
+  'BR-1000080109': 'safra',
+  'BR-1000080745': 'sicredi',
+  'BR-1000080673': 'bnp',
+  'BR-1000082475': 'xp',
+  'BR-1000080154': 'banrisul',
+  'BR-1000080484': 'votorantim',
+  'BR-1000081593': 'nordeste',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */

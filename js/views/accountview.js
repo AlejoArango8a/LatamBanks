@@ -1,11 +1,11 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon36';
-import { accountViewLevel } from '../coCuentas.js?v=bmon36';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon36';
-import { apiDatos } from '../api.js?v=bmon36';
-import { btgBlue, btgRgba } from '../config.js?v=bmon36';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon37';
+import { accountViewLevel } from '../coCuentas.js?v=bmon37';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon37';
+import { apiDatos } from '../api.js?v=bmon37';
+import { btgBlue, btgRgba } from '../config.js?v=bmon37';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 
@@ -277,7 +277,7 @@ export async function runAccountView() {
         </tr></thead>
         <tbody>`;
 
-    const BTG_BANK = datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59;
+    const BTG_BANK = datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 1000080336 : 59;
     bankData.forEach(b => {
       const isBTG      = Number(b.code) === BTG_BANK;
       const dv         = (b.v2 - b.v1) * usdFactor;
