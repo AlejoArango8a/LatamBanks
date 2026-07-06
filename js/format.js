@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon37';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon37';
-import { ST } from './state.js?v=bmon37';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon38';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon38';
+import { ST } from './state.js?v=bmon38';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -30,8 +30,6 @@ export const fmtKPI        = clpRaw => _fmtKPIBase(clpRaw, 0);
 export const fmtKPIDecimal = clpRaw => _fmtKPIBase(clpRaw, 1);
 
 // Axis label (values already divided by 1e9 = billions).
-// compact: shorter labels when chart width is small (mobile).
-// Sub‑0.001 B (e.g. USD view of small COP balances) must not round to 0.00 — use fractional millions (×1000).
 export function fmtAxis(v, compact) {
   const abs = Math.abs(v);
   const sign = v < 0 ? '-' : '';
@@ -70,7 +68,7 @@ export const fmtM = n => Math.round(n / 1e6).toLocaleString('es-CL');
 export const fmtB = n => (n / 1e9).toFixed(1).replace('.', ',');
 export const fmtP = (n, d) => d ? (n / d * 100).toFixed(2) + '%' : '—';
 
-/** NPL / total loans (CMF amounts are same unit → ratio is scale-free). */
+/** NPL / total loans (CMF amounts are same unit — ratio is scale-free). */
 export function nplPctFromRaw(moraAbs, loansAbs) {
   const l = Number(loansAbs) || 0;
   if (l <= 0) return null;
@@ -90,7 +88,7 @@ export function fmtChartPct(v, compact) {
 
 // ---- Bank name ----
 
-/** Quita sufijos legales y normaliza espacios (principalmente CUIF Colombia). */
+/** Quita sufijos legales y normaliza espacios (principalmente CUIF Colombia y BR). */
 function stripSociedadAnonima(s) {
   return String(s || '')
     .replace(/\s*,\s*N\.?\s*A\.?\.?\s*$/gi, '')
@@ -98,12 +96,11 @@ function stripSociedadAnonima(s) {
     .replace(/\s*,\s*S\.?\s*A\.?\.?\s*$/gi, '')
     .replace(/\bS\.?\s*A\.?\.?\b/gi, ' ')
     .replace(/\s{2,}/g, ' ')
-    // API / regex leave a dangling period after stripping legal suffixes (e.g. "Bancolombia .")
     .replace(/(?:\s*\.)+\s*$/g, '')
     .trim();
 }
 
-/** Siglas / marcas que no se fuerzan a “capitalize” típico. */
+/** Siglas / marcas que no se title-casean (Colombia). */
 const CO_ACRONYM_FORMS = new Map([
   ['btg', 'BTG'],
   ['bbva', 'BBVA'],
@@ -112,8 +109,56 @@ const CO_ACRONYM_FORMS = new Map([
   ['citibank', 'Citibank'],
 ]);
 
-/** Partículas en minúscula salvo primera palabra. */
+/** Particulas en minuscula salvo primera palabra (Colombia). */
 const CO_TITLE_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'en', 'al', 'a']);
+
+// ---- Title Case compartido: Chile y Brasil ----------------------------------
+
+/**
+ * Siglas explicitas (>4 chars) que siempre van en mayusculas en CL/BR.
+ * Las de <=4 chars se detectan por heuristica en titleCaseLatam.
+ */
+const KNOWN_ACRONYMS = new Set(['BNDES', 'HSBC', 'BBVA', 'GNB', 'BNP']);
+
+/**
+ * Particulas que van en minuscula en espanol y portugues, salvo posicion 0.
+ * Tienen PRIORIDAD sobre la heuristica de siglas (e.g. "DO", "DE", "DEL").
+ */
+const LATAM_PARTICLES = new Set([
+  // portugues
+  'do', 'dos', 'da', 'das', 'de', 'e', 'em', 'no', 'na', 'nos', 'nas',
+  // espanol
+  'del', 'la', 'las', 'los', 'y', 'en', 'al', 'a',
+]);
+
+/**
+ * Title Case para nombres de bancos latinoamericanos (CL y BR).
+ *   1. Particulas (do, de, da, y, del…) -> minusculas, salvo posicion 0.
+ *      (tienen prioridad; evita que "DO" active la heuristica de sigla)
+ *   2. Siglas en KNOWN_ACRONYMS -> siempre mayusculas.
+ *   3. Heuristica: palabra toda-mayusculas de <=4 letras puras -> sigla (BB, XP, BTG, ITAU…).
+ *   4. Palabras con prefijo no-alfa (e.g. "(BRASIL)") -> capitalizar parte alfa.
+ *   5. Resto -> primera letra mayuscula, resto minusculas.
+ */
+function titleCaseLatam(raw) {
+  if (!raw) return raw;
+  return raw.trim().split(/\s+/).map((orig, i) => {
+    const lower = orig.toLowerCase();
+    // 1. Particles take priority (except first word)
+    if (i > 0 && LATAM_PARTICLES.has(lower)) return lower;
+    // 2. Explicit known acronym
+    if (KNOWN_ACRONYMS.has(orig.toUpperCase())) return orig.toUpperCase();
+    // 3. Heuristic: pure alpha, all-caps, <=4 chars -> acronym
+    if (/^[A-Z]+$/.test(orig) && orig.length <= 4) return orig;
+    // 4. Words with non-alpha prefix like "(BRASIL)" -> capitalize alpha part
+    const m = orig.match(/^(\W*)([A-Za-z].*)$/);
+    if (m) return m[1] + m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase();
+    // 5. Default
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }).join(' ');
+}
+
+// ---------------------------------------------------------------------------
 
 function titleCaseCoToken(lower) {
   if (!lower) return '';
@@ -128,7 +173,7 @@ function titleCaseCoToken(lower) {
 /** Grupo Aval — codigo_entidad CUIF (establecimientos tipo 1). */
 const CO_AVAL_CODES = new Set([1, 2, 23, 49]);
 
-/** Nombres curator (CUIF establecimientos tipo 1, codigo_entidad). */
+/** Nombres curados por codigo_entidad CUIF. */
 const CO_BANK_DISPLAY = new Map([
   [66, 'BTG Pactual Colombia'],
   [12, 'GNB Sudameris'],
@@ -158,15 +203,19 @@ export function polishColombianBankDisplay(raw) {
 
 export function bankName(code) {
   const fromApi = ST.bancos[code];
-  if (ST.country === 'brasil' && Number(code) === 1000080336) return 'BTG Pactual Brasil';
-  if (ST.country === 'brasil' && Number(code) === 1000080154) return 'Banrisul';
+
+  // ---- Brasil ----
   if (ST.country === 'brasil') {
-    // El razon_social del rebuild IF.data viene como "ITAU - PRUDENCIAL",
-    // "BB - PRUDENCIAL", etc. Se quita el sufijo del nivel de consolidación
-    // para mostrar el nombre limpio (sin hardcodear nombres por banco).
+    // Overrides puntuales (codigos prudenciales conocidos)
+    if (Number(code) === 1000080336) return 'BTG Pactual Brasil';
+    if (Number(code) === 1000080154) return 'Banrisul';
+    // Nombre generico: quitar sufijo prudencial y S.A., luego Title Case
     const raw = fromApi || `Bank ${code}`;
-    return raw.replace(/\s*-\s*PRUDENCIAL\s*$/i, '').trim();
+    const stripped = stripSociedadAnonima(raw.replace(/\s*-\s*PRUDENCIAL\s*$/i, '').trim());
+    return titleCaseLatam(stripped);
   }
+
+  // ---- Colombia ----
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
     const ins = Number(code);
@@ -177,8 +226,13 @@ export function bankName(code) {
     if (CO_AVAL_CODES.has(ins)) name = `${name} (Aval)`;
     return name;
   }
-  return BANK_NAMES[code] || (fromApi || `Bank ${code}`)
-    .replace('BANCO ', '').replace(/ CHILE$/, '').replace(/-CHILE$/, '');
+
+  // ---- Chile ----
+  // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
+  // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
+  // quitar "BANCO"/"CHILE" como se hacia antes.
+  if (BANK_NAMES[code]) return BANK_NAMES[code];
+  return titleCaseLatam(fromApi || `Bank ${code}`);
 }
 
 // ---- Text helpers ----
@@ -203,7 +257,6 @@ export function escapeAttr(s) {
 
 /**
  * Colombia Income Statement — sentence-case label, ellipsis via CSS, full text on hover.
- * Section headers: no casing change (English UI strings).
  */
 export function coIncomeStatementConceptHtml(label, isSection) {
   if (isSection) return escapeHtml(String(label ?? ''));

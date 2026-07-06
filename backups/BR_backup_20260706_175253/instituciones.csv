@@ -1,0 +1,1781 @@
+codigo,razon_social,country,es_banco
+0,Banco do Brasil,BR,True
+208,Brb - Banco de Brasília,BR,True
+66670,Instituição 00066670,BR,False
+68987,Instituição 00068987,BR,False
+75847,Instituição 00075847,BR,False
+106180,Instituição 00106180,BR,False
+122327,Santinvest S.A. - Credito Financiamento e Investimentos,BR,False
+129753,Instituição 00129753,BR,False
+141155,Instituição 00141155,BR,False
+162760,Instituição 00162760,BR,False
+184068,Instituição 00184068,BR,False
+204963,Cooperativa de Credito Rural Seara - Crediseara,BR,False
+250699,Agk Corretora de Cambio,BR,False
+259231,Instituição 00259231,BR,False
+309024,Instituição 00309024,BR,False
+315557,Cooperativa Central de Crédito Unicred do Brasil - Unicred do Brasil,BR,False
+329598,Sefer Investimentos Distribuidora de Títulos e Valores Mobiliários Ltda - Em Liquidação Extrajudicial,BR,False
+336036,Instituição 00336036,BR,False
+360305,Caixa Econômica Federal,BR,True
+411939,Finamax S.A. - Credito Financiamento e Investimento,BR,False
+416968,Banco Inter,BR,True
+429890,Instituição 00429890,BR,False
+460065,Coluna S/A Distribuidora de Titulos e Valores Mobiliários,BR,False
+512839,Instituição 00512839,BR,False
+517645,Banco Ribeirao Preto,BR,True
+543968,Instituição 00543968,BR,False
+548980,Instituição 00548980,BR,False
+556603,Banco Bari de Investimentos e Financiamentos,BR,True
+558456,Banco Cetelem,BR,True
+655522,APE Poupex,BR,True
+692214,Instituição 00692214,BR,False
+694389,Instituição 00694389,BR,False
+694877,Instituição 00694877,BR,False
+698609,Instituição 00698609,BR,False
+707903,Instituição 00707903,BR,False
+714671,Ewally Instituição de Pagamento,BR,False
+731320,Instituição 00731320,BR,False
+778858,Instituição 00778858,BR,False
+795423,Banco Semear,BR,True
+803287,Instituição 00803287,BR,False
+804046,Instituição 00804046,BR,False
+806535,Planner Corretora de Valores,BR,False
+815319,Instituição 00815319,BR,False
+869687,Instituição 00869687,BR,False
+881829,Instituição 00881829,BR,False
+913314,Instituição 00913314,BR,False
+915950,Instituição 00915950,BR,False
+946465,Instituição 00946465,BR,False
+952415,Instituição 00952415,BR,False
+966246,Instituição 00966246,BR,False
+968602,Instituição 00968602,BR,False
+968834,Instituição 00968834,BR,False
+971300,Instituição 00971300,BR,False
+977212,Instituição 00977212,BR,False
+991143,Instituição 00991143,BR,False
+991739,Instituição 00991739,BR,False
+997185,Banco B3,BR,True
+997804,Instituição 00997804,BR,False
+999403,Instituição 00999403,BR,False
+1009908,Instituição 01009908,BR,False
+1023570,Banco Rabobank International Brasil,BR,True
+1027058,Cielo S.A. - Instituição de Pagamento,BR,False
+1039011,Instituição 01039011,BR,False
+1042487,Instituição 01042487,BR,False
+1060307,Instituição 01060307,BR,False
+1062439,Instituição 01062439,BR,False
+1073966,Cooperativa de Crédito Rural de Abelardo Luz - Sulcredi/crediluz,BR,False
+1090027,Instituição 01090027,BR,False
+1107759,Instituição 01107759,BR,False
+1110032,Instituição 01110032,BR,False
+1152097,Instituição 01152097,BR,False
+1155801,Instituição 01155801,BR,False
+1181521,Banco Cooperativo Sicredi,BR,True
+1187961,Instituição 01187961,BR,False
+1205736,Instituição 01205736,BR,False
+1235921,Cooperativa de Crédito dos Servidores Públicos Municipais da Grande Vitória/es,BR,False
+1259518,Instituição 01259518,BR,False
+1286361,Instituição 01286361,BR,False
+1288797,Instituição 01288797,BR,False
+1301541,Instituição 01301541,BR,False
+1330295,Instituição 01330295,BR,False
+1330387,Cooperativa de Crédito Popular do Brasil - Crehnor,BR,False
+1374196,Instituição 01374196,BR,False
+1389651,Instituição 01389651,BR,False
+1401771,Instituição 01401771,BR,False
+1425787,Redecard (itaú),BR,False
+1439107,Instituição 01439107,BR,False
+1504952,Instituição 01504952,BR,False
+1522368,Banco BNP Paribas Brasil,BR,True
+1526924,Instituição 01526924,BR,False
+1530136,Instituição 01530136,BR,False
+1551820,Instituição 01551820,BR,False
+1559914,Instituição 01559914,BR,False
+1566038,Instituição 01566038,BR,False
+1572667,Instituição 01572667,BR,False
+1582158,Instituição 01582158,BR,False
+1604998,Instituição 01604998,BR,False
+1608685,Instituição 01608685,BR,False
+1609345,Instituição 01609345,BR,False
+1634601,Central de Cooperativas de Economia e Crédito Mútuo do Estado do Rio Grande do S,BR,False
+1635462,Instituição 01635462,BR,False
+1637949,Instituição 01637949,BR,False
+1638542,Instituição 01638542,BR,False
+1644264,Instituição 01644264,BR,False
+1648418,Instituição 01648418,BR,False
+1657678,Instituição 01657678,BR,False
+1658426,Cooperforte Cooperativa de Crédito e Investimentos Ltda,BR,False
+1664968,Instituição 01664968,BR,False
+1667352,Instituição 01667352,BR,False
+1667766,Instituição 01667766,BR,False
+1692448,Instituição 01692448,BR,False
+1699652,Instituição 01699652,BR,False
+1701201,Kirton Bank,BR,False
+1703620,Instituição 01703620,BR,False
+1705236,Instituição 01705236,BR,False
+1709266,Instituição 01709266,BR,False
+1720488,Instituição 01720488,BR,False
+1722480,Instituição 01722480,BR,False
+1727929,Instituição 01727929,BR,False
+1736516,Instituição 01736516,BR,False
+1739375,Instituição 01739375,BR,False
+1760242,Instituição 01760242,BR,False
+1788147,Instituição 01788147,BR,False
+1796302,Instituição 01796302,BR,False
+1800019,Portocred S.A. - Credito Financiamento e Investimento,BR,False
+1819799,Instituição 01819799,BR,False
+1848322,Instituição 01848322,BR,False
+1852137,Banco Brasileiro de Crédito Sociedade Anônima,BR,True
+1858774,Banco BV,BR,True
+1864151,Instituição 01864151,BR,False
+1918144,Instituição 01918144,BR,False
+1997612,Instituição 01997612,BR,False
+2000895,Instituição 02000895,BR,False
+2015588,Instituição 02015588,BR,False
+2024442,Instituição 02024442,BR,False
+2025743,Instituição 02025743,BR,False
+2031139,Instituição 02031139,BR,False
+2038232,Banco Cooperativo Sicoob S.A. - Banco Sicoob,BR,True
+2057584,Instituição 02057584,BR,False
+2072790,Instituição 02072790,BR,False
+2083914,Instituição 02083914,BR,False
+2090126,Instituição 02090126,BR,False
+2093154,Instituição 02093154,BR,False
+2104058,Instituição 02104058,BR,False
+2115870,Instituição 02115870,BR,False
+2137018,Instituição 02137018,BR,False
+2144899,Instituição 02144899,BR,False
+2173447,Instituição 02173447,BR,False
+2179673,Instituição 02179673,BR,False
+2192115,Instituição 02192115,BR,False
+2197569,Instituição 02197569,BR,False
+2201501,Instituição 02201501,BR,False
+2206577,Instituição 02206577,BR,False
+2217068,Instituição 02217068,BR,False
+2230138,Instituição 02230138,BR,False
+2232228,Instituição 02232228,BR,False
+2232383,Instituição 02232383,BR,False
+2254376,Instituição 02254376,BR,False
+2275781,Instituição 02275781,BR,False
+2276653,Trinus Capital Distribuidora de Títulos e Valores Mobiliários,BR,False
+2282165,Instituição 02282165,BR,False
+2282709,Instituição 02282709,BR,False
+2285107,Instituição 02285107,BR,False
+2309070,Instituição 02309070,BR,False
+2318507,Banco KEB Hana do Brasil,BR,True
+2332886,XP Investimentos Corretora de Câmbiotítulos e Valores Mobiliários,BR,False
+2335109,Instituição 02335109,BR,False
+2338666,Instituição 02338666,BR,False
+2347114,Instituição 02347114,BR,False
+2382755,Instituição 02382755,BR,False
+2398976,Sisprime do Brasil - Cooperativa de Crédito,BR,False
+2405189,Instituição 02405189,BR,False
+2446089,Instituição 02446089,BR,False
+2447120,Instituição 02447120,BR,False
+2447184,Instituição 02447184,BR,False
+2448310,Instituição 02448310,BR,False
+2448839,Instituição 02448839,BR,False
+2466552,Instituição 02466552,BR,False
+2475222,Instituição 02475222,BR,False
+2480577,Instituição 02480577,BR,False
+2493000,Instituição 02493000,BR,False
+2528151,Instituição 02528151,BR,False
+2541707,Instituição 02541707,BR,False
+2562412,Instituição 02562412,BR,False
+2587492,Instituição 02587492,BR,False
+2588819,Instituição 02588819,BR,False
+2602922,Instituição 02602922,BR,False
+2641032,Instituição 02641032,BR,False
+2641969,Instituição 02641969,BR,False
+2658435,Instituição 02658435,BR,False
+2663426,Instituição 02663426,BR,False
+2670590,Instituição 02670590,BR,False
+2671743,Banvox Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+2674113,Instituição 02674113,BR,False
+2682287,PAN Financeira S.A. - Sociedade de Crédito Financiamento e Investimentos,BR,False
+2685483,Cm Capital Markets Corretora de Câmbio Títulos e Valores Mobiliários Ltda,BR,False
+2723075,Instituição 02723075,BR,False
+2732968,Instituição 02732968,BR,False
+2738981,Instituição 02738981,BR,False
+2766672,Instituição 02766672,BR,False
+2794761,Instituição 02794761,BR,False
+2801938,Banco Morgan Stanley,BR,True
+2814832,Instituição 02814832,BR,False
+2819125,UBS BB Corretora de Câmbio Títulos e Valores Mobiliários,BR,False
+2833202,Instituição 02833202,BR,False
+2843443,Instituição 02843443,BR,False
+2844024,Instituição 02844024,BR,False
+2850075,Instituição 02850075,BR,False
+2853045,Instituição 02853045,BR,False
+2869663,Instituição 02869663,BR,False
+2876918,Instituição 02876918,BR,False
+2883398,Instituição 02883398,BR,False
+2885855,Instituição 02885855,BR,False
+2904125,Instituição 02904125,BR,False
+2904138,Instituição 02904138,BR,False
+2910387,Instituição 02910387,BR,False
+2910987,Instituição 02910987,BR,False
+2923389,Instituição 02923389,BR,False
+2924977,Instituição 02924977,BR,False
+2927433,Instituição 02927433,BR,False
+2929977,Instituição 02929977,BR,False
+2931166,Instituição 02931166,BR,False
+2931668,Instituição 02931668,BR,False
+2934201,Instituição 02934201,BR,False
+2935307,Instituição 02935307,BR,False
+2992317,Intex Bank Banco de Câmbio,BR,False
+2992446,Instituição 02992446,BR,False
+3000142,Instituição 03000142,BR,False
+3012230,Hipercard,BR,True
+3014007,Instituição 03014007,BR,False
+3015152,Instituição 03015152,BR,False
+3017677,Banco J. Safra,BR,True
+3033469,Instituição 03033469,BR,False
+3042597,Instituição 03042597,BR,False
+3046391,Uniprime Central Nacional - Central Nacional de Cooperativa de Credito,BR,False
+3047549,Instituição 03047549,BR,False
+3058464,Instituição 03058464,BR,False
+3065046,Instituição 03065046,BR,False
+3102185,Instituição 03102185,BR,False
+3128973,Instituição 03128973,BR,False
+3130170,Instituição 03130170,BR,False
+3139644,Instituição 03139644,BR,False
+3165497,Instituição 03165497,BR,False
+3183937,Instituição 03183937,BR,False
+3212823,Instituição 03212823,BR,False
+3215790,Banco Toyota do Brasil,BR,True
+3219207,Instituição 03219207,BR,False
+3222753,Instituição 03222753,BR,False
+3269540,Instituição 03269540,BR,False
+3311443,Parati - Credito Financiamento e Investimento,BR,False
+3317692,Instituição 03317692,BR,False
+3320525,Instituição 03320525,BR,False
+3323840,Banco Alfa,BR,True
+3326437,Instituição 03326437,BR,False
+3329154,Instituição 03329154,BR,False
+3358914,Instituição 03358914,BR,False
+3384738,Instituição 03384738,BR,False
+3400651,Instituição 03400651,BR,False
+3412878,Instituição 03412878,BR,False
+3419786,Instituição 03419786,BR,False
+3422007,Instituição 03422007,BR,False
+3427097,Instituição 03427097,BR,False
+3428338,Instituição 03428338,BR,False
+3443143,Instituição 03443143,BR,False
+3459850,Instituição 03459850,BR,False
+3461243,Instituição 03461243,BR,False
+3485130,Instituição 03485130,BR,False
+3502131,Instituição 03502131,BR,False
+3502961,Instituição 03502961,BR,False
+3502968,Pi Distribuidora de Títulos e Valores Mobiliários,BR,False
+3519240,Instituição 03519240,BR,False
+3528402,Instituição 03528402,BR,False
+3532415,Banco ABN AMRO Clearing,BR,True
+3535065,Instituição 03535065,BR,False
+3566655,Instituição 03566655,BR,False
+3575699,Instituição 03575699,BR,False
+3584906,Instituição 03584906,BR,False
+3603683,Instituição 03603683,BR,False
+3609817,Banco Cargill,BR,True
+3612679,Instituição 03612679,BR,False
+3612764,Instituição 03612764,BR,False
+3620772,Instituição 03620772,BR,False
+3632872,Instituição 03632872,BR,False
+3634220,Instituição 03634220,BR,False
+3634239,Instituição 03634239,BR,False
+3635061,Instituição 03635061,BR,False
+3639902,Instituição 03639902,BR,False
+3645752,Instituição 03645752,BR,False
+3657230,Instituição 03657230,BR,False
+3662047,Instituição 03662047,BR,False
+3674133,Instituição 03674133,BR,False
+3685335,Instituição 03685335,BR,False
+3732359,Instituição 03732359,BR,False
+3750034,Instituição 03750034,BR,False
+3751794,Terra Investimentos Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+3793242,Instituição 03793242,BR,False
+3795072,Instituição 03795072,BR,False
+3816413,Pagueveloz Instituição de Pagamento Ltda.,BR,False
+3844699,Cooperativa de Economia e Credito Mutuo dos Trabalhadores Portuarios da Grande Vitoria - Credestiva.,BR,False
+3847413,Instituição 03847413,BR,False
+3848103,Instituição 03848103,BR,False
+3862898,Instituição 03862898,BR,False
+3877288,Instituição 03877288,BR,False
+3881423,Socinal S.A. - Crédito Financiamento e Investimento,BR,False
+3918382,Instituição 03918382,BR,False
+3941182,Instituição 03941182,BR,False
+3965737,Instituição 03965737,BR,False
+3973743,Instituição 03973743,BR,False
+3973814,Servicoop - Cooperativa de Crédito dos Servidores Públicos Estaduais e Municipais do Rio Grande do Sul,BR,False
+3985375,Instituição 03985375,BR,False
+3990888,Instituição 03990888,BR,False
+4013172,Instituição 04013172,BR,False
+4051232,Instituição 04051232,BR,False
+4062902,Oz Corretora de Câmbio,BR,False
+4079285,Instituição 04079285,BR,False
+4088208,Instituição 04088208,BR,False
+4120633,Instituição 04120633,BR,False
+4138455,Instituição 04138455,BR,False
+4146333,Instituição 04146333,BR,False
+4152107,Instituição 04152107,BR,False
+4158581,Instituição 04158581,BR,False
+4174720,Instituição 04174720,BR,False
+4181542,Instituição 04181542,BR,False
+4184779,Banco Bradescard,BR,True
+4223451,Instituição 04223451,BR,False
+4230630,Instituição 04230630,BR,False
+4237413,Instituição 04237413,BR,False
+4243780,Instituição 04243780,BR,False
+4247370,Instituição 04247370,BR,False
+4249235,Instituição 04249235,BR,False
+4257795,Nova Futura Corretora de Títulos e Valores Mobiliários Ltda.,BR,False
+4261151,Instituição 04261151,BR,False
+4281182,Instituição 04281182,BR,False
+4306351,Independência Cooperativa de Crédito e Investimento - Independência Cooperativa de Crédito,BR,False
+4307598,Fidúcia Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Limitada.,BR,False
+4316357,Instituição 04316357,BR,False
+4321309,Instituição 04321309,BR,False
+4323351,Instituição 04323351,BR,False
+4332281,Goldman Sachs do Brasil,BR,True
+4350225,Instituição 04350225,BR,False
+4355489,Instituição 04355489,BR,False
+4379829,Instituição 04379829,BR,False
+4388688,Instituição 04388688,BR,False
+4406371,Instituição 04406371,BR,False
+4414354,Instituição 04414354,BR,False
+4445917,Instituição 04445917,BR,False
+4452473,Instituição 04452473,BR,False
+4463602,Instituição 04463602,BR,False
+4478231,Instituição 04478231,BR,False
+4484490,Instituição 04484490,BR,False
+4490531,Instituição 04490531,BR,False
+4525997,Instituição 04525997,BR,False
+4529074,Instituição 04529074,BR,False
+4546162,Cooperativa de Crédito Mútuo de Servidores Públicos do Estado de São Paulo - Credifisco,BR,False
+4565791,Instituição 04565791,BR,False
+4572960,Instituição 04572960,BR,False
+4608925,Instituição 04608925,BR,False
+4622657,Instituição 04622657,BR,False
+4632856,Credisis - Central de Cooperativas de Crédito,BR,False
+4649337,Instituição 04649337,BR,False
+4663561,Instituição 04663561,BR,False
+4670195,Instituição 04670195,BR,False
+4684647,Instituição 04684647,BR,False
+4694278,Instituição 04694278,BR,False
+4715685,Cooperativa de Crédito Mútuo dos Despachantes de Trânsito de Santa Catarina e Rio Grande do Sul - Sicoob Creditran,BR,False
+4740876,Instituição 04740876,BR,False
+4751713,Instituição 04751713,BR,False
+4772908,Instituição 04772908,BR,False
+4791645,Instituição 04791645,BR,False
+4804353,Instituição 04804353,BR,False
+4814563,Banco Afinz,BR,True
+4831810,Cooperativa de Economia e Crédito Mútuo dos Servidores Públicos de Pinhão - Creserv Credisis,BR,False
+4833655,Instituição 04833655,BR,False
+4836002,Instituição 04836002,BR,False
+4848115,Instituição 04848115,BR,False
+4849745,Hbi Sociedade de Crédito Direto,BR,False
+4853988,Instituição 04853988,BR,False
+4862600,Portoseg S.A. - Credito Financiamento e Investimento,BR,False
+4866275,Banco Inbursa,BR,True
+4876393,Instituição 04876393,BR,False
+4886317,Instituição 04886317,BR,False
+4891850,Instituição 04891850,BR,False
+4894460,Instituição 04894460,BR,False
+4899135,Instituição 04899135,BR,False
+4902979,Banco da Amazônia,BR,True
+4913129,Confidence Sociedade Corretora de Cambio,BR,False
+4913711,Banco do Estado do Pará,BR,True
+4962772,Instituição 04962772,BR,False
+4985665,Instituição 04985665,BR,False
+4995006,Instituição 04995006,BR,False
+4998845,Instituição 04998845,BR,False
+5036532,Instituição 05036532,BR,False
+5040481,Instituição 05040481,BR,False
+5040680,Instituição 05040680,BR,False
+5048575,Instituição 05048575,BR,False
+5070112,Instituição 05070112,BR,False
+5076239,Instituição 05076239,BR,False
+5097757,Instituição 05097757,BR,False
+5158093,Instituição 05158093,BR,False
+5192316,Via Certa Financiadora S.A. - Crédito Financiamento e Investimentos,BR,False
+5203605,Instituição 05203605,BR,False
+5211129,Instituição 05211129,BR,False
+5220232,Instituição 05220232,BR,False
+5220243,Instituição 05220243,BR,False
+5222094,Instituição 05222094,BR,False
+5231945,Instituição 05231945,BR,False
+5241145,Instituição 05241145,BR,False
+5241619,Instituição 05241619,BR,False
+5247312,Instituição 05247312,BR,False
+5269976,Instituição 05269976,BR,False
+5276770,Instituição 05276770,BR,False
+5277312,Instituição 05277312,BR,False
+5289612,Instituição 05289612,BR,False
+5292849,Instituição 05292849,BR,False
+5296712,Instituição 05296712,BR,False
+5331882,Instituição 05331882,BR,False
+5351887,Zema Crédito Financiamento e Investimento,BR,False
+5389174,Instituição 05389174,BR,False
+5392810,Instituição 05392810,BR,False
+5410056,Instituição 05410056,BR,False
+5419025,Instituição 05419025,BR,False
+5424088,Instituição 05424088,BR,False
+5425526,Instituição 05425526,BR,False
+5428587,Instituição 05428587,BR,False
+5439425,Instituição 05439425,BR,False
+5442029,Casa do Crédito S.A. Sociedade de Crédito Ao Microempreendedor,BR,False
+5442759,Instituição 05442759,BR,False
+5460750,Instituição 05460750,BR,False
+5463212,Cooperativa Central de Crédito - Ailos,BR,False
+5463934,Instituição 05463934,BR,False
+5474540,Instituição 05474540,BR,False
+5477038,Instituição 05477038,BR,False
+5491616,Cooperativa de Crédito Poupança e Serviços Financeiros - Em Liquidação Extrajudicial,BR,False
+5494591,Instituição 05494591,BR,False
+5503849,Instituição 05503849,BR,False
+5545390,Instituição 05545390,BR,False
+5548335,Instituição 05548335,BR,False
+5582619,Instituição 05582619,BR,False
+5591437,Instituição 05591437,BR,False
+5597773,Instituição 05597773,BR,False
+5607266,Instituição 05607266,BR,False
+5658367,Instituição 05658367,BR,False
+5667301,Instituição 05667301,BR,False
+5669150,Instituição 05669150,BR,False
+5676026,Crediare S.A. - Crédito Financiamento e Investimento,BR,False
+5684234,Planner Sociedade de Crédito Direto,BR,False
+5740092,Instituição 05740092,BR,False
+5745533,Instituição 05745533,BR,False
+5746715,Instituição 05746715,BR,False
+5747018,Instituição 05747018,BR,False
+5790149,Central Cooperativa de Crédito No Estado do Espírito Santo - Cecoop,BR,False
+5816451,Instituição 05816451,BR,False
+5841967,Cooperativa de Economia e Crédito Mútuo dos Fabricantes de Calçados de Sapiranga Ltda.,BR,False
+5856736,Instituição 05856736,BR,False
+5861932,Instituição 05861932,BR,False
+5863726,Instituição 05863726,BR,False
+5883884,Instituição 05883884,BR,False
+5888589,Instituição 05888589,BR,False
+5938780,Instituição 05938780,BR,False
+5940203,Instituição 05940203,BR,False
+5956581,Instituição 05956581,BR,False
+5969937,Instituição 05969937,BR,False
+5979692,Instituição 05979692,BR,False
+5983995,Instituição 05983995,BR,False
+6031727,Instituição 06031727,BR,False
+6040559,Instituição 06040559,BR,False
+6077760,Instituição 06077760,BR,False
+6078926,Instituição 06078926,BR,False
+6126780,Instituição 06126780,BR,False
+6132348,Instituição 06132348,BR,False
+6139650,Instituição 06139650,BR,False
+6174009,Instituição 06174009,BR,False
+6249129,Rpw S/A Sociedade de Crédito Financiamento e Investimento,BR,False
+6271464,Banco Bradesco Bbi,BR,True
+6284531,Instituição 06284531,BR,False
+6324872,Instituição 06324872,BR,False
+6332931,Instituição 06332931,BR,False
+6339468,Instituição 06339468,BR,False
+6369729,Instituição 06369729,BR,False
+6373777,Instituição 06373777,BR,False
+6881898,Instituição 06881898,BR,False
+6910457,Instituição 06910457,BR,False
+6942423,Instituição 06942423,BR,False
+6975532,Instituição 06975532,BR,False
+7026923,Instituição 07026923,BR,False
+7070495,Instituição 07070495,BR,False
+7097064,Instituição 07097064,BR,False
+7108146,Instituição 07108146,BR,False
+7122321,Instituição 07122321,BR,False
+7138049,Picpay Invest Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+7194313,Instituição 07194313,BR,False
+7202627,Instituição 07202627,BR,False
+7206072,Instituição 07206072,BR,False
+7207996,Banco Bradesco Financiamentos,BR,True
+7215632,Instituição 07215632,BR,False
+7237373,Banco do Nordeste do Brasil,BR,True
+7252614,Instituição 07252614,BR,False
+7253654,Hedge Investments Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+7268499,Instituição 07268499,BR,False
+7299480,Instituição 07299480,BR,False
+7314204,Instituição 07314204,BR,False
+7318874,Instituição 07318874,BR,False
+7320890,Instituição 07320890,BR,False
+7327045,Instituição 07327045,BR,False
+7333726,Instituição 07333726,BR,False
+7397614,Instituição 07397614,BR,False
+7412987,Instituição 07412987,BR,False
+7437241,Instituição 07437241,BR,False
+7441209,Instituição 07441209,BR,False
+7450604,Bank Of China (brasil),BR,True
+7465539,Instituição 07465539,BR,False
+7469260,Instituição 07469260,BR,False
+7494300,Instituição 07494300,BR,False
+7502031,Instituição 07502031,BR,False
+7509426,Instituição 07509426,BR,False
+7512441,HS Financeira S/A Credito Financiamento e Investimentos,BR,False
+7512780,Instituição 07512780,BR,False
+7554076,Instituição 07554076,BR,False
+7564184,Instituição 07564184,BR,False
+7599206,Instituição 07599206,BR,False
+7631026,Instituição 07631026,BR,False
+7651495,Instituição 07651495,BR,False
+7652226,Lecca Crédito Financiamento e Investimento,BR,False
+7656500,Banco Kdb do Brasil,BR,True
+7669921,Instituição 07669921,BR,False
+7679404,Banco Topázio,BR,True
+7693858,Hscm - Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Ltda.,BR,False
+7707650,Aymoré Cfi (santander),BR,False
+7714057,Instituição 07714057,BR,False
+7747410,Instituição 07747410,BR,False
+7753938,Instituição 07753938,BR,False
+7789195,Instituição 07789195,BR,False
+7799277,Valor S/A Sociedade de Crédito Financiamento e Investimento,BR,False
+7853842,Uniprime Ouro - Cooperativa de Crédito de Ouro,BR,False
+7925729,Instituição 07925729,BR,False
+7945233,Pólocred Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Ltda.,BR,False
+7946216,Instituição 07946216,BR,False
+7946451,Instituição 07946451,BR,False
+7958405,Instituição 07958405,BR,False
+8030215,Instituição 08030215,BR,False
+8030602,Instituição 08030602,BR,False
+8041950,Instituição 08041950,BR,False
+8044854,Instituição 08044854,BR,False
+8055016,Instituição 08055016,BR,False
+8071414,Instituição 08071414,BR,False
+8075352,Instituição 08075352,BR,False
+8143326,Instituição 08143326,BR,False
+8240446,Cooperativa de Credito Rural de Ibiam - Sulcredi/ibiam,BR,False
+8253539,Cooperativa de Credito Sulcredi Amplea,BR,False
+8257293,Instituição 08257293,BR,False
+8323197,Instituição 08323197,BR,False
+8357240,Banco Csf,BR,True
+8422119,Instituição 08422119,BR,False
+8430732,Instituição 08430732,BR,False
+8482873,Cooperativa de Crédito Rural do Agreste Alagoano - Cooperagre,BR,False
+8488377,Instituição 08488377,BR,False
+8520517,Instituição 08520517,BR,False
+8560508,Instituição 08560508,BR,False
+8561701,Pagseguro Internet Instituição de Pagamento,BR,False
+8609934,Moneycorp Banco de Câmbio,BR,False
+8611734,Instituição 08611734,BR,False
+8624548,Instituição 08624548,BR,False
+8647473,Instituição 08647473,BR,False
+8652872,Instituição 08652872,BR,False
+8673569,F.d'gold - Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+8718431,Instituição 08718431,BR,False
+8742188,Instituição 08742188,BR,False
+8795285,Instituição 08795285,BR,False
+8844074,Instituição 08844074,BR,False
+8850613,Instituição 08850613,BR,False
+8931800,Instituição 08931800,BR,False
+9004796,Instituição 09004796,BR,False
+9033698,Instituição 09033698,BR,False
+9089356,Efí S.A. - Instituição de Pagamento,BR,False
+9092759,Instituição 09092759,BR,False
+9105360,Icap do Brasil Corretora de Títulos e Valores Mobiliários Ltda.,BR,False
+9128022,Instituição 09128022,BR,False
+9210106,Socred S.A. - Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte,BR,False
+9274232,State Street Brasil S.A. - Banco Comercial,BR,True
+9313766,Caruana S.A. - Sociedade de Crédito Financiamento e Investimento,BR,False
+9330158,Instituição 09330158,BR,False
+9343038,Instituição 09343038,BR,False
+9403026,Instituição 09403026,BR,False
+9424988,Instituição 09424988,BR,False
+9433005,Instituição 09433005,BR,False
+9437293,Instituição 09437293,BR,False
+9463721,Instituição 09463721,BR,False
+9464032,Midway S.A. - Sociedade de Crédito Financiamento e Investimento,BR,False
+9473806,Instituição 09473806,BR,False
+9488496,Instituição 09488496,BR,False
+9512539,Instituição 09512539,BR,False
+9512542,Codepe Corretora de Valores e Câmbio,BR,False
+9515813,Instituição 09515813,BR,False
+9516419,Picpay Bank,BR,True
+9526594,Banco Master de Investimento S.A. - Em Liquidação Extrajudicial,BR,False
+9552111,Instituição 09552111,BR,False
+9554480,Superdigital Instituição de Pagamento,BR,False
+9576849,Instituição 09576849,BR,False
+9579249,Instituição 09579249,BR,False
+9590601,Instituição 09590601,BR,False
+9605581,Instituição 09605581,BR,False
+9639338,Instituição 09639338,BR,False
+10013534,Instituição 10013534,BR,False
+10143499,Instituição 10143499,BR,False
+10143743,Instituição 10143743,BR,False
+10175348,Instituição 10175348,BR,False
+10209619,Instituição 10209619,BR,False
+10218474,Instituição 10218474,BR,False
+10262276,Instituição 10262276,BR,False
+10264663,Bancoseguro,BR,True
+10280601,Instituição 10280601,BR,False
+10311218,Instituição 10311218,BR,False
+10314753,Instituição 10314753,BR,False
+10319386,Instituição 10319386,BR,False
+10348181,Instituição 10348181,BR,False
+10371492,Banco Yamaha Motor do Brasil,BR,True
+10398952,Confederação Nacional das Cooperativas Centrais de Crédito e Economia Familiar e Solidária - Cresol Confederação,BR,False
+10440482,Getnet Adquirência e Serviços Para Meios de Pagamento S.A. Instituição de Pagamento,BR,False
+10453077,Instituição 10453077,BR,False
+10506341,Instituição 10506341,BR,False
+10520232,Instituição 10520232,BR,False
+10548608,Instituição 10548608,BR,False
+10573521,Mercado Pago Instituição de Pagamento Ltda.,BR,False
+10663610,Desenvolve Sp - Agência de Fomento do Estado de São Paulo,BR,False
+10664513,Banco Agibank,BR,True
+10690848,Banco da China Brasil,BR,True
+10719496,Instituição 10719496,BR,False
+10736214,Instituição 10736214,BR,False
+10749264,Instituição 10749264,BR,False
+10769660,Instituição 10769660,BR,False
+10789035,Attrus Instituição de Pagamento,BR,False
+10808037,Instituição 10808037,BR,False
+10853017,Get Money Sociedade Corretora de Câmbio,BR,False
+10866788,Banco Bandepe,BR,False
+10868663,Instituição 10868663,BR,False
+10878448,Instituição 10878448,BR,False
+11165756,Global Finanças Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Ltda.,BR,False
+11271860,Instituição 11271860,BR,False
+11275560,Instituição 11275560,BR,False
+11285104,Neon Financeira - Sociedade de Crédito Financiamento e Investimento,BR,False
+11351086,Mercado Bitcoin Instituicao de Pagamento Ltda,BR,False
+11356599,Instituição 11356599,BR,False
+11406965,Instituição 11406965,BR,False
+11414839,Eagle Instituicao de Pagamento Ltda.,BR,False
+11417016,Instituição 11417016,BR,False
+11476673,Banco Randon,BR,True
+11491029,Bsn Pagamentos Instituição de Pagamento Ltda,BR,False
+11495073,Om Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+11545653,Instituição 11545653,BR,False
+11581339,Bmp Sociedade de Crédito Ao Microempreendedor e A Empresa de Pequeno Porte Ltda.,BR,False
+11703662,Banco Travelex,BR,True
+11758741,Banco Finaxis,BR,True
+11760553,Gazincred S.A. Sociedade de Crédito Financiamento e Investimento,BR,False
+11836226,Instituição 11836226,BR,False
+11907520,Instituição 11907520,BR,False
+11969853,Instituição 11969853,BR,False
+11970623,Banco Senff,BR,True
+12063256,Instituição 12063256,BR,False
+12102128,Safetypay Brasil Instituicao de Pagamento Ltda,BR,False
+12272183,Instituição 12272183,BR,False
+12384953,Instituição 12384953,BR,False
+12392983,Mirae Asset (brasil) Corretora de Câmbio Títulos e Valores Mobiliários Ltda.,BR,False
+12473687,Conta Pronta Instituicao de Pagamento Ltda,BR,False
+12481100,Biz Instituição de Pagamento,BR,False
+12599971,Instituição 12599971,BR,False
+12651789,Instituição 12651789,BR,False
+12815827,Instituição 12815827,BR,False
+12865507,Brk S.A. Crédito Financiamento e Investimento,BR,False
+13009717,Banco do Estado de Sergipe,BR,True
+13059145,Ebury Banco de Câmbio,BR,False
+13140088,Acesso Soluções de Pagamento S.A. - Instituição de Pagamento,BR,False
+13178690,Instituição 13178690,BR,False
+13203354,Fits Instituição de Pagamento,BR,False
+13220493,Br Partners Banco de Investimento,BR,False
+13293225,Órama Distribuidora de Títulos e Valores Mobiliários,BR,False
+13370835,Dock Instituição de Pagamento,BR,False
+13486793,Brl Trust Distribuidora de Títulos e Valores Mobiliários,BR,False
+13660104,Instituição 13660104,BR,False
+13673855,Oslo Capital Distribuidora de Títulos e Valores Mobiliários,BR,False
+13720915,Banco Western Union do Brasil,BR,True
+13728156,Instituição 13728156,BR,False
+13776742,Instituição 13776742,BR,False
+13884775,Magalupay Instituição de Pagamento,BR,False
+13935893,Celcoin Instituicao de Pagamento,BR,False
+13966572,Instituição 13966572,BR,False
+14046512,Instituição 14046512,BR,False
+14190547,Cambionet Corretora de Câmbio Ltda.,BR,False
+14388334,Paraná Banco,BR,False
+14388516,Instituição 14388516,BR,False
+14511781,Bari Companhia Hipotecária,BR,False
+14568725,Instituição 14568725,BR,False
+14796606,Instituição 14796606,BR,False
+14913919,Instituição 14913919,BR,False
+15011719,Instituição 15011719,BR,False
+15077393,Instituição 15077393,BR,False
+15111975,Iugu Instituição de Pagamento,BR,False
+15114366,Banco BOCOM BBM,BR,True
+15122605,Instituição 15122605,BR,False
+15124464,Banco Besa,BR,True
+15163587,Instituição 15163587,BR,False
+15168152,Instituição 15168152,BR,False
+15173776,Social Bank,BR,True
+15213150,Instituição 15213150,BR,False
+15227994,Instituição 15227994,BR,False
+15357060,Banco Woori Bank do Brasil,BR,True
+15482499,Instituição 15482499,BR,False
+15489568,Intra Investimentos Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+15581638,Facta Financeira S.A. - Crédito Financiamento e Investimento,BR,False
+15761217,Instituição 15761217,BR,False
+16501555,Stone Instituição de Pagamento,BR,False
+16564240,Instituição 16564240,BR,False
+16581207,Instituição 16581207,BR,False
+16651002,Instituição 16651002,BR,False
+16668076,Instituição 16668076,BR,False
+16683062,Instituição 16683062,BR,False
+16695922,Id Corretora de Títulos e Valores Mobiliários,BR,False
+16721078,Instituição 16721078,BR,False
+16779741,Instituição 16779741,BR,False
+16814330,Bk Instituição de Pagamento,BR,False
+16854999,Instituição 16854999,BR,False
+16927221,Amazônia Corretora de Câmbio Ltda.,BR,False
+16944141,Broker Brasil Corretora de Câmbio Ltda.,BR,False
+17079937,Pinbank Brasil Instituição de Pagamento,BR,False
+17157777,Banco Nacional,BR,False
+17167412,Instituição 17167412,BR,False
+17184037,Banco Mercantil do Brasil,BR,True
+17192451,Instituição 17192451,BR,False
+17298092,Banco Itaú Bba,BR,True
+17312083,Instituição 17312083,BR,False
+17312661,Instituição 17312661,BR,False
+17314501,Instituição 17314501,BR,False
+17315359,Instituição 17315359,BR,False
+17343510,Instituição 17343510,BR,False
+17343682,Instituição 17343682,BR,False
+17351180,Banco Triangulo,BR,True
+17352220,Senso Corretora de Cambio e Valores Mobiliarios,BR,False
+17354911,Instituição 17354911,BR,False
+17359351,Instituição 17359351,BR,False
+17361536,Instituição 17361536,BR,False
+17364795,Instituição 17364795,BR,False
+17411307,Instituição 17411307,BR,False
+17441197,Instituição 17441197,BR,False
+17453575,Icbc do Brasil,BR,True
+17502881,Instituição 17502881,BR,False
+17508380,Instituição 17508380,BR,False
+17607375,Instituição 17607375,BR,False
+17635177,Instituição 17635177,BR,False
+17768068,Instituição 17768068,BR,False
+17772370,Vips Corretora de Câmbio,BR,False
+17819084,Instituição 17819084,BR,False
+17826860,Bms Sociedade de Crédito Direto,BR,False
+17887874,Instituição 17887874,BR,False
+17904906,Instituição 17904906,BR,False
+18140913,Instituição 18140913,BR,False
+18145784,Instituição 18145784,BR,False
+18188384,Crefaz Sociedade de Crédito Ao Microempreendedor e A Empresa de Pequeno Porte,BR,False
+18189547,Cloudwalk Instituição de Pagamento e Servicos Ltda,BR,False
+18236120,Nubank,BR,True
+18282093,Oxy Companhia Hipotecária,BR,False
+18287740,Instituição 18287740,BR,False
+18310649,Instituição 18310649,BR,False
+18340695,Instituição 18340695,BR,False
+18394228,Cdc Sociedade de Crédito Direto,BR,False
+18520834,UBS BB Banco de Investimento,BR,False
+18539102,Instituição 18539102,BR,False
+18587586,Instituição 18587586,BR,False
+18684408,Azimut Brasil Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+18810553,Instituição 18810553,BR,False
+18846364,Instituição 18846364,BR,False
+18945670,Instituição 18945670,BR,False
+18966739,Instituição 18966739,BR,False
+19086249,Instituição 19086249,BR,False
+19307785,Braza Bank S.A. Banco de Câmbio,BR,True
+19324634,Lamara Sociedade de Crédito Direto,BR,False
+19402130,Instituição 19402130,BR,False
+19449602,Instituição 19449602,BR,False
+19468242,Ifood Pago Instituição de Pagamento,BR,False
+19495266,Instituição 19495266,BR,False
+19540550,Asaas Gestão Financeira Instituição de Pagamento,BR,False
+19551787,Instituição 19551787,BR,False
+19869338,Instituição 19869338,BR,False
+19875244,Instituição 19875244,BR,False
+19962468,Instituição 19962468,BR,False
+20018183,Stark Bank S.A. - Instituicao de Pagamento,BR,False
+20062766,Instituição 20062766,BR,False
+20110153,Instituição 20110153,BR,False
+20155248,Unida Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+20158571,Instituição 20158571,BR,False
+20177390,Instituição 20177390,BR,False
+20251847,Sudacred Sociedade de Crédito Direto,BR,False
+20269566,Instituição 20269566,BR,False
+20308187,Avancard Prover Instituição de Pagamento Ltda,BR,False
+20443996,Becker Financeira S.A. - Crédito Financiamento e Investimento,BR,False
+20520298,Instituição 20520298,BR,False
+20622809,Instituição 20622809,BR,False
+20757199,Pay4fun Instituicao de Pagamento,BR,False
+20833976,Instituição 20833976,BR,False
+20833992,Cooperativa de Crédito Mútuo dos Empregados do Centro Universitário Newton Paiva Ltda. - Credipaiva,BR,False
+20855875,Neon Pagamentos S.A. - Instituição de Pagamento,BR,False
+20961629,Instituição 20961629,BR,False
+21018182,Ebanx Instituicao de Pagamentos Ltda.,BR,False
+21040668,Instituição 21040668,BR,False
+21110927,Instituição 21110927,BR,False
+21130869,Instituição 21130869,BR,False
+21198087,Instituição 21198087,BR,False
+21332862,Cartos Sociedade de Crédito Direto,BR,False
+21597133,Instituição 21597133,BR,False
+21661202,Instituição 21661202,BR,False
+21670187,Instituição 21670187,BR,False
+21797311,Instituição 21797311,BR,False
+21866694,Instituição 21866694,BR,False
+21995256,Mag Instituicao de Pagamento Ltda,BR,False
+22121209,Instituição 22121209,BR,False
+22177858,Instituição 22177858,BR,False
+22575466,Srm Bank Instituição de Pagamento,BR,False
+22610500,Vortx Distribuidora de Titulos e Valores Mobiliarios Ltda.,BR,False
+22639377,Instituição 22639377,BR,False
+22656789,Instituição 22656789,BR,False
+22724710,Instituição 22724710,BR,False
+22749014,Instituição 22749014,BR,False
+22753982,Instituição 22753982,BR,False
+22760839,Instituição 22760839,BR,False
+22896431,Picpay Instituição de Pagamento,BR,True
+23010182,Instituição 23010182,BR,False
+23114447,Flagship Instituicao de Pagamento Ltda,BR,False
+23241540,Instituição 23241540,BR,False
+23511655,Instituição 23511655,BR,False
+23522214,Commerzbank Brasil,BR,True
+23623636,Instituição 23623636,BR,False
+23757411,Instituição 23757411,BR,False
+23862762,Will Financeira S.A. Crédito Financiamento e Investimento - Em Liquidação Extrajudicial,BR,False
+23903068,Instituição 23903068,BR,False
+23949522,Instituição 23949522,BR,False
+24048910,Instituição 24048910,BR,False
+24074692,Guitta Corretora de Cambio Ltda.,BR,False
+24235459,Instituição 24235459,BR,False
+24313102,99pay Instituicao de Pagamento,BR,False
+24361690,Instituição 24361690,BR,False
+24431221,Instituição 24431221,BR,False
+24537861,Ffa Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Ltda.,BR,False
+24610065,Instituição 24610065,BR,False
+24654881,Instituição 24654881,BR,False
+24795049,Instituição 24795049,BR,False
+24799033,Instituição 24799033,BR,False
+24830879,Instituição 24830879,BR,False
+24933830,Instituição 24933830,BR,False
+25021356,Instituição 25021356,BR,False
+25104230,Pagare Instituicao de Pagamento,BR,False
+25238191,Instituição 25238191,BR,False
+25280945,Instituição 25280945,BR,False
+25353939,Instituição 25353939,BR,False
+25363615,Instituição 25363615,BR,False
+25387655,Instituição 25387655,BR,False
+25387671,Instituição 25387671,BR,False
+25387713,Instituição 25387713,BR,False
+25395435,Instituição 25395435,BR,False
+25404542,Instituição 25404542,BR,False
+25420696,Instituição 25420696,BR,False
+25528753,Instituição 25528753,BR,False
+25536764,Instituição 25536764,BR,False
+25606237,Instituição 25606237,BR,False
+25626490,Instituição 25626490,BR,False
+25674235,Instituição 25674235,BR,False
+25683434,Instituição 25683434,BR,False
+25683475,Instituição 25683475,BR,False
+25743311,Instituição 25743311,BR,False
+25798596,Instituição 25798596,BR,False
+26014175,Instituição 26014175,BR,False
+26072728,Instituição 26072728,BR,False
+26178111,Instituição 26178111,BR,False
+26178533,Instituição 26178533,BR,False
+26191078,Instituição 26191078,BR,False
+26225776,Instituição 26225776,BR,False
+26264220,Zero Instituição de Pagamento,BR,False
+26359745,Instituição 26359745,BR,False
+26408161,Instituição 26408161,BR,False
+26408187,Instituição 26408187,BR,False
+26526166,Instituição 26526166,BR,False
+26529420,Instituição 26529420,BR,False
+26549311,Instituição 26549311,BR,False
+26555235,Instituição 26555235,BR,False
+26563270,Primacredi Credisis - Cooperativa de Crédito de Primavera do Leste,BR,False
+26615279,Tycoon Technology Instituicao de Pagamento,BR,False
+26758433,Instituição 26758433,BR,False
+26960328,Instituição 26960328,BR,False
+27084098,Transfeera Instituição de Pagamento,BR,False
+27098060,Banco Digio,BR,True
+27140946,Instituição 27140946,BR,False
+27171974,Instituição 27171974,BR,False
+27214112,Al5 S.A. Sociedade de Crédito Financiamento e Investimento,BR,False
+27302181,Cooperativa de Crédito dos Servidores da Universidade Federal do Espirito Santo,BR,False
+27348513,Instituição 27348513,BR,False
+27351731,Realize Sociedade de Crédito Financiamento e Investimento,BR,False
+27652684,Genial Investimentos Corretora de Valores Mobiliários,BR,False
+27842177,Bpy Corretora de Câmbio Títulos e Valores Mobiliários,BR,False
+27970567,Hinova Pay Instituicao de Pagamento,BR,False
+28048783,Instituição 28048783,BR,False
+28080769,Instituição 28080769,BR,False
+28127603,Banestes S.A. Banco do Estado do Espírito Santo,BR,True
+28145589,Instituição 28145589,BR,False
+28145829,Instituição 28145829,BR,False
+28156057,Instituição 28156057,BR,False
+28195667,Banco ABC Brasil,BR,True
+28244622,Instituição 28244622,BR,False
+28435685,Instituição 28435685,BR,False
+28517628,Instituição 28517628,BR,False
+28581308,Instituição 28581308,BR,False
+28650236,Galapagos Capital Distribuidora de Títulos e Valores Mobiliários,BR,False
+28683892,Instituição 28683892,BR,False
+28762249,Instituição 28762249,BR,False
+28811341,Banco Stonex,BR,True
+28885036,Instituição 28885036,BR,False
+28979546,Instituição 28979546,BR,False
+29030467,Scotiabank Brasil,BR,True
+29162769,Santander Corretora de Títulos e Valores Mobiliários,BR,False
+29341260,Instituição 29341260,BR,False
+29650082,Instituição 29650082,BR,False
+29759316,Instituição 29759316,BR,False
+29985421,Instituição 29985421,BR,False
+30138226,Instituição 30138226,BR,False
+30172491,Instituição 30172491,BR,False
+30183111,Instituição 30183111,BR,False
+30304919,Instituição 30304919,BR,False
+30306294,BTG Pactual,BR,True
+30507541,Brasil Cash Instituicao de Pagamento,BR,False
+30586895,Instituição 30586895,BR,False
+30680829,Nu Financeira S.A. - Sociedade de Crédito Financiamento e Investimento,BR,False
+30723871,Casas Bahia Pay Instituição de Pagamento Ltda.,BR,False
+30723886,Banco Modal,BR,True
+30765018,Instituição 30765018,BR,False
+30798783,Instituição 30798783,BR,False
+30822936,Instituição 30822936,BR,False
+30944783,Pagprime Instituicao de Pagamento Ltda,BR,False
+30949267,Instituição 30949267,BR,False
+30980539,Okto Instituição de Pagamento,BR,False
+31531997,Instituição 31531997,BR,False
+31546476,Instituição 31546476,BR,False
+31597552,Banco Classico,BR,False
+31680151,Swap Instituição de Pagamento,BR,False
+31746993,Instituição 31746993,BR,False
+31749596,Ideal Corretora de Títulos e Valores Mobiliários,BR,False
+31804966,Instituição 31804966,BR,False
+31815293,Instituição 31815293,BR,False
+31818873,Instituição 31818873,BR,False
+31872495,Banco C6,BR,True
+31880826,Banco Guanabara,BR,True
+31895683,Banco Industrial do Brasil,BR,True
+32062580,Banco UBS (brasil),BR,True
+32074986,Beeteller Instituição de Pagamento Ltda.,BR,False
+32192325,Uzzipay Instituição de Pagamento,BR,False
+32206435,Instituição 32206435,BR,False
+32219232,Instituição 32219232,BR,False
+32223020,Instituição 32223020,BR,False
+32343119,Instituição 32343119,BR,False
+32345784,Instituição 32345784,BR,False
+32402502,Qi Sociedade de Crédito Direto,BR,False
+32422628,Instituição 32422628,BR,False
+32428294,Instituição 32428294,BR,False
+32430233,Instituição 32430233,BR,False
+32467086,Instituição 32467086,BR,False
+32474884,Instituição 32474884,BR,False
+32588139,Instituição 32588139,BR,False
+32615247,Instituição 32615247,BR,False
+32648370,Fair Sociedade Corretora de Câmbio,BR,False
+32708748,We Pay Out Instituicao de Pagamento Ltda.,BR,False
+32778350,Instituição 32778350,BR,False
+32820711,Efex Instituição de Pagamento,BR,False
+32971064,Instituição 32971064,BR,False
+32982245,Instituição 32982245,BR,False
+32983165,Instituição 32983165,BR,False
+32995755,Instituição 32995755,BR,False
+32997490,Creditas Sociedade de Crédito Direto,BR,False
+33021064,Instituição 33021064,BR,False
+33022690,Instituição 33022690,BR,False
+33040601,Mercantil Financeira S.A. - Sociedade de Crédito Financiamento e Investimento.,BR,False
+33042151,Banco de La Nacion Argentina,BR,True
+33042953,Citibank N.a.,BR,False
+33132044,Banco Cedula,BR,True
+33136888,Instituição 33136888,BR,False
+33147315,Banco Bradesco Berj,BR,True
+33171211,Instituição 33171211,BR,False
+33172537,Banco J.P. Morgan,BR,True
+33222241,Instituição 33222241,BR,False
+33254319,Instituição 33254319,BR,False
+33264668,Banco XP,BR,True
+33311713,Instituição 33311713,BR,False
+33370115,Instituição 33370115,BR,False
+33416108,Instituição 33416108,BR,False
+33444505,Instituição 33444505,BR,False
+33449007,Instituição 33449007,BR,False
+33466988,Banco Caixa Geral - Brasil,BR,True
+33479023,Banco Citibank,BR,True
+33579731,Instituição 33579731,BR,False
+33588252,Banco Induscred de Investimento,BR,True
+33603457,Banco Rodobens,BR,True
+33615055,Instituição 33615055,BR,False
+33630661,Instituição 33630661,BR,False
+33644196,Banco Fator,BR,True
+33657248,Banco Nacional de Desenvolvimento Economico e Social,BR,False
+33667205,Cooperativa Central de Crédito Poupança e Investimento do Centro Norte do Brasil - Central Sicredi Centro Norte,BR,False
+33709114,Instituição 33709114,BR,False
+33735192,Instituição 33735192,BR,False
+33737818,Cooperativa Central de Crédito Poupança e Investimento de Mato Grosso do Sul Goiás Distrito Federal e Tocantins - Central Sicredi Brasil Central,BR,False
+33775974,Ativa Investimentos S.A. Corretora de Títulos Câmbio e Valores,BR,False
+33817677,Instituição 33817677,BR,False
+33850686,Instituição 33850686,BR,False
+33851064,Instituição 33851064,BR,False
+33851205,Instituição 33851205,BR,False
+33862244,Bgc Liquidez Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+33868597,Instituição 33868597,BR,False
+33884941,Banco Master Múltiplo S.A. - Em Liquidação Extrajudicial,BR,False
+33885724,Banco Itaú Consignado,BR,True
+33886862,Master S/A Corretora de Câmbio Títulos e Valores Mobiliários - Em Liquidação Extrajudicial,BR,False
+33890605,Instituição 33890605,BR,False
+33894445,Instituição 33894445,BR,False
+33923111,Instituição 33923111,BR,False
+33923798,Banco Master S/A - Em Liquidação Extrajudicial,BR,False
+33924028,Instituição 33924028,BR,False
+33959738,Mova Sociedade de Empréstimo Entre Pessoas,BR,False
+33987793,Banco UBS Brasil,BR,True
+34006497,Instituição 34006497,BR,False
+34088029,Listo Sociedade de Credito Direto,BR,False
+34111187,Haitong Banco de Investimento do Brasil,BR,False
+34139916,Emcash Serviços Financeiros Sociedade de Empréstimo Entre Pessoas,BR,False
+34148882,Instituição 34148882,BR,False
+34169557,Instituição 34169557,BR,False
+34190991,Instituição 34190991,BR,False
+34254279,Instituição 34254279,BR,False
+34265561,Instituição 34265561,BR,False
+34265629,Intercam Corretora de Câmbio Ltda.,BR,False
+34270520,Instituição 34270520,BR,False
+34335592,Ótimo Sociedade de Crédito Direto,BR,False
+34337707,Bmp Sociedade de Crédito Direto,BR,False
+34471744,Pagme Instituição de Pagamento Ltda.,BR,False
+34590184,Instituição 34590184,BR,False
+34666362,Instituição 34666362,BR,False
+34669130,Instituição 34669130,BR,False
+34711571,Vitreo Distribuidora de Títulos e Valores Mobiliários,BR,False
+34747388,Issuer Instituicao de Pagamento Ltda.,BR,False
+34829992,Cbsf Distribuidora de Títulos e Valores Mobiliários S.a.- Em Liquidação Extrajudicial,BR,False
+34831910,Instituição 34831910,BR,False
+34846868,Instituição 34846868,BR,False
+34878543,Instituição 34878543,BR,False
+34978626,Instituição 34978626,BR,False
+34991938,Instituição 34991938,BR,False
+35084163,Instituição 35084163,BR,False
+35136120,Instituição 35136120,BR,False
+35210410,Onekey Payments Instituicao de Pagamento,BR,False
+35274306,Instituição 35274306,BR,False
+35340796,Inco Sociedade de Empréstimo Entre Pessoas,BR,False
+35470647,Instituição 35470647,BR,False
+35479592,Dufrio Financeira Crédito Financiamento e Investimentos,BR,False
+35523352,Bees Instituicao de Pagamento Ltda.,BR,False
+35534511,Instituição 35534511,BR,False
+35542555,Instituição 35542555,BR,False
+35551187,Plantae S.A. - Crédito Financiamento e Investimento,BR,False
+35571249,Instituição 35571249,BR,False
+35713491,Prototype Instituicao de Pagamento,BR,False
+35810871,Z1 Instituição de Pagamento Ltda.,BR,False
+35911258,Instituição 35911258,BR,False
+35977097,Up.p Sociedade de Empréstimo Entre Pessoas,BR,False
+36010822,Instituição 36010822,BR,False
+36113876,Oliveira Trust Distribuidora de Títulos e Valores Mobiliarios,BR,False
+36266751,Finvest Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+36272465,Instituição 36272465,BR,False
+36321990,Agoracred S/A Sociedade de Crédito Financiamento e Investimento,BR,False
+36452762,Instituição 36452762,BR,False
+36583700,Qista S.A. - Crédito Financiamento e Investimento,BR,False
+36586946,Bonuspago Sociedade de Crédito Direto,BR,False
+36588217,Instituição 36588217,BR,False
+36658769,Instituição 36658769,BR,False
+36690516,Pay Instituicao de Pagamento,BR,False
+36864992,Maf Distribuidora de Títulos e Valores Mobiliários,BR,False
+36900256,Instituição 36900256,BR,False
+36947229,Cobuccio S/A - Sociedade de Crédito Financiamento e Investimentos,BR,False
+37076205,Instituição 37076205,BR,False
+37079720,Instituição 37079720,BR,False
+37122487,Instituição 37122487,BR,False
+37134759,Instituição 37134759,BR,False
+37168145,Instituição 37168145,BR,False
+37229413,Sociedade de Crédito Financiamento e Investimento Efí,BR,False
+37241230,Sumup Sociedade de Crédito Direto,BR,False
+37255049,Instituição 37255049,BR,False
+37374538,Instituição 37374538,BR,False
+37395399,Instituição 37395399,BR,False
+37414009,Zipdin Soluções Digitais Sociedade de Crédito Direto,BR,False
+37442605,Instituição 37442605,BR,False
+37470405,Smart Solutions Group Instituicao de Pagamento Ltda,BR,False
+37511258,Instituição 37511258,BR,False
+37526080,Lend Sociedade de Crédito Direto,BR,False
+37554441,Instituição 37554441,BR,False
+37555231,Dm Sociedade de Crédito Direto,BR,False
+37631058,Instituição 37631058,BR,False
+37663090,Instituição 37663090,BR,False
+37678915,Fidd Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+37679449,Mercado Crédito Sociedade de Crédito Financiamento e Investimento,BR,False
+37715993,Accredito - Sociedade de Crédito Direto,BR,False
+37753531,Pagsmile Instituição de Pagamento Ltda.,BR,False
+37763847,Instituição 37763847,BR,False
+37800856,Instituição 37800856,BR,False
+37880206,Cora Sociedade de Crédito Financiamento e Investimento,BR,False
+37943755,Instituição 37943755,BR,False
+38129006,Numbrs Sociedade de Crédito Direto,BR,False
+38146949,Instituição 38146949,BR,False
+38224857,Delfinance Sociedade de Credito Direto,BR,False
+38316293,Instituição 38316293,BR,False
+38320462,Instituição 38320462,BR,False
+38372267,Instituição 38372267,BR,False
+38429045,Vis Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+38486817,Instituição 38486817,BR,False
+38588174,Instituição 38588174,BR,False
+38593706,Multicred Sociedade de Crédito Direto,BR,False
+38653626,Instituição 38653626,BR,False
+39231527,Instituição 39231527,BR,False
+39321657,Instituição 39321657,BR,False
+39343350,Lar Cooperativa de Crédito - Lar Credi,BR,False
+39416705,Octa Sociedade de Crédito Direto S.A. - Em Liquidação Extrajudicial,BR,False
+39431423,Instituição 39431423,BR,False
+39519944,Opea Sociedade de Crédito Direto,BR,False
+39544456,Instituição 39544456,BR,False
+39587424,Uy3 Sociedade de Crédito Direto,BR,False
+39664698,Credsystem Sociedade de Crédito Direto,BR,False
+39669186,Hemera Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+39676772,Credifit Sociedade de Crédito Direto,BR,False
+39696395,Cactvs Instituicao de Pagamento,BR,False
+39696805,Instituição 39696805,BR,False
+39738065,Ffcred Sociedade de Crédito Direto S.A..,BR,False
+39908427,Stark Sociedade de Crédito Direto,BR,False
+39993186,Instituição 39993186,BR,False
+40083667,Capital Consig Sociedade de Crédito Direto,BR,False
+40112555,Giro - Sociedade de Crédito Direto,BR,False
+40269467,Instituição 40269467,BR,False
+40276692,Protege Cash Instituição de Pagamento,BR,False
+40303299,Portopar Distribuidora de Titulos e Valores Mobiliarios Ltda.,BR,False
+40333582,Saygo Corretora de Câmbio,BR,False
+40353377,Fourtrade Corretora de Câmbio Ltda.,BR,False
+40429946,Instituição 40429946,BR,False
+40434681,Azumi Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+40473435,Repasses Financeiros e Solucoes Tecnologicas Instituicao de Pagamento,BR,False
+40475846,J17 - Sociedade de Crédito Direto,BR,False
+40571694,Instituição 40571694,BR,False
+40654622,Trinus Sociedade de Crédito Direto,BR,False
+40710595,Instituição 40710595,BR,False
+40768766,Lions Trust Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+40819834,Instituição 40819834,BR,False
+40820176,Instituição 40820176,BR,False
+40867163,Instituição 40867163,BR,False
+41146382,Instituição 41146382,BR,False
+41180092,Instituição 41180092,BR,False
+41219353,Instituição 41219353,BR,False
+41255225,Instituição 41255225,BR,False
+41349521,Instituição 41349521,BR,False
+41498340,Instituição 41498340,BR,False
+41538335,Instituição 41538335,BR,False
+41560568,Instituição 41560568,BR,False
+41592532,Mérito Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+41669227,Instituição 41669227,BR,False
+41697103,Instituição 41697103,BR,False
+41707258,Instituição 41707258,BR,False
+41753500,Instituição 41753500,BR,False
+41791005,Instituição 41791005,BR,False
+41805003,Instituição 41805003,BR,False
+41931221,Instituição 41931221,BR,False
+41931445,Instituição 41931445,BR,False
+42040639,Instituição 42040639,BR,False
+42047025,Unavanti Sociedade de Crédito Direto,BR,False
+42054886,Instituição 42054886,BR,False
+42064545,Instituição 42064545,BR,False
+42066258,Rji Corretora de Titulos e Valores Mobiliarios Ltda,BR,False
+42100982,Instituição 42100982,BR,False
+42107706,Instituição 42107706,BR,False
+42258376,Instituição 42258376,BR,False
+42259084,Artta Sociedade de Crédito Direto,BR,False
+42272526,Bny Mellon Banco,BR,True
+42445122,Instituição 42445122,BR,False
+42584318,Instituição 42584318,BR,False
+42622791,Instituição 42622791,BR,False
+42627615,Instituição 42627615,BR,False
+42723848,Instituição 42723848,BR,False
+42873828,Instituição 42873828,BR,False
+42880617,Instituição 42880617,BR,False
+42887133,Instituição 42887133,BR,False
+42898825,Instituição 42898825,BR,False
+42926025,Instituição 42926025,BR,False
+42934794,Instituição 42934794,BR,False
+42963742,Bansur Jm Sociedade de Crédito Direto,BR,False
+43010260,Instituição 43010260,BR,False
+43050917,Instituição 43050917,BR,False
+43060029,Instituição 43060029,BR,False
+43167610,Instituição 43167610,BR,False
+43180355,Pefisa S.A. - Crédito Financiamento e Investimento,BR,False
+43182278,Instituição 43182278,BR,False
+43215815,Instituição 43215815,BR,False
+43268960,Instituição 43268960,BR,False
+43394419,Instituição 43394419,BR,False
+43438662,Instituição 43438662,BR,False
+43446335,Instituição 43446335,BR,False
+43488782,Instituição 43488782,BR,False
+43561343,Instituição 43561343,BR,False
+43599047,Superlógica Sociedade de Crédito Direto,BR,False
+43730498,Instituição 43730498,BR,False
+43774196,Instituição 43774196,BR,False
+43815158,Instituição 43815158,BR,False
+43818780,Instituição 43818780,BR,False
+43978697,Kikai Sociedade de Crédito Direto,BR,False
+44019481,Peak Sociedade de Empréstimo Entre Pessoas,BR,False
+44064068,Oppens Sociedade de Emprestimo Entre Pessoas,BR,False
+44077014,Br-capital Distribuidora de Títulos e Valores Mobiliários,BR,False
+44128548,Instituição 44128548,BR,False
+44154779,Instituição 44154779,BR,False
+44189447,Banco de La Provincia de Buenos Aires,BR,True
+44223196,Instituição 44223196,BR,False
+44292580,Hr Digital - Sociedade de Crédito Direto,BR,False
+44323831,Atual Sociedade Corretora de Câmbio Ltda,BR,False
+44353942,Instituição 44353942,BR,False
+44373041,Instituição 44373041,BR,False
+44401800,Instituição 44401800,BR,False
+44431743,Instituição 44431743,BR,False
+44459799,Instituição 44459799,BR,False
+44469161,Instituição 44469161,BR,False
+44471172,Instituição 44471172,BR,False
+44475245,Instituição 44475245,BR,False
+44478623,Aticca - Sociedade de Crédito Direto,BR,False
+44527444,Instituição 44527444,BR,False
+44564204,Instituição 44564204,BR,False
+44650156,Instituição 44650156,BR,False
+44663846,Festor Instituição de Pagamento Ltda.,BR,False
+44683140,Magnum Sociedade de Crédito Direto,BR,False
+44705774,Somapay Sociedade de Crédito Direto,BR,False
+44728700,Atf Sociedade de Crédito Direto,BR,False
+44746352,Instituição 44746352,BR,False
+44782130,Actual Distribuidora de Títulos e Valores Mobiliários,BR,False
+44815065,Instituição 44815065,BR,False
+44905255,Instituição 44905255,BR,False
+44921281,Nixfin Sociedade de Crédito Direto,BR,False
+44958981,Instituição 44958981,BR,False
+45045671,Instituição 45045671,BR,False
+45056494,Jm Corretora de Câmbio Ltda.,BR,False
+45068632,Instituição 45068632,BR,False
+45220646,Instituição 45220646,BR,False
+45246410,Banco Genial,BR,True
+45283173,BBVA Brasil Banco de Investimento,BR,False
+45331622,Bnk Digital Sociedade de Crédito Direto,BR,False
+45341994,Instituição 45341994,BR,False
+45421856,Instituição 45421856,BR,False
+45437547,Instituição 45437547,BR,False
+45457891,Instituição 45457891,BR,False
+45548763,Instituição de Pagamentos Maps Ltda.,BR,False
+45597546,Instituição 45597546,BR,False
+45691128,Instituição 45691128,BR,False
+45716916,Fidem Sociedade de Crédito Direto,BR,False
+45745537,Futuro Sociedade de Crédito Direto,BR,False
+45756448,Microcash Sociedade de Crédito Ao Microempreendedor e À Empresa de Pequeno Porte Ltda.,BR,False
+45854066,Wnt Capital Distribuidora de Títulos e Valores Mobiliários,BR,False
+45860531,Idea Maker Instituicao de Pagamento Ltda,BR,False
+45879000,Instituição 45879000,BR,False
+46004634,Instituição 46004634,BR,False
+46009412,Instituição 46009412,BR,False
+46026562,Monetarie Sociedade de Crédito Direto,BR,False
+46130566,Instituição 46130566,BR,False
+46241852,Instituição 46241852,BR,False
+46277273,Instituição 46277273,BR,False
+46297307,Instituição 46297307,BR,False
+46403683,Instituição 46403683,BR,False
+46505612,Monery Instituicao de Pagamento,BR,False
+46518205,Jpmorgan Chase Bank National Association,BR,True
+46570800,Instituição 46570800,BR,False
+46642294,Instituição 46642294,BR,False
+46743943,Instituição 46743943,BR,False
+46743997,Instituição 46743997,BR,False
+46955383,Qi Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+46996177,Instituição 46996177,BR,False
+47074323,Instituição 47074323,BR,False
+47133056,Transfero Instituicao de Pagamento Ltda.,BR,False
+47193149,Instituição 47193149,BR,False
+47196084,Instituição 47196084,BR,False
+47215387,Instituição 47215387,BR,False
+47227569,Instituição 47227569,BR,False
+47377613,Instituição 47377613,BR,False
+47381104,Contaazul Instituicao de Pagamento Ltda.,BR,False
+47438068,Instituição 47438068,BR,False
+47509120,Instituição 47509120,BR,False
+47593544,Red Sociedade de Crédito Direto,BR,False
+47631123,Instituição 47631123,BR,False
+47825528,Instituição 47825528,BR,False
+47873449,Ser Finance Sociedade de Crédito Direto,BR,False
+47944277,Instituição 47944277,BR,False
+47965438,Instituição 47965438,BR,False
+48140925,Instituição 48140925,BR,False
+48172860,Instituição 48172860,BR,False
+48176336,Instituição 48176336,BR,False
+48430050,Instituição 48430050,BR,False
+48528314,Instituição 48528314,BR,False
+48529228,Instituição 48529228,BR,False
+48552108,Liquido Instituicao de Pagamento Ltda,BR,False
+48584954,Dgbk Credit S.A. - Sociedade de Crédito Direto.,BR,False
+48632754,Celcoin Sociedade de Crédito Direto,BR,False
+48703302,Instituição 48703302,BR,False
+48703388,Asa Sociedade de Crédito Financiamento e Investimento,BR,False
+48707451,Percapital Sociedade de Crédito Direto,BR,False
+48718183,Instituição 48718183,BR,False
+48721937,Instituição 48721937,BR,False
+48751854,Instituição 48751854,BR,False
+48755901,Instituição 48755901,BR,False
+48756121,A55 Sociedade de Crédito Direto,BR,False
+48786608,Instituição 48786608,BR,False
+48795256,Banco Andbank (brasil),BR,True
+48805820,Instituição 48805820,BR,False
+48967968,Vert Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+49035310,Instituição 49035310,BR,False
+49091119,Instituição 49091119,BR,False
+49173791,Instituição 49173791,BR,False
+49204605,Instituição 49204605,BR,False
+49241570,Instituição 49241570,BR,False
+49288113,Kanastra Financeira S.A Credito Financiamento e Investimento,BR,False
+49336860,ING Bank N.v.,BR,True
+49389307,Instituição 49389307,BR,False
+49555647,Quadra Sociedade de Crédito Direto,BR,False
+49654502,Instituição 49654502,BR,False
+49686505,Wasu - Wallet Support Instituição de Pagamento Ltda,BR,False
+49889190,Instituição 49889190,BR,False
+49925225,Instituição 49925225,BR,False
+49931906,Trio Instituicao de Pagamento Ltda.,BR,False
+49933388,Brcondos Sociedade de Crédito Direto,BR,False
+49947715,Instituição 49947715,BR,False
+50032584,Loan Brasil Sociedade de Crédito Direto,BR,False
+50053267,Instituição 50053267,BR,False
+50286774,Instituição 50286774,BR,False
+50334234,Instituição 50334234,BR,False
+50489148,Instituição 50489148,BR,False
+50579044,Levycam - Corretora de Cambio e Valores Ltda.,BR,False
+50585090,Banco BMG Consignado,BR,False
+50626276,Konect Sociedade de Crédito Direto,BR,False
+50657675,Instituição 50657675,BR,False
+50735161,Instituição 50735161,BR,False
+50871921,Mt Instituicao de Pagamento,BR,False
+50946592,Sethi Sociedade de Crédito Direto,BR,False
+51010858,Instituição 51010858,BR,False
+51014223,Instituição 51014223,BR,False
+51118615,Integração de Crédito e Cobrança Sociedade de Crédito Direto,BR,False
+51118718,Nvio Brasil Sociedade de Crédito Direto,BR,False
+51212088,G5 Sociedade de Crédito Direto,BR,False
+51342763,Revolut Sociedade de Crédito Direto,BR,False
+51414521,All In Cred Sociedade de Credito Direto,BR,False
+51489318,Instituição 51489318,BR,False
+51556307,Instituição 51556307,BR,False
+51604356,Instituição 51604356,BR,False
+51834986,Instituição 51834986,BR,False
+51982465,Instituição 51982465,BR,False
+51982600,Instituição 51982600,BR,False
+52046299,Instituição 52046299,BR,False
+52067630,Banco Traton Brasil,BR,True
+52076716,Awx Brasil Instituicao de Pagamento Ltda,BR,False
+52137361,Instituição 52137361,BR,False
+52440987,Sants Sociedade de Crédito Direto,BR,False
+52586293,Z-on Sociedade de Crédito Direto,BR,False
+52623311,Instituição 52623311,BR,False
+52690487,Instituição 52690487,BR,False
+52833288,Lb Pay Instituição de Pagamento Ltda,BR,False
+52904364,Necton Investimentos S.A. Corretora de Valores Mobiliários e Commodities,BR,False
+52935442,Instituição 52935442,BR,False
+52937216,Bexs Corretora de Câmbio,BR,False
+53146221,Instituição 53146221,BR,False
+53184438,Instituição 53184438,BR,False
+53236808,Instituição 53236808,BR,False
+53263331,Instituição 53263331,BR,False
+53272365,Instituição 53272365,BR,False
+53385390,Instituição 53385390,BR,False
+53505601,Stone Sociedade de Credito Financiamento e Investimento,BR,False
+53505681,Instituição 53505681,BR,False
+53518684,Banco Hsbc,BR,True
+53575491,Instituição 53575491,BR,False
+53623781,Instituição 53623781,BR,False
+53720128,Conta Simples Sociedade de Crédito Direto,BR,False
+53776852,Instituição 53776852,BR,False
+53800488,Instituição 53800488,BR,False
+53822116,Mw Instituicao de Pagamento Ltda,BR,False
+53841911,Instituição 53841911,BR,False
+53842122,Urbano S.A. - Sociedade de Crédito Financiamento e Investimento,BR,False
+53846242,Instituição 53846242,BR,False
+53899051,Instituição 53899051,BR,False
+53908413,Kiwify Instituicao de Pagamento Ltda,BR,False
+53932869,Instituição 53932869,BR,False
+53935029,Instituição 53935029,BR,False
+54024532,Max Instituição de Pagamento Ltda,BR,False
+54037916,Instituição 54037916,BR,False
+54190525,Instituição 54190525,BR,False
+54264235,Instituição 54264235,BR,False
+54335401,Instituição 54335401,BR,False
+54401286,Instituição 54401286,BR,False
+54403563,Banco Arbi,BR,True
+54541468,Instituição 54541468,BR,False
+54603022,Instituição 54603022,BR,False
+54647259,321 Sociedade de Crédito Direto,BR,False
+54733010,Instituição 54733010,BR,False
+54811417,Woovi Instituicao de Pagamento Ltda,BR,False
+55230916,Intesa Sanpaolo Brasil,BR,True
+55251092,Instituição 55251092,BR,False
+55319370,Instituição 55319370,BR,False
+55428859,Freex Sociedade Corretora de Câmbio,BR,False
+55823094,Delta Global Sociedade de Crédito Direto,BR,False
+55841657,Instituição 55841657,BR,False
+56030613,Instituição 56030613,BR,False
+56047774,Instituição 56047774,BR,False
+56106523,Vue Instituição de Pagamento,BR,False
+56198117,Squid Sociedade de Crédito Direto,BR,False
+56392166,Harmos S.A. - Sociedade de Crédito Financiamento e Investimento,BR,False
+56606230,Instituição 56606230,BR,False
+57038408,Instituição 57038408,BR,False
+57173208,Instituição 57173208,BR,False
+57259525,Instituição 57259525,BR,False
+57440521,Instituição 57440521,BR,False
+57487987,Instituição 57487987,BR,False
+57523215,Instituição 57523215,BR,False
+57545436,Instituição 57545436,BR,False
+57563728,Instituição 57563728,BR,False
+57598120,Instituição 57598120,BR,False
+57647653,Instituição 57647653,BR,False
+57654096,Apusdigital Instituicao de Pagamento Ltda,BR,False
+57671443,Instituição 57671443,BR,False
+57707777,Instituição 57707777,BR,False
+57731012,Instituição 57731012,BR,False
+57771416,Instituição 57771416,BR,False
+57824223,Wx Instituicao de Pagamento Ltda,BR,False
+57839805,Banco Tricury,BR,True
+57905133,Instituição 57905133,BR,False
+57987273,Instituição 57987273,BR,False
+57996878,Instituição 57996878,BR,False
+58006471,Baru Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+58017179,Instituição 58017179,BR,False
+58022195,Instituição 58022195,BR,False
+58158387,Instituição 58158387,BR,False
+58160789,Banco Safra,BR,True
+58229246,Instituição 58229246,BR,False
+58290800,Instituição 58290800,BR,False
+58330558,Instituição 58330558,BR,False
+58367961,Bit Sociedade de Crédito Direto,BR,False
+58497702,Banco Letsbank S.A. - Em Liquidação Extrajudicial,BR,False
+58513168,Instituição 58513168,BR,False
+58526733,Instituição 58526733,BR,False
+58616418,Banco Fibra,BR,True
+58674454,Instituição 58674454,BR,False
+58859402,Instituição 58859402,BR,False
+59109165,Banco Volkswagen,BR,True
+59118133,Banco Luso Brasileiro,BR,True
+59149941,Instituição 59149941,BR,False
+59158642,Instituição 59158642,BR,False
+59274605,Banco Gm,BR,True
+59281253,Instituição 59281253,BR,False
+59285411,Banco PAN,BR,True
+59305565,Instituição 59305565,BR,False
+59379565,Instituição 59379565,BR,False
+59394633,Instituição 59394633,BR,False
+59396084,Bfc Sociedade de Crédito Direto,BR,False
+59588111,Banco Votorantim,BR,True
+59615005,Instituição 59615005,BR,False
+59620708,Instituição 59620708,BR,False
+59855096,Instituição 59855096,BR,False
+59869560,Instituição 59869560,BR,False
+60057265,Instituição 60057265,BR,False
+60114865,Instituição 60114865,BR,False
+60236532,Instituição 60236532,BR,False
+60394079,Banco Itaubank,BR,True
+60498557,Banco MUFG Brasil,BR,True
+60518222,Banco Sumitomo Mitsui Brasileiro,BR,True
+60701190,Itaú,BR,True
+60717928,Instituição 60717928,BR,False
+60746948,Banco Bradesco,BR,True
+60770336,Instituição 60770336,BR,False
+60779196,Crefisa,BR,True
+60783503,Instituição 60783503,BR,False
+60814191,Banco Mercedes-benz do Brasil,BR,True
+60850229,Omni Banco,BR,True
+60872504,Itaú Unibanco Holding,BR,False
+60872983,Instituição 60872983,BR,False
+60889128,Banco Sofisa,BR,True
+60935819,Instituição 60935819,BR,False
+61021673,Magalupay - Sociedade de Crédito Financiamento e Investimento,BR,False
+61024352,Banco Pleno S.A. - Em Liquidação Extrajudicial,BR,False
+61033106,Banco Crefisa,BR,True
+61039038,Instituição 61039038,BR,False
+61088183,Banco Mizuho do Brasil,BR,True
+61182408,Banco Investcred Unibanco,BR,True
+61186680,Banco BMG,BR,True
+61190658,Instituição 61190658,BR,False
+61194353,Instituição 61194353,BR,False
+61348538,Banco C6 Consignado,BR,True
+61384004,Avenue Securities Banco de Investimento,BR,False
+61444949,Sagitur Corretora de Câmbio,BR,False
+61533584,Banco Societe Generale Brasil,BR,True
+61637240,Instituição 61637240,BR,False
+61723847,Neon Corretora de Títulos e Valores Mobiliários,BR,False
+61747085,Tullett Prebon Brasil Corretora de Valores e Câmbio Ltda,BR,False
+61809182,UBS (brasil) Corretora de Valores,BR,False
+61820817,Banco Paulista,BR,True
+61855045,Instituição 61855045,BR,False
+61971803,Instituição 61971803,BR,False
+62063177,Instituição 62063177,BR,False
+62073200,Bank Of America Merrill Lynch,BR,True
+62090873,Instituição 62090873,BR,False
+62109566,Credisan Cooperativa de Crédito,BR,False
+62144175,Banco Pine,BR,True
+62169875,Nu Investimentos S.A. - Corretora de Títulos e Valores Mobiliários,BR,False
+62178421,Instituição 62178421,BR,False
+62198637,Instituição 62198637,BR,False
+62223733,Instituição 62223733,BR,False
+62232889,Banco Daycoval,BR,True
+62237425,Instituição 62237425,BR,False
+62237649,Carol Distribuidora de Titulos e Valores Mobiliarios Ltda.,BR,False
+62264924,Qore Distribuidora de Titulos e Valores Mobiliários Ltda,BR,False
+62280490,Instituição 62280490,BR,False
+62284385,Instituição 62284385,BR,False
+62285390,Qi Corretora de Títulos e Valores Mobiliários,BR,False
+62287735,Warren Rena Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+62307848,Instituição 62307848,BR,False
+62318407,Instituição 62318407,BR,False
+62331228,Deutsche Bank S.A. - Banco Alemao,BR,True
+62375134,Instituição 62375134,BR,False
+62418140,Instituição 62418140,BR,False
+62421979,Banco BMG Soluções Financeiras,BR,True
+62448932,Multiplike Financeira S.A. Sociedade de Crédito Financiamento e Investimento,BR,False
+62451088,Instituição 62451088,BR,False
+62469998,Instituição 62469998,BR,False
+62562012,Instituição 62562012,BR,False
+62605290,Instituição 62605290,BR,False
+62667674,Instituição 62667674,BR,False
+62673470,Instituição 62673470,BR,False
+62795257,Instituição 62795257,BR,False
+62816426,Instituição 62816426,BR,False
+62895230,Instituição 62895230,BR,False
+62928320,Instituição 62928320,BR,False
+62931522,Instituição 62931522,BR,False
+63055668,Instituição 63055668,BR,False
+63062749,Instituição 63062749,BR,False
+63229629,Instituição 63229629,BR,False
+63822040,Instituição 63822040,BR,False
+63917579,Instituição 63917579,BR,False
+64237530,Instituição 64237530,BR,False
+64276058,Instituição 64276058,BR,False
+64293582,Instituição 64293582,BR,False
+64480833,Instituição 64480833,BR,False
+64739121,Instituição 64739121,BR,False
+64835226,Instituição 64835226,BR,False
+65229254,Instituição 65229254,BR,False
+65239402,Instituição 65239402,BR,False
+65635377,Instituição 65635377,BR,False
+65645137,Instituição 65645137,BR,False
+65654303,Instituição 65654303,BR,False
+65697260,Instituição 65697260,BR,False
+65913436,Safra Asset Corretora de Títulos e Valores Mobiliários,BR,False
+66259110,Instituição 66259110,BR,False
+66262643,Instituição 66262643,BR,False
+66398496,Instituição 66398496,BR,False
+66402207,Instituição 66402207,BR,False
+66463407,Instituição 66463407,BR,False
+66788142,Instituição 66788142,BR,False
+67030395,Trustee Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+67031757,Instituição 67031757,BR,False
+67096909,Instituição 67096909,BR,False
+67341487,Instituição 67341487,BR,False
+67600379,Instituição 67600379,BR,False
+67915868,Instituição 67915868,BR,False
+67960229,Instituição 67960229,BR,False
+68228006,Instituição 68228006,BR,False
+68314921,Instituição 68314921,BR,False
+68512748,Instituição 68512748,BR,False
+68742204,Instituição 68742204,BR,False
+68757681,Simpaul Corretora de Cambio e Valores Mobiliarios,BR,False
+68848563,Instituição 68848563,BR,False
+68900810,Banco Rendimento,BR,True
+68969625,Instituição 68969625,BR,False
+69136075,Instituição 69136075,BR,False
+69346856,Instituição 69346856,BR,False
+69720894,Instituição 69720894,BR,False
+69720910,Instituição 69720910,BR,False
+70038237,Instituição 70038237,BR,False
+70116611,Instituição 70116611,BR,False
+70119680,Cooperativa Central de Crédito Poupança e Investimento do Nordeste - Central Sicredi Nordeste,BR,False
+70241658,Instituição 70241658,BR,False
+70431630,Instituição 70431630,BR,False
+70937271,Instituição 70937271,BR,False
+71027866,Banco BS2,BR,True
+71069587,Instituição 71069587,BR,False
+71146450,Instituição 71146450,BR,False
+71154256,Instituição 71154256,BR,False
+71154876,Instituição 71154876,BR,False
+71163315,Instituição 71163315,BR,False
+71207740,Instituição 71207740,BR,False
+71230338,Instituição 71230338,BR,False
+71237184,Instituição 71237184,BR,False
+71238232,Instituição 71238232,BR,False
+71243034,Instituição 71243034,BR,False
+71261184,Instituição 71261184,BR,False
+71297899,Instituição 71297899,BR,False
+71328769,Instituição 71328769,BR,False
+71336432,Instituição 71336432,BR,False
+71378426,Instituição 71378426,BR,False
+71384697,Instituição 71384697,BR,False
+71392047,Instituição 71392047,BR,False
+71418784,Instituição 71418784,BR,False
+71419600,Instituição 71419600,BR,False
+71432926,Instituição 71432926,BR,False
+71441406,Instituição 71441406,BR,False
+71479653,Instituição 71479653,BR,False
+71491609,Instituição 71491609,BR,False
+71502181,Instituição 71502181,BR,False
+71506513,Instituição 71506513,BR,False
+71590442,Lastro Rdv Distribuidora de Títulos e Valores Mobiliários Ltda.,BR,False
+71677850,Frente Sociedade Corretora de Câmbio S.A. - Em Liquidação Extrajudicial,BR,False
+71698674,Instituição 71698674,BR,False
+71884498,Instituição 71884498,BR,False
+71965313,Instituição 71965313,BR,False
+72128440,Instituição 72128440,BR,False
+72257793,Instituição 72257793,BR,False
+72556996,Instituição 72556996,BR,False
+72600026,Instituição 72600026,BR,False
+72952138,Instituição 72952138,BR,False
+73077398,Instituição 73077398,BR,False
+73085573,Instituição 73085573,BR,False
+73092827,Instituição 73092827,BR,False
+73113243,Instituição 73113243,BR,False
+73254757,Instituição 73254757,BR,False
+73279093,Instituição 73279093,BR,False
+73302408,Exim Corretora de Cambio Ltda,BR,False
+73326449,Instituição 73326449,BR,False
+73398646,Instituição 73398646,BR,False
+73422792,Instituição 73422792,BR,False
+73443863,Instituição 73443863,BR,False
+73622748,Bt Corretora de Câmbio Ltda.,BR,False
+73631483,Instituição 73631483,BR,False
+73647935,Instituição 73647935,BR,False
+73750424,Instituição 73750424,BR,False
+74014747,Ágora Corretora de Titulos e Valores Mobiliarios,BR,False
+74064502,Instituição 74064502,BR,False
+74114042,Instituição 74114042,BR,False
+74220948,Instituição 74220948,BR,False
+74244344,Instituição 74244344,BR,False
+74248949,Instituição 74248949,BR,False
+74828799,Novo Banco Continental,BR,True
+75174953,Instituição 75174953,BR,False
+75647891,Banco Crédit Agricole Brasil,BR,True
+76059997,Instituição 76059997,BR,False
+76461557,Cooperativa de Crédito Rural Coopavel,BR,False
+76543115,Banco Sistema,BR,True
+76621457,Instituição 76621457,BR,False
+76641497,Dourada Corretora de Câmbio Ltda.,BR,False
+77162881,Instituição 77162881,BR,False
+77984870,Instituição 77984870,BR,False
+78157146,Credialiança Cooperativa de Crédito Rural,BR,False
+78414067,Instituição 78414067,BR,False
+78483310,Instituição 78483310,BR,False
+78626983,Banco Vr,BR,True
+78632767,Ouribank,BR,True
+78825023,Instituição 78825023,BR,False
+78825270,Instituição 78825270,BR,False
+78834975,Instituição 78834975,BR,False
+78840071,Instituição 78840071,BR,False
+78858107,Instituição 78858107,BR,False
+78862083,Instituição 78862083,BR,False
+78865995,Instituição 78865995,BR,False
+78907607,Instituição 78907607,BR,False
+79052122,Instituição 79052122,BR,False
+79063574,Instituição 79063574,BR,False
+79086997,Instituição 79086997,BR,False
+79342069,Instituição 79342069,BR,False
+79457883,Instituição 79457883,BR,False
+80160260,Instituição 80160260,BR,False
+80202872,Instituição 80202872,BR,False
+80230774,Cooperativa Central de Crédito Poupança e Investimento dos Estados do Paraná São Paulo e Rio de Janeiro - Central Sicredi Pr/sp/rj,BR,False
+80271455,Banco Rnx,BR,True
+80959612,Instituição 80959612,BR,False
+80959638,Instituição 80959638,BR,False
+81011686,Instituição 81011686,BR,False
+81014060,Instituição 81014060,BR,False
+81016131,Instituição 81016131,BR,False
+81054686,Instituição 81054686,BR,False
+81099491,Instituição 81099491,BR,False
+81115149,Instituição 81115149,BR,False
+81192106,Instituição 81192106,BR,False
+81206039,Instituição 81206039,BR,False
+81292278,Instituição 81292278,BR,False
+81367880,Instituição 81367880,BR,False
+81466286,Instituição 81466286,BR,False
+81607046,Instituição 81607046,BR,False
+81706616,Instituição 81706616,BR,False
+81723108,Credicoamo Credito Rural Cooperativa,BR,False
+82065285,Instituição 82065285,BR,False
+82096447,Credi&gente - Cooperativa de Crédito e Investimentos,BR,False
+82133182,Instituição 82133182,BR,False
+82527557,Instituição 82527557,BR,False
+82639451,Instituição 82639451,BR,False
+82937293,Instituição 82937293,BR,False
+83315408,Instituição 83315408,BR,False
+83325811,Instituição 83325811,BR,False
+83836114,Instituição 83836114,BR,False
+84156470,Instituição 84156470,BR,False
+84974278,Instituição 84974278,BR,False
+85291086,Instituição 85291086,BR,False
+86389236,Instituição 86389236,BR,False
+86564051,Instituição 86564051,BR,False
+86585049,Instituição 86585049,BR,False
+86774775,Instituição 86774775,BR,False
+86791837,Instituição 86791837,BR,False
+86803939,Instituição 86803939,BR,False
+86829827,Instituição 86829827,BR,False
+86913993,Instituição 86913993,BR,False
+87067757,Instituição 87067757,BR,False
+87091716,Instituição 87091716,BR,False
+87437687,Cooperativa Central de Crédito Poupança e Investimento do Sul e Sudeste - Central Sicredi Sul/sudeste,BR,False
+87510475,Instituição 87510475,BR,False
+87733077,Instituição 87733077,BR,False
+87733770,Instituição 87733770,BR,False
+87779625,Instituição 87779625,BR,False
+87780268,Instituição 87780268,BR,False
+87780284,Instituição 87780284,BR,False
+87781530,Instituição 87781530,BR,False
+87784088,Instituição 87784088,BR,False
+87795639,Instituição 87795639,BR,False
+87853206,Instituição 87853206,BR,False
+87900411,Instituição 87900411,BR,False
+87900601,Instituição 87900601,BR,False
+87963450,Magnetis - Distribuidora de Títulos e Valores Mobiliários Ltda,BR,False
+88038260,Instituição 88038260,BR,False
+88043187,Instituição 88043187,BR,False
+88099247,Instituição 88099247,BR,False
+88183173,Instituição 88183173,BR,False
+88325113,Instituição 88325113,BR,False
+88471024,Instituição 88471024,BR,False
+88530142,Instituição 88530142,BR,False
+88894548,Instituição 88894548,BR,False
+88952130,Instituição 88952130,BR,False
+89049738,Instituição 89049738,BR,False
+89126130,Instituição 89126130,BR,False
+89280960,Instituição 89280960,BR,False
+89468565,Instituição 89468565,BR,False
+89784367,Instituição 89784367,BR,False
+89960090,Rb Investimentos Distribuidora de Titulos e Valores Mobiliarios Limitada,BR,False
+89990501,Instituição 89990501,BR,False
+90278987,Instituição 90278987,BR,False
+90400888,Santander Brasil,BR,True
+90497256,Instituição 90497256,BR,False
+90560434,Instituição 90560434,BR,False
+90608712,Instituição 90608712,BR,False
+90729369,Instituição 90729369,BR,False
+91018408,Instituição 91018408,BR,False
+91159764,Instituição 91159764,BR,False
+91586982,Instituição 91586982,BR,False
+91669747,Dm Sociedade de Crédito Financiamento e Investimento,BR,False
+91884981,Banco John Deere,BR,True
+92228410,Instituição 92228410,BR,False
+92236777,Instituição 92236777,BR,False
+92555150,Instituição 92555150,BR,False
+92675578,Instituição 92675578,BR,False
+92702067,Banco do Estado do Rio Grande do Sul,BR,True
+92764489,Instituição 92764489,BR,False
+92796564,Instituição 92796564,BR,False
+92816560,Instituição 92816560,BR,False
+92825397,Cooperativa de Economia e Crédito Mútuo dos Eletricitários e dos Trabalhadores das Empresas do Setor de Energia - Coopcrece,BR,False
+92856905,Advanced Corretora de Câmbio Ltda - Em Liquidação Extrajudicial,BR,False
+92858380,Instituição 92858380,BR,False
+92874270,Banco Digimais,BR,True
+92875780,Warren Corretora de Valores Mobiliários e Câmbio Ltda.,BR,False
+92880749,Instituição 92880749,BR,False
+92894922,Banco Original,BR,True
+92934215,Instituição 92934215,BR,False
+92935741,Instituição 92935741,BR,False
+93026847,Instituição 93026847,BR,False
+94243839,Instituição 94243839,BR,False
+94433109,Instituição 94433109,BR,False
+94968518,Efx Corretora de Câmbio Ltda.,BR,False
+95163002,Instituição 95163002,BR,False
+95213211,Instituição 95213211,BR,False
+95424891,Instituição 95424891,BR,False
+95594941,Instituição 95594941,BR,False
+96409263,Instituição 96409263,BR,False
+96477906,Instituição 96477906,BR,False
+97259253,Instituição 97259253,BR,False
+97406706,Instituição 97406706,BR,False
+97447304,Instituição 97447304,BR,False
+97489280,Instituição 97489280,BR,False

@@ -1,0 +1,18 @@
+periodo,archivos_procesados,estado,country,detalle
+202203,18156,ok,BR,
+202206,18210,ok,BR,
+202209,18177,ok,BR,
+202212,18190,ok,BR,
+202303,18188,ok,BR,
+202306,18224,ok,BR,
+202309,18246,ok,BR,
+202312,18288,ok,BR,
+202403,18360,ok,BR,
+202406,18310,ok,BR,
+202409,18412,ok,BR,
+202412,18418,ok,BR,
+202503,23877,alerta_esquema,BR,"{'criticas_faltantes': [], 'desaparecidas': ['78182', '78183', '78184', '78185', '78186', '78187'], 'detected_at': '2026-07-05T04:03:02+00:00', 'n_desaparecidas': 6, 'n_nuevas': 7, 'nuevas': ['140200', '140220', '140239', '140244', '140246', '141870', '141873'], 'pct_desaparecidas': 100.0, 'periodo': '202503', 'resumen': 'desapareció el 100% de las cuentas del período previo (posible cambio de plan de cuentas); aparecieron 7 cuenta(s) nueva(s).', 'status': 'structural_change', 'truncado': False}"
+202506,24003,ok,BR,
+202509,68784,ok,BR,
+202512,24164,ok,BR,
+202603,24129,ok,BR,

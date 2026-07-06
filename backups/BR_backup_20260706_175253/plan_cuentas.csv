@@ -1,0 +1,332 @@
+cuenta,descripcion,country,formula
+110560,"Conta de Pagamento Pré-Paga 
+(a5)",BR,[41930005]
+140198,"Disponibilidades 
+(a)",BR,[1100000002]
+140199,"Aplicações Interfinanceiras de Liquidez 
+(b)",BR,[1200000005]
+140200,"Títulos e Valores Mobiliários 
+(c)",BR,[1300000008]-[1330000009]
+140201,"Valor Contábil Bruto 
+(e1)",BR,[1611001105] + [1611001112] + [1611001129] + [1611001136] + [1611001143] + [1611001150] + [1612001104] + [1612001111] + [1612001128] + [1612001135] + [1612001142] + [1612001159] + [1613001103] + [1613001110] + [1613001127] + [1613001134] + [1613001141] + [1613001158] + [1630501105] + [1630501112] + [1630501129] + [1630501136] + [1630501143] + [1630501150] + [1631501104] + [1631501111] + [1631501128] + [1631501135] + [1631501142] + [1631501159] + [1632501103] + [1632501110] + [1632501127] + [1632501134] + [1632501141] + [1632501158] + [1633501102] + [1633501119] + [1633501126] + [1633501133] + [1633501140] + [1633501157] + [1634501101] + [1634501118] + [1634501125] + [1634501132] + [1634501149] + [1634501156] + [1641001106] + [1641001113] + [1641001120] + [1641001137] + [1641001144] + [1641001151] + [1643001104] + [1643001111] + [1643001128] + [1643001135] + [1643001142] + [1643001159] + [1644001103] + [1644001110] + [1644001127] + [1644001134] + [1644001141] + [1644001158] + [1621001102] + [1621001119] + [1621001126] + [1621001133] + [1621001140] + [1621001157] + [1621501107] + [1621501114] + [1621501121] + [1621501138] + [1621501145] + [1621501152] + [1622001101] + [1622001118] + [1622001125] + [1622001132] + [1622001149] + [1622001156] + [1622501106] + [1622501113] + [1622501120] + [1622501137] + [1622501144] + [1622501151] + [1623001100] + [1623001117] + [1623001124] + [1623001131] + [1623001148] + [1623001155] + [1624001109] + [1624001116] + [1624001123] + [1624001130] + [1624001147] + [1624001154] + [1652001102] + [1652001119] + [1652001126] + [1652001133] + [1652001140] + [1652001157] + [1661001100] + [1661001117] + [1661001124] + [1661001131] + [1661001148] + [1661001155]
+140202,"Perda Esperada 
+(e2)",BR,[1611001404] + [1611001507] + [1611001600] + [1612001403] + [1612001506] + [1612001609] + [1613001402] + [1613001505] + [1613001608] + [1630501404] + [1630501507] + [1630501600] + [1631501403] + [1631501506] + [1631501609] + [1632501402] + [1632501505] + [1632501608] + [1633501401] + [1633501504] + [1633501607] + [1634501400] + [1634501503] + [1634501606] + [1641001405] + [1641001508] + [1641001601] + [1643001403] + [1643001506] + [1643001609] + [1644001402] + [1644001505] + [1644001608] + [1621001401] + [1621001504] + [1621001607] + [1621501406] + [1621501509] + [1621501602] + [1622001400] + [1622001503] + [1622001606] + [1622501405] + [1622501508] + [1622501601] + [1623001409] + [1623001502] + [1623001605] +  [1624001408] + [1624001501] + [1624001604] + [1652001401] + [1652001504] + [1652001607] + [1661001409] + [1661001502] + [1661001605]
+140203,"Hedge de Valor Justo 
+(e3)",BR,[1611001703] + [1612001702] + [1613001701] + [1630501703] + [1631501702] + [1632501701] + [1633501700] + [1634501709] + [1641001704] + [1643001702] + [1644001701] +[1621001700] + [1621501705] + [1622001709] + [1622501704] + [1623001708] + [1624001707] + [1652001700] + [1661001708]
+140204,"Ajuste a Valor Justo 
+(e4)",BR,[1611001806] + [1612001805] + [1613001804] + [1630501806] + [1631501805] + [1632501804] + [1633501803] + [1634501802] + [1641001807] + [1643001805] + [1644001804] + [1621001803] + [1621501808] + [1622001802] + [1622501807] + [1623001801] + [1624001800] + [1652001803] + [1661001801]
+140205,"Operações de Crédito 
+(e)",BR,[1600000007]
+140207,"Valor Contábil Bruto 
+(f1)",BR,[1741010004] + [1741020001]
+140208,"Perda Esperada 
+(f2)",BR,[1741040005] + [1741050002] + [1741060009]
+140209,"Hedge de Valor Justo 
+(f3)",BR,[1741070006]
+140210,"Operações de Arrendamento Financeiro 
+(f)",BR,[1741000007]
+140212,"Valor Contábil Bruto 
+(g1)",BR,[1811010109] + [1811010116] + [1811010123] + [1811010130] + [1811010147] + [1811010154] + [1812010108] + [1812010115] + [1812010122] + [1812010139] + [1812010146] + [1812010153] + [1813010107] + [1813010114] + [1813010121] + [1813010138] + [1813010145] + [1813010152] + [1814010106] + [1814010113] + [1814010120] + [1814010137] + [1814010144] + [1814010151] + [1815010105] + [1815010112] + [1815010129] + [1815010136] + [1815010143] + [1815010150] + [1819010101] + [1819010118] + [1819010125] + [1819010132] + [1819010149] + [1819010156]
+140213,"Perda Esperada 
+(g2)",BR,[1811010408] + [1811010501] + [1811010604] + [1812010407] + [1812010500] + [1812010603] + [1813010406] + [1813010509] + [1813010602] + [1814010405] + [1814010508] + [1814010601] + [1815010404] + [1815010507] + [1815010600] + [1819010400] + [1819010503] + [1819010606]
+140214,"Hedge de Valor Justo 
+(g3)",BR,[1811010707] + [1812010706] + [1813010705] + [1814010704] + [1815010703] + [1819010709]
+140215,"Ajuste a Valor Justo 
+(g4)",BR,[1811010800] + [1812010809] + [1813010808] + [1814010807] + [1815010806] + [1819010802]
+140216,"Outras Operações com Características de Concessão de Crédito 
+(g)",BR,[1810000000]
+140218,"Outros Ativos Realizáveis 
+(i)",BR,[1400000001] + [1500000004] + [1900000006] + [1700000000] - [1741000007] + [1800000003] - [1810000000] - [1887900009] - [1899600005]
+140219,"Ativo Permanente 
+(j)",BR,[2000000008]
+140220,Ativo Total,BR,[1000000009] + [2000000008]
+140222,"Depósitos à Vista 
+(a1)",BR,[4110000006]
+140223,"Depósitos de Poupança 
+(a2)",BR,[4120000003]
+140224,"Depósitos Interfinanceiros 
+(a3)",BR,[4130000000]
+140225,"Depósitos a Prazo 
+(a4)",BR,[4150000004]
+140226,"Conta de Pagamento Pré-Paga 
+(a5)",BR,[4193000009]
+140227,"Depósitos Outros 
+(a6)",BR,[4140000007] + [4160000001] + [4170000008] + [4180000005] + [4190000002] - [4193000009]
+140228,"Depósitos 
+(a)",BR,[4100000009]
+140230,"Obrigações por Operações Compromissadas 
+(b)",BR,[4200000002]
+140231,"Letras de Crédito Imobiliário 
+(c1)",BR,[4323500001]
+140232,"Letras de Crédito do Agronegócio 
+(c2)",BR,[4324000005]
+140233,"Letras Financeiras 
+(c3)",BR,[4325000004]
+140234,"Obrigações por Títulos e Valores Mobiliários no Exterior 
+(c4)",BR,[4350000000]
+140235,"Demais instrumentos de dívida 
+(c5)",BR,[4300000005] - [4323500001] - [4324000005] - [4325000004] - [4350000000] - [4391000007] - [4392000006]
+140236,"Outros Instrumentos de Dívida 
+(c)",BR,[4300000005] - [4391000007] - [4392000006]
+140238,"Obrigações por Empréstimos e Repasses 
+(d)",BR,[4600000004]
+140239,"Captações 
+(e) = (a) + (b) + (c) + (d)",BR,[4100000009] + [4200000002] + [4300000005] - [4391000007] - [4392000006] + [4600000004]
+140241,"Instrumentos Derivativos 
+(f)",BR,[4700000007]
+140242,"Outras Obrigações 
+(g)",BR,[4400000008]+ [4500000001]+ [4800000000]+ [4900000003]
+140243,"Instrumentos de Dívida Elegíveis a Capital 
+(h)",BR,[4391000007] + [4392000006]
+140244,"Passivo Exigível 
+(i) = (e) + (f) + (g) + (h)",BR,[4000000006]
+140246,"Patrimônio Líquido 
+(j)",BR,[6000000004]+ [7000000003]+ [8000000002]
+140247,"Passivo Total 
+(k) = (i) + (j)",BR,[4000000006] + [6000000004]+ [7000000003]+ [8000000002]
+141612,Instrumentos Derivativos (d),BR,[1330000009]
+141821,"Receita de Juros com Aplicações Interfinanceiras de Liquidez 
+(a1)",BR,[7141000003]+ [7142000002]+ [8115020001]
+141822,"Ajuste de Variação Cambial de Aplicações Interfinanceiras de Liquidez 
+(a2)",BR,[7199112008]+ [8199112007]
+141823,"Ajuste a Valor Justo e Ajuste de Hedge de Valor Justo de Aplicações Interfinanceiras de Liquidez 
+(a3)",BR,[7199312004]+ [7199342005]+ [7199412007]+ [7199442204]+ [7199442307]+ [8199312003]+[8199342004]+ [8199412006]
+141825,"Rendas de Aplicações Interfinanceiras de Liquidez 
+(a)",BR,"Somatório de Receita de Juros, Ajuste de Variação Cambial, Ajuste a Valor Justo e Ajuste de Hedge de Valor Justo de Aplicações Interfinanceiras de Liquidez"
+141826,"Receita de Juros com TVM 
+(b1)",BR,[7151000000]+ [7151500005]+ [7194000005]
+141827,"Ajuste de Variação Cambial de TVM 
+(b2)",BR,[7199113007]+ [8199113006]
+141828,"Ajuste a Valor Justo e Ajuste de Hedge de Valor Justo de TVM 
+(b3)",BR,[7199313003]+ [7199413006]+ [8199313002]+ [8199413005]
+141829,"Outros Resultados de TVM 
+(b4)",BR,[7151300009]+ [7152000009]+  [7154000007]+ [7155000006]+ [7157500009]+ [7192013001]+  [8152000008]+ [8153000007]+ [8154000006]
+141830,"Rendas de Títulos e Valores Mobiliários 
+(b)",BR,"Somatório de Receita de Juros, Ajuste de Variação Cambial, Ajuste a Valor Justo, Ajuste de Hedge de Valor Justo e Outros Resultados de Títulos e Valores Mobiliários"
+141831,"Receita de Juros com Operações de Crédito 
+(c1)",BR,[7110000003]
+141832,"Ajuste de Variação Cambial de Operações de Crédito 
+(c2)",BR,[7199116004]+ [8199116003]
+141833,"Ajuste a Valor Justo e Ajuste de Hedge de Valor Justo de Operações de Crédito 
+(c3)",BR,[7199316000]+ [7199416003]+ [8199316009]+ [8199416002]
+141834,"Outros Resultados de Operações de Crédito 
+(c4)",BR,[7191510000]+ [7192016008]+ [8191510009]+ [8195000003]+ [8195210006]
+141835,"Rendas de Operações de Crédito 
+(c)",BR,"Somatório de Receita de Juros, Ajuste de Variação Cambial, Ajuste a Valor Justo, Ajuste de Hedge de Valor Justo e Outros Resultados de Operações de Crédito"
+141836,"Rendas de Arrendamento Financeiro 
+(d)",BR,[7124010003]+ [7125010002]+ [7191520007]+ [7192017007]+ [7199117003]+ [7199417002]+ [8191520006]+ [8194000004]+ [8195220003]+ [8199117002]+ [8199417001]
+141837,"Rendas de Outras Operações com Características de Concessão de Crédito 
+(e)",BR,[7160000008]+ [7191530004]+ [7192018006]+ [7199118002]+ [7199318008]+ [7199418001]+ [8191530003]+ [8194500009]+ [8195230000]+ [8199118001]+ [8199318007]+ [8199418000]
+141838,"Resultado com Perda Esperada de Aplicações Interfinanceiras de Liquidez 
+(f1)",BR,[7199212001]+ [8199212000]
+141839,"Resultado com Perda Esperada de TVM 
+(f2)",BR,[7199213000]+ [8199213009]
+141840,"Resultado com Perda Esperada de Operações de Crédito 
+(f3)",BR,[7199216007]+ [8199216006]
+141841,"Resultado com Perda Esperada de Outros Ativos Geradores de Renda 
+(f6)",BR,[7199214906]+ [7199219901]+ [8199214905]+ [8199219900]
+141842,"Resultado com Perda Esperada 
+(f)",BR,"Somatório do Resultado com Perdas Esperadas de Aplicações Interfinanceiras de Liquidez, TVM, Operações de Crédito e Outros Ativos Geradores de Renda"
+141843,"Despesa de Juros com Captações 
+(g1)",BR,[8110000002]+ [8120000009]- [8115020001]- [8118500009]- [8119110003]- [8119120000]- [8119130007]
+141844,"Ajuste de Variação Cambial de Captações 
+(g2)",BR,[7199141000]+ [7199142009]+ [7199143905]+ [7199144007]+ [8199141009]+ [8199142008]+ [8199143904]+ [8199145005]
+141845,"Ajuste de Hedge de Valor Justo de Captações 
+(g3)",BR,[7199441009]+ [7199442101]+ [7199443904]+ [7199444006]+ [8199441008]+ [8199442007]+ [8199443903]+ [8199444005]
+141846,"Outros Resultados de Captações 
+(g4)",BR,[8118500009]+ [8191200003]+ [8198600008]
+141847,"Despesas de Captações 
+(g)",BR,"Somatório de Despesa de Juros, Ajuste de Variação Cambial, Ajuste a Valor Justo, Ajuste de Hedge de Valor Justo e Outros Resultados de Captações"
+141848,"Despesas de Instrumentos de Dívida Elegíveis a Capital 
+(h)",BR,[7199143101]+ [7199143204]+ [7199143307]+ [7199443100]+ [7199443203]+ [7199443306]+ [8119110003]+ [8119120000]+ [8119130007]+ [8199143100]+ [8199143203]+ [8199143306]+ [8199443109]+ [8199443202]+[8199443305]
+141849,"Resultado com Derivativos 
+(i)",BR,[7158000003]+ [8155000005]
+141850,"Outros Resultados de Intermediação Financeira 
+(j)",BR,[7144000000]+ [7191000008]+ [7191540001]+ [7191700009]+ [7192012002]+ [7192014000]+ [7192019005]+ [7192500002]+ [7199111009]+ [7199119001]+ [7199149002]+ [7199319007]+ [7199388007]+ [7199399003]+ [7199419000]+ [7199449001]+ [8191540000]+ [8199111008]+ [8199119000]+ [8199149001]+ [8199319006]+ [8199349007]+ [8199388006]+ [8199419009]+ [8199449000]
+141851,"Resultado de Intermediação Financeira 
+(k) = (a) + (b) + (c) + (d) + (e) + (f) + (g) + (h) + (i) + (j)",BR,"Somatório das Rendas de Aplicações Interfinanceiras de Liquidez, Rendas de Títulos e Valores Mobiliários, Rendas de Operações de Crédito, Rendas de Arrendamento Financeiro, Rendas de Outras Operações com Características de Concessão de Crédito, Resultado com Perda Esperada, Despesas de Captações, Despesas de Instrumentos de Dívida Elegíveis a Capital, Resultado com Derivativos e Outros Resultados de Intermediação Financeira"
+141852,"Resultado com Serviços por Transações de Pagamento 
+(l1)",BR,[7170500000]+ [8191900004]
+141853,"Resultados de Perda Esperada com Transações de Pagamento 
+(l2)",BR,[7199214102]+ [7199219107]+ [8199214101]+ [8199219106]
+141854,"Outros Resultados com Transações de Pagamento 
+(l3)",BR,[7191800002]+ [7198100004]+ [7199115005]+[8191800001]+ [8198100003]+ [8199115004]
+141855,"Resultado com Transações de Pagamento 
+(l)",BR,"Somatório das Rendas de Serviços por Transações de Pagamento, Resultados de Perda Esperada com Transações de Pagamento e Outros Resultados com Transações de Pagamento"
+141856,"Rendas de Tarifas Bancárias 
+(m)",BR,[7170100008]+ [7170200001]
+141857,"Outras Rendas de Prestação de Serviços 
+(n)",BR,[7170000005]- [7170100008]- [7170200001]- [7170500000]
+141858,"Despesas de Pessoal 
+(o)",BR,[8171810004]+ [8171830008]+ [8172700003]+ [8173000001]+ [8173300000]+ [8173600009]+ [8173700002]+ [8199020003]
+141859,"Despesas Administrativas 
+(p)",BR,[8170000004]- [8171810004]- [8171830008]- [8172700003]- [8173000001]- [8173300000]- [8173600009]- [8173700002]- [8176900005]+ [8180000001]-[8181030001]- [8181035006]- [8181038003]
+141860,"Resultado com Perdas Esperadas de Outras Operações 
+(q)",BR,[7199281001]+ [7199283009]+ [7199288004]+ [8199281000]+ [8199283008]
+141861,"Juros Sobre Capital Próprio de Cooperativas 
+(aa)",BR,[8195600001]
+141862,"Despesas Tributárias 
+(r)",BR,[8176900005]+ [8192500001]+ [8193000005]+ [8193300004]
+141863,"Resultado de Participações 
+(s)",BR,[7180000002]+ [8160000007]+ [8181030001]+ [8181035006]+ [8181038003]
+141864,"Outras Receitas 
+(t)",BR,[7124020000]+ [7125020009]+ [7126000004]+ [7128500007]+ [7190000009]- [7191000008]- [7191500003]- [7191700009]- [7191800002]- [7192000007]- [7192500002]- [7194000005]- [7198100004]- [7199100003]- [7199200006]- [7199300009]- [7199400002]+ [7300000002]
+141865,"Outras Despesas 
+(u)",BR,[8130000006]+ [8190000008]- [8191200003]- [8191500002]- [8191800001]- [8191900004]- [8192500001]- [8193000005]- [8193300004]- [8194500009]- [8195000003]- [8195200009]- [8195600001]- [8198100003]- [8198600008]- [8199020003]- [8199100002]- [8199200005]- [8199300008]- [8199400001]+ [8300000001]
+141866,"Outras Receitas / Despesas 
+(v)= (m) + (n) + (o) +  (p) + (q) + (r) + (s) + (t) + (u)",BR,"Somatório das Rendas de Tarifas Bancárias, Outras Rendas de Prestação de Serviços, Despesas de Pessoal, Despesas Administrativas, Resultado com Perdas Esperadas com Outras Operações, Despesas Tributárias, Resultado de Participações, Outras Receitas e Outras Despesas"
+141867,"Resultado antes da Tributação e Participações 
+(w) = (k) + (l) + (v)",BR,[7100000006] + [7300000002] + [8100000005] + [8300000001] - [8195600001]
+141868,"Imposto de Renda e Contribuição Social 
+(x)",BR,[7940000008]+ [8940000007]
+141869,"Participações no Lucro 
+(y)",BR,[8970000008]
+141870,"Lucro Líquido 
+(z) = (w) + (x) + (y)",BR,[7000000003] + [8000000002] - [8195600001]
+141873,Carteira de Crédito,BR,[1600000007] + [1741000007] + [1810000000] + [1887900009] + [1899600005]
+142851,"Resultado com Perda Esperada de Arrendamento 
+(f4)",BR,[7199217006]+ [8199217005]
+142852,"Resultado com Perda Esperada de Outras Operações com Características de Concessão de Crédito
+(f5)",BR,[7199218005]+ [8199218004]
+145831,"Valor Contábil Bruto 
+(h1)",BR,[1887900009]
+145832,"Perda Esperada 
+(h2)",BR,[1899600005]
+145833,"Valores a Receber de Transações de Pagamentos - Usuários Finais (Pós-pago) 
+(h)",BR,[1887900009] + [1899600005]
+78182,"Ativo Total 
+(k) = (i) - (j)",BR,[10000007]+[20000004]
+78183,Carteira de Crédito Classificada,BR,[31000000]
+78184,Passivo Circulante e Exigível a Longo Prazo e Resultados de Exercícios Futuros,BR,[40000008] + [50000005]
+78185,"Captações 
+(e) = (a) + (b) + (c) + (d)",BR,[41000007] + [42000006] + [43000005] + [46000002]
+78186,"Patrimônio Líquido 
+(i)",BR,[60000002] + [70000009]+ [80000006]
+78187,"Lucro Líquido 
+(j) = (g) + (h) + (i)",BR,[70000009]+[80000006]-[81956001]
+78188,"Disponibilidades 
+(a)",BR,[11000006]
+78189,"Aplicações Interfinanceiras de Liquidez 
+(b)",BR,[12000005]
+78190,"TVM e Instrumentos Financeiros Derivativos 
+(c)",BR,[13000004]
+78191,"Operações de Crédito 
+(d1)",BR,[16000001]-[16900008]
+78192,"Provisão sobre Operações de Crédito 
+(d2)",BR,[16900008]
+78193,"Operações de Crédito Líquidas de Provisão 
+(d)",BR,[16000001]
+78194,"Arrendamento Mercantil a Receber 
+(e1)",BR,[17000000]-[17900007]
+78195,"Imobilizado de Arrendamento 
+(e2)",BR,[23000001]
+78196,"Credores por Antecipação de Valor Residual 
+(e3)",BR,[49908008]
+78197,"Provisão sobre Arrendamento Mercantil 
+(e4)",BR,[17900007]
+78198,"Arrendamento Mercantil Líquido de Provisão 
+(e)",BR,[17000000] + [23000001] + [49908008]
+78199,"Outros Créditos - Líquido de Provisão 
+(f)",BR,[18000009]
+78200,"Outros Ativos Realizáveis 
+(g)",BR,[19000008] + [14000003] + [15000002]
+78201,"Permanente Ajustado 
+(h)",BR,[20000004]-[23000001]
+78202,"Ativo Total Ajustado 
+(i) = (a) + (b) + (c) + (d) + (e) + (f) + (g) + (h)",BR,[11000006] +  [12000005] +  [13000004] + [16000001] + [17000000] + [23000001] + [49908008] + [18000009] + [19000008] + [14000003] + [15000002] + [20000004]-[23000001]
+78203,"Rendas de Operações de Crédito 
+(a1)",BR,[71100001]+[71910002]+[71915007]+[71920009]+[71925004]+[71950000]+[71980001]+[81945005]+[81950007]+[81915004]
+78204,"Rendas de Operações de Arrendamento Mercantil 
+(a2)",BR,[71200004]+[81940000]
+78205,"Rendas de Operações com TVM 
+(a3)",BR,[71400000]+[71500003]-[71580009]+[71940003]+[71945008]+[71947006]+[71990053]+[71990101]+[71990156]+[71990204]+[81500000]-[81550005]+[81830055]+[81830103]+[81830158]+[81830206]
+78206,"Rendas de Operações com Instrumentos Financeiros Derivativos 
+(a4)",BR,[71580009]+[81550005]+[71990266]+[81830268]
+78207,"Resultado de Operações de Câmbio 
+(a5)",BR,[71300007]+[81400007]
+78208,"Receitas de Intermediação Financeira 
+(a) = (a1) + (a2) + (a3) + (a4) + (a5) + (a6)",BR,"Somatório de Rendas de Operações de Crédito, Rendas de Operações de Arrendamento Mercantil, Rendas de Operações com TVM, Rendas de Operações com Instrumentos Financeiros Derivativos, Resultado de Operações de Câmbio e Rendas de Aplicações Compulsórias"
+78209,"Despesas de Captação 
+(b1)",BR,[81100008]+[81980008]+[81986002]+[81912007]
+78210,"Despesas de Obrigações por Empréstimos e Repasses 
+(b2)",BR,[81200001]+[81960004]
+78211,"Despesas de Operações de Arrendamento Mercantil 
+(b3)",BR,[81300004]+[81830550]
+78212,"Resultado de Operações de Câmbio 
+(b4)",BR,[71300007]+[81400007]
+78213,"Resultado de Provisão para Créditos de Difícil Liquidação 
+(b5)",BR,[71990307]+[71990352]+[71990400]+[71990503]+[71990606]+[81830309]+[81830354]+[81830402]+[81830505]+[81830608]
+78214,"Despesas de Intermediação Financeira 
+(b) = (b1) + (b2) + (b3) + (b4) + (b5)",BR,"Somatório de Despesas de Captação, Despesas de Obrigações por Empréstimos e Repasses, Despesas de Operações de Arrendamento Mercantil, Resultado de Operações de Câmbio e Resultado de Provisão para Créditos de Difícil Liquidação"
+78215,"Resultado de Intermediação Financeira 
+(c) = (a) + (b)",BR,Somatório de Receitas de Intermediação Financeira e Despesas de Intermediação Financeira
+78216,"Rendas de Prestação de Serviços 
+(d1)",BR,[71700009]-[71794008]-[71795007]-[71796006]-[71797005]-[71798004]+[71970004]
+78217,"Rendas de Tarifas Bancárias 
+(d2)",BR,[71794008]+[71795007]+[71796006]+[71797005]+[71798004]
+78218,"Despesas de Pessoal 
+(d3)",BR,[81718005]+[81727003]+[81730007]+[81733004]+[81736001]+[81737000]+[81990201]
+78219,"Despesas Administrativas 
+(d4)",BR,[71930006]+[8170006]-[81718005]-[81727003]-[81730007]-[81733004]-[81736001]-[81737000]+[81810006]+[81820003]+[81910009]
+78220,"Despesas Tributárias 
+(d5)",BR,[81925001]+[81930003]+[81933000]+[81990108]+[81990304]+[81990902]
+78221,"Resultado de Participações 
+(d6)",BR,[71800002]+[71990802]+[71990905]+[71990709]+[81600003]+[81830804]+[81830907]+[81830701]
+78222,"Outras Receitas Operacionais 
+(d7)",BR,[71900005]-[71910002]-[71915007]-[71920009]-[71925004]-[71930006]-[71940003]-[71945008]-[71947006]-[71950000]-[71955005]-[71960007]-[71965002]-[71970004]-[71980001]-[71990053]-[71990101][71990125]-[71990156]-[71990204]-[71990266]-[71990307]-[71990352]-[71990400]-[71990503]-[71990606]-[71990709]-[71990802]-[71990905]
+78223,"Outras Despesas Operacionais 
+(d8)",BR,[81800009]-[81810006]-[81820003]-[81830055]-[81830103]-[81830127]-[81830158]-[81830206]-[81830268]-[81830309]-[81830354]-[81830402]-[81830505]-[81830550]-[81830608]-[81830701]-[81830804]-[81830907]+[81900002]-[81910009]-[81912007]-[81915004]-[81925001]-[81930003]-[81933000]-[81940000]-[81945005]-[81950007] -[81956001]-[81960004]-[81980008]-[81986002]-[81990108]-[81990201]-[81990304]-[81990902]
+78224,"Outras Receitas/Despesas  Operacionais 
+(d) = (d1) + (d2) + (d3) + (d4) + (d5) + (d6) + (d7) + (d8)",BR,"Somatório de Rendas de Prestação de Serviços, Rendas de Tarifas Bancárias, Despesas de Pessoal, Despesas Administrativas, Despesas Tributárias, Resultado de Participações, Outras Receitas Operacionais e Outras Despesas Operacionais"
+78225,"Resultado Operacional 
+(e) = (c) + (d)",BR,Somatório do Resultado de Intermediação Financeira e de Outras Receitas/Despesas Operacionais
+78226,"Resultado antes da Tributação, Lucro e Participação 
+(g) = (e) + (f)",BR,Somatório do Resultado Operacional e do Resultado Não Operacional
+78227,"Resultado Não Operacional 
+(f)",BR,[73000006]+[83000003]
+78228,"Imposto de Renda e Contribuição Social 
+(h)",BR,[89410006]+[89420003]
+78229,"Participação nos Lucros 
+(i)",BR,[89700008]
+78230,"Juros Sobre Capital Social de Cooperativas 
+(k)",BR,[81956001]
+78231,"Rendas de Aplicações Compulsórias 
+(a6)",BR,[71955005]+[71960007]+[71965002]+[71990125]+[81830127]
+78282,"Depósitos à Vista 
+(a1)",BR,[41100000]
+78283,"Depósitos de Poupança 
+(a2)",BR,[41200003]
+78284,"Depósitos Interfinanceiros 
+(a3)",BR,[41300006]
+78285,"Depósitos Outros 
+(a6)",BR,[41400009]+[41600005]+[41700008]+[41800001]+[41900004]-[41930005]
+78286,"Depósitos a Prazo 
+(a4)",BR,[41500002]
+78287,"Depósito Total 
+(a)",BR,[41000007]
+78288,"Obrigações por Operações Compromissadas 
+(b)",BR,[42000006]
+78289,"Letras de Crédito Imobiliário 
+(c1)",BR,[43235007]
+78290,"Letras de Crédito do Agronegócio 
+(c2)",BR,[43240009]
+78291,"Letras Financeiras 
+(c3)",BR,[43250006]
+78292,"Obrigações por Títulos e Valores Mobiliários no Exterior 
+(c4)",BR,[43500000]
+78293,"Outros Recursos de Aceites e Emissão de Títulos 
+(c5)",BR,[43000005] - [43235007] - [43240009] - [43250006] - [43500000]
+78294,"Recursos de Aceites e Emissão de Títulos 
+(c)",BR,[43000005]
+78295,"Obrigações por Empréstimos e Repasses 
+(d)",BR,[46000002]
+78296,"Instrumentos Derivativos 
+(f)",BR,[47000001]
+78297,"Outras Obrigações 
+(g)",BR,[49000009] + [45000003] + [44000004]
+78298,"Passivo Circulante e Exigível a Longo Prazo 
+(h) = (e) + (f) + (g)",BR,[40000008]
+78299,"Resultados de Exercícios Futuros 
+(i)",BR,[50000005]
+78300,"Passivo Total 
+(j) = (h) + (i)",BR,[40000008] + [60000002] + [70000009]+ [80000006]
