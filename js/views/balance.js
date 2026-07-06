@@ -1,11 +1,11 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon31';
-import { bankColor } from '../config.js?v=bmon31';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon31';
-import { sumRows } from '../api.js?v=bmon31';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon31';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon32';
+import { bankColor } from '../config.js?v=bmon32';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon32';
+import { sumRows } from '../api.js?v=bmon32';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon32';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {

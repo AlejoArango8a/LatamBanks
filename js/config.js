@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon31';
+import { datasetIsoCountry } from './state.js?v=bmon32';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -97,6 +97,8 @@ export const LOGO_SLUGS = {
   'CL-53':       'ripley',
   'CL-55':       'consorcio',
   'CL-59':       'btg',
+  'CL-60':       'ccb',
+  'CL-61':       'bankofchina',
   'CL-62':       'tanner',
   // Colombia (CO) — código CUIF
   'CO-1':        'bogota',
