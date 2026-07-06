@@ -1,8 +1,8 @@
 // ============================================================
 // CUSTOM KEY DATA — cuenta del plan por país (modal; solo en memoria, se pierde al recargar)
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon34';
-import { getTipo, toSentenceCase, getExpLabel } from '../format.js?v=bmon34';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon35';
+import { getTipo, toSentenceCase, getExpLabel } from '../format.js?v=bmon35';
 
 const LEGACY_LS_KEYS = ['kpiCustomCuenta_CO', 'kpiCustomCuenta_CL'];
 

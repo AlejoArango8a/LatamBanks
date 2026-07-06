@@ -1,33 +1,28 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon34';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon34';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon34';
-import { bankColor, btgBlue, bankLogoUrl, bankLogoPngUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon34';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon34';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon34';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon34';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon34';
-import { setStatus, showErr } from '../utils.js?v=bmon34';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon34';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon35';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon35';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon35';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon35';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon35';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon35';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon35';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon35';
+import { setStatus, showErr } from '../utils.js?v=bmon35';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon35';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
   if (!el) return;
-  const url     = bankLogoUrl(iso, code);      // tries .svg first
-  const pngUrl  = bankLogoPngUrl(iso, code);   // .png fallback
+  const url     = bankLogoUrl(iso, code);
   const generic = 'assets/logos/logo-generico.png';
-  const slug = pngUrl ? pngUrl.replace('assets/logos/logo-', '').replace('.png', '') : null;
+  const slug = url ? url.replace('assets/logos/logo-', '').replace('.png', '') : null;
   const h = (slug && LOGO_SIZES[slug]) || 42;
   const w = Math.max(160, h * 5);
   const imgStyle = `max-height:${h}px;max-width:${w}px;object-fit:contain;`;
-  // Chain: svg → png → generico
-  const fallbackChain = pngUrl
-    ? `this.onerror=function(){this.onerror=null;this.src='${generic}'};this.src='${pngUrl}'`
-    : `this.onerror=null;this.src='${generic}'`;
-  el.innerHTML = `<img src="${url || pngUrl || generic}" alt="" style="${imgStyle}"
-    onerror="${fallbackChain}">`;
+  el.innerHTML = `<img src="${url || generic}" alt="" style="${imgStyle}"
+    onerror="this.onerror=null;this.src='${generic}';">`;
 }
 
 const btgCodeForIso = () => (datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 30306294 : 59);
