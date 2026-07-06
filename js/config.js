@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon35';
+import { datasetIsoCountry } from './state.js?v=bmon36';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -243,7 +243,7 @@ export const LOGO_SIZES = {
   'bradesco':      52,
   'itau':          62,
   'hsbc':          64,
-  'consorcio':     52,
+  'consorcio':     56,
   'ripley':        52,
   'safra':         68,
   'jpmorgan':      82,
@@ -252,6 +252,9 @@ export const LOGO_SIZES = {
   'popular':       72,
   'falabella':     62,
   'gnbsudameris':  56,
+  'nordeste':      56,
+  'votorantim':    56,
+  'banrisul':      56,
 };
 
 export const BANK_NAMES = {

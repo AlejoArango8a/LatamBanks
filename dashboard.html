@@ -899,12 +899,12 @@ body.light .kpi-custom-badge {
             <span id="arrSecBanks">&#x25B8;</span>
           </div>
           <div class="mob-section-bd" id="secBanks">
-        <div class="sidebar-block">
+        <div class="sidebar-block" style="padding:6px 12px;">
           <div id="compareToggle" class="cmp-toggle" onclick="toggleCompareMode()" role="switch" aria-checked="false" title="Compare multiple banks (max. 5)">
             <span class="cmp-label">Bank Comparison</span>
             <span class="cmp-switch" aria-hidden="true"></span>
           </div>
-          <div id="bankLimitMsg" style="display:none;font-size:10px;color:var(--yellow);font-family:var(--mono);padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:3px;margin-bottom:6px;">
+          <div id="bankLimitMsg" style="display:none;font-size:10px;color:var(--yellow);font-family:var(--mono);padding:4px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:3px;">
             Maximum 5 banks at a time
           </div>
         </div>
@@ -986,7 +986,6 @@ body.light .kpi-custom-badge {
             </span>
             <div>
               <div id="chartSectionTitle" style="font-size:17px;font-weight:500;color:var(--white);">Historical evolution</div>
-              <div id="chartSectionSub" style="font-size:12px;color:var(--text2);margin-top:2px;">Key indicators for selected period range</div>
             </div>
           </div>
           <div class="panel">
@@ -1303,7 +1302,7 @@ body.light .kpi-custom-badge {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon35"></script>
+<script type="module" src="js/app.js?v=bmon36"></script>
 <!-- Coming soon overlay for Colombia/Peru/Uruguay -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

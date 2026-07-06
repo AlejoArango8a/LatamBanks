@@ -42,6 +42,7 @@ RENOMBRAR: dict[str, str] = {
     "00655522": "APE Poupex",
     "60779196": "Crefisa",
     "33987793": "Banco UBS Brasil",
+    "92702067": "Banrisul",
 }
 
 # ── Limpieza de nombres (usadas por brasil_banks.py) ─────────────────────────

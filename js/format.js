@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon35';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon35';
-import { ST } from './state.js?v=bmon35';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon36';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon36';
+import { ST } from './state.js?v=bmon36';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -159,6 +159,7 @@ export function polishColombianBankDisplay(raw) {
 export function bankName(code) {
   const fromApi = ST.bancos[code];
   if (ST.country === 'brasil' && Number(code) === 30306294) return 'BTG Pactual Brasil';
+  if (ST.country === 'brasil' && Number(code) === 92702067) return 'Banrisul';
   if (ST.country === 'colombia') {
     if (!fromApi) return `Bank ${code}`;
     const ins = Number(code);
