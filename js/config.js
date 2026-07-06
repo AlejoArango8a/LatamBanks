@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon33';
+import { datasetIsoCountry } from './state.js?v=bmon34';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -249,6 +249,7 @@ export function bankBrandTextColor(iso, code) {
  * Slugs that need a custom size are listed here.
  */
 export const LOGO_SIZES = {
+  'bancoestado':   52,
   'bancodobrasil': 52,
   'caixaeconomica': 72,
   'bradesco':      52,
