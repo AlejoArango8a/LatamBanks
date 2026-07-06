@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon32';
+import { datasetIsoCountry } from './state.js?v=bmon33';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -139,10 +139,22 @@ export const LOGO_SLUGS = {
   'BR-07237373': 'nordeste',
 };
 
-/** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */
+/** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco.
+ *  Prefiere .svg sobre .png cuando ambos existen (mejor calidad a cualquier tamaño). */
 export function bankLogoUrl(iso, code) {
-  // Backend casts codigo::int, so BR codes like '00000000' arrive as 0.
-  // Re-pad to 8 digits so keys match LOGO_SLUGS entries.
+  const key = iso === 'BR'
+    ? `BR-${String(code).padStart(8, '0')}`
+    : `${iso}-${code}`;
+  const slug = LOGO_SLUGS[key];
+  if (!slug) return null;
+  // SVG takes priority — the HTML img tag handles both formats natively.
+  // The actual file-existence check happens in the browser (onerror fallback).
+  // We try SVG first; if it 404s the onerror chain falls back to generico.
+  return `assets/logos/logo-${slug}.svg`;
+}
+
+/** Secondary URL used as first fallback when the SVG is missing (onerror). */
+export function bankLogoPngUrl(iso, code) {
   const key = iso === 'BR'
     ? `BR-${String(code).padStart(8, '0')}`
     : `${iso}-${code}`;
@@ -241,7 +253,7 @@ export const LOGO_SIZES = {
   'caixaeconomica': 72,
   'bradesco':      52,
   'itau':          62,
-  'hsbc':          54,
+  'hsbc':          64,
   'consorcio':     52,
   'ripley':        52,
   'safra':         68,
@@ -249,6 +261,8 @@ export const LOGO_SIZES = {
   'bancolombia':   72,
   'bogota':        56,
   'popular':       72,
+  'falabella':     62,
+  'gnbsudameris':  56,
 };
 
 export const BANK_NAMES = {
