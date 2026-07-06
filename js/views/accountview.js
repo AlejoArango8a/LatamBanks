@@ -1,11 +1,11 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon30';
-import { accountViewLevel } from '../coCuentas.js?v=bmon30';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon30';
-import { apiDatos } from '../api.js?v=bmon30';
-import { btgBlue, btgRgba } from '../config.js?v=bmon30';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon31';
+import { accountViewLevel } from '../coCuentas.js?v=bmon31';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon31';
+import { apiDatos } from '../api.js?v=bmon31';
+import { btgBlue, btgRgba } from '../config.js?v=bmon31';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 

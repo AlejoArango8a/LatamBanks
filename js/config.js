@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon30';
+import { datasetIsoCountry } from './state.js?v=bmon31';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -79,7 +79,7 @@ export const bankColor = (code, i, name = '') => {
 };
 
 // ---- Logo slugs ----
-// Mapea "ISO-codigo" → slug de archivo en assets/logo-{slug}.png
+// Mapea "ISO-codigo" → slug de archivo en assets/logos/logo-{slug}.png
 // Un slug por marca visual; bancos de la misma marca en distintos países apuntan al mismo archivo.
 export const LOGO_SLUGS = {
   // Chile (CL) — código CMF
@@ -104,10 +104,13 @@ export const LOGO_SLUGS = {
   'CO-6':        'itau',
   'CO-7':        'bancolombia',
   'CO-9':        'citibank',
+  'CO-12':       'gnbsudameris',
   'CO-13':       'bbva',
   'CO-23':       'occidente',
+  'CO-30':       'cajasocial',
   'CO-39':       'davivienda',
   'CO-42':       'scotiabank',
+  'CO-43':       'agrario',
   'CO-56':       'falabella',
   'CO-59':       'santander',
   'CO-64':       'jpmorgan',
@@ -129,6 +132,9 @@ export const LOGO_SLUGS = {
   'BR-01181521': 'sicredi',
   'BR-01522368': 'bnp',
   'BR-33264668': 'xp',
+  'BR-92702067': 'banrisul',
+  'BR-59588111': 'votorantim',
+  'BR-07237373': 'nordeste',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */
@@ -139,7 +145,7 @@ export function bankLogoUrl(iso, code) {
     ? `BR-${String(code).padStart(8, '0')}`
     : `${iso}-${code}`;
   const slug = LOGO_SLUGS[key];
-  return slug ? `assets/logo-${slug}.png` : null;
+  return slug ? `assets/logos/logo-${slug}.png` : null;
 }
 
 /**
@@ -150,31 +156,33 @@ export function bankLogoUrl(iso, code) {
  */
 const BRAND_TEXT_COLORS = {
   // Chile
-  'bancochile':    '#0A1464',
-  'bancoestado':   '#EC6707',
+  'bancochile':    '#103878',
+  'bancoestado':   '#C80038',
   'scotiabank':    '#E82820',
-  'bci':           '#F01028',
+  'bci':           '#E83840',
   'bice':          '#003868',
-  'hsbc':          '#F5333B',
+  'hsbc':          '#F83028',
   'santander':     '#F80000',
-  'itau':          '#302080',
+  'itau':          '#F86000',
   'jpmorgan':      '#6B4423',
-  'falabella':     '#AEC400',
+  'falabella':     '#007830',
   'ripley':        '#582880',
-  'consorcio':     '#102951',
-  'tanner':        '#00A8F0',
+  'consorcio':     '#14284F',
+  'tanner':        '#00B0F0',
   'internacional': '#0068A0',
   // Colombia
   'bancolombia':   '#3A3A3A',
-  'bogota':        '#E81820',
+  'bogota':        '#F8D000',
   'popular':       '#088038',
   'citibank':      '#002870',
   'bbva':          '#005098',
   'occidente':     '#0890D8',
   'davivienda':    '#F80000',
   'aval':          '#2058A8',
-  'lulo':          '#AEC400',
-  'gnbsudameris':  '#1565C0',
+  'lulo':          '#B9CC00',
+  'gnbsudameris':  '#88C038',
+  'agrario':       '#0090D0',
+  'cajasocial':    '#0070B8',
   // Brasil
   'bradesco':      '#E81828',
   'bancodobrasil': '#303088',
@@ -182,12 +190,17 @@ const BRAND_TEXT_COLORS = {
   'ubs':           '#E00000',
   'nubank':        '#681878',
   'safra':         '#3A3A3A',
-  'sicredi':       '#F0A818',
+  'sicredi':       '#F8B828',
   'bnp':           '#00A868',
   'xp':            '#1F1F1F',
+  'banrisul':      '#10256B',
+  'votorantim':    '#D81848',
+  'nordeste':      '#A01838',
+  'bankofchina':   '#B00830',
+  'ccb':           '#184098',
   // Extras present in assets/
-  'barclays':      '#00A8F0',
-  'ing':           '#FF6200',
+  'barclays':      '#00B0F0',
+  'ing':           '#002868',
 };
 
 /**
