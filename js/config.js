@@ -249,7 +249,7 @@ export const LOGO_SIZES = {
   'consorcio':     56,
   'ripley':        52,
   'safra':         68,
-  'jpmorgan':      82,
+  'jpmorgan':      62,
   'bancolombia':   72,
   'bogota':        56,
   'popular':       72,
