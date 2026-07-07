@@ -240,12 +240,16 @@ export function bankBrandTextColor(iso, code) {
  * Slugs that need a custom size are listed here.
  */
 export const LOGO_SIZES = {
-  'bancoestado':   52,
+  'bancoestado':   44,
+  'bancochile':    34,
+  'bci':           34,
+  'scotiabank':    34,
+  'ccb':           34,
   'bancodobrasil': 52,
   'caixaeconomica': 72,
   'bradesco':      52,
   'itau':          62,
-  'hsbc':          64,
+  'hsbc':          72,
   'consorcio':     56,
   'ripley':        52,
   'safra':         68,
