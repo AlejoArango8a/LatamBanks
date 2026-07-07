@@ -206,9 +206,29 @@ export function bankName(code) {
 
   // ---- Brasil ----
   if (ST.country === 'brasil') {
-    // Overrides puntuales (codigos prudenciales conocidos)
-    if (Number(code) === 1000080336) return 'BTG Pactual Brasil';
-    if (Number(code) === 1000080154) return 'Banrisul';
+    // Overrides de nombre de display (codigo prudencial -> nombre curado).
+    // Orden: primero overrides puntuales, luego titleCase generico.
+    const BR_DISPLAY = new Map([
+      [1000080099, 'Ita\u00fa'],
+      [1000080329, 'Banco do Brasil'],
+      [1000080738, 'Caixa Econ\u00f4mica'],
+      [1000084693, 'Nubank'],
+      [1000081593, 'Banco do Nordeste'],
+      [1000080996, 'Banco Inter'],
+      [1000081744, 'Daycoval'],
+      [1000080556, 'BofA'],
+      [1000080312, 'Banco ABC'],
+      [1000084820, 'Mercado Pago'],
+      [1000081555, 'Rabobank'],
+      [1000080745, 'Sicredi'],
+      [82639451,   'Viacredi'],
+      [54037916,   'Credicitrus'],
+      [1000083632, 'Crefisa'],
+      [1000080336, 'BTG Pactual'],
+      [1000080154, 'Banrisul'],
+    ]);
+    const numCode = Number(code);
+    if (BR_DISPLAY.has(numCode)) return BR_DISPLAY.get(numCode);
     // Nombre generico: quitar sufijo prudencial y S.A., luego Title Case
     const raw = fromApi || `Bank ${code}`;
     const stripped = stripSociedadAnonima(raw.replace(/\s*-\s*PRUDENCIAL\s*$/i, '').trim());

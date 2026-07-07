@@ -164,14 +164,27 @@ app.get('/api/bootstrap', async (req, res) => {
           [country, ['78186', '140246'], lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
 
+        // Instituciones que nunca se muestran en el dashboard BR aunque tengan
+        // datos de PL: IPs (pagos), banco de desarrollo BNDES, y entidades
+        // clasificadas como bancos pero sin relevancia para el ranking comercial.
+        const BR_EXCLUDE = new Set([
+          1000081847, // BNDES
+          1000081665, // BCO CLASSICO
+          1000086581, // CLOUDWALK IP
+          1000084686, // STONE IP
+          1000081184, // APE POUPEX
+          1000086158, // SEM PARAR IP
+          1000084710, // CIELO IP
+        ]);
+
         // Diseño (Sección 1 de la spec): la base guarda el universo prudencial
         // completo (~1.400 entidades) y el dashboard filtra al TOP-50 por
-        // Patrimônio Líquido del último período. Se recorta acá para no volcar
-        // ~1.400 entidades al selector (incluidas cooperativas y entidades sin
-        // dato de equity). Ordena por PL desc y toma las 50 mayores.
+        // Patrimônio Líquido del último período, excluyendo IPs y entidades no
+        // relevantes para la comparativa bancaria comercial.
         const BR_TOP_N = 50;
         const topCodes = new Set(
           [...patrimonioRows]
+            .filter(r => !BR_EXCLUDE.has(r.ins_cod))
             .sort((a, b) => b.monto_total - a.monto_total)
             .slice(0, BR_TOP_N)
             .map(r => r.ins_cod),
