@@ -1,16 +1,16 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon38';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon38';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries } from '../brCuentas.js?v=bmon38';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon38';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon38';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon38';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon38';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon38';
-import { setStatus, showErr } from '../utils.js?v=bmon38';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon38';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon39';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon39';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon39';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon39';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon39';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon39';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon39';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon39';
+import { setStatus, showErr } from '../utils.js?v=bmon39';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon39';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
@@ -50,19 +50,15 @@ function computeCustomKpiSnapshot(b1, r1, c1, firstBank, lastP) {
 
 function customKpiTileHtml(m) {
   const ck = m.customKpi;
-  const val = ck && ck.monto != null && Number.isFinite(ck.monto) ? fmtKPI(ck.monto) : '—';
-  let sub;
-  if (ck?.cuenta) {
-    const d = (ck.descripcion || '').trim();
-    const short = d.length > 56 ? `${d.slice(0, 56)}…` : d;
-    sub = `<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${escHtml(ck.cuenta)}</span> · ${escHtml(short || '—')} · <span style="font-size:9px;text-transform:uppercase;color:var(--text3);">${escHtml(ck.tipo || '')}</span>`;
-  } else {
-    sub = 'Choose any plan account · click to open the picker';
-  }
-  return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom Key Data — click to change account">
-    <div class="kpi-label kpi-custom-label-row"><span class="kpi-custom-badge">Custom</span><span class="kpi-custom-heading">Custom Account</span></div>
-    <div class="kpi-val">${val}</div>
-    <div class="kpi-sub" style="line-height:1.35;">${sub}</div>
+  const hasSel = !!(ck && ck.cuenta);
+  const val = hasSel && ck.monto != null && Number.isFinite(ck.monto) ? fmtKPI(ck.monto) : '';
+  const sub = hasSel
+    ? `<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${escHtml(ck.cuenta)}</span> · ${escHtml((ck.descripcion || '').trim() || '—')}`
+    : 'Click to open the picker';
+  return `<div class="kpi kpi-custom-tile kpi-btn" onclick="openCustomKpiPicker()" title="Custom account — choose &amp; chart any account">
+    <div class="kpi-custom-heading">⭐ Custom Account</div>
+    ${val ? `<div class="kpi-val">${val}</div>` : ''}
+    <div class="kpi-sub">${sub}</div>
   </div>`;
 }
 
@@ -80,7 +76,7 @@ function abortROEFetch() {
 }
 
 // ---- KPI refresh (called after run or currency toggle) ----
-export function refreshKPIs() {
+function refreshKPIsBase() {
   if (!ST._kpiRaw?.lastP) return;
   const m          = ST._kpiRaw;
   const lastMonth  = parseInt(String(m.lastP).slice(4, 6), 10);
@@ -115,7 +111,7 @@ export function refreshKPIs() {
     <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Net Income (YTD)</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
-    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showResChart('roe_hist')"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -137,7 +133,7 @@ export function refreshKPIs() {
     if (!(lastMonth >= 1 && lastMonth <= 12)) return;
     const utilAnualizada = m.utilidad ? m.utilidad * (12 / lastMonth) : 0;
     const roe        = m.patrimonio && m.utilidad ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
-    const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
+    const roeSubLabel = `Month ${lastMonth} × ${(12 / lastMonth).toFixed(2).replace(/\.00$/, '')}`;
     const firstBank  = ST.selectedOrder[0];
     const moraLbl = m.colocaciones && Number.isFinite(m.mora90)
       ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false)
@@ -163,7 +159,7 @@ export function refreshKPIs() {
     <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Net Income</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
-    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showResChart('roe_hist')"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>`;
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
@@ -211,7 +207,7 @@ export function refreshKPIs() {
     <div class="kpi-col"><div class="kpi-col-title">Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('patrimonio')"><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">${fmtP(m.patrimonio, m.totalAssets)} of assets</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Total Assets</div><div class="kpi blue kpi-btn" onclick="showResChart('activos')"><div class="kpi-val">${fmtKPI(m.totalAssets)}</div><div class="kpi-sub">${fmtP(m.colocaciones, m.totalAssets)} of loans</div></div></div>
     <div class="kpi-col"><div class="kpi-col-title">Net Income</div><div class="kpi blue kpi-btn" onclick="showResChart('utilidad')"><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div></div>
-    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>
+    <div class="kpi-col"><div class="kpi-col-title">Annual ROE</div><div class="kpi green kpi-btn" onclick="showResChart('roe_hist')"><div class="kpi-val ${utilAnualizada < 0 ? 'neg' : ''}">${roe}</div><div class="kpi-sub">${roeSubLabel}</div></div></div>
   `;
 
   document.getElementById('kpiBalance').innerHTML = `
@@ -229,6 +225,66 @@ export function refreshKPIs() {
   `;
   syncResChartCustomBtn();
   syncKpiResumenActive(ST._lastResChart || 'patrimonio');
+}
+
+// Wrapper: KPIs base + cuadritos extra de "Financial Highlights".
+export function refreshKPIs() {
+  refreshKPIsBase();
+  renderHighlightExtras();
+}
+
+/** Cuadritos extra de "Financial Highlights":
+ *  - Total Loans (gráficable)
+ *  - Total Loans / Total Equity (ratio)
+ *  - Custom: selector para graficar CUALQUIER cuenta del país. */
+function renderHighlightExtras() {
+  const m = ST._kpiRaw;
+  const cont = document.getElementById('kpiResumen');
+  if (!m || !cont) return;
+  const loans = m.colocaciones || 0;
+  const eq    = m.patrimonio || 0;
+  const ratio = eq ? (loans / eq).toFixed(1) + 'x' : '—';
+  cont.insertAdjacentHTML('beforeend',
+      `<div class="kpi-col"><div class="kpi-col-title">Total Loans</div><div class="kpi green kpi-btn" onclick="showResChart('coloc')"><div class="kpi-val">${fmtKPI(loans)}</div><div class="kpi-sub">${fmtP(loans, m.totalAssets)} of assets</div></div></div>`
+    + `<div class="kpi-col"><div class="kpi-col-title">Loans / Equity</div><div class="kpi purple kpi-btn" onclick="showResChart('loans_equity')"><div class="kpi-val">${ratio}</div><div class="kpi-sub">times equity</div></div></div>`
+    + `<div class="kpi-col"><div class="kpi-col-title">ROE Ranking</div><div class="kpi green kpi-btn" onclick="showROEChart()"><div class="kpi-val">All banks</div><div class="kpi-sub">Ranking by annual ROE</div></div></div>`
+    + `<div class="kpi-col">${customKpiTileHtml(m)}</div>`
+  );
+  injectNiPills();
+  syncKpiResumenActive(ST._lastResChart || 'patrimonio');
+}
+
+// Inserta el sub-selector YTD / Period dentro del cuadrito de Net Income.
+function injectNiPills() {
+  const cont = document.getElementById('kpiResumen');
+  if (!cont) return;
+  const niTile = cont.querySelector('.kpi[onclick*="utilidad"]');
+  if (!niTile) return;
+  const nm = ST._niMode || 'period';
+  const pill = (mv, lbl) => `<span onclick="event.stopPropagation();setNiMode('${mv}')" style="cursor:pointer;padding:1px 6px;border-radius:7px;font-size:8px;font-weight:700;text-align:center;line-height:1.35;${nm === mv ? 'background:#0284c7;color:#fff;' : 'border:1px solid var(--border2);color:var(--text2);background:var(--bg3);'}">${lbl}</span>`;
+
+  // Envuelve el texto (valor + sub) a la izquierda y coloca los toggles a la derecha,
+  // apilados verticalmente → el cuadrito no crece en altura.
+  let left = niTile.querySelector('.ni-left');
+  if (!left) {
+    left = document.createElement('div');
+    left.className = 'ni-left';
+    left.style.minWidth = '0';
+    while (niTile.firstChild) left.appendChild(niTile.firstChild);
+    niTile.appendChild(left);
+    niTile.style.display = 'flex';
+    niTile.style.alignItems = 'center';
+    niTile.style.justifyContent = 'space-between';
+    niTile.style.gap = '6px';
+  }
+  let bar = niTile.querySelector('.ni-mode-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'ni-mode-bar';
+    bar.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex-shrink:0;';
+    niTile.appendChild(bar);
+  }
+  bar.innerHTML = `${pill('ytd', 'YTD')}${pill('period', 'Period')}`;
 }
 
 /** Top loading strip · oculta si el overlay de arranque (#loadingScreen) sigue visible */
@@ -325,7 +381,11 @@ export async function run() {
       const pasivos      = brSum(b1First, BR_KPI.pasivos, lastP);
       const patrimonio   = brSum(b1First, BR_KPI.patrimonio, lastP);
       const tvm          = brSum(b1First, BR_KPI.tvm, lastP);
-      const utilidad     = brSum(r1First, BR_KPI.utilidad, lastP);
+      // Net Income YTD REAL: Brasil acumula por semestre, así que reconstruimos el
+      // acumulado del año (en H2 se suma el cierre de junio).
+      const utilByP = {};
+      periodos.forEach(p => { utilByP[p] = brSum(r1First, BR_KPI.utilidad, p); });
+      const utilidad     = brResultReset(utilByP, lastP, 'ytd');
       const customKpi    = computeCustomKpiSnapshot(b1, r1, [], firstBank, lastP);
 
       ST._kpiRaw = {
@@ -344,6 +404,9 @@ export async function run() {
       ST._b1 = b1;
       ST._lastP = lastP;
       ST._resTableData = null;
+
+      showBalTab(ST._lastBalTab || 'assets');
+      renderResTable(null);
 
       const hi = document.getElementById('headerInfo');
       if (hi) hi.textContent = rangeLabel;
@@ -592,11 +655,11 @@ export async function run() {
 // Los demás tipos de gráfico (loans, deposits, NPL, custom, etc.) siguen
 // disponibles en la barra de botones del gráfico; simplemente no resaltan tile.
 const KPI_RESUMEN_IDX = {
-  patrimonio: 0, activos: 1, utilidad: 2, roe: 3,
+  patrimonio: 0, activos: 1, utilidad: 2, roe_hist: 3, coloc: 4, loans_equity: 5, roe: 6, customkpi: 7,
 };
 
 const KPI_RESUMEN_IDX_BR = {
-  patrimonio: 0, activos: 1, utilidad: 2, roe: 3,
+  patrimonio: 0, activos: 1, utilidad: 2, roe_hist: 3, coloc: 4, loans_equity: 5, roe: 6, customkpi: 7,
 };
 
 function syncKpiResumenActive(tipo) {
@@ -605,6 +668,27 @@ function syncKpiResumenActive(tipo) {
   document.querySelectorAll('#kpiResumen .kpi-btn').forEach((el, i) => {
     el.classList.toggle('kpi-active', idx !== undefined && i === idx);
   });
+}
+
+// Cambia el modo de Net Income (Brasil): 'ytd' | 'quarter' y redibuja.
+export function setNiMode(mode) {
+  ST._niMode = mode === 'period' ? 'period' : 'ytd';
+  injectNiPills();
+  showResChart('utilidad');
+}
+
+// Herramienta Δ%: activa/desactiva la comparación entre 2 puntos del gráfico.
+export function toggleDeltaMode() {
+  ST._deltaMode = !ST._deltaMode;
+  ST._deltaSel = [];
+  const btn = document.getElementById('btnDelta');
+  if (btn) {
+    btn.style.background = ST._deltaMode ? 'var(--accent)' : 'var(--btg)';   // azul BTG; más claro al activar
+    btn.style.color = '#fff';
+    btn.style.borderColor = ST._deltaMode ? 'var(--accent)' : 'var(--btg)';
+    btn.classList.toggle('attn', !ST._deltaMode);   // el pulso invita a activarla; se apaga al usarse
+  }
+  showResChart(ST._lastResChart || 'patrimonio');
 }
 
 // ---- Resumen chart ----
@@ -618,6 +702,7 @@ export function showResChart(tipo) {
     showResChart('patrimonio');
     return;
   }
+  if (ST._lastResChart !== tipo) ST._deltaSel = [];   // nueva métrica → limpia selección Δ
   ST._lastResChart = tipo;
   if (tipo === 'roe') {
     showROEChart();
@@ -635,10 +720,13 @@ export function showResChart(tipo) {
   if (titleEl) titleEl.textContent = 'Historical evolution';
   if (subEl)   subEl.textContent   = 'Key indicators for selected period range';
 
+  // (El sub-selector YTD/Period se muestra en el cuadrito de Net Income, no aquí.)
+
   const map = {
     activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds',
     captacoes:'🏦 Funding', tvm:'📄 Securities',
     pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account',
+    roe_hist:'📈 Annual ROE', loans_equity:'⚖️ Loans/Equity',
   };
   document.querySelectorAll('.rcbtn').forEach(b => {
     b.classList.toggle('active', b.textContent.trim() === (map[tipo] || ''));
@@ -728,6 +816,76 @@ export function showResChart(tipo) {
       return { label: bankName(code), data, color };
     });
     chartOpts = undefined;
+  } else if (tipo === 'loans_equity' || tipo === 'roe_hist') {
+    const isBRc = datasetIsoCountry() === 'BR';
+    const sumSet = (rows, set, code, p) =>
+      rows.filter(r => sameIns(r, code) && set.has(r.cuenta) && r.periodo === p)
+          .reduce((s, r) => s + (r.monto_total || 0), 0);
+    const eqE   = cuentaMap.patrimonio;
+    const eqSet = new Set(eqE.cuentas || [eqE.cuenta]);
+    if (tipo === 'loans_equity') {
+      chartOpts = { valueScale: 'ratio' };
+      const loanE = cuentaMap.coloc;
+      const loanSet = new Set(loanE.cuentas || [loanE.cuenta]);
+      series = banks.map((code, i) => ({
+        label: bankName(code), color: bankColor(code, i, bankName(code)),
+        data: periodos.map(p => {
+          const eq = sumSet(eqE.rows, eqSet, code, p);
+          return eq ? sumSet(loanE.rows, loanSet, code, p) / eq : null;
+        }),
+      }));
+    } else {
+      chartOpts = { valueScale: 'percent' };
+      const utE = cuentaMap.utilidad;
+      const utSet = new Set(utE.cuentas || [utE.cuenta]);
+      series = banks.map((code, i) => {
+        const byP = {};
+        if (isBRc) periodos.forEach(p => { byP[p] = sumSet(utE.rows, utSet, code, p); });
+        return {
+          label: bankName(code), color: bankColor(code, i, bankName(code)),
+          data: periodos.map(p => {
+            const eq = sumSet(eqE.rows, eqSet, code, p);
+            const month = parseInt(String(p).slice(4, 6), 10);
+            const util = isBRc ? brResultReset(byP, p, 'ytd') : sumSet(utE.rows, utSet, code, p);
+            return eq && month ? (util / eq) * (12 / month) * 100 : null;
+          }),
+        };
+      });
+    }
+  } else if (tipo === 'utilidad') {
+    // Net Income con modo YTD (acumulado del año) o Period (resultado del período).
+    //  · Brasil: el resultado se acumula por SEMESTRE → brResultReset lo corrige.
+    //  · Chile/Colombia: mensual acumulado YTD → Period = desacumular vs el período
+    //    anterior del MISMO año.
+    chartOpts = undefined;
+    const niMode = ST._niMode || 'period';
+    const isBRni = datasetIsoCountry() === 'BR';
+    const utE = cuentaMap.utilidad;
+    const utSet = new Set(utE.cuentas || [utE.cuenta]);
+    const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
+    series = banks.map((code, i) => {
+      const byP = {};
+      periodos.forEach(p => {
+        byP[p] = utE.rows.filter(r => sameIns(r, code) && utSet.has(r.cuenta) && r.periodo === p)
+                         .reduce((s, r) => s + (r.monto_total || 0), 0);
+      });
+      const data = periodos.map((p, idx) => {
+        let v;
+        if (niMode === 'ytd') {
+          v = isBRni ? brResultReset(byP, p, 'ytd') : byP[p];
+        } else if (isBRni) {
+          v = brResultReset(byP, p, 'quarter');
+        } else {
+          const prevP = idx > 0 ? periodos[idx - 1] : null;
+          const mo = parseInt(String(p).slice(4, 6), 10);
+          if (prevP && prevP.slice(0, 4) === p.slice(0, 4)) v = byP[p] - byP[prevP];   // mismo año: delta
+          else if (prevP) v = byP[p];   // cruce de año: el YTD reinició en enero → el crudo YA es el resultado del período
+          else v = mo <= 3 ? byP[p] : null;   // primer período sin referencia: solo válido si es inicio de año
+        }
+        return (v === null || v === undefined) ? null : v / 1e9 * usdFactor;
+      });
+      return { label: bankName(code), color: bankColor(code, i, bankName(code)), data: sparseData(data) };
+    });
   } else {
     const entry = cuentaMap[tipo] || cuentaMap.activos;
     const rows = entry.rows;
@@ -744,10 +902,24 @@ export function showResChart(tipo) {
     chartOpts = undefined;
   }
 
-  drawLineChart('chartResumen', periodos, series, chartOpts);
+  // Recorta columnas iniciales totalmente vacías (ej. el 1er período no
+  // desacumulable en modo Period) para no dejar espacio en blanco.
+  let periodosDraw = periodos, seriesDraw = series;
+  {
+    let f = 0;
+    while (f < periodos.length && seriesDraw.every(s => {
+      const v = s.data[f]; return v === null || v === undefined || !Number.isFinite(v);
+    })) f++;
+    if (f > 0 && f < periodos.length) {
+      periodosDraw = periodos.slice(f);
+      seriesDraw   = series.map(s => ({ ...s, data: s.data.slice(f) }));
+    }
+  }
+
+  drawLineChart('chartResumen', periodosDraw, seriesDraw, chartOpts);
   setupChartTooltip('chartResumen', 'chartTooltip');
 
-  document.getElementById('resumenLegend').innerHTML = series.map(s =>
+  document.getElementById('resumenLegend').innerHTML = seriesDraw.map(s =>
     `<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div>${s.label}</div>`
   ).join('');
 
@@ -758,6 +930,7 @@ export function showResChart(tipo) {
     const metricLabels = {
       activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income',
       captacoes:'Funding (Captações)', tvm:'Securities (TVM)',
+      loans_equity:'Loans / Equity (x)', roe_hist:'Annual ROE (%)',
       mora:'NPL / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account',
     };
     if (tableTitleEl) {
@@ -774,20 +947,21 @@ export function showResChart(tipo) {
 
     let html = `<table class="tbl" style="white-space:nowrap;font-size:12px;"><thead><tr>
       <th style="white-space:nowrap;min-width:120px;" data-export="Bank">Bank</th>
-      ${periodos.map(p => {
+      ${periodosDraw.map(p => {
         const mm   = p.slice(4, 6);
         const yyyy = p.slice(0, 4);
         return `<th class="r" style="white-space:nowrap;min-width:80px;font-size:10px;" data-export="01/${mm}/${yyyy}">${periodLabel(p)}</th>`;
       }).join('')}
     </tr></thead><tbody>`;
 
-    series.forEach(s => {
+    seriesDraw.forEach(s => {
       html += `<tr>
         <td style="font-weight:600;color:${s.color};white-space:nowrap;">${s.label}</td>
         ${s.data.map(v => {
           if (v === null || v === undefined || !Number.isFinite(v)) return `<td class="r" style="color:var(--text3)">—</td>`;
-          if (tipo === 'mora') return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;">${fmtChartPct(v, false)}</td>`;
-          return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;">${fmtAxis(v)}</td>`;
+          if (tipo === 'mora' || tipo === 'roe_hist') return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;" data-export="${v}">${fmtChartPct(v, false)}</td>`;
+          if (tipo === 'loans_equity') return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;" data-export="${v}">${Number(v).toFixed(1)}x</td>`;
+          return `<td class="r ${v < 0 ? 'neg' : ''}" style="white-space:nowrap;" data-export="${Math.round(v * 1e9)}">${fmtAxis(v)}</td>`;
         }).join('')}
       </tr>`;
     });
@@ -810,9 +984,7 @@ export async function showROEChart() {
   const dataTable = document.getElementById('resChartTablePanel');
   if (dataTable) dataTable.style.display = 'none';
 
-  document.querySelectorAll('.rcbtn').forEach(b => {
-    b.classList.toggle('active', b.textContent.trim() === '📈 Annual ROE');
-  });
+  document.querySelectorAll('.rcbtn').forEach(b => b.classList.remove('active'));
   syncKpiResumenActive('roe');
   const titleEl = document.getElementById('chartSectionTitle');
   const subEl   = document.getElementById('chartSectionSub');

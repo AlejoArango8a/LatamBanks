@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { datasetIsoCountry } from './state.js?v=bmon38';
+import { ST, datasetIsoCountry } from './state.js?v=bmon39';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -68,8 +68,31 @@ function brandColorByName(name) {
  * bankColor(code, i, name?)
  * name es opcional: cuando se pasa, permite emparejar colores de marca entre países.
  */
-export const bankColor = (code, i, name = '') => {
+// Marcas muy reconocibles que SIEMPRE conservan su color, incluso en comparación.
+const ITAU_ORANGE   = '#F75F01';
+const NUBANK_PURPLE = '#820AD1';
+const BCI_YELLOW    = '#EAB308';   // amarillo del logo BCI (tono legible en gráficos)
+function protectedBrandColor(code, name) {
   if (isBtgCode(code)) return btgBlue();
+  const l = (name || '').toLowerCase();
+  if (l.includes('itaú') || l.includes('itau')) return ITAU_ORANGE;
+  if (l.includes('nubank') || l.includes('nu pagamentos')) return NUBANK_PURPLE;
+  if (l.includes('bci')) return BCI_YELLOW;
+  return null;
+}
+// Paleta para "los demás" bancos en comparación: tonos bien separados que evitan
+// el azul (BTG), el naranja (Itaú) y el morado (Nubank).
+const COMPARE_PALETTE = ['#16a34a', '#dc2626', '#db2777', '#0d9488', '#65a30d', '#be123c', '#0e7490', '#a16207'];
+
+export const bankColor = (code, i, name = '') => {
+  // BTG, Itaú y Nubank SIEMPRE conservan su color de marca.
+  const prot = protectedBrandColor(code, name);
+  if (prot) return prot;
+  // En "Bank Comparison" (varios bancos): el resto usa una paleta por índice →
+  // colores garantizadamente distintos y fáciles de comparar.
+  const comparing = !!(ST && ST.selected && ST.selected.size > 1);
+  if (comparing) return COMPARE_PALETTE[i % COMPARE_PALETTE.length];
+  // Vista de un solo banco: se respeta el color de marca de cada institución.
   const byLogo = logoBrandColor(datasetIsoCountry(), code);
   if (byLogo) return byLogo;
   if (BANK_COLORS[code]) return BANK_COLORS[code];

@@ -1,0 +1,109 @@
+{
+  "quarter": "202603",
+  "resumo_cuentas": 194,
+  "reportes": {
+    "2": {
+      "existe": true,
+      "entidades": 1377,
+      "cuentas_totales": 3,
+      "cuentas_nuevas": 2,
+      "muestra_codigos_nuevos": [
+        "429",
+        "92999"
+      ]
+    },
+    "3": {
+      "existe": true,
+      "entidades": 1104,
+      "cuentas_totales": 402,
+      "cuentas_nuevas": 402,
+      "muestra_codigos_nuevos": [
+        "101484",
+        "107030",
+        "112607",
+        "112608",
+        "113786",
+        "113787",
+        "148833",
+        "148834",
+        "148835",
+        "148836",
+        "148837",
+        "148838",
+        "148839",
+        "149385",
+        "23036"
+      ]
+    },
+    "4": {
+      "existe": true,
+      "entidades": 1,
+      "cuentas_totales": 12,
+      "cuentas_nuevas": 12,
+      "muestra_codigos_nuevos": [
+        "23024",
+        "23025",
+        "23026",
+        "23027",
+        "23028",
+        "23029",
+        "23030",
+        "23031",
+        "23032",
+        "23033",
+        "23034",
+        "23035"
+      ]
+    },
+    "5": {
+      "existe": true,
+      "entidades": 1377,
+      "cuentas_totales": 22,
+      "cuentas_nuevas": 18,
+      "muestra_codigos_nuevos": [
+        "138232",
+        "142840",
+        "148471",
+        "148474",
+        "148475",
+        "149618",
+        "149619",
+        "79645",
+        "79647",
+        "79650",
+        "79652",
+        "79655",
+        "79658",
+        "79659",
+        "79660"
+      ]
+    }
+  },
+  "credito_detallado": {
+    "archivos_dados": [],
+    "archivos_plantilla": [
+      "trel202603_105.json",
+      "trel202603_106.json",
+      "trel202603_107.json",
+      "trel202603_108.json",
+      "trel202603_109.json",
+      "trel202603_110.json",
+      "trel202603_115.json",
+      "trel202603_116.json",
+      "trel202603_117.json",
+      "trel202603_118.json",
+      "trel202603_119.json",
+      "trel202603_120.json",
+      "trel202603_121.json",
+      "trel202603_123.json",
+      "trel202603_124.json",
+      "trel202603_125.json",
+      "trel202603_126.json",
+      "trel202603_127.json",
+      "trel202603_128.json",
+      "trel202603_129.json",
+      "trel202603_130.json",
+      "trel202603_131.json"
+    ]
+  }
+}

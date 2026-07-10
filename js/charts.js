@@ -1,8 +1,8 @@
 // ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon38';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon38';
+import { ST, CHART_STATE } from './state.js?v=bmon39';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon39';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -10,10 +10,10 @@ export function sparseData(rawData) {
   return rawData.map((v, i) => i < firstNonZero ? null : v);
 }
 
-export function niceScale(lo, hi, tickTarget = 4) {
+export function niceScale(lo, hi, tickTarget = 4, forceZeroFlag = false) {
   const allNeg = hi <= 0 && lo < 0;
   const allPos = lo >= 0 && hi > 0;
-  const forceZero = !allNeg && (lo < 0 || (allPos && lo < hi * 0.2));
+  const forceZero = forceZeroFlag || (!allNeg && (lo < 0 || (allPos && lo < hi * 0.2)));
   const scaleLo = forceZero ? Math.min(0, lo) : lo;
   const range = hi - scaleLo || 1;
   const tgt = Math.max(2, tickTarget);
@@ -35,7 +35,9 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   opts = opts || {};
   const valueScale = opts.valueScale || 'billions';
   const fmtVal = (v, compact) =>
-    valueScale === 'percent' ? fmtChartPct(v, compact) : fmtAxis(v, compact);
+    valueScale === 'percent' ? fmtChartPct(v, compact)
+    : valueScale === 'ratio' ? `${Number(v).toFixed(1)}x`
+    : fmtAxis(v, compact);
 
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -49,7 +51,7 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const dpr = window.devicePixelRatio || 1;
   const W = rawW;
   const isResumen = canvasId === 'chartResumen';
-  const H = isResumen ? 360 : 180;
+  const H = isResumen ? 300 : 180;   // coincide con .chart-canvas max-height → sin escalado/pixelado
   const narrowCanvas = W < 480;
   const veryNarrow   = W < 360;
 
@@ -105,7 +107,7 @@ export function drawLineChart(canvasId, periodos, series, opts) {
 
   const nSeries = series.filter(s => s.data.some(v => v !== null)).length;
 
-  if (nSeries >= 2 && rawLo >= 0) {
+  if (nSeries >= 2 && rawLo >= 0 && valueScale !== 'ratio') {
     rawLo = 0;
   } else if (nSeries >= 2 && rawHi <= 0) {
     rawHi = 0;
@@ -121,10 +123,20 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   }
 
   const rangeGuard = (rawHi - rawLo) || Math.abs(rawHi) * 0.1 || 1;
-  rawHi += rangeGuard * 0.08;
-  if (rawLo > 0) rawLo -= rangeGuard * 0.05;
+  if (valueScale === 'ratio') {
+    // Loans/Equity: eje flexible (no forzar cero); piso ~1x por debajo del mínimo.
+    rawHi += rangeGuard * 0.16;
+    rawLo -= 1;
+  } else if (valueScale === 'percent') {
+    // % (ROE, NPL): arranca en cero (lo fuerza niceScale más abajo).
+    rawHi += rangeGuard * 0.14;
+  } else {
+    // Montos ($): más amplitud abajo para que las variaciones se aprecien mejor.
+    rawHi += rangeGuard * 0.16;
+    if (rawLo > 0) rawLo -= rangeGuard * 0.20;
+  }
 
-  const scale = niceScale(rawLo, rawHi, tickTarget);
+  const scale = niceScale(rawLo, rawHi, tickTarget, valueScale === 'percent');
   const lo = scale.lo, hi = scale.hi;
 
   const axisPx = veryNarrow ? 8 : narrowCanvas ? 9 : 10;
@@ -201,25 +213,50 @@ export function drawLineChart(canvasId, periodos, series, opts) {
       CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
 
       if (showLabels) {
-        const labelX = x + barW / 2;
-        const txt = fmtVal(v, axisCompact);
-        const aboveY = barTop - 5;
-        const insideY = barTop + 11;
-        const labelY = aboveY > PAD.t + 12 ? aboveY : insideY;
-        labelsToDraw.push({ labelX, labelY, txt, inside: aboveY <= PAD.t + 12 });
+        labelsToDraw.push({ labelX: x + barW / 2, barTop, txt: fmtVal(v, axisCompact) });
       }
     });
   });
 
-  ctx.font = `bold ${axisPx}px DM Mono, monospace`;
+  const labelPx = veryNarrow ? 9 : narrowCanvas ? 10 : 12;
+  ctx.font = `bold ${labelPx}px DM Mono, monospace`;
   ctx.textAlign = 'center';
-  labelsToDraw.forEach(({ labelX, labelY, txt }) => {
-    const tw = ctx.measureText(txt).width;
-    ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,35,0.85)';
-    ctx.fillRect(labelX - tw / 2 - 3, labelY - 11, tw + 6, 14);
-    ctx.fillStyle = ST.theme === 'light' ? '#1e293b' : '#f1f5f9';
-    ctx.fillText(txt, labelX, labelY);
-  });
+  ctx.textBaseline = 'alphabetic';
+  // TODAS las barras llevan label. Si dos se solaparían, el de arriba se EMPUJA
+  // hacia arriba (por filas) y se vincula a su barra con una línea guía punteada.
+  // Halo de contraste para que el texto se lea sobre cualquier color de barra.
+  const rowH   = labelPx + 3;
+  const ceilY  = PAD.t + labelPx + 1;                       // no subir sobre el área del gráfico
+  const haloCol   = ST.theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.92)';
+  const textCol   = ST.theme === 'light' ? '#0b1220' : '#f1f5f9';
+  const leaderCol = ST.theme === 'light' ? 'rgba(30,41,59,0.45)' : 'rgba(203,213,225,0.5)';
+  const placedBoxes = [];
+  labelsToDraw
+    .slice()
+    .sort((a, b) => (a.labelX - b.labelX) || (a.barTop - b.barTop))
+    .forEach(({ labelX, barTop, txt }) => {
+      const halfW = ctx.measureText(txt).width / 2 + 1.5;
+      let y = Math.max(ceilY, barTop - 6);                  // baseline objetivo, justo sobre la barra
+      let guard = 0;
+      const hits = () => placedBoxes.some(q =>
+        (labelX - halfW) < q.r && (labelX + halfW) > q.l &&
+        (y - labelPx) < q.b && (y + 3) > q.t);
+      while (hits() && (y - rowH) >= ceilY && guard++ < 60) y -= rowH;   // empuja hacia arriba
+      placedBoxes.push({ l: labelX - halfW, r: labelX + halfW, t: y - labelPx, b: y + 3 });
+      // Línea guía punteada tenue cuando el label se separó de su barra.
+      if (barTop - y > rowH * 0.9) {
+        ctx.save();
+        ctx.strokeStyle = leaderCol; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(labelX, y + 3); ctx.lineTo(labelX, barTop - 1); ctx.stroke();
+        ctx.restore();
+      }
+      // Halo (contorno) + texto.
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 3; ctx.strokeStyle = haloCol;
+      ctx.strokeText(txt, labelX, y);
+      ctx.fillStyle = textCol;
+      ctx.fillText(txt, labelX, y);
+    });
 
   const xAxisPx = veryNarrow ? 8 : narrowCanvas ? 9 : 10;
   const periodStep = Math.max(
@@ -235,6 +272,89 @@ export function drawLineChart(canvasId, periodos, series, opts) {
     const xAxisYOff = veryNarrow ? 34 : narrowCanvas ? 34 : 36;
     ctx.fillText(periodLabel(p), x, PAD.t + cH + xAxisYOff);
   });
+
+  // ---- Herramienta Δ%: marca los puntos seleccionados y dibuja el conector ----
+  if (ST._deltaMode && Array.isArray(ST._deltaSel) && ST._deltaSel.length) {
+    const allBars = CHART_STATE[canvasId].bars;
+    const sel = ST._deltaSel
+      .map(s => allBars.find(b => b.periodo === s.periodo && b.label === s.label))
+      .filter(Boolean);
+    const ink = ST.theme === 'light' ? '#475569' : '#cbd5e1';   // gris pizarra, sobrio
+    ctx.save();
+    sel.forEach(b => {
+      ctx.fillStyle = ink;
+      ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y, 3.2, 0, Math.PI * 2); ctx.fill();
+    });
+    if (sel.length === 2) {
+      // Siempre calcula el cambio en el sentido del avance del tiempo (período menor → mayor),
+      // sin importar el orden de los clicks.
+      const [a, b2] = [...sel].sort((p, q) => String(p.periodo).localeCompare(String(q.periodo)));
+      const ax = a.x + a.w / 2, bx = b2.x + b2.w / 2;
+      // La subida vertical ARRANCA por encima del label del valor (para no solaparlo),
+      // sube lo suficiente para superarlo y ahí parte el travesaño horizontal.
+      const labelClear = showLabels ? (labelPx + 10) : 6;
+      const startA = a.y - labelClear;
+      const startB = b2.y - labelClear;
+      const topY = Math.max(PAD.t + 4, Math.min(startA, startB) - 9);
+      // Conector tipo "bracket": subida vertical (sobre el label) + travesaño horizontal.
+      ctx.strokeStyle = ink; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      if (startA > topY) { ctx.moveTo(ax, startA); ctx.lineTo(ax, topY); }
+      if (startB > topY) { ctx.moveTo(bx, startB); ctx.lineTo(bx, topY); }
+      ctx.moveTo(Math.min(ax, bx), topY); ctx.lineTo(Math.max(ax, bx), topY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const dPct = a.val ? (b2.val / a.val - 1) * 100 : null;
+      const dAbs = b2.val - a.val;
+      const pctTxt = (dPct === null || !isFinite(dPct)) ? '—' : (dPct >= 0 ? '+' : '') + dPct.toFixed(1) + '%';
+      const absTxt = (dAbs >= 0 ? '+' : '') + fmtVal(dAbs, false);
+      const txt = `${pctTxt}  ·  ${absTxt}`;
+      const midX = (ax + bx) / 2;
+      const labelY = Math.max(PAD.t + 11, topY - 7);
+      ctx.font = '500 11px DM Mono, monospace';
+      ctx.textAlign = 'center';
+      const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = ST.theme === 'light' ? 'rgba(255,255,255,0.90)' : 'rgba(17,24,39,0.82)';
+      ctx.fillRect(midX - tw / 2 - 6, labelY - 11, tw + 12, 15);
+      ctx.fillStyle = ink;
+      ctx.fillText(txt, midX, labelY);
+    }
+    ctx.restore();
+  }
+}
+
+/**
+ * Etiqueta de período para el tooltip. Si la serie es trimestral (o de mayor paso),
+ * muestra el RANGO de meses que abarca la barra (p. ej. "Jan–Mar 2024") en vez del
+ * solo mes de cierre. Detecta el paso a partir de los períodos vecinos.
+ */
+function periodSpanLabel(periodo, periodos) {
+  const p = String(periodo);
+  if (p.length < 6) return periodLabel(periodo);
+  const y = parseInt(p.slice(0, 4), 10);
+  const m = parseInt(p.slice(4, 6), 10);
+  const monthsOf = s => {
+    const t = String(s);
+    return parseInt(t.slice(0, 4), 10) * 12 + parseInt(t.slice(4, 6), 10);
+  };
+  const list = Array.isArray(periodos) ? periodos : [];
+  const idx = list.indexOf(periodo);
+  let step = 1;
+  if (idx > 0) step = monthsOf(periodo) - monthsOf(list[idx - 1]);
+  else if (idx === 0 && list.length > 1) step = monthsOf(list[1]) - monthsOf(periodo);
+  if (!(step > 1)) return periodLabel(periodo);   // mensual → un solo mes
+
+  const endTot = y * 12 + m;
+  const startTot = endTot - step + 1;
+  const sy = Math.floor((startTot - 1) / 12);
+  const sm = ((startTot - 1) % 12) + 1;
+  const startP = `${sy}${String(sm).padStart(2, '0')}`;
+  const endLbl = periodLabel(p);                    // "Mar 2024"
+  if (sy === y) {
+    const startMon = periodLabel(startP).replace(/\s+\d{4}$/, '');  // "Jan"
+    return `${startMon}–${endLbl}`;                 // "Jan–Mar 2024"
+  }
+  return `${periodLabel(startP)}–${endLbl}`;         // cruza año: "Nov 2023–Jan 2024"
 }
 
 export function setupChartTooltip(canvasId, tooltipId) {
@@ -260,8 +380,10 @@ export function setupChartTooltip(canvasId, tooltipId) {
       const valTxt =
         st && st.valueScale === 'percent'
           ? fmtChartPct(found.val, false)
-          : fmtAxis(found.val);
-      tooltip.innerHTML = `<span style="color:${found.color}">${found.label}</span><br><strong>${periodLabel(found.periodo)}</strong>: ${valTxt}`;
+          : st && st.valueScale === 'ratio'
+            ? `${Number(found.val).toFixed(1)}x`
+            : fmtAxis(found.val);
+      tooltip.innerHTML = `<span style="color:${found.color}">${found.label}</span><br><strong>${periodSpanLabel(found.periodo, state.periodos)}</strong>: ${valTxt}`;
       const ttW = tooltip.offsetWidth || 160;
       const ttH = tooltip.offsetHeight || 48;
       const spaceRight = window.innerWidth - e.clientX;
@@ -274,4 +396,25 @@ export function setupChartTooltip(canvasId, tooltipId) {
     }
   });
   canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+  // Click para seleccionar puntos en modo Δ% (se enlaza una sola vez por canvas).
+  if (!canvas._deltaClickBound) {
+    canvas._deltaClickBound = true;
+    canvas.style.cursor = 'pointer';
+    canvas.addEventListener('click', e => {
+      if (!ST._deltaMode) return;
+      const state = CHART_STATE[canvasId];
+      if (!state || !state.bars) return;
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      let hit = null;
+      for (const bar of state.bars) {
+        if (mx >= bar.x && mx <= bar.x + bar.w && my >= bar.y && my <= bar.y + bar.h) { hit = bar; break; }
+      }
+      if (!hit) return;
+      if (!Array.isArray(ST._deltaSel) || ST._deltaSel.length >= 2) ST._deltaSel = [];
+      ST._deltaSel.push({ periodo: hit.periodo, label: hit.label, val: hit.val });
+      drawLineChart(canvasId, state.periodos, state.series, { valueScale: state.valueScale });
+    });
+  }
 }

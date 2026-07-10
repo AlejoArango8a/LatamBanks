@@ -1,9 +1,9 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon38';
-import { periodLabel } from './format.js?v=bmon38';
-import { paisLocale } from './paises.js?v=bmon38';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon39';
+import { periodLabel } from './format.js?v=bmon39';
+import { paisLocale } from './paises.js?v=bmon39';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;
@@ -43,7 +43,16 @@ export function tableToData(table) {
     const cells = [];
     tr.querySelectorAll('th, td').forEach(td => {
       const exportVal = td.getAttribute('data-export');
-      if (exportVal !== null) { cells.push(exportVal); return; }
+      if (exportVal !== null) {
+        // Datos en % → guardar con máximo 4 decimales.
+        if (td.innerText.trim().endsWith('%')) {
+          const num = parseFloat(exportVal);
+          cells.push(isNaN(num) ? exportVal : Math.round(num * 1e4) / 1e4);
+        } else {
+          cells.push(exportVal);
+        }
+        return;
+      }
       const raw    = td.innerText.trim();
       const isDate = /^[A-Za-z]{3}\s+\d{4}$/.test(raw);
       if (isDate) { cells.push(parseExportDate(raw)); return; }
@@ -88,7 +97,15 @@ export function exportTableById(tableContainerId, filename) {
     : (container.tagName === 'TABLE' ? container : container.querySelector('table'));
   if (!table) { alert('No data to export'); return; }
   try {
-    const data   = tableToData(table);
+    const raw    = tableToData(table);
+    // Columna de moneda: en qué moneda está expresado cada dato (BRL/CLP/COP/USD…).
+    // Se inserta como 2ª columna, inmediatamente después del nombre/1ª columna.
+    const ccy    = ST.currency === 'USD' ? 'USD' : reportingLocalCurrencyISO();
+    const data   = raw.map((row, i) => {
+      const r = [...row];
+      r.splice(1, 0, i === 0 ? 'Currency' : ccy);
+      return r;
+    });
     const wb     = XLSX.utils.book_new();
     const ws     = XLSX.utils.aoa_to_sheet(data);
     const maxLen = data.reduce((acc, row) => {

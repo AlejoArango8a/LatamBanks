@@ -1,11 +1,12 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon38';
-import { bankColor } from '../config.js?v=bmon38';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml } from '../format.js?v=bmon38';
-import { sumRows } from '../api.js?v=bmon38';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon38';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon39';
+import { bankColor } from '../config.js?v=bmon39';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon39';
+import { sumRows } from '../api.js?v=bmon39';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon39';
+import { BAL_BR_SECTIONS, R1_BR_ROWS } from '../brCuentas.js?v=bmon39';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -101,10 +102,12 @@ export function showBalTab(sec, bankCode) {
     b.classList.toggle('active', b.textContent.trim().toLowerCase() === sec));
   if (!ST._b1) return;
 
-  const rows = datasetIsoCountry() === 'CO' ? BAL_CO_SECTIONS[sec] : BAL_SECTIONS[sec];
+  const iso = datasetIsoCountry();
+  const rows = iso === 'CO' ? BAL_CO_SECTIONS[sec] : iso === 'BR' ? BAL_BR_SECTIONS[sec] : BAL_SECTIONS[sec];
   if (!rows) return;
 
-  const isCO = datasetIsoCountry() === 'CO';
+  const isCO = iso === 'CO';
+  const isBR = iso === 'BR';
   const sameIns = (row, code) => Number(row.ins_cod) === Number(code);
 
   let b1Map = null;
@@ -125,19 +128,20 @@ export function showBalTab(sec, bankCode) {
   if (banks.length === 1) {
     const code = banks[0];
     const amtLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
-    if (isCO) {
+    if (isCO || isBR) {
       let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
         <th class="cod">Account</th><th>Description</th>
         <th class="r">${amtLabel}</th>
       </tr></thead><tbody>`;
       rows.forEach(row => {
-        const slice = b1Period.filter(r => sameIns(r, code));
-        const tot = coSumB1BalanceRow(slice, row.c);
+        const tot = isCO
+          ? coSumB1BalanceRow(b1Period.filter(r => sameIns(r, code)), row.c)
+          : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
         const neg = tot < 0 ? 'neg' : '';
         html += `<tr>
         <td class="cod">${row.c}</td>
         <td class="${row.cls}">${row.l}</td>
-        <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}">${fmtKPI(tot)}</td>
+        <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}" data-export="${rawForExport(tot)}">${fmtKPI(tot)}</td>
       </tr>`;
       });
       html += `</tbody></table></div>`;
@@ -164,11 +168,11 @@ export function showBalTab(sec, bankCode) {
       html += `<tr>
         <td class="cod">${row.c}</td>
         <td class="${row.cls}">${row.l}</td>
-        <td class="r ${neg}">${fmtKPI(cols[0])}</td>
-        <td class="r ${neg}">${fmtKPI(cols[1])}</td>
-        <td class="r ${neg}">${fmtKPI(cols[2])}</td>
-        <td class="r ${neg}">${fmtKPI(cols[3])}</td>
-        <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}">${fmtKPI(tot)}</td>
+        <td class="r ${neg}" data-export="${rawForExport(cols[0])}">${fmtKPI(cols[0])}</td>
+        <td class="r ${neg}" data-export="${rawForExport(cols[1])}">${fmtKPI(cols[1])}</td>
+        <td class="r ${neg}" data-export="${rawForExport(cols[2])}">${fmtKPI(cols[2])}</td>
+        <td class="r ${neg}" data-export="${rawForExport(cols[3])}">${fmtKPI(cols[3])}</td>
+        <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}" data-export="${rawForExport(tot)}">${fmtKPI(tot)}</td>
       </tr>`;
     });
     html += `</tbody></table></div>`;
@@ -193,7 +197,7 @@ export function showBalTab(sec, bankCode) {
           ? coSumB1BalanceRow(b1Period.filter(r => sameIns(r, code)), row.c)
           : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
         const neg = tot < 0 ? 'neg' : '';
-        html += `<td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}">${fmtKPI(tot)}</td>`;
+        html += `<td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}" data-export="${rawForExport(tot)}">${fmtKPI(tot)}</td>`;
       });
       html += `</tr>`;
     });
@@ -230,7 +234,8 @@ export function renderResTable(m) {
     {l:'Income Tax',                       c:'480000000', cls:'i1'},
     {l:'NET INCOME (LOSS)',                c:'590000000', cls:'hl'},
   ];
-  const r1Rows = datasetIsoCountry() === 'CO' ? coPlStatementRows() : R1_ROWS;
+  const r1Rows = datasetIsoCountry() === 'BR' ? R1_BR_ROWS
+               : datasetIsoCountry() === 'CO' ? coPlStatementRows() : R1_ROWS;
 
   if (ST._series && ST._series.r1 && ST._lastP) {
     const r1    = ST._series.r1;
@@ -263,7 +268,7 @@ export function renderResTable(m) {
       html += `<tr>${conceptTd}`;
       banks.forEach(code => {
         const v = getVal(row.c, code);
-        html += `<td class="r ${v < 0 ? 'neg' : ''} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td>`;
+        html += `<td class="r ${v < 0 ? 'neg' : ''} ${row.cls === 'hl' ? 'hl' : ''}" data-export="${rawForExport(v)}">${fmtKPI(v)}</td>`;
       });
       html += `</tr>`;
     });
@@ -283,7 +288,7 @@ export function renderResTable(m) {
       const conceptTd = isCOPl
         ? `<td class="${row.cls} res-pl-concept-td">${coIncomeStatementConceptHtml(row.l, false)}</td>`
         : `<td class="${row.cls}">${row.l}</td>`;
-      html += `<tr>${conceptTd}<td class="r ${v < 0 ? 'neg' : 'pos'} ${row.cls === 'hl' ? 'hl' : ''}">${fmtKPI(v)}</td></tr>`;
+      html += `<tr>${conceptTd}<td class="r ${v < 0 ? 'neg' : 'pos'} ${row.cls === 'hl' ? 'hl' : ''}" data-export="${rawForExport(v)}">${fmtKPI(v)}</td></tr>`;
     });
     html += `</tbody></table>`;
     document.getElementById('resTable').innerHTML = html;

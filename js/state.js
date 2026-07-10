@@ -1,7 +1,7 @@
 // ============================================================
 // STATE — single source of truth for mutable app state
 // ============================================================
-import { paisIso, paisCurrency } from './paises.js?v=bmon38';
+import { paisIso, paisCurrency } from './paises.js?v=bmon39';
 
 export const ST = {
   /** Active dataset jurisdiction (bootstrap sets Chile; clears cache when switching live backends). */
@@ -19,7 +19,9 @@ export const ST = {
 
   // UI prefs (set immediately so boot code can reference them)
   theme: 'light',
-  showBarLabels: null,
+  showBarLabels: true,   // labels de barras ON por defecto
+  _deltaMode: false,     // herramienta de comparación Δ% entre 2 puntos
+  _deltaSel: [],         // puntos seleccionados [{periodo,label,val}]
   currency: 'USD',
   usdRate: null,
   usdDate: null,

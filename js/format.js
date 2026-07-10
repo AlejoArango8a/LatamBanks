@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon38';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon38';
-import { ST } from './state.js?v=bmon38';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon39';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon39';
+import { ST } from './state.js?v=bmon39';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -28,6 +28,14 @@ function _fmtKPIBase(clpRaw, decimals) {
 
 export const fmtKPI        = clpRaw => _fmtKPIBase(clpRaw, 0);
 export const fmtKPIDecimal = clpRaw => _fmtKPIBase(clpRaw, 1);
+
+// Valor CRUDO para exportar a Excel (número completo, sin abreviar). Respeta la
+// moneda activa: en USD devuelve la conversión exacta (sin redondear); en moneda
+// local, el número tal cual. La columna "Currency" del export indica la unidad.
+export const rawForExport = (raw) => {
+  const v = (ST.currency === 'USD' && ST.usdRate) ? (Number(raw) || 0) / ST.usdRate : (Number(raw) || 0);
+  return Math.round(v);   // solo enteros en el Excel (sin decimales)
+};
 
 // Axis label (values already divided by 1e9 = billions).
 export function fmtAxis(v, compact) {

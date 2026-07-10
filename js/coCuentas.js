@@ -2,7 +2,7 @@
 // Colombia CUIF — 6 dígitos (clasificación financiera típica SFC)
 // Derivado de datos reales datos_financieros CO (prioridad cobertura b1/r1).
 // ============================================================
-import { ST } from './state.js?v=bmon38';
+import { ST } from './state.js?v=bmon39';
 
 export const CO_CUIF = {
   activos: '100000',

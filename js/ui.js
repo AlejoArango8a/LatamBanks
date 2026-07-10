@@ -2,12 +2,12 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon38';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon38';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon38';
-import { setStatus, showErr } from './utils.js?v=bmon38';
-import { sumRows } from './api.js?v=bmon38';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon38';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon39';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon39';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon39';
+import { setStatus, showErr } from './utils.js?v=bmon39';
+import { sumRows } from './api.js?v=bmon39';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon39';
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -360,7 +360,8 @@ export function syncCountryChartButtons() {
 }
 
 // Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
-const BR_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
+// Balance e Income Statement ya habilitados (Relatorios 2-4 cargados).
+const BR_DISABLED_TABS = ['accountview'];
 export function syncCountryDisabledTabs() {
   const isBR = datasetIsoCountry() === 'BR';
   BR_DISABLED_TABS.forEach(t => {

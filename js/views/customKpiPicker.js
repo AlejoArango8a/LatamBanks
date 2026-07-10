@@ -1,8 +1,8 @@
 // ============================================================
 // CUSTOM KEY DATA — cuenta del plan por país (modal; solo en memoria, se pierde al recargar)
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon38';
-import { getTipo, toSentenceCase, getExpLabel } from '../format.js?v=bmon38';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon39';
+import { getTipo, toSentenceCase, getExpLabel } from '../format.js?v=bmon39';
 
 const LEGACY_LS_KEYS = ['kpiCustomCuenta_CO', 'kpiCustomCuenta_CL'];
 
@@ -131,7 +131,7 @@ export function openCustomKpiPicker() {
   const dlg = document.getElementById('customKpiModal');
   const sub = dlg.querySelector('.custom-kpi-subtitle');
   if (sub)
-    sub.textContent = `Elegí una cuenta del plan · ${datasetIsoCountry() === 'CO' ? 'Colombia (CUIF)' : 'Chile (CMF)'}`;
+    sub.textContent = `Elegí una cuenta del plan · ${datasetIsoCountry() === 'CO' ? 'Colombia (CUIF)' : datasetIsoCountry() === 'BR' ? 'Brasil (IF.data)' : 'Chile (CMF)'}`;
   dlg.style.display = 'flex';
   document.getElementById('customKpiSearch').value = '';
   renderPlanList();
