@@ -101,7 +101,23 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 |------|--------|
 | Chile | Activo (CMF, desde 2022) |
 | Colombia | ETL CUIF disponible (`colombia_loader.py`); KPIs panel resumen aún en cuentas CMF |
+| Brasil | Activo (IF.data prudencial). Histórico continuo desde **201403**; Cosif viejo≤202412 + nuevo≥202503 |
 | Perú | En desarrollo |
 | Uruguay | En desarrollo |
+
+### Brasil — backfill / carga
+
+```bash
+# Ver qué se cargaría (sin BD)
+python brasil_loader.py --dry-run --all --from 201403 --to 202412
+
+# Cargar histórico faltante (requiere COCKROACH_URL en .env)
+python brasil_loader.py --all --from 201403 --to 202412
+
+# Modo automático (cron): solo trimestres que falten en carga_log
+python brasil_loader.py
+```
+
+También: GitHub Actions → **Brasil - Auto Update** → `workflow_dispatch` con mode `range` o `auto`.
 
 `ST.country` en el cliente separa por jurisdicción la clave de caché local de datos; al sumar backends adicionales, conviene vaciar `ST.data` en el cambio de país.

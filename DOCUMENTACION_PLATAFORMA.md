@@ -272,36 +272,40 @@ Instituições Independentes"** (cada grupo económico consolidado una vez +
 independientes sueltos).
 
 - **Fuente principal (portal IF.data, HTTPS GET sin auth):**
-  - Catálogo de trimestres: `GET https://www3.bcb.gov.br/ifdata/rest/relatorios2025a2030`
-    → `[{dt: 202503, files: [{f: "..."}]}, ...]`. **Se lee dinámicamente, nunca se
-    hardcodean los trimestres.**
-  - Descarga de archivos: `GET .../ifdata/rest/arquivos?nomeArquivo=<f>`.
+  - Catálogos unidos (dinámicos, sin hardcodear trimestres):
+    - `GET .../ifdata/rest/relatorios` → histórico hasta `202412`
+    - `GET .../ifdata/rest/relatorios2025a2030` → `202503+`
+  - Cobertura prudencial continua desde **`201403`** (cadastro `1004` /
+    `1009`; no se usa `1005` financiero con otros IDs).
+  - Descarga: `GET .../ifdata/rest/arquivos?nomeArquivo=<f>`. El histórico
+    requiere prefijo `ifdata/` sobre el path del catálogo; 2025+ ya trae
+    bucket `ifdata_2025_2030//…`.
   - Por trimestre `{dt}` se usan:
-    - `cadastro{dt}_1009.json` → universo prudencial. Columnas posicionales
-      `c0` (código: grupo prudencial = `"1000"`+código, ej. `1000080336`=BTG;
-      independiente = su CNPJ base), `c2` (nombre), `c3` (tipo TCB), `c4`
-      (`'C'`=conglomerado / `'I'`=independiente), etc.
-    - `dados{dt}_1.json` → valores maestros: `{values:[{e:<=c0>, v:[{i:<conta>, v:<valor>}, …~181]}]}`.
-      Mezcla todos los niveles → se filtra a `e ∈ {c0 del cadastro_1009}`.
+    - `cadastro{dt}_1009.json` (desde 202309) o `cadastro{dt}_1004.json`
+      (201403–202306) → universo prudencial. `c0` = código grupo `1000…`
+      (ej. `1000080336`=BTG) o CNPJ base si independiente; `c2` nombre;
+      `c3` TCB; `c4` `'C'`/`'I'`.
+    - `dados{dt}_1.json` → valores: filtrar `e ∈ {c0 del cadastro prudencial}`.
 - **Fuente secundaria (Olinda OData):** SOLO como diccionario `Conta → NomeColuna`
-  (nombre legible de la cuenta). Se consultan varias instituciones de tipos TCB
-  distintos (`pick_reference_codinst`) para maximizar cobertura. **No** se usa
-  Olinda para los valores consolidados (usa otro esquema de códigos).
+  (nombre legible). Se fusionan un trimestre Cosif nuevo y uno viejo (≤202412)
+  para cubrir `14xxxx` y `78xxx`. **No** se usa Olinda para montos.
 - **Loader:** `brasil_loader.py`. Modos:
-  - (sin flags) → **modo automático**: carga solo trimestres del catálogo que no
-    estén en `carga_log`. Es el que corre en GitHub Actions.
+  - (sin flags) → **modo automático**: carga trimestres del catálogo que no
+    estén en `carga_log` (incluye backfill histórico faltante). Cron GHA.
   - `--quarter AAAAMM` → carga/recarga un trimestre.
-  - `--all` → carga/recarga todos los del catálogo.
-  - `--wipe` → **borra TODO Brasil** (solo `country='BR'`) antes de cargar. Se usa
-    UNA sola vez en una reconstrucción; nunca en operación normal.
+  - `--all` → carga/recarga todos los del catálogo (o del rango).
+  - `--from` / `--to` AAAAMM → limita el rango.
+  - `--dry-run` → lista objetivo sin tocar la BD.
+  - `--wipe` → **borra TODO Brasil** (solo `country='BR'`) antes de cargar.
 - **`tipo` = `'p'`** para todas las filas. `monto_total` = valor en R$.
-- **Cuentas clave (plan Cosif nuevo, mar-2025 / Res. 4.966):**
-  `140220` Ativo Total · `140246` Patrimônio Líquido (métrica de ranking) ·
-  `141870` Lucro Líquido · `141873` Carteira de Crédito · `140239` Captações ·
-  `140244` Passivo · `140200` Títulos e Valores Mobiliários.
-  (Los códigos viejos `78xxx` de antes de 2025 quedan fuera de alcance; en el
-  rebuild aparecen como filas en 0.)
-- **Automatización:** `.github/workflows/brasil_auto_update.yml`, cron día 1.
+- **Cuentas clave (KPI — Cosif viejo ≤202412 + nuevo ≥202503):**
+  `78182`/`140220` Ativo · `78186`/`140246` Patrimônio · `78187`/`141870`
+  Lucro · `78183`/`141873` Carteira · `78185`/`140239` Captações ·
+  `78184`/`140244` Passivo · `140200` TVM (solo plan nuevo).
+  El frontend suma el par (`BR_KPI` / `brSum`); en cada trimestre solo un
+  lado tiene valor (sin doble conteo en la frontera).
+- **Automatización:** `.github/workflows/brasil_auto_update.yml`, cron día 1;
+  `workflow_dispatch` con modes `auto` / `all` / `range`.
 - **Nota:** el nuevo `brasil_loader.py` **no** usa `schema_guard` (es más simple
   y autónomo). `brasil_banks.py` / `brasil_bancos_config.py` quedaron como legado
   del modelo viejo y ya no los importa el loader nuevo.
@@ -498,11 +502,11 @@ Objetivo: avisar cuando una fuente cambia su estructura, sin romper la serie.
 |------|------------------------------|----------|-----------|-------|
 | CL | ~2.28 M | ~53 meses | mensual | desglose por moneda |
 | CO | ~1.13 M | ~52 meses | mensual | Grupo Aval consolidado |
-| BR | ~1.31 M | 5 trimestres (`202503`–`202603`) | trimestral | nivel prudencial, `tipo='p'`, ~1.400 entidades/trim |
+| BR | ~1.31 M (solo 2025+; +~11.5 M tras backfill 2014–2024) | prudencial desde `201403` | trimestral | nivel prudencial, `tipo='p'`, ~1.300–1.400 entidades/trim |
 
-Brasil: ~1.441 instituciones únicas, 198 cuentas en `plan_cuentas`. Solo cubre
-2025+ (antes de 2025 la estructura de códigos IF.data es distinta y quedó fuera
-de alcance).
+Brasil: ~1.4k instituciones/trimestre; `plan_cuentas` con Cosif viejo (`78xxx`)
+y nuevo (`14xxxx`). Backfill histórico = misma fuente portal IF.data; KPIs
+continúan vía `BR_KPI` (suma del par viejo/nuevo sin doble conteo).
 
 ---
 
@@ -545,9 +549,11 @@ Ver la especificación original en `ESPECIFICACION_BRASIL_LOADER.md` (externo).
 - **Un mismo `codigo` numérico es OTRO banco en distinto país.** El código no es
   único global; la PK incluye `country`. El frontend tiene overrides por país
   (ej. `btgCodeForIso()`).
-- **Frontera Cosif de Brasil (mar-2025):** los códigos de cuenta cambiaron
-  (`78182`→`140220`, `78186`→`140246`, …). El front suma el par {viejo,nuevo}.
-  En el rebuild 2025+, los códigos viejos aparecen como filas en 0 (no duplican).
+- **Frontera Cosif de Brasil (mar-2025):** códigos `78xxx` (≤202412) vs
+  `14xxxx` (≥202503). El front suma el par {viejo,nuevo} en `BR_KPI`; en cada
+  trimestre solo un lado tiene valor (sin doble conteo). Cartera/Pasivo también
+  cambiaron de definición → posible salto real pequeño en la frontera.
+  Balance/PyG detallados del UI aún usan solo el árbol Cosif nuevo.
 - **BR usa códigos prudenciais `1000...` (10 dígitos)**, no los CNPJ individuales
   del modelo anterior. Todos los mapas del front (logos, BTG) están migrados a
   estos códigos. Si algún banco muestra logo genérico, falta su entrada en
