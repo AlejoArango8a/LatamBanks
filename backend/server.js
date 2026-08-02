@@ -192,6 +192,18 @@ app.get('/api/bootstrap', async (req, res) => {
            GROUP BY ins_cod`,
           [country, eqCuenta, lastPeriodo],
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+
+        // Filter here (same branch as the fetch). A trailing `else if (US)` after
+        // the BR block is unreachable once this US branch has already matched.
+        // Drop ghost/acquired CERTs with no equity in the latest quarter.
+        if (patrimonioRows.length) {
+          const allowedCodes = new Set(patrimonioRows.map(r => r.ins_cod));
+          instituciones.splice(
+            0,
+            instituciones.length,
+            ...instituciones.filter(i => allowedCodes.has(i.codigo)),
+          );
+        }
       } else if (country === 'AR') {
         const eqCuenta = String(process.env.AR_EQUITY_CUENTA || 'PATRIMONIO_NETO').trim();
         patrimonioRows = await query(
@@ -249,16 +261,6 @@ app.get('/api/bootstrap', async (req, res) => {
             .filter(r => !BR_EXCLUDE.has(r.ins_cod))
             .map(r => r.ins_cod),
         );
-        instituciones.splice(
-          0,
-          instituciones.length,
-          ...instituciones.filter(i => allowedCodes.has(i.codigo)),
-        );
-      } else if (country === 'US' && patrimonioRows.length) {
-        // El catálogo US acumula CERT históricos (fusiones / fantasma) sin EQTOT
-        // en el trimestre vigente — p.ej. SunTrust tras Truist. El sidebar solo
-        // lista bancos con equity en el último período cargado.
-        const allowedCodes = new Set(patrimonioRows.map(r => r.ins_cod));
         instituciones.splice(
           0,
           instituciones.length,
