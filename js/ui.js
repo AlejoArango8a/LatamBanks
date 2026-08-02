@@ -2,12 +2,14 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon39';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon39';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon39';
-import { setStatus, showErr } from './utils.js?v=bmon39';
-import { sumRows } from './api.js?v=bmon39';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon39';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon44';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon44';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon44';
+import { setStatus, showErr } from './utils.js?v=bmon44';
+import { sumRows } from './api.js?v=bmon44';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon44';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon44';
+export { fetchUSDRate };
 
 // ---- Run & period ----
 export function onPeriodChange() {
@@ -239,7 +241,8 @@ export function initTopbarTabsOverflow() {
 
 // ---- Tab routing ----
 export function showTab(tab) {
-  if (datasetIsoCountry() === 'BR' && BR_DISABLED_TABS.includes(tab)) return;
+  const isoTab = datasetIsoCountry();
+  if ((isoTab === 'BR' || isoTab === 'US') && tab === 'accountview') return;
   ['resumen','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
@@ -347,40 +350,93 @@ export function syncResumenMoraChartButton() {
 // Resumo de Brasil (IF.data). Se deshabilitan sus botones cuando el país activo
 // es Brasil para no mostrar valores incorrectos.
 const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
+const US_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const AR_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const MX_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 export function syncCountryChartButtons() {
-  const isBR = datasetIsoCountry() === 'BR';
-  BR_DISABLED_CHART_BTNS.forEach(id => {
+  const iso = datasetIsoCountry();
+  const isBR = iso === 'BR';
+  const isUY = iso === 'UY';
+  const isPE = iso === 'PE';
+  const isUS = iso === 'US';
+  const isAR = iso === 'AR';
+  const isMX = iso === 'MX';
+  const allIds = new Set([
+    ...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS, ...PE_DISABLED_CHART_BTNS,
+    ...US_DISABLED_CHART_BTNS, ...AR_DISABLED_CHART_BTNS, ...MX_DISABLED_CHART_BTNS,
+  ]);
+  allIds.forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.disabled = isBR;
-    btn.classList.toggle('rcbtn-disabled', isBR);
-    if (isBR) btn.title = 'Sin dato confiable para Brasil por ahora';
-    else btn.removeAttribute('title');
+    const disable = (isBR && BR_DISABLED_CHART_BTNS.includes(id))
+      || (isUY && UY_DISABLED_CHART_BTNS.includes(id))
+      || (isPE && PE_DISABLED_CHART_BTNS.includes(id))
+      || (isUS && US_DISABLED_CHART_BTNS.includes(id))
+      || (isAR && AR_DISABLED_CHART_BTNS.includes(id))
+      || (isMX && MX_DISABLED_CHART_BTNS.includes(id));
+    btn.disabled = disable;
+    btn.classList.toggle('rcbtn-disabled', disable);
+    if (disable) {
+      btn.title = isBR ? 'Sin dato confiable para Brasil por ahora'
+        : isUY ? 'Sin desglose para Uruguay por ahora'
+        : isUS ? 'FDIC top-N: sin desglose vista/plazo / NPL en este corte'
+        : isAR ? 'BCRA: depósitos totales (sin vista/plazo) · NPL no mapeado'
+        : isMX ? 'CNBV Pm2: captación total (sin vista/plazo) · NPL no mapeado'
+        : 'Sin dato para Perú por ahora';
+    } else {
+      btn.removeAttribute('title');
+    }
   });
+  const depVista = document.getElementById('btnResChartDepVista');
+  if (depVista && !isBR) {
+    depVista.textContent = (isUY || isUS || isAR || isMX) ? '🏦 Deposits' : '👁 Demand Dep.';
+  }
 }
+
+// Pestañas Account View: deshabilitar en cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2)
+const US_DISABLED_TABS = ['accountview'];
+const AR_DISABLED_TABS = ['accountview'];
+const MX_DISABLED_TABS = ['accountview'];
 
 // Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
 // Balance e Income Statement ya habilitados (Relatorios 2-4 cargados).
 const BR_DISABLED_TABS = ['accountview'];
 export function syncCountryDisabledTabs() {
-  const isBR = datasetIsoCountry() === 'BR';
-  BR_DISABLED_TABS.forEach(t => {
+  const iso = datasetIsoCountry();
+  const disabled = iso === 'BR' ? BR_DISABLED_TABS
+    : iso === 'US' ? US_DISABLED_TABS
+    : iso === 'AR' ? AR_DISABLED_TABS
+    : iso === 'MX' ? MX_DISABLED_TABS
+    : [];
+  const allTabs = new Set([...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS, ...MX_DISABLED_TABS]);
+  allTabs.forEach(t => {
     const btn = document.querySelector(`.tab[data-tab="${t}"]`);
     if (!btn) return;
-    btn.disabled = isBR;
-    btn.classList.toggle('tab-disabled', isBR);
-    if (isBR) btn.title = 'No disponible para Brasil todavía';
-    else btn.removeAttribute('title');
+    const off = disabled.includes(t);
+    btn.disabled = off;
+    btn.classList.toggle('tab-disabled', off);
+    if (off) {
+      btn.title = iso === 'US' ? 'Resumen FDIC — Account View no aplica'
+        : iso === 'AR' ? 'BCRA open data — Account View no aplica'
+        : iso === 'MX' ? 'CNBV Pm2 — Account View no aplica'
+        : 'No disponible para Brasil todavía';
+    } else btn.removeAttribute('title');
   });
-  if (isBR) {
+  if (disabled.length) {
     const active = document.querySelector('.tab.active')?.getAttribute('data-tab');
-    if (BR_DISABLED_TABS.includes(active)) showTab('resumen');
+    if (disabled.includes(active)) showTab('resumen');
   }
 }
 
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
-  const flags = { chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil', peru: 'flagPeru', uruguay: 'flagUruguay' };
+  const flags = {
+    chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil',
+    peru: 'flagPeru', uruguay: 'flagUruguay', usa: 'flagUSA',
+    argentina: 'flagArgentina', mexico: 'flagMexico',
+  };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -389,48 +445,39 @@ export function syncCountryFlagsVisual(activeCountryKey) {
   });
 }
 
+const LIVE_COUNTRY_KEYS = ['chile', 'colombia', 'brasil', 'peru', 'uruguay', 'usa', 'argentina', 'mexico'];
+
 export function selectCountry(country) {
-  const prev = ST.country;
   syncCountryFlagsVisual(country);
   const overlay = document.getElementById('countryOverlay');
 
-  if (country === 'chile') {
-    if (overlay) overlay.style.display = 'none';
-    ST.country = 'chile';
-    syncCurrencyToggleUI();
-    syncResumenMoraChartButton();
-    if (prev !== 'chile') queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+  if (!LIVE_COUNTRY_KEYS.includes(country)) {
+    if (overlay) {
+      const nameEl = document.getElementById('countryOverlayName');
+      if (nameEl) {
+        nameEl.innerHTML =
+          `<span style="font-size:36px;font-weight:700;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:2px;">${country}</span>`;
+      }
+      overlay.style.display = 'flex';
+    }
     return;
   }
 
-  if (country === 'colombia') {
-    ST.country = 'colombia';
-    if (overlay) overlay.style.display = 'none';
+  if (overlay) overlay.style.display = 'none';
+  if (ST.country === country) {
     syncCurrencyToggleUI();
     syncResumenMoraChartButton();
-    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
     return;
   }
 
-  if (country === 'brasil') {
-    ST.country = 'brasil';
-    if (overlay) overlay.style.display = 'none';
-    syncCurrencyToggleUI();
-    syncResumenMoraChartButton();
-    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
-    return;
-  }
-
-  const names    = { peru:'Perú', uruguay:'Uruguay' };
-  const flagImgs = { peru:'flagPeru', uruguay:'flagUruguay' };
-  if (overlay) {
-    const nameEl = document.getElementById('countryOverlayName');
-    const imgBtn = document.getElementById(flagImgs[country]);
-    const img    = imgBtn ? imgBtn.querySelector('img') : null;
-    nameEl.innerHTML = (img ? `<img src="${img.src}" style="width:72px;height:72px;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 4px 16px rgba(0,0,0,0.5);">` : '') +
-      `<span style="font-size:36px;font-weight:700;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:2px;">${names[country] || country}</span>`;
-    overlay.style.display = 'flex';
-  }
+  ST.country = country;
+  // Fail-closed FX: no reutilizar TRM del país anterior
+  clearUsdRate();
+  syncCurrencyToggleUI();
+  syncResumenMoraChartButton();
+  syncCountryChartButtons();
+  syncCountryDisabledTabs();
+  queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
 }
 
 // ---- Theme ----
@@ -513,48 +560,10 @@ export function toggleBarLabels() {
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
 }
 
-// ---- Currency ----
-export async function fetchUSDRate() {
-  const sbl = document.getElementById('usdSidebarLabel');
-  try {
-    if (ST.country === 'colombia') {
-      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
-      const data = await resp.json();
-      if (data.result === 'success' && data.rates && data.rates.COP) {
-        ST.usdRate = Number(data.rates.COP);
-        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
-        ST.usdDate = d.toISOString().slice(0, 10);
-        const txt = `1 USD ≈ $${Math.round(ST.usdRate).toLocaleString('es-CO')} COP · ${ST.usdDate}`;
-        if (sbl) sbl.textContent = txt;
-      }
-      return;
-    }
-    if (ST.country === 'brasil') {
-      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
-      const data = await resp.json();
-      if (data.result === 'success' && data.rates && data.rates.BRL) {
-        ST.usdRate = Number(data.rates.BRL);
-        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
-        ST.usdDate = d.toISOString().slice(0, 10);
-        const txt = `1 USD ≈ R$${ST.usdRate.toFixed(2)} BRL · ${ST.usdDate}`;
-        if (sbl) sbl.textContent = txt;
-      }
-      return;
-    }
-    const resp = await fetch('https://mindicador.cl/api/dolar');
-    const data = await resp.json();
-    if (data.serie && data.serie.length > 0) {
-      ST.usdRate = data.serie[0].valor;
-      ST.usdDate = data.serie[0].fecha.slice(0, 10);
-      const txt  = `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')} · ${ST.usdDate}`;
-      if (sbl) sbl.textContent = txt;
-    }
-  } catch (e) { console.warn('No se pudo obtener tasa USD:', e); }
-}
-
-export function convertAmt(clpMillions) {
-  if (ST.currency === 'USD' && ST.usdRate) return clpMillions / ST.usdRate;
-  return clpMillions;
+// ---- Currency (lógica FX en fx.js: cascada + fail-closed) ----
+export function convertAmt(localRaw) {
+  if (ST.currency === 'USD' && hasUsdRate()) return localRaw / ST.usdRate;
+  return localRaw;
 }
 
 /** Visual state for the topbar segmented control (`#switchCLP` = Local Ccy, `#switchUSD` = USD). */
@@ -562,10 +571,17 @@ export function syncCurrencyToggleUI() {
   const localEl = document.getElementById('switchCLP');
   const usdEl = document.getElementById('switchUSD');
   if (!localEl || !usdEl) return;
-  const isUsd = ST.currency === 'USD';
+  const rateOk = hasUsdRate();
+  // Visual: sin TRM se muestra moneda local aunque la preferencia sea USD
+  // (fmtKPI / charts ya ignoran USD si !usdRate).
+  const isUsd = ST.currency === 'USD' && rateOk;
   localEl.textContent = reportingLocalCurrencyISO();
   localEl.classList.toggle('ccy-on', !isUsd);
   usdEl.classList.toggle('ccy-on', isUsd);
+  usdEl.title = rateOk
+    ? (ST.usdFxSource ? `USD · ${ST.usdFxSource}` : 'USD')
+    : 'Exchange rate unavailable — click to retry';
+  usdEl.style.opacity = rateOk || ST.currency !== 'USD' ? '1' : '0.55';
 }
 
 /**
@@ -586,7 +602,8 @@ export function refreshMoneyDenominatedUI() {
   } else if (ST._series?.r1 && datasetIsoCountry() === 'CO' && typeof window.renderResTable === 'function') {
     window.renderResTable(null);
   }
-  if (ST._kpiRaw && ST.country !== 'colombia' && typeof window.renderCalidad === 'function') {
+  // Calidad CMF (c1) solo aplica a Chile — no contaminar BR/UY/PE con cuentas CL.
+  if (ST._kpiRaw && datasetIsoCountry() === 'CL' && typeof window.renderCalidad === 'function') {
     const m = ST._kpiRaw;
     const carNorm = sumRows(ST._c1 || [], '854000000', ST._lastP) + sumRows(ST._c1 || [], '851000000', ST._lastP);
     const carSub  = sumRows(ST._c1 || [], '852000000', ST._lastP);
@@ -604,12 +621,21 @@ export function refreshMoneyDenominatedUI() {
   syncFinStatementPanelLabels();
 }
 
-export function toggleCurrency() {
-  if (ST.currency === 'CLP') {
-    if (!ST.usdRate) { alert('No se pudo obtener la tasa de cambio USD. Intenta nuevamente.'); return; }
+export async function toggleCurrency() {
+  const showingUsd = ST.currency === 'USD' && hasUsdRate();
+  if (!showingUsd) {
+    // Activar USD (o reintentar FX si la preferencia ya era USD sin tasa)
+    if (!hasUsdRate()) {
+      const ok = await fetchUSDRate().catch(() => false);
+      syncCurrencyToggleUI();
+      if (!ok && !hasUsdRate()) {
+        alert('No se pudo obtener la tasa de cambio USD (fuentes primaria y alterna). Se mantiene moneda local.');
+        return;
+      }
+    }
     ST.currency = 'USD';
   } else {
-    ST.currency = 'CLP';
+    ST.currency = 'CLP'; // sentinel = moneda local del país activo
   }
   syncCurrencyToggleUI();
   refreshMoneyDenominatedUI();

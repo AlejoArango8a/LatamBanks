@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon39';
+import { ST, datasetIsoCountry } from './state.js?v=bmon44';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -163,6 +163,38 @@ export const LOGO_SLUGS = {
   'BR-1000080154': 'banrisul',
   'BR-1000080484': 'votorantim',
   'BR-1000081593': 'nordeste',
+  // Uruguay (UY) — código institución BCU / SSF
+  'UY-1':   'brou',
+  'UY-91':  'bhu',
+  'UY-110': 'bandes',
+  'UY-113': 'itau',
+  'UY-128': 'scotiabank',
+  'UY-137': 'santander',
+  'UY-153': 'bbva',
+  'UY-157': 'hsbc',
+  'UY-162': 'heritage',
+  'UY-205': 'citibank',
+  'UY-246': 'bna',
+  // Perú (SBS B-2201) — slugs con PNG en assets/logos/ (resto → generico)
+  'PE-1':   'bbva',
+  'PE-3':   'bcp',
+  'PE-5':   'banbif',
+  'PE-6':   'scotiabank',
+  'PE-7':   'citibank',
+  'PE-8':   'interbank',
+  'PE-9':   'mibanco',
+  'PE-10':  'gnbsudameris',
+  'PE-11':  'falabella',
+  'PE-12':  'santander',
+  'PE-13':  'ripley',
+  'PE-16':  'bankofchina',
+  'PE-17':  'bci',
+  'PE-18':  'compartamos',
+  // US FDIC CERT → logos existentes
+  'US-628':   'jpmorgan',
+  'US-7213':  'citibank',
+  'US-5416':  'hsbc',
+
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */

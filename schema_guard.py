@@ -72,15 +72,44 @@ CRITICAL_ACCOUNTS: dict[str, list[str]] = {
     # Para Brasil el detector correcto es el UMBRAL RELATIVO de abajo, que dispara
     # cuando desaparece la mayoría de las cuentas de un período al siguiente.
     "BR": [],
+    "UY": [
+        "1",            # Activos
+        "2",            # Pasivos
+        "3",            # Patrimonio (sidebar)
+        "1.4.1",        # Créditos interm. sector financiero
+        "1.4.2",        # Créditos interm. privado
+        "1.4.3",        # Créditos interm. público
+        "2.1.3",        # Depósitos sector no financiero privado
+        "R_EJERCICIO",  # Resultado del ejercicio
+    ],
+    "PE": [
+        "TOTAL_ACTIVO",
+        "CREDITOS_NETOS",
+        "OBLIGACIONES_PUBLICO",
+        "TOTAL_PASIVO",
+        "PATRIMONIO",
+        "RESULTADO_NETO",
+    ],
+    "US": [
+        "ASSET",
+        "EQTOT",
+        "DEP",
+        "LNLS",
+        "NETINC",
+    ],
 }
 
 # Cómo normalizar un número de cuenta antes de comparar (por país).
 # CO usa códigos CUIF de 6 dígitos; CL usa 9 dígitos exactos.
 # BR usa el código `Conta` del reporte IF.data tal cual (numérico, longitud variable).
+# UY usa códigos jerárquicos BCU ("1.4.2") o sentinels R_*/S_*.
 _NORMALIZERS = {
     "CO": lambda c: re.sub(r"\D", "", str(c or ""))[:6],
     "CL": lambda c: str(c or "").strip(),
     "BR": lambda c: str(c or "").strip(),
+    "UY": lambda c: str(c or "").strip(),
+    "PE": lambda c: str(c or "").strip(),
+    "US": lambda c: str(c or "").strip(),
 }
 
 # Umbral secundario: si aparecen/desaparecen más de esta cantidad de cuentas,

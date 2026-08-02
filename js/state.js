@@ -1,7 +1,7 @@
 // ============================================================
 // STATE — single source of truth for mutable app state
 // ============================================================
-import { paisIso, paisCurrency } from './paises.js?v=bmon39';
+import { paisIso, paisCurrency } from './paises.js?v=bmon44';
 
 export const ST = {
   /** Active dataset jurisdiction (bootstrap sets Chile; clears cache when switching live backends). */
@@ -25,6 +25,8 @@ export const ST = {
   currency: 'USD',
   usdRate: null,
   usdDate: null,
+  /** Fuente FX activa (open.er-api.com | currency-api | mindicador.cl) */
+  usdFxSource: null,
   fontSize: 14,
 
   // Account View state
