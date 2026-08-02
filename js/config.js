@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon47';
+import { ST, datasetIsoCountry } from './state.js?v=bmon48';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -43,6 +43,7 @@ export const isBtgCode = (code) => {
   if (iso === 'CL') return n === 59;
   if (iso === 'CO') return n === 66;
   if (iso === 'BR') return n === 1000080336;
+  if (iso === 'US') return n === 35154;
   return false;
 };
 
