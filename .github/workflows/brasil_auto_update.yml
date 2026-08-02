@@ -2,11 +2,30 @@ name: Brasil - Auto Update
 on:
   schedule:
     - cron: "0 12 1 * *"   # día 1 de cada mes, 12:00 UTC
-  workflow_dispatch: {}     # permite correrlo manualmente desde GitHub
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Modo de carga"
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto          # solo trimestres faltantes (incluye backfill histórico)
+          - all           # recargar todo el catálogo prudencial
+          - range         # usar from/to
+      from:
+        description: "Desde AAAAMM (solo mode=range; mínimo prudencial 201403)"
+        required: false
+        default: "201403"
+      to:
+        description: "Hasta AAAAMM (solo mode=range)"
+        required: false
+        default: "202412"
 
 jobs:
   update-brasil:
     runs-on: ubuntu-latest
+    timeout-minutes: 360   # backfill histórico (~44 trimestres) puede tardar horas
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -14,7 +33,22 @@ jobs:
           python-version: "3.11"
       - name: Instalar dependencias
         run: pip install psycopg2-binary python-dotenv
-      - name: Correr loader en modo automático
+      - name: Correr loader
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
-        run: python brasil_loader.py
+        run: |
+          set -euo pipefail
+          MODE="${{ github.event.inputs.mode || 'auto' }}"
+          case "$MODE" in
+            all)
+              python brasil_loader.py --all
+              ;;
+            range)
+              python brasil_loader.py --all \
+                --from "${{ github.event.inputs.from || '201403' }}" \
+                --to "${{ github.event.inputs.to || '202412' }}"
+              ;;
+            *)
+              python brasil_loader.py
+              ;;
+          esac

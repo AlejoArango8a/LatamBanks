@@ -4,14 +4,26 @@ brasil_loader.py — ETL Banco Central do Brasil (IF.data) -> CockroachDB
 Nivel: Conglomerados Prudenciais e Instituições Independentes.
 LatamBanks — country='BR'
 
+Fuente (igual pre y post 2025):
+  - Catálogo REST: relatorios (2000–2024) + relatorios2025a2030
+  - Universo prudencial: cadastro{dt}_1009.json (desde 202309) o
+    cadastro{dt}_1004.json (201403–202306). Mismos códigos 1000… de grupo.
+  - Valores: dados{dt}_1.json
+  - Paths: el catálogo 2025+ ya trae bucket `ifdata_2025_2030//…`;
+    el histórico requiere prefijo `ifdata/`.
+
+Cobertura prudencial continua: desde 201403 (mínimo por defecto).
+KPIs: Cosif viejo ≤202412 (78xxx) + nuevo ≥202503 (14xxxx); el frontend
+suma el par (brSum) y en cada trimestre solo uno tiene valor.
+
 Modos:
-  (sin flags)          Modo automático: carga solo los trimestres del catálogo
-                        que todavía no estén en carga_log. Uso normal en cron.
+  (sin flags)          Modo automático: carga trimestres del catálogo que
+                        aún no estén en carga_log. Uso normal en cron.
   --quarter AAAAMM      Carga (o recarga) un trimestre puntual.
   --all                 Carga (o recarga) todos los trimestres del catálogo.
-  --wipe                Borra TODO Brasil antes de cargar. Usar SOLO una vez,
-                        en la reconstrucción inicial, combinado con --quarter
-                        o --all.
+  --from / --to         Filtra el rango AAAAMM (inclusive).
+  --dry-run             Lista qué se cargaría; no toca la base.
+  --wipe                Borra TODO Brasil antes de cargar. Usar SOLO una vez.
 """
 import argparse
 import json
@@ -24,17 +36,20 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
-import psycopg2
-import psycopg2.extras
 
 load_dotenv(Path(__file__).parent / ".env")
-COCKROACH_URL = os.environ["COCKROACH_URL"]
+
 COUNTRY = "BR"
 BATCH = 500
+# Primer trimestre con cadastro prudencial (1004) y códigos 1000… estables.
+MIN_PRUDENTIAL_DT = "201403"
 
 PORTAL = "https://www3.bcb.gov.br/ifdata/rest"
 OLINDA = "https://olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata"
 DICT_RELATORIOS = ["1", "2", "3", "4", "5"]  # Resumo, Ativo, Passivo, Resultado, Capital
+# Preferir 1009 (nombre actual del filtro prudencial); 1004 es el mismo
+# universo en 2014–2023-06. No usar 1005 (conglomerados financieros / otros IDs).
+CADASTRO_PRUDENTIAL_IDS = ("1009", "1004")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("brasil_loader")
@@ -50,8 +65,11 @@ def http_json(url, retries=3, backoff=5):
         try:
             req = Request(url, headers={"User-Agent": "LatamBanksBR/1.0"})
             with urlopen(req, timeout=180) as r:
-                return json.loads(r.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError) as e:
+                raw = r.read().decode("utf-8")
+            if not raw or raw.lstrip()[:1] not in "{[":
+                raise ValueError(f"respuesta no-JSON ({raw[:80]!r})")
+            return json.loads(raw)
+        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as e:
             last_err = e
             log.warning("intento %d/%d fallo para %s: %s", attempt, retries, url, e)
             if attempt < retries:
@@ -59,16 +77,70 @@ def http_json(url, retries=3, backoff=5):
     raise last_err
 
 
+def resolve_portal_path(f):
+    """
+    El catálogo histórico devuelve paths tipo `202412/cadastro…json` que el
+    endpoint /arquivos solo sirve con prefijo `ifdata/`. El catálogo 2025+
+    ya incluye `ifdata_2025_2030//…`.
+    """
+    f = str(f).lstrip("/")
+    if f.startswith("ifdata_") or f.startswith("ifdata/"):
+        return f
+    return "ifdata/" + f
+
+
 def portal_file(f):
-    return http_json(f"{PORTAL}/arquivos?nomeArquivo=" + quote(f, safe="/:._-"))
+    path = resolve_portal_path(f)
+    return http_json(f"{PORTAL}/arquivos?nomeArquivo=" + quote(path, safe="/:._-"))
 
 
-def list_quarters():
-    # NOTA: el nombre del endpoint asume catálogo 2025-2030. Si el Banco
-    # Central publica un catálogo nuevo después de 2030, este endpoint podría
-    # cambiar de nombre — revisar si algún día deja de devolver trimestres
-    # nuevos.
-    return http_json(f"{PORTAL}/relatorios2025a2030")  # [{dt, files:[{f}]}]
+def file_map(files):
+    return {f["f"].split("/")[-1]: f["f"] for f in files}
+
+
+def pick_cadastro_key(fmap, dt):
+    """Devuelve (filename, cad_id) del cadastro prudencial disponible."""
+    for cad_id in CADASTRO_PRUDENTIAL_IDS:
+        key = f"cadastro{dt}_{cad_id}.json"
+        if key in fmap:
+            return key, cad_id
+    return None, None
+
+
+def list_quarters(min_dt=MIN_PRUDENTIAL_DT):
+    """
+    Une catálogo histórico (hasta 202412) y 2025–2030. Solo trimestres con
+    cadastro prudencial (1009 o 1004) y dados{dt}_1.json.
+    """
+    hist = http_json(f"{PORTAL}/relatorios")
+    try:
+        new = http_json(f"{PORTAL}/relatorios2025a2030")
+    except Exception as e:
+        log.warning("catálogo 2025a2030 inaccesible (%s); solo histórico", e)
+        new = []
+
+    by_dt = {}
+    for q in list(hist) + list(new):
+        dt = str(q.get("dt") or "").strip()
+        if not dt or dt < min_dt:
+            continue
+        files = q.get("files") or []
+        fmap = file_map(files)
+        cad_key, cad_id = pick_cadastro_key(fmap, dt)
+        if not cad_key or f"dados{dt}_1.json" not in fmap:
+            continue
+        # Si el mismo dt aparece en ambos catálogos, conservar el de 2025+
+        # (paths con bucket correcto). En la práctica no se solapan.
+        by_dt[dt] = {"dt": dt, "files": files, "cad_id": cad_id}
+
+    quarters = [by_dt[k] for k in sorted(by_dt)]
+    log.info(
+        "Catálogo prudencial: %d trimestres (%s .. %s)",
+        len(quarters),
+        quarters[0]["dt"] if quarters else "—",
+        quarters[-1]["dt"] if quarters else "—",
+    )
+    return quarters
 
 
 # ---------------------------------------------------------------------------
@@ -113,20 +185,67 @@ def build_dictionary(anomes, cadastro):
                 for row in http_json(url).get("value", []):
                     c = str(row.get("Conta") or "").strip()
                     if c and c not in d:
-                        d[c] = str(row.get("NomeColuna") or "").strip()
+                        # NomeColuna a veces trae saltos de línea / fórmulas
+                        nome = str(row.get("NomeColuna") or "").strip()
+                        nome = " ".join(nome.split())
+                        d[c] = nome
             except Exception as e:
                 log.warning("diccionario rel=%s cod=%s: %s", rel, cod, e)
     log.info(
-        "Diccionario de cuentas: %d códigos mapeados (de %d instituciones de referencia: %s)",
-        len(d), len(codinsts), codinsts,
+        "Diccionario de cuentas (%s): %d códigos mapeados (refs: %s)",
+        anomes, len(d), codinsts,
     )
     return d
+
+
+def build_merged_dictionary(quarters):
+    """
+    Une diccionarios Cosif nuevo (≥202503) y viejo (≤202412) para que
+    plan_cuentas tenga nombres legibles en ambos lados de la frontera.
+    """
+    if not quarters:
+        return {}
+
+    def load_cad(q):
+        fmap = file_map(q["files"])
+        key, _ = pick_cadastro_key(fmap, q["dt"])
+        return portal_file(fmap[key])
+
+    merged = {}
+    # 1) Trimestre más reciente → Cosif nuevo
+    ultimo = quarters[-1]
+    merged.update(build_dictionary(ultimo["dt"], load_cad(ultimo)))
+
+    # 2) Último trimestre pre-2025 → Cosif viejo (78xxx)
+    pre = [q for q in quarters if q["dt"] < "202501"]
+    if pre:
+        old_q = pre[-1]
+        for k, v in build_dictionary(old_q["dt"], load_cad(old_q)).items():
+            merged.setdefault(k, v)
+
+    log.info("Diccionario fusionado: %d códigos (viejo+nuevo Cosif)", len(merged))
+    return merged
 
 
 # ---------------------------------------------------------------------------
 # DB helpers
 # ---------------------------------------------------------------------------
+def get_db_url():
+    url = os.environ.get("COCKROACH_URL")
+    if not url:
+        raise SystemExit(
+            "Falta COCKROACH_URL. Copia .env.example → .env o exporta la variable."
+        )
+    return url
+
+
+def connect():
+    import psycopg2
+    return psycopg2.connect(get_db_url())
+
+
 def upsert(conn, table, cols, updates, conflict, rows):
+    import psycopg2.extras
     if not rows:
         return
     cur = conn.cursor()
@@ -160,9 +279,20 @@ def get_loaded_periods(conn):
 # Carga de un trimestre
 # ---------------------------------------------------------------------------
 def load_quarter(conn, dt, files, diccion):
-    fmap = {f["f"].split("/")[-1]: f["f"] for f in files}
-    cadastro = portal_file(fmap[f"cadastro{dt}_1009.json"])
-    dados = portal_file(fmap[f"dados{dt}_1.json"])
+    fmap = file_map(files)
+    cad_key, cad_id = pick_cadastro_key(fmap, dt)
+    if not cad_key:
+        raise KeyError(
+            f"Sin cadastro prudencial (1009/1004) para {dt}. "
+            "No cargar consolidación financiera (1005)."
+        )
+    dados_key = f"dados{dt}_1.json"
+    if dados_key not in fmap:
+        raise KeyError(f"Falta {dados_key}")
+
+    log.info("dt=%s cadastro=%s path=%s", dt, cad_id, resolve_portal_path(fmap[cad_key]))
+    cadastro = portal_file(fmap[cad_key])
+    dados = portal_file(fmap[dados_key])
 
     valid = {str(e.get("c0")).strip() for e in cadastro if e.get("c0") is not None}
 
@@ -176,7 +306,7 @@ def load_quarter(conn, dt, files, diccion):
         ["razon_social"], ["country", "codigo"], inst,
     )
 
-    datos, contas = [], set()
+    datos_rows, contas = [], set()
     for ent in dados.get("values", []):
         e = str(ent.get("e")).strip()
         if e not in valid:  # solo universo prudencial + independientes
@@ -188,7 +318,7 @@ def load_quarter(conn, dt, files, diccion):
                 val = int(round(float(val)))  # monto_total suele ser bigint
             except (TypeError, ValueError):
                 val = 0
-            datos.append((COUNTRY, str(dt), "p", e, conta, 0, 0, 0, 0, val))
+            datos_rows.append((COUNTRY, str(dt), "p", e, conta, 0, 0, 0, 0, val))
             contas.add(conta)
 
     plan = [(COUNTRY, c, diccion.get(c, c)) for c in contas]
@@ -201,73 +331,121 @@ def load_quarter(conn, dt, files, diccion):
         ["country", "periodo", "tipo", "ins_cod", "cuenta",
          "monto_clp", "monto_uf", "monto_tc", "monto_ext", "monto_total"],
         ["monto_total"],
-        ["country", "periodo", "tipo", "ins_cod", "cuenta"], datos,
+        ["country", "periodo", "tipo", "ins_cod", "cuenta"], datos_rows,
     )
     upsert(
         conn, "carga_log", ["country", "periodo", "archivos_procesados", "estado"],
         ["archivos_procesados", "estado"], ["country", "periodo"],
         [(COUNTRY, str(dt), len(valid), "ok")],
     )
-    log.info("dt=%s cargado: %s entidades, %s filas de datos", dt, len(valid), len(datos))
+    log.info(
+        "dt=%s cargado: %s entidades, %s filas de datos (cadastro=%s)",
+        dt, len(valid), len(datos_rows), cad_id,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def filter_quarters(quarters, args, loaded=None):
+    target = list(quarters)
+    if args.quarter:
+        target = [q for q in target if q["dt"] == args.quarter]
+    if args.from_dt:
+        target = [q for q in target if q["dt"] >= args.from_dt]
+    if args.to_dt:
+        target = [q for q in target if q["dt"] <= args.to_dt]
+    if not args.quarter and not args.all and loaded is not None:
+        target = [q for q in target if q["dt"] not in loaded]
+    return target
+
+
 def main():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        description="ETL IF.data Brasil → CockroachDB (nivel prudencial, desde 201403)."
+    )
     ap.add_argument("--wipe", action="store_true",
-                     help="Borrar TODO Brasil antes de cargar. Usar solo una vez.")
+                    help="Borrar TODO Brasil antes de cargar. Usar solo una vez.")
     ap.add_argument("--quarter", help="Cargar/recargar UN trimestre puntual AAAAMM")
     ap.add_argument("--all", action="store_true",
-                     help="Cargar/recargar TODOS los trimestres del catálogo")
+                    help="Cargar/recargar TODOS los trimestres del catálogo (o del rango)")
+    ap.add_argument("--from", dest="from_dt", metavar="AAAAMM",
+                    help="Solo trimestres >= AAAAMM (default catálogo: 201403)")
+    ap.add_argument("--to", dest="to_dt", metavar="AAAAMM",
+                    help="Solo trimestres <= AAAAMM")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Solo listar trimestres objetivo; no conecta a la BD")
     args = ap.parse_args()
 
-    conn = psycopg2.connect(COCKROACH_URL)
+    min_dt = args.from_dt or MIN_PRUDENTIAL_DT
+    if args.from_dt and args.from_dt < MIN_PRUDENTIAL_DT:
+        log.warning(
+            "--from=%s es anterior al mínimo prudencial %s; "
+            "se usará %s (códigos 1000… / cadastro 1004+).",
+            args.from_dt, MIN_PRUDENTIAL_DT, MIN_PRUDENTIAL_DT,
+        )
+        min_dt = MIN_PRUDENTIAL_DT
+
+    quarters = list_quarters(min_dt=min_dt)
+    if not quarters:
+        log.error("Catálogo vacío o inaccesible.")
+        return 1
+
+    if args.dry_run:
+        loaded = set()
+        # En dry-run no hay BD; con --all/--quarter mostramos el filtro puro.
+        if args.quarter or args.all or args.from_dt or args.to_dt:
+            target = filter_quarters(quarters, args, loaded=None if (args.quarter or args.all) else set())
+            if not args.quarter and not args.all:
+                # sin --all, dry-run asume que nada está cargado → muestra backlog
+                target = filter_quarters(quarters, args, loaded=set())
+        else:
+            target = quarters
+        print(f"Trimestres en catálogo prudencial: {len(quarters)}")
+        print(f"Objetivo dry-run: {len(target)}")
+        for q in target:
+            fmap = file_map(q["files"])
+            cad_key, cad_id = pick_cadastro_key(fmap, q["dt"])
+            print(
+                f"  {q['dt']}  cadastro={cad_id}  "
+                f"cad_path={resolve_portal_path(fmap[cad_key])}  "
+                f"dados_path={resolve_portal_path(fmap[f'dados{q['dt']}_1.json'])}"
+            )
+        return 0
+
+    conn = connect()
     try:
         if args.wipe:
             wipe_brazil(conn)
 
-        quarters = list_quarters()
-        if not quarters:
-            log.error("Catálogo vacío o inaccesible.")
-            return
-
-        if args.quarter:
-            target = [q for q in quarters if str(q["dt"]) == args.quarter]
-        elif args.all:
-            target = quarters
-        else:
-            # Modo automático (default): solo lo que falta. Este es el modo
-            # que corre en GitHub Actions una vez terminada la reconstrucción.
-            loaded = get_loaded_periods(conn)
-            target = [q for q in quarters if str(q["dt"]) not in loaded]
-            if not target:
-                log.info("Brasil al día (%d trimestres cargados). Nada nuevo.", len(loaded))
-                return
-            log.info(
-                "Modo automático: %d trimestre(s) nuevo(s): %s",
-                len(target), [q["dt"] for q in target],
-            )
+        loaded = get_loaded_periods(conn) if not (args.quarter or args.all) else None
+        target = filter_quarters(quarters, args, loaded=loaded)
 
         if not target:
-            log.error("Nada que cargar (revisa --quarter/--all o el catálogo).")
-            return
+            if loaded is not None:
+                log.info(
+                    "Brasil al día (%d trimestres cargados; catálogo %d). Nada nuevo.",
+                    len(loaded), len(quarters),
+                )
+                return 0
+            log.error("Nada que cargar (revisa --quarter/--all/--from/--to o el catálogo).")
+            return 1
 
-        # El diccionario de cuentas se construye UNA sola vez por corrida,
-        # usando el cadastro del trimestre más reciente del catálogo (no
-        # necesariamente el primero de `target`), para tener el set de
-        # cuentas más actualizado disponible.
-        ultimo = quarters[-1]
-        fmap_dic = {f["f"].split("/")[-1]: f["f"] for f in ultimo["files"]}
-        cadastro_dic = portal_file(fmap_dic[f"cadastro{ultimo['dt']}_1009.json"])
-        diccion = build_dictionary(ultimo["dt"], cadastro_dic)
+        log.info(
+            "Cargando %d trimestre(s): %s%s",
+            len(target),
+            [q["dt"] for q in target[:8]],
+            "…" if len(target) > 8 else "",
+        )
+
+        diccion = build_merged_dictionary(quarters)
 
         for q in target:
             load_quarter(conn, q["dt"], q["files"], diccion)
+        return 0
     finally:
         conn.close()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main() or 0)
