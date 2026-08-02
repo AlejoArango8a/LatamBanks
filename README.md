@@ -91,7 +91,7 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | Frontend | `dashboard.html` + ES modules (`js/`) | Vercel |
 | Backend | Express / Node.js (serverless `api/index.js`) | Vercel |
 | Base de datos | CockroachDB Serverless | AWS us-east-1 |
-| ETL | Python (`cmf_loader.py`, `colombia_loader.py`) | Local / GitHub Actions |
+| ETL | Python (`cmf_loader.py`, `colombia_loader.py`, `brasil_loader.py`, `uruguay_loader.py`, `peru_loader.py`, `usa_loader.py`, `argentina_loader.py`, `mexico_loader.py`) | Local / GitHub Actions |
 
 ---
 
@@ -100,8 +100,14 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | País | Estado |
 |------|--------|
 | Chile | Activo (CMF, desde 2022) |
-| Colombia | ETL CUIF disponible (`colombia_loader.py`); KPIs panel resumen aún en cuentas CMF |
-| Perú | En desarrollo |
-| Uruguay | En desarrollo |
+| Colombia | Activo (CUIF / Socrata) |
+| Brasil | Activo (BCB IF.data, prudencial; backfill hist. desde 201403) |
+| Uruguay | Activo (BCU Boletín SSF → `uruguay_loader.py`; desde ~2020) |
+| Perú | Activo (SBS B-2201 → `peru_loader.py`; desde ~2015) |
+| Estados Unidos | Activo (FDIC BankFind → `usa_loader.py`; **top 100 por equity**/trimestre) |
+| Argentina | Activo (BCRA datos abiertos → `argentina_loader.py`; mensual) |
+| México | Activo (CNBV Boletín BM → `mexico_loader.py`; mensual) |
+
+Carga inicial / backfills: ver `LOADERS_MANANA.md`.
 
 `ST.country` en el cliente separa por jurisdicción la clave de caché local de datos; al sumar backends adicionales, conviene vaciar `ST.data` en el cambio de país.
