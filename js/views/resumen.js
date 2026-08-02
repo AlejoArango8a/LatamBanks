@@ -310,7 +310,7 @@ function refreshKPIsBase() {
     <div class="kpi blue"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">United States · FDIC</div><div class="kpi-val">Top 100 by equity</div><div class="kpi-sub">Call Report fields vía BankFind API. Universo = 100 mayores EQTOT del trimestre (no los ~4.300 bancos FDIC). NPL detallado no incluido en este corte.</div></div>`;
+    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">United States · FDIC</div><div class="kpi-val">Top 300 by equity</div><div class="kpi-sub">Call Report fields vía BankFind API. Universo = 300 mayores EQTOT del trimestre (no los ~4.300 bancos FDIC). NPL detallado no incluido en este corte.</div></div>`;
     syncResChartCustomBtn();
     syncKpiResumenActive(ST._lastResChart || 'patrimonio');
     return;
@@ -951,7 +951,7 @@ export async function run() {
       if (hi) hi.textContent = rangeLabel;
       document.getElementById('dashContent').style.display = 'flex';
       setRunLoadingBar(false);
-      setStatus('ok', `US FDIC top-100 · ${periodos.length} quarters · ${ST.selected.size} bank(s)`);
+      setStatus('ok', `US FDIC top-300 · ${periodos.length} quarters · ${ST.selected.size} bank(s)`);
       return;
     }
 

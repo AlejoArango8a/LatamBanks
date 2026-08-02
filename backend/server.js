@@ -135,7 +135,7 @@ app.get('/api/bootstrap', async (req, res) => {
               : country === 'PE'
                 ? 'Sin períodos cargados para Perú (PE). Ejecuta peru_loader.py (SBS B-2201).'
                 : country === 'US'
-                  ? 'Sin períodos cargados para Estados Unidos (US). Ejecuta usa_loader.py (FDIC top-100).'
+                  ? 'Sin períodos cargados para Estados Unidos (US). Ejecuta usa_loader.py (FDIC top-300).'
                 : country === 'AR'
                   ? 'Sin períodos cargados para Argentina (AR). Ejecuta argentina_loader.py (BCRA datos abiertos).'
                 : country === 'MX'
@@ -231,22 +231,18 @@ app.get('/api/bootstrap', async (req, res) => {
           1000084710, // CIELO IP
         ]);
 
-        // Diseño (Sección 1 de la spec): la base guarda el universo prudencial
-        // completo (~1.400 entidades) y el dashboard filtra al TOP-50 por
-        // Patrimônio Líquido del último período, excluyendo IPs y entidades no
-        // relevantes para la comparativa bancaria comercial.
-        const BR_TOP_N = 50;
-        const topCodes = new Set(
+        // La base guarda el universo prudencial completo. El dashboard muestra
+        // todos los bancos con patrimonio, excluyendo solo IPs / entidades
+        // no relevantes para la comparativa bancaria comercial (sin tope TOP-N).
+        const allowedCodes = new Set(
           [...patrimonioRows]
             .filter(r => !BR_EXCLUDE.has(r.ins_cod))
-            .sort((a, b) => b.monto_total - a.monto_total)
-            .slice(0, BR_TOP_N)
             .map(r => r.ins_cod),
         );
         instituciones.splice(
           0,
           instituciones.length,
-          ...instituciones.filter(i => topCodes.has(i.codigo)),
+          ...instituciones.filter(i => allowedCodes.has(i.codigo)),
         );
       }
     } catch (e) {

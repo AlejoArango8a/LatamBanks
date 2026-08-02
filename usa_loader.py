@@ -38,7 +38,7 @@ COUNTRY = "US"
 BATCH = 500
 API = "https://banks.data.fdic.gov/api/financials"
 SCALE = 1000  # miles USD → USD
-DEFAULT_TOP = 100
+DEFAULT_TOP = 300
 MIN_PERIOD = "201503"  # trimestres razonables en API
 
 # Campos Call Report / BankFind usados como cuentas canónicas
@@ -346,7 +346,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--from", dest="from_dt", default=MIN_PERIOD)
     ap.add_argument("--to", dest="to_dt", default=None)
-    ap.add_argument("--top", type=int, default=DEFAULT_TOP, help="Bancos por EQTOT (default 100)")
+    ap.add_argument("--top", type=int, default=DEFAULT_TOP, help="Bancos por EQTOT (default 300)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(list(argv) if argv is not None else None)
 
