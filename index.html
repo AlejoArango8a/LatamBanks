@@ -304,7 +304,7 @@
     .hero-flags-fixed .flags-zone {
       pointer-events: auto;
       width: 100%;
-      max-width: min(100%, 520px);
+      max-width: min(100%, 640px);
       margin-inline: auto;
       display: flex;
       flex-direction: column;
@@ -421,7 +421,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(14px, 2vh, 22px);
+      gap: clamp(20px, 2.6vh, 32px);
     }
 
     .flags-label {
@@ -441,7 +441,7 @@
       width: 100%;
       max-width: 100%;
       margin-inline: auto;
-      gap: clamp(14px, 1.8vw, 28px) clamp(12px, 1.6vw, 24px);
+      gap: clamp(22px, 2.6vw, 40px) clamp(20px, 2.4vw, 36px);
       justify-items: center;
       align-items: start;
       justify-content: center;
@@ -555,13 +555,13 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(100, 160, 255, 0.35);
     }
 
-    /* Desktop: banderas un poco mayores, centradas en la columna derecha */
+    /* Desktop: más aire entre banderas, centradas en la columna derecha */
     @media (min-width: 900px) {
       .hero-flags-fixed .flags-zone {
-        max-width: min(100%, 500px);
+        max-width: min(100%, 620px);
       }
       .flags-row {
-        gap: clamp(16px, 1.8vw, 28px) clamp(14px, 1.6vw, 24px);
+        gap: clamp(26px, 2.8vw, 44px) clamp(24px, 2.6vw, 40px);
       }
       .flag-btn {
         width: 76px;
@@ -570,7 +570,10 @@
     }
     @media (min-width: 1100px) {
       .hero-flags-fixed .flags-zone {
-        max-width: min(100%, 540px);
+        max-width: min(100%, 680px);
+      }
+      .flags-row {
+        gap: clamp(30px, 3vw, 48px) clamp(28px, 2.8vw, 44px);
       }
       .flag-btn {
         width: 82px;
@@ -582,14 +585,14 @@
     }
     @media (min-width: 1400px) {
       .hero-stage {
-        grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.1fr);
-        column-gap: clamp(40px, 5vw, 80px);
+        grid-template-columns: minmax(280px, 0.78fr) minmax(420px, 1.22fr);
+        column-gap: clamp(36px, 4.5vw, 72px);
       }
       .hero-flags-fixed .flags-zone {
-        max-width: min(100%, 580px);
+        max-width: min(100%, 760px);
       }
       .flags-row {
-        gap: clamp(20px, 2vw, 32px) clamp(18px, 1.8vw, 28px);
+        gap: clamp(36px, 3.4vw, 56px) clamp(32px, 3.2vw, 52px);
       }
       .flag-btn {
         width: 88px;
