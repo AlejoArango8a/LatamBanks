@@ -1,7 +1,11 @@
 // ============================================================
 // Americas Monitor — cross-country bank comparison in USD
 // ============================================================
-import { API_BASE, CHART_COLORS } from './config.js?v=am1';
+// Keep API_BASE inline (do not import config.js) so this page never
+// inherits a stale module graph that pointed at localhost during local tests.
+const _h = window.location.hostname;
+const API_BASE = (_h === 'localhost' || _h === '127.0.0.1') ? 'http://localhost:3000' : '';
+const CHART_COLORS = ['#38bdf8', '#f59e0b', '#f87171', '#a78bfa', '#fb923c', '#34d399'];
 
 const METRIC_LABELS = {
   equity: 'Equity',
