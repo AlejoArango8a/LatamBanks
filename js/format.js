@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon44';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon44';
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon44';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon46';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon46';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon46';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -384,11 +384,43 @@ export function bankName(code) {
     return titleCaseLatam(stripSociedadAnonima(raw).replace(/^BANCO\s+/i, '').trim() || raw);
   }
 
+  // ---- Panamá (SBP) ----
+  // Never fall through to Chile BANK_NAMES: PA codes collide (e.g. 1, 12, 59).
+  if (ST.country === 'panama') {
+    const PA_DISPLAY = new Map([
+      [1,   'Banco Nacional'],
+      [2,   'Caja de Ahorros'],
+      [3,   'Banco General'],
+      [7,   'Davivienda'],
+      [27,  'Bladex'],
+      [37,  'Citibank'],
+      [45,  'Scotiabank'],
+      [117, 'Bank of China'],
+      [148, 'Global Bank'],
+      [155, 'BAC'],
+      [182, 'Banistmo'],
+      [201, 'Banesco'],
+      [243, 'Bancolombia'],
+      [247, 'Banco de Bogotá'],
+      [259, 'Multibank'],
+      [260, 'ICBC'],
+    ]);
+    const numCode = Number(code);
+    if (PA_DISPLAY.has(numCode)) return PA_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    return titleCaseLatam(
+      stripSociedadAnonima(raw)
+        .replace(/\s*\(PANAMÁ\)\s*/gi, ' ')
+        .replace(/\s*\(PANAMA\)\s*/gi, ' ')
+        .replace(/^BANCO\s+/i, '')
+        .replace(/\s+/g, ' ')
+        .trim() || raw,
+    );
+  }
+
   // ---- Chile ----
-  // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
-  // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
-  // quitar "BANCO"/"CHILE" como se hacia antes.
-  if (BANK_NAMES[code]) return BANK_NAMES[code];
+  // BANK_NAMES is Chile-only. Do not use these codes for other countries.
+  if (ST.country === 'chile' && BANK_NAMES[code]) return BANK_NAMES[code];
   return titleCaseLatam(fromApi || `Bank ${code}`);
 }
 

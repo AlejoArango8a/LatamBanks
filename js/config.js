@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon44';
+import { ST, datasetIsoCountry } from './state.js?v=bmon46';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -36,8 +36,15 @@ export const BTG_BLUE_LIGHT = '#062650';
 export const BTG_BLUE_DARK  = '#2563eb';
 export const btgBlue = () => (_isLightTheme() ? BTG_BLUE_LIGHT : BTG_BLUE_DARK);
 export const btgRgba = (a = 0.08) => (_isLightTheme() ? `rgba(6,38,80,${a})` : `rgba(37,99,235,${a})`);
-const BTG_CODES = new Set([59, 66, 1000080336]);
-export const isBtgCode = (code) => BTG_CODES.has(Number(code));
+/** BTG franchise codes are country-specific (CL 59 ≠ PA 59). */
+export const isBtgCode = (code) => {
+  const n = Number(code);
+  const iso = datasetIsoCountry();
+  if (iso === 'CL') return n === 59;
+  if (iso === 'CO') return n === 66;
+  if (iso === 'BR') return n === 1000080336;
+  return false;
+};
 
 // Colores de marca compartidos entre países, indexados por fragmento de nombre en minúsculas.
 // Permite que Santander Chile y Santander Brasil usen el mismo rojo, etc.
@@ -95,7 +102,8 @@ export const bankColor = (code, i, name = '') => {
   // Vista de un solo banco: se respeta el color de marca de cada institución.
   const byLogo = logoBrandColor(datasetIsoCountry(), code);
   if (byLogo) return byLogo;
-  if (BANK_COLORS[code]) return BANK_COLORS[code];
+  // BANK_COLORS is Chile-centric by supervisory code — do not reuse on other ISOs.
+  if (datasetIsoCountry() === 'CL' && BANK_COLORS[code]) return BANK_COLORS[code];
   const byBrand = brandColorByName(name);
   if (byBrand) return byBrand;
   return CHART_COLORS[i % CHART_COLORS.length];

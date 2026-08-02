@@ -1,12 +1,15 @@
 // ============================================================
-// Bank Detail — executive brief for the selected institution
+// Bank Profile — executive brief for the selected institution
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon45';
-import { bankName, fmtKPI } from '../format.js?v=bmon45';
-import { pais } from '../paises.js?v=bmon45';
-import { resolveBankProfile } from '../bankProfiles.js?v=bmon45';
-import { getCBRatings } from './ranking.js?v=bmon45';
-import { bankLogoUrl } from '../config.js?v=bmon45';
+// IMPORTANT: import shared modules with the same ?v= as the rest of the app.
+// A different query string creates a second ST instance and the profile tab
+// always looks "unselected".
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon46';
+import { bankName, fmtKPI } from '../format.js?v=bmon46';
+import { pais } from '../paises.js?v=bmon46';
+import { resolveBankProfile } from '../bankProfiles.js?v=bmon46';
+import { getCBRatings } from './ranking.js?v=bmon46';
+import { bankLogoUrl } from '../config.js?v=bmon46';
 
 function esc(s) {
   return String(s ?? '')
@@ -83,7 +86,7 @@ export function renderBankDetail() {
   const code = selectedBankCode();
   if (code == null) {
     root.innerHTML = `<div class="bd-empty">
-      <h2>Bank Detail</h2>
+      <h2>Bank Profile</h2>
       <p>Select a bank in the sidebar to open its executive brief.</p>
     </div>`;
     return;
@@ -110,7 +113,7 @@ export function renderBankDetail() {
     <article class="bd-brief">
       <header class="bd-hero">
         <div class="bd-hero-text">
-          <div class="bd-eyebrow">${esc(meta?.name || countryKey)} · Bank Detail</div>
+          <div class="bd-eyebrow">${esc(meta?.name || countryKey)} · Bank Profile</div>
           <h1 class="bd-title">${esc(title)}</h1>
           <p class="bd-legal">${esc(legal)} <span class="bd-code">· ${esc(code)}</span></p>
           <div class="bd-meta-line">
