@@ -23,7 +23,7 @@
 /** @type {Record<string, Record<number, BankProfile>>} */
 export const BANK_PROFILES = {
   chile: {
-    59: {
+    1: {
       shortName: 'Banco de Chile',
       legalName: 'Banco de Chile',
       hq: 'Santiago, Chile',
@@ -37,6 +37,21 @@ export const BANK_PROFILES = {
       irUrl: 'https://www.bancochile.cl',
       news: [
         { title: 'Banco de Chile — news search', url: 'https://news.google.com/search?q=Banco%20de%20Chile', source: 'Google News' },
+      ],
+    },
+    59: {
+      shortName: 'BTG Pactual Chile',
+      legalName: 'Banco BTG Pactual Chile',
+      hq: 'Santiago, Chile',
+      founded: '2012 (banking license / BTG franchise in Chile)',
+      ownership: 'Subsidiary of BTG Pactual',
+      controlling: 'BTG Pactual',
+      shareholders: ['BTG Pactual group'],
+      history: 'Chilean commercial bank of the BTG Pactual group. Focuses on corporate, investment-banking adjacency and wealth / private banking rather than mass-market retail.',
+      context: 'Niche franchise versus large Chilean universal banks (Santander, Banco de Chile, BCI, Itaú). Peer set is specialty / corporate banks, not the systemically large retail players.',
+      website: 'https://www.btgpactual.cl',
+      news: [
+        { title: 'BTG Pactual Chile — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Chile%20banco', source: 'Google News' },
       ],
     },
     37: {
@@ -151,9 +166,25 @@ export const BANK_PROFILES = {
       website: 'https://www.bbva.mx',
       news: [{ title: 'BBVA México — news', url: 'https://news.google.com/search?q=BBVA%20M%C3%A9xico%20banco', source: 'Google News' }],
     },
+    // Nu México: operated as SOFIPO historically; CNBV authorized banca múltiple ~Jul 2026.
+    // It will appear in LatamBanks only after the CNBV Boletín BM lists it as a bank.
   },
   usa: {
-    // Soft-filled via name match for JPM / BAC etc.
+    35154: {
+      shortName: 'BTG Pactual Bank',
+      legalName: 'BTG Pactual Bank, N.A.',
+      hq: 'United States',
+      founded: 'FDIC CERT 35154 (ex M.Y. Safra Bank, FSB; renamed ~Dec 2025)',
+      ownership: 'Subsidiary of BTG Pactual',
+      controlling: 'BTG Pactual',
+      shareholders: ['BTG Pactual group'],
+      history: 'U.S. national bank (FDIC CERT 35154). Formerly M.Y. Safra Bank, FSB; rebranded to BTG Pactual Bank, N.A. around December 2025. Distinct from Safra National Bank of New York (CERT 26876).',
+      context: 'Small U.S. banking subsidiary of BTG Pactual; equity is below the default FDIC top-300 cut, so LatamBanks pins CERT 35154 each quarter.',
+      website: 'https://www.btgpactual.com',
+      news: [
+        { title: 'BTG Pactual Bank — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Bank%20NA%20OR%20%22M.Y.%20Safra%22', source: 'Google News' },
+      ],
+    },
   },
 };
 
@@ -192,6 +223,29 @@ const NAME_ALIASES = [
     website: 'https://www.bankofamerica.com',
     irUrl: 'https://investor.bankofamerica.com',
     news: [{ title: 'Bank of America — news', url: 'https://news.google.com/search?q=Bank%20of%20America', source: 'Google News' }],
+  }},
+  { country: 'usa', re: /btg\s*pactual|m\.?\s*y\.?\s*safra/i, profile: {
+    shortName: 'BTG Pactual Bank',
+    legalName: 'BTG Pactual Bank, N.A.',
+    hq: 'United States',
+    founded: 'FDIC CERT 35154 (ex M.Y. Safra Bank, FSB)',
+    ownership: 'Subsidiary of BTG Pactual',
+    controlling: 'BTG Pactual',
+    history: 'U.S. national bank of the BTG Pactual group (formerly M.Y. Safra Bank, FSB).',
+    context: 'Pinned in the U.S. universe when equity is below the FDIC top-300 floor.',
+    website: 'https://www.btgpactual.com',
+    news: [{ title: 'BTG Pactual Bank — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Bank', source: 'Google News' }],
+  }},
+  { country: 'chile', re: /btg\s*pactual/i, profile: {
+    shortName: 'BTG Pactual Chile',
+    legalName: 'Banco BTG Pactual Chile',
+    hq: 'Santiago, Chile',
+    ownership: 'Subsidiary of BTG Pactual',
+    controlling: 'BTG Pactual',
+    history: 'Chilean banking unit of BTG Pactual, oriented to corporate and wealth clients.',
+    context: 'Specialty franchise versus Chile’s large universal banks.',
+    website: 'https://www.btgpactual.cl',
+    news: [{ title: 'BTG Pactual Chile — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Chile', source: 'Google News' }],
   }},
 ];
 

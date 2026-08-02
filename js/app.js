@@ -15,7 +15,7 @@ import {
 } from './views/balance.js?v=bmon44';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon44';
 import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon44';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon44';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon45';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon44';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon44';
 

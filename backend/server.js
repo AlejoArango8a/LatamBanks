@@ -254,6 +254,16 @@ app.get('/api/bootstrap', async (req, res) => {
           instituciones.length,
           ...instituciones.filter(i => allowedCodes.has(i.codigo)),
         );
+      } else if (country === 'US' && patrimonioRows.length) {
+        // El catálogo US acumula CERT históricos (fusiones / fantasma) sin EQTOT
+        // en el trimestre vigente — p.ej. SunTrust tras Truist. El sidebar solo
+        // lista bancos con equity en el último período cargado.
+        const allowedCodes = new Set(patrimonioRows.map(r => r.ins_cod));
+        instituciones.splice(
+          0,
+          instituciones.length,
+          ...instituciones.filter(i => allowedCodes.has(i.codigo)),
+        );
       }
     } catch (e) {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
