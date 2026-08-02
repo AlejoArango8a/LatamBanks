@@ -38,6 +38,16 @@ export function fillPeriodSelectors() {
 }
 
 // ---- Bank list ----
+export function filterBankList() {
+  const q = (document.getElementById('bankSearch')?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#bankList .bank-item').forEach(el => {
+    const name = (el.querySelector('.bank-name')?.textContent || '').toLowerCase();
+    const code = String(el.dataset.bankCode || '');
+    const hit = !q || name.includes(q) || code.includes(q);
+    el.classList.toggle('bank-filtered-out', !hit);
+  });
+}
+
 export function fillBankList() {
   const list  = document.getElementById('bankList');
   list.innerHTML = '';
@@ -80,8 +90,15 @@ export function fillBankList() {
     const prefer = iso === 'BR' ? 1000080336 : iso === 'CO' ? 66 : 59;
     const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
+    return;
   }
   syncCompareToggleUI();
+  filterBankList();
+  const search = document.getElementById('bankSearch');
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = '1';
+    search.addEventListener('input', filterBankList);
+  }
 }
 
 export function toggleBank(c, on) {
@@ -103,6 +120,9 @@ export function toggleBank(c, on) {
     }
     document.getElementById('bankLimitMsg').style.display = 'none';
     fillBankList();
+    if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
+      window.renderBankDetail?.();
+    }
     if (ST.selected.size > 0 && ST.periodos.length > 0) {
       clearTimeout(ST._autoRunTimer);
       ST._autoRunTimer = setTimeout(() => window.run(), 300);
@@ -132,6 +152,9 @@ export function toggleBank(c, on) {
     const cb = el.querySelector('input');
     if (cb) el.classList.toggle('on', cb.checked);
   });
+  if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
+    window.renderBankDetail?.();
+  }
   if (ST.selected.size > 0 && ST.periodos.length > 0) {
     clearTimeout(ST._autoRunTimer);
     ST._autoRunTimer = setTimeout(() => window.run(), 300);
@@ -243,7 +266,7 @@ export function initTopbarTabsOverflow() {
 export function showTab(tab) {
   const isoTab = datasetIsoCountry();
   if ((isoTab === 'BR' || isoTab === 'US') && tab === 'accountview') return;
-  ['resumen','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
+  ['resumen','bankdetail','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -253,7 +276,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Detail', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -281,6 +304,7 @@ export function showTab(tab) {
   }
   if (tab === 'config')       { window.populateConfig(); window.loadVisitStats(); }
   if (tab === 'chileanbanks') window.renderChileanBanks();
+  if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();
 }
@@ -473,6 +497,8 @@ export function selectCountry(country) {
   ST.country = country;
   // Fail-closed FX: no reutilizar TRM del país anterior
   clearUsdRate();
+  const bankSearch = document.getElementById('bankSearch');
+  if (bankSearch) bankSearch.value = '';
   syncCurrencyToggleUI();
   syncResumenMoraChartButton();
   syncCountryChartButtons();

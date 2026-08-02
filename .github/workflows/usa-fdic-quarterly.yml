@@ -1,4 +1,4 @@
-name: USA FDIC top-100 (quarterly)
+name: USA FDIC top-300 (quarterly)
 
 on:
   schedule:
@@ -23,9 +23,9 @@ on:
         required: false
         default: ''
       top:
-        description: 'Bancos por equity (default 100)'
+        description: 'Bancos por equity (default 300)'
         required: false
-        default: '100'
+        default: '300'
 
 jobs:
   load:
@@ -42,7 +42,7 @@ jobs:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
         run: |
           MODE="${{ github.event.inputs.mode || 'incremental' }}"
-          TOP="${{ github.event.inputs.top || '100' }}"
+          TOP="${{ github.event.inputs.top || '300' }}"
           if [ "$MODE" = "quarter" ]; then
             python usa_loader.py --quarter "${{ github.event.inputs.quarter }}" --top "$TOP"
           elif [ "$MODE" = "range" ]; then
