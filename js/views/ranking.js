@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon47';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon47';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon48';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon48';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,17 +22,17 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon47';
-import { CO_CUIF } from '../coCuentas.js?v=bmon47';
-import { BR_KPI } from '../brCuentas.js?v=bmon47';
-import { UY_KPI } from '../uyCuentas.js?v=bmon47';
-import { PE_KPI } from '../peCuentas.js?v=bmon47';
-import { US_KPI } from '../usCuentas.js?v=bmon47';
-import { AR_KPI } from '../arCuentas.js?v=bmon47';
-import { MX_KPI } from '../mxCuentas.js?v=bmon47';
-import { PA_KPI } from '../paCuentas.js?v=bmon47';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon47';
-import { apiDatos } from '../api.js?v=bmon47';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon48';
+import { CO_CUIF } from '../coCuentas.js?v=bmon48';
+import { BR_KPI } from '../brCuentas.js?v=bmon48';
+import { UY_KPI } from '../uyCuentas.js?v=bmon48';
+import { PE_KPI } from '../peCuentas.js?v=bmon48';
+import { US_KPI } from '../usCuentas.js?v=bmon48';
+import { AR_KPI } from '../arCuentas.js?v=bmon48';
+import { MX_KPI } from '../mxCuentas.js?v=bmon48';
+import { PA_KPI } from '../paCuentas.js?v=bmon48';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon48';
+import { apiDatos } from '../api.js?v=bmon48';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 
