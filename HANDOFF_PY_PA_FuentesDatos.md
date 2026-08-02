@@ -3,7 +3,7 @@
 **Fecha:** agosto 2026  
 **Estado:** investigación web + validación HTTP parcial.  
 - **PA:** descargas Excel individuales **validadas** (HTTP 200, parseo openpyxl OK).  
-- **PY:** fuente oficial identificada y descrita por BCP/INE/prensa; **portal bloqueado por Cloudflare** en este entorno (no se pudo validar URL directa de archivo).  
+- **PY:** **parcial** — muestra Excel histórica obtenida vía Wayback (formato anterior `1_BOLB`); **último boletín live no descargable** (Cloudflare + Liferay 403).  
 **Objetivo:** evaluar viabilidad de loaders tipo BCU/SBS/BCRA/CNBV para llevar PY/PA a `live`.
 
 ---
@@ -223,46 +223,63 @@ Según comunicación oficial del BCP (versión 2.0 del boletín):
 | Cobertura bancos (universo 2025–2026, MEF) | ~16 bancos: Atlas, Bancop, Basa, BNF, Citibank, Continental, Do Brasil, Familiar, GNB, Interfisa, Itaú, Nación Argentina, Sudameris, Solar, Ueno, Zeta (+ fusiones/renombres; Río aparece en informes 2025) |
 | Financieras | Presentes en el mismo boletín (ej. Tu Financiera en rankings ROE) — decidir si entran al sidebar |
 
-### 2.5 Patrones de URL directa
+### 2.5 Intento de descarga (ago-2026) — resultado: **parcial**
 
-**No descubiertos / no validables** desde este entorno: todo `bcp.gov.py` respondió **Cloudflare 403** (`Just a moment…`) incluso con `cloudscraper` y User-Agent de navegador. Wayback CDX no devolvió hits útiles para `*.xlsx` del dominio en la ventana consultada.
+| Intento | Resultado |
+|---------|-----------|
+| `curl` / `wget` / `cloudscraper` / `curl_cffi` (Chrome UA) | **HTTP 403** — Cloudflare Managed Challenge (`cf-mitigated: challenge`, título `Just a moment…` / `Un momento…`, Turnstile) |
+| Chrome/Playwright headed (Xvfb) | A veces obtiene `cf_clearance`, pero `/boletines-estadisticos-i62` responde **Liferay 403 “Acceso restringido”** (no el listado de archivos) |
+| Paths live `userfiles/files/1_BOLB_*.xlsx` | **404** (migrados; ya no sirven) |
+| Wayback Machine | **OK** — muestra formato anterior |
 
-**Estrategia de descubrimiento para el implementador (máquina con browser real):**
+**Blocker exacto (live latest):**  
+1) Cloudflare Bot Management / Turnstile (“Verifique que es un ser humano”).  
+2) Tras pasar CF desde IP de datacenter: ACL Liferay **403 Acceso restringido** en el hub de boletines. No se llegó a listar ni descargar el Excel “tablas” / formato nuevo.
+
+**Click path humano (browser residencial / no datacenter):**
 
 1. Abrir https://www.bcp.gov.py/boletines-estadisticos-i62  
-2. Descargar el boletín del mes + el **archivo de tablas**  
-3. Capturar URL final (Liferay suele ser `/documents/…` o similar)  
-4. Probar si la URL del binario admite `curl` con cookies CF o si requiere Playwright permanente  
-5. Documentar patrón en este handoff (actualizar sección)
+2. Completar checkbox Cloudflare *Verifique que es un ser humano*  
+3. En **“Boletines Estadístico-Financieros formato nuevo”**: Descargar el mes más reciente **y** el **archivo independiente de tablas** (preferido para ETL)  
+4. Alternativa: sección **formato anterior** → archivo bancos `1_BOLB_MMYYYY.xlsx`  
+5. Guardar URL final del binario (DevTools → Network; típico Liferay `/documents/…`)
 
-Mientras tanto, asumir loader tipo:
+**Archivo obtenido (muestra, no latest):**
 
-- Playwright / browser storage state para obtener cookie CF, **o**  
-- Descarga manual/asistida + drop en S3/GCS, **o**  
-- Runner self-hosted con IP “humana”
+| Campo | Valor |
+|-------|--------|
+| Origen | Wayback `…/userfiles/files/1_BOLB 032023(2).xlsx` (captura ~2024-01) |
+| Local | `/tmp/py-bcp/1_BOLB_032023(2).xlsx` (+ `022023`, `012023`) |
+| Título | Boletín Estadístico y Financiero — Empresas Bancarias — **2023-03-31** |
+| Hojas | 41: `Carátula*`, `Índice`, `1`…`38` |
+| FS por banco | **Sí** — hoja `2` *Balance General por Empresa Bancaria*; hoja `3` *Estado de Ganancias y Pérdidas por Empresa Bancaria* |
+| Layout | Fila bancos (nombres); subcols **MN / ME / TOTAL**; cuentas en col A; unidad **millones de Gs.** |
+| KPIs | `TOTAL ACTIVO`, `COLOCACIONES NETAS` / cartera, `DEPÓSITOS`, `PATRIMONIO NETO` (resumen hoja `1`); PyG en hoja `3` |
+| No usar | `/documents/d/institucional/estados-financieros` = EEFF del **BCP** (no multi-banco) |
+
+Patrón histórico (roto en live): `https://www.bcp.gov.py/userfiles/files/1_BOLB_{MM}{YYYY}….xlsx` (`2_BOLF` financieras, etc.).
 
 ### 2.6 Riesgos / blockers PY
 
 | Riesgo | Severidad | Mitigación |
 |--------|-----------|------------|
-| **Cloudflare** bloquea ETL headless | **Alta** | Playwright + storage state; o pipeline semi-manual |
-| URL de archivo no documentada públicamente | Alta | Una sesión browser para fijar patrón |
-| Boletín v2 puede ser Power Pivot / modelo embebido | Media | Preferir “archivo de tablas” tabular |
-| MN/ME vs total | Media | Guardar TOTAL (MN+ME en PYG) como `monto_total` |
-| Renombres (Ueno, Solar, fusiones) | Media | Tabla manual nombre→`ins_cod` |
-| Financieras vs bancos | Producto | MVP solo bancos |
-| datos.gov.py no sustituye | — | No usarlo como primario |
+| **Cloudflare Turnstile** + posible **ACL Liferay por IP** | **Alta** | Descarga humana / runner residencial; o artefacto drop S3 |
+| URL “tablas” v2 aún no capturada | Alta | Una sesión humana: anotar URL `/documents/…` |
+| Formato nuevo ≠ `1_BOLB` validado | Media | Re-inspeccionar hojas tras 1 descarga v2; parser MVP puede basarse en `1_BOLB` si v2 tablas es plano |
+| MN/ME vs total | Media | Usar columna **TOTAL** → ×1e6 → `monto_total` PYG |
+| Renombres (Ueno, Solar, fusiones) | Media | Catálogo nombre→`ins_cod` |
+| Financieras vs bancos | Producto | MVP solo `1_BOLB` / bancos |
+| datos.gov.py / ASOBAN | — | Solo links al hub BCP; no sustituyen |
 
-**Viabilidad PY: MEDIA** — el dato correcto **existe** y es análogo a SBS/BCU, pero el **acceso automatizado está bloqueado** hasta resolver Cloudflare y fijar URL del Excel de tablas.
+**Viabilidad PY: MEDIA** — estructura multi-banco **clara** en muestra `1_BOLB`; **acceso al mes corriente bloqueado** en este entorno.
 
-### 2.7 Automatización propuesta → `paraguay_loader.py` (tras desbloquear acceso)
+### 2.7 `paraguay_loader.py` — siguiente paso (no implementar full aún)
 
-1. Resolver descarga del Excel de tablas del mes `YYYYMM`.  
-2. Identificar hojas/tablas de balance y resultados **por entidad**.  
-3. Normalizar moneda a PYG enteros (`monto_total`).  
-4. Mapear labels → `plan_cuentas`; patrimonio para ranking.  
-5. Upsert + schema_guard + cron ~día 28–5 (lag ~25 días).  
-6. FX: cotización BCP (ya hay scrapers comunitarios de TC; el portal de cotizaciones también usa Cloudflare — `cloudscraper` a veces funciona ahí).
+1. **Gate:** obtener 1 Excel live (tablas v2 o `1_BOLB` reciente) desde browser humano; dropear en repo/`/tmp/py-bcp/`.  
+2. Si llega `1_BOLB`-like: parsear hoja `2` (b1) y `3` (r1); header bancos fila ~7; valor = col **TOTAL**; montos ×1_000_000.  
+3. Si llega solo “tablas” v2: mapear hojas equivalentes; no asumir mismos nombres.  
+4. Upsert + `schema_guard` + cron tras URL estable.  
+5. FX PYG/USD vía cotización BCP (también detrás de CF).
 
 ### 2.8 MVP scope PY
 
@@ -344,8 +361,8 @@ Mientras tanto, asumir loader tipo:
 | País | Código | Moneda | Fuente | ¿Listo para coder? |
 |------|--------|--------|--------|---------------------|
 | **Panamá** | `PA` | `USD` (PAB 1:1) | SBP Excel individual mensuales | **Sí** — URLs y layout validados |
-| **Paraguay** | `PY` | `PYG` | BCP Boletín Estadístico-Financiero (+ tablas) | **Parcial** — falta romper Cloudflare y fijar URL del Excel |
+| **Paraguay** | `PY` | `PYG` | BCP Boletín Estadístico-Financiero (+ tablas) | **Parcial** — muestra `1_BOLB` 2023-03 vía Wayback; live = CF + Liferay 403 |
 
-**Próximo paso concreto:** implementar `panama_loader.py` con backfill desde `202001` (Oficiales + Licencia General). En paralelo, obtener **un** Excel de tablas del boletín PY desde browser real y actualizar este handoff con el patrón de descarga.
+**Próximo paso concreto:** implementar `panama_loader.py` con backfill desde `202001` (Oficiales + Licencia General). En paralelo, un humano descarga el Excel **tablas** (o `1_BOLB` latest) del hub PY y confirma si el layout sigue `/tmp/py-bcp/1_BOLB_032023(2).xlsx`.
 
 Este documento es especificación de fuentes; no implementa loaders.
