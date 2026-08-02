@@ -230,7 +230,7 @@
       width: 100%;
     }
 
-    /* Escenario hero: rejilla desktop 1fr | banderas | 1fr ⇒ banderas centradas sin solape con texto */
+    /* Hero: copy a la izquierda, banderas a la derecha — sin solape */
     .hero-stage {
       position: relative;
       flex: 1 1 auto;
@@ -239,28 +239,22 @@
       box-sizing: border-box;
       isolation: isolate;
       --hero-title-main-fs: clamp(26px, 4.2vw, 40px);
-      /*
-        Espacio título ↔ copy ↔ botón: equidistante (un solo gap en flex).
-        Mínimo ≈ tamaño visual de una línea del titular “Latam Banks Monitor”.
-      */
       --hero-pitch-gap: max(calc(var(--hero-title-main-fs) * 1.28), 2.35rem);
       display: grid;
-      grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+      grid-template-columns: minmax(260px, 0.92fr) minmax(300px, 1.15fr);
       align-items: center;
       justify-items: stretch;
-      column-gap: clamp(16px, 2.8vw, 42px);
+      column-gap: clamp(28px, 4vw, 64px);
     }
 
-    /* Copy en carril izquierdo: min-width 0 permite wrap sin invadir columna central */
     .hero-left {
       grid-column: 1;
       justify-self: start;
       align-self: center;
       position: relative;
-      inset: auto;
       min-width: 0;
       width: 100%;
-      max-width: min(560px, 100%);
+      max-width: 520px;
       z-index: 3;
       display: flex;
       flex-direction: column;
@@ -271,7 +265,6 @@
       pointer-events: none;
     }
 
-    /* Viewports bajos: mantener proporción gaps */
     @media (min-width: 721px) and (max-height: 720px) {
       .hero-stage {
         --hero-pitch-gap: max(calc(var(--hero-title-main-fs) * 1.05), 1.85rem);
@@ -282,7 +275,6 @@
       pointer-events: auto;
     }
 
-    /* Título · copy · botón: un gap común ⇒ equidistante respecto al texto central */
     .hero-left-stack {
       display: flex;
       flex-direction: column;
@@ -290,51 +282,33 @@
       gap: var(--hero-pitch-gap);
     }
 
-    /* Banderas: carril central ⇒ centradas en el viewport entre dos columnas iguales */
+    /* Banderas: columna derecha, ancladas al lado derecho */
     .hero-flags-fixed {
       grid-column: 2;
-      justify-self: center;
+      justify-self: end;
       align-self: center;
       position: relative;
       left: auto;
       top: auto;
       transform: none;
       z-index: 2;
-      width: auto;
-      max-width: min(100%, calc(100vw - 48px));
+      width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
       pointer-events: none;
     }
     .hero-flags-fixed .flags-zone {
       pointer-events: auto;
       width: 100%;
+      max-width: min(100%, 560px);
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-    }
-
-    /* Pantalla amplia: anclar el bloque al centro real del hero (más aire vs. el copy) */
-    @media (min-width: 1180px) {
-      .hero-stage {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .hero-left {
-        grid-column: 1;
-        max-width: min(420px, 32vw);
-      }
-      .hero-flags-fixed {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        grid-column: 1;
-        /* Usa casi todo el carril libre a la derecha del copy */
-        width: min(980px, calc(100vw - min(420px, 32vw) - 96px));
-        max-width: min(980px, calc(100vw - min(420px, 32vw) - 96px));
-      }
     }
 
     .hero-copy-actions.hero-actions-row {
@@ -372,6 +346,11 @@
         transform: none;
         width: 100%;
         max-width: 100%;
+        align-items: center;
+        justify-self: center;
+      }
+      .hero-flags-fixed .flags-zone {
+        max-width: min(100%, 420px);
       }
       main.page-main.wrap {
         align-items: center;
@@ -441,7 +420,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(18px, 2.4vh, 28px);
+      gap: clamp(14px, 2vh, 22px);
     }
 
     .flags-label {
@@ -459,9 +438,9 @@
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       width: 100%;
-      max-width: min(100%, 720px);
+      max-width: 100%;
       margin-inline: auto;
-      gap: clamp(22px, 3.2vw, 40px) clamp(20px, 3.4vw, 44px);
+      gap: clamp(14px, 1.8vw, 28px) clamp(12px, 1.6vw, 24px);
       justify-items: center;
       align-items: start;
       justify-content: center;
@@ -471,11 +450,11 @@
       display: flex;
       justify-content: center;
       width: 100%;
-      padding-top: clamp(4px, 1vh, 10px);
+      padding-top: clamp(2px, 0.8vh, 8px);
     }
     .flags-americas .hero-flag-hit .flag-btn {
-      width: 88px;
-      height: 88px;
+      width: 84px;
+      height: 84px;
       border-color: rgba(160, 200, 255, 0.55);
       background: rgba(4, 18, 48, 0.55);
     }
@@ -483,9 +462,8 @@
       border-color: rgba(180, 215, 255, 0.85);
     }
     .flags-americas .flag-btn img {
-      object-fit: contain;
+      object-fit: cover;
       padding: 0;
-      transform: scale(1.02);
     }
     .flags-americas .flag-caption.live {
       letter-spacing: 0.08em;
@@ -578,21 +556,45 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(100, 160, 255, 0.35);
     }
 
-    /* Pantallas amplias (PC): banderas más grandes y con más aire entre ellas */
+    /* Desktop: banderas un poco mayores, siempre dentro de la columna derecha */
     @media (min-width: 900px) {
+      .hero-flags-fixed .flags-zone {
+        max-width: min(100%, 520px);
+      }
       .flags-row {
-        max-width: min(100%, 860px);
-        gap: clamp(28px, 3.6vw, 48px) clamp(28px, 3.8vw, 52px);
+        gap: clamp(16px, 1.8vw, 28px) clamp(14px, 1.6vw, 24px);
       }
       .flag-btn {
-        width: 80px;
-        height: 80px;
+        width: 76px;
+        height: 76px;
       }
     }
-    @media (min-width: 1024px) {
+    @media (min-width: 1100px) {
+      .hero-flags-fixed .flags-zone {
+        max-width: min(100%, 560px);
+      }
+      .flag-btn {
+        width: 82px;
+        height: 82px;
+      }
+      .flags-americas .hero-flag-hit .flag-btn {
+        width: 96px;
+        height: 96px;
+      }
+      .flag-caption {
+        font-size: 11px;
+      }
+    }
+    @media (min-width: 1400px) {
+      .hero-stage {
+        grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.1fr);
+        column-gap: clamp(40px, 5vw, 80px);
+      }
+      .hero-flags-fixed .flags-zone {
+        max-width: min(100%, 620px);
+      }
       .flags-row {
-        max-width: min(100%, 940px);
-        gap: clamp(34px, 4vw, 56px) clamp(36px, 4.2vw, 60px);
+        gap: clamp(20px, 2vw, 32px) clamp(18px, 1.8vw, 28px);
       }
       .flag-btn {
         width: 88px;
@@ -601,29 +603,6 @@
       .flags-americas .hero-flag-hit .flag-btn {
         width: 104px;
         height: 104px;
-      }
-      .flag-caption {
-        font-size: 11px;
-      }
-    }
-    @media (min-width: 1280px) {
-      .flags-row {
-        max-width: min(100%, 1040px);
-        gap: clamp(40px, 4.4vw, 64px) clamp(44px, 4.8vw, 72px);
-      }
-      .flag-btn {
-        width: 92px;
-        height: 92px;
-      }
-      .flags-americas .hero-flag-hit .flag-btn {
-        width: 112px;
-        height: 112px;
-      }
-    }
-    @media (min-width: 1600px) {
-      .flags-row {
-        max-width: min(100%, 1120px);
-        gap: clamp(48px, 5vw, 76px) clamp(52px, 5.2vw, 84px);
       }
     }
 
@@ -866,7 +845,7 @@
         <div class="flags-americas" role="list">
           <div class="flag-entry" role="listitem">
             <a class="hero-flag-hit" href="./americas.html" title="Open Americas cross-country monitor (USD)" aria-label="Americas: open cross-country USD monitor">
-              <span class="flag-btn flag-btn-americas"><img src="assets/americas-map.svg" alt="" /></span>
+              <span class="flag-btn flag-btn-americas"><img src="assets/americas-map.png" alt="" /></span>
               <span class="flag-caption live">Americas</span>
             </a>
           </div>
