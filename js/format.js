@@ -3,18 +3,22 @@
 // ============================================================
 import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon39';
 import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon39';
-import { ST } from './state.js?v=bmon39';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon42';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
   if (clpRaw == null || clpRaw === '' || !Number.isFinite(Number(clpRaw))) return '—';
-  const isUSD = ST.currency === 'USD' && Number(ST.usdRate) > 0;
-  const val = isUSD ? Number(clpRaw) / ST.usdRate : Number(clpRaw);
-  const sym = isUSD ? 'USD ' : '$';
+  const localIso = reportingLocalCurrencyISO();
+  const convertToUsd = ST.currency === 'USD' && Number(ST.usdRate) > 0 && localIso !== 'USD';
+  // US (y cualquier país con moneda local USD): escala tipo billones = 1e9
+  const usdScale = convertToUsd || localIso === 'USD';
+  const val = convertToUsd ? Number(clpRaw) / ST.usdRate : Number(clpRaw);
+  const sym = convertToUsd ? 'USD ' : '$';
   const abs = Math.abs(val);
   const sign = val < 0 ? '-' : '';
-  const fmt = (n, d) => n.toLocaleString('es-CL', { minimumFractionDigits: d, maximumFractionDigits: d });
-  if (isUSD) {
+  const loc = localIso === 'USD' ? 'en-US' : 'es-CL';
+  const fmt = (n, d) => n.toLocaleString(loc, { minimumFractionDigits: d, maximumFractionDigits: d });
+  if (usdScale) {
     if (abs >= 1e9)  return `${sign}${sym}${fmt(abs / 1e9,  1)}B`;
     if (abs >= 1e6)  return `${sign}${sym}${fmt(abs / 1e6,  decimals)}M`;
     if (abs >= 1e3)  return `${sign}${sym}${fmt(abs / 1e3,  decimals)}K`;
@@ -24,7 +28,7 @@ function _fmtKPIBase(clpRaw, decimals) {
     if (abs >= 1e6)  return `${sign}${sym}${fmt(abs / 1e6,  decimals)}K`;
     if (abs >= 1e3)  return `${sign}${sym}${fmt(abs / 1e3,  decimals)}`;
   }
-  return `${sign}${sym}${Math.round(abs).toLocaleString('es-CL')}`;
+  return `${sign}${sym}${Math.round(abs).toLocaleString(loc)}`;
 }
 
 export const fmtKPI        = clpRaw => _fmtKPIBase(clpRaw, 0);
@@ -306,6 +310,35 @@ export function bankName(code) {
     return titleCaseLatam(stripSociedadAnonima(raw));
   }
 
+  // ---- United States (FDIC CERT) ----
+  if (ST.country === 'usa') {
+    const US_DISPLAY = new Map([
+      [628,   'JPMorgan Chase'],
+      [3510,  'Bank of America'],
+      [3511,  'Wells Fargo'],
+      [7213,  'Citibank'],
+      [4297,  'Capital One'],
+      [33124, 'Goldman Sachs Bank'],
+      [6384,  'PNC Bank'],
+      [6548,  'U.S. Bank'],
+      [9846,  'Truist'],
+      [27374, 'TD Bank'],
+      [32992, 'Charles Schwab Bank'],
+      [14,    'State Street'],
+      [5416,  'HSBC Bank USA'],
+    ]);
+    const numCode = Number(code);
+    if (US_DISPLAY.has(numCode)) return US_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    // Quitar sufijos NA / NATIONAL ASSOCIATION
+    const cleaned = stripSociedadAnonima(raw)
+      .replace(/\bNATIONAL\s+ASSOCIATION\b/gi, '')
+      .replace(/\bN\.?\s*A\.?\b/gi, '')
+      .replace(/\bNA\b/gi, '')
+      .trim();
+    return titleCaseLatam(cleaned || raw);
+  }
+
   // ---- Chile ----
   // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
   // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
@@ -354,6 +387,11 @@ export function getTipo(code) {
   if (ST.country === 'peru') {
     const peR1 = /^(INGRESOS_|GASTOS_|MARGEN_|PROVISIONES_CREDITOS|RESULTADO_|IMPUESTO_RENTA|UTILIDAD_)/;
     if (c === 'RESULTADO_NETO' || peR1.test(c)) return 'r1';
+    return 'b1';
+  }
+  // US FDIC
+  if (ST.country === 'usa') {
+    if (['NETINC', 'INTINC', 'EINTEXP', 'NONII', 'NONIX'].includes(c)) return 'r1';
     return 'b1';
   }
   const p = c[0];

@@ -116,6 +116,16 @@ export async function fetchUSDRate() {
   const ccy = paisCurrency(ST.country) || reportingLocalCurrencyISO() || 'CLP';
 
   clearUsdRate();
+
+  // Estados Unidos: la moneda de reporte ya es USD (FDIC).
+  if (ccy === 'USD' || ST.country === 'usa') {
+    ST.usdRate = 1;
+    ST.usdDate = todayISO();
+    ST.usdFxSource = 'native';
+    if (sbl) sbl.textContent = 'Amounts in USD · FDIC Call Reports';
+    return true;
+  }
+
   if (sbl) sbl.textContent = `Loading USD → ${ccy}…`;
 
   /** @type {Array<() => Promise<FxQuote|null>>} */
@@ -123,8 +133,6 @@ export async function fetchUSDRate() {
   if (ccy === 'CLP') chain.push(fromMindicador);
   chain.push(() => fromErApi(ccy));
   chain.push(() => fromCurrencyApi(ccy));
-  // Chile: si mindicador falló, er-api y CDN ya están; listo.
-  // Otros: er-api → CDN.
 
   for (const step of chain) {
     try {

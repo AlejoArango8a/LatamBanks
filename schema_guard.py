@@ -90,6 +90,13 @@ CRITICAL_ACCOUNTS: dict[str, list[str]] = {
         "PATRIMONIO",
         "RESULTADO_NETO",
     ],
+    "US": [
+        "ASSET",
+        "EQTOT",
+        "DEP",
+        "LNLS",
+        "NETINC",
+    ],
 }
 
 # Cómo normalizar un número de cuenta antes de comparar (por país).
@@ -102,6 +109,7 @@ _NORMALIZERS = {
     "BR": lambda c: str(c or "").strip(),
     "UY": lambda c: str(c or "").strip(),
     "PE": lambda c: str(c or "").strip(),
+    "US": lambda c: str(c or "").strip(),
 }
 
 # Umbral secundario: si aparecen/desaparecen más de esta cantidad de cuentas,

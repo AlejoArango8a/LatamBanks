@@ -190,6 +190,11 @@ export const LOGO_SLUGS = {
   'PE-16':  'bankofchina',
   'PE-17':  'bci',
   'PE-18':  'compartamos',
+  // US FDIC CERT → logos existentes
+  'US-628':   'jpmorgan',
+  'US-7213':  'citibank',
+  'US-5416':  'hsbc',
+
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */

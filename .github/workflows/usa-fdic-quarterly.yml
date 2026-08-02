@@ -1,0 +1,52 @@
+name: USA FDIC top-100 (quarterly)
+
+on:
+  schedule:
+    # Día 25 del mes siguiente al cierre de trimestre (aprox. publicación Call Reports)
+    - cron: '0 16 25 1,4,7,10 *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'incremental | quarter | range'
+        required: false
+        default: 'incremental'
+      quarter:
+        description: 'AAAAMM (03/06/09/12) — mode=quarter'
+        required: false
+        default: ''
+      from:
+        description: 'AAAAMM inicio (mode=range)'
+        required: false
+        default: ''
+      to:
+        description: 'AAAAMM fin (mode=range)'
+        required: false
+        default: ''
+      top:
+        description: 'Bancos por equity (default 100)'
+        required: false
+        default: '100'
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load USA FDIC top-N
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'incremental' }}"
+          TOP="${{ github.event.inputs.top || '100' }}"
+          if [ "$MODE" = "quarter" ]; then
+            python usa_loader.py --quarter "${{ github.event.inputs.quarter }}" --top "$TOP"
+          elif [ "$MODE" = "range" ]; then
+            python usa_loader.py --all --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" --top "$TOP"
+          else
+            python usa_loader.py --top "$TOP"
+          fi

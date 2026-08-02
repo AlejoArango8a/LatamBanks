@@ -25,28 +25,37 @@ python uruguay_loader.py   # incremental después
 # o GHA: Uruguay BCU/SSF → mode=range
 ```
 
-## 3) Perú — SBS B-2201 (esta rama)
+## 3) Perú — SBS B-2201
 
 ```bash
 python peru_loader.py --all --from 201501 --to 202512
-# smoke de un mes:
-python peru_loader.py --month 202512
-python peru_loader.py   # incremental
-# o GHA: Peru SBS B-2201 → mode=range
+python peru_loader.py --month 202512   # smoke
+python peru_loader.py                  # incremental
+```
+
+## 4) Estados Unidos — FDIC top-100 por equity
+
+```bash
+python usa_loader.py --all --from 201503 --to 202603 --top 100
+python usa_loader.py --quarter 202603 --top 100   # smoke
+python usa_loader.py --top 100                    # incremental
+# o GHA: USA FDIC top-100
 ```
 
 Dry-run sin DB:
 ```bash
 python peru_loader.py --dry-run --month 202512
 python uruguay_loader.py --dry-run --from 202606 --to 202606
+python usa_loader.py --dry-run --quarter 202603 --top 5
 ```
 
-## 4) Verificación rápida en dashboard
+## 5) Verificación rápida en dashboard
 
-1. Merge/deploy de PRs (UY + PE + BR hist.).
-2. `dashboard.html?country=brasil` — series pre-2025.
-3. `?country=uruguay` — BROU / Itaú, equity cuenta `3`.
+1. Merge/deploy de PRs.
+2. `?country=brasil` — series pre-2025.
+3. `?country=uruguay` — BROU / Itaú, equity `3`.
 4. `?country=peru` — BCP / Interbank, equity `PATRIMONIO`.
+5. `?country=usa` — JPM / BofA, equity `EQTOT` (top 100).
 
 ## Contratos de equity (sidebar)
 
@@ -57,6 +66,7 @@ python uruguay_loader.py --dry-run --from 202606 --to 202606
 | BR | `78186` / `140246` | — |
 | UY | `3` | `UY_EQUITY_CUENTA` |
 | PE | `PATRIMONIO` | `PE_EQUITY_CUENTA` |
+| US | `EQTOT` | `US_EQUITY_CUENTA` |
 
 ## Notas
 

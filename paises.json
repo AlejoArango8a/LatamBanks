@@ -66,6 +66,19 @@
       "source": "BCU / SSF (Boletín)",
       "flag": "assets/Uruguay flag.png",
       "aliases": ["uy", "uruguay"]
+    },
+    "usa": {
+      "key": "usa",
+      "iso": "US",
+      "name": "United States",
+      "systemName": "US Banking System",
+      "currency": "USD",
+      "locale": "en-US",
+      "status": "live",
+      "frequency": "quarterly",
+      "source": "FDIC Call Reports (BankFind)",
+      "flag": "assets/USA flag.png",
+      "aliases": ["us", "usa", "eeuu", "united states", "estados unidos"]
     }
   }
 }

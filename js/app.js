@@ -5,16 +5,16 @@ import { API_BASE } from './config.js?v=bmon39';
 import { ST, datasetIsoCountry } from './state.js?v=bmon39';
 import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon39';
 import { fetchWithTimeout } from './api.js?v=bmon39';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon42';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon43';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon42';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon43';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon42';
+} from './views/balance.js?v=bmon43';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon39';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon42';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon43';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon39';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon39';
 
@@ -30,7 +30,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon42';
+} from './ui.js?v=bmon43';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon39';
@@ -154,8 +154,10 @@ async function switchCountryDataset() {
     let defaultBank = 59;
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
-    else if (isoSwitch === 'UY' || isoSwitch === 'PE') {
-      defaultBank = ST._patrimonioRanking?.[0] ?? (isoSwitch === 'PE' ? 3 : 1);
+    else if (isoSwitch === 'UY' || isoSwitch === 'PE' || isoSwitch === 'US') {
+      // UY BROU=1 · PE BCP=3 · US JPM CERT=628
+      defaultBank = ST._patrimonioRanking?.[0]
+        ?? (isoSwitch === 'PE' ? 3 : isoSwitch === 'US' ? 628 : 1);
     }
     toggleBank(defaultBank, true);
     fillBankList();
@@ -238,8 +240,9 @@ async function init() {
       let def = 59;
       if (isoInit === 'CO') def = 66;
       else if (isoInit === 'BR') def = 1000080336;
-      else if (isoInit === 'UY' || isoInit === 'PE') {
-        def = ST._patrimonioRanking?.[0] ?? (isoInit === 'PE' ? 3 : 1);
+      else if (isoInit === 'UY' || isoInit === 'PE' || isoInit === 'US') {
+        def = ST._patrimonioRanking?.[0]
+          ?? (isoInit === 'PE' ? 3 : isoInit === 'US' ? 628 : 1);
       }
       toggleBank(def, true);
     }
