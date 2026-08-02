@@ -104,9 +104,9 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | Brasil | Activo (IF.data prudencial). Histórico continuo desde **201403**; Cosif viejo≤202412 + nuevo≥202503 |
 | Uruguay | Activo (BCU Boletín SSF → `uruguay_loader.py`; desde ~2020) |
 | Perú | Activo (SBS B-2201 → `peru_loader.py`; desde ~2015) |
-| Estados Unidos | Activo (FDIC BankFind → `usa_loader.py`; **top 300 por equity**/trimestre) |
+| Estados Unidos | Activo (FDIC BankFind → `usa_loader.py`; **top 300 por equity**/trimestre + CERT fijados, p.ej. BTG Pactual Bank 35154) |
 | Argentina | Activo (BCRA datos abiertos → `argentina_loader.py`; mensual) |
-| México | Activo (CNBV Boletín BM → `mexico_loader.py`; mensual) |
+| México | Activo (CNBV Boletín **Banca Múltiple** → `mexico_loader.py`; mensual). Nu/Nubank aún no en BM (era SOFIPO; auth. banco ~jul 2026 — entra cuando CNBV lo publique en BM) |
 | Panamá | Activo (SBP reportes individuales → `panama_loader.py`; mensual; USD) |
 | Paraguay | En investigación (BCP; `status: soon` en selectors) |
 

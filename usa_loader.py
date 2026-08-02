@@ -6,14 +6,15 @@ LatamBanks — country='US'
 Fuente (API pública, sin API key):
   https://banks.data.fdic.gov/api/financials
 
-Universo: top N bancos FDIC-insured por EQTOT (default 100) en cada trimestre.
+Universo: top N bancos FDIC-insured por EQTOT (default 300) en cada trimestre,
+más CERT fijados en ALWAYS_INCLUDE_CERTS (franquicias LatAm bajo el piso top-N).
 Valores FDIC en miles de USD → monto_total en dólares enteros (×1000).
 
 Modos:
   (sin flags)     Incremental: trimestres recientes aún no en carga_log
   --quarter AAAAMM  Carga un trimestre (mes = 03/06/09/12)
   --all / --from / --to
-  --top N         Ranking por equity (default 100)
+  --top N         Ranking por equity (default 300)
   --dry-run
   --wipe
 """
@@ -40,6 +41,13 @@ API = "https://banks.data.fdic.gov/api/financials"
 SCALE = 1000  # miles USD → USD
 DEFAULT_TOP = 300
 MIN_PERIOD = "201503"  # trimestres razonables en API
+
+# Siempre incluir aunque queden fuera del top-N por equity.
+# 35154 = BTG Pactual Bank, N.A. (antes M.Y. Safra Bank, FSB; rename ~2025-12).
+ALWAYS_INCLUDE_CERTS = (35154,)
+DISPLAY_NAME_OVERRIDES = {
+    35154: "BTG Pactual Bank, N.A.",
+}
 
 # Campos Call Report / BankFind usados como cuentas canónicas
 FIELDS = [
@@ -142,6 +150,24 @@ def discover_quarters_from_anchor(cert: int = 628, n: int = 40) -> list[str]:
     return periods
 
 
+def fetch_cert_for_quarter(periodo: str, cert: int) -> dict | None:
+    """Trae un CERT puntual para el trimestre (pin fuera del top-N)."""
+    rep = period_to_repdte(periodo)
+    data = http_json(
+        {
+            "filters": f"CERT:{cert} AND REPDTE:{rep}",
+            "fields": ",".join(FIELDS),
+            "limit": "1",
+            "format": "json",
+        }
+    )
+    for item in data.get("data") or []:
+        d = item.get("data") or item
+        if d.get("CERT") is not None:
+            return d
+    return None
+
+
 def fetch_top_for_quarter(periodo: str, top: int) -> list[dict]:
     rep = period_to_repdte(periodo)
     data = http_json(
@@ -160,7 +186,25 @@ def fetch_top_for_quarter(periodo: str, top: int) -> list[dict]:
         if d.get("CERT") is None:
             continue
         rows.append(d)
-    log.info("dt=%s FDIC: %d bancos (pedido top %d)", periodo, len(rows), top)
+    have = {int(d["CERT"]) for d in rows}
+    pinned = 0
+    for cert in ALWAYS_INCLUDE_CERTS:
+        if cert in have:
+            continue
+        extra = fetch_cert_for_quarter(periodo, cert)
+        if extra:
+            rows.append(extra)
+            have.add(cert)
+            pinned += 1
+        else:
+            log.warning("dt=%s pin CERT %s sin datos FDIC", periodo, cert)
+    log.info(
+        "dt=%s FDIC: %d bancos (pedido top %d, +%d pinned)",
+        periodo,
+        len(rows),
+        top,
+        pinned,
+    )
     return rows
 
 
@@ -186,7 +230,7 @@ def rows_to_db(periodo: str, banks: list[dict]):
     }
     for b in banks:
         cert = int(b["CERT"])
-        name = str(b.get("NAME") or f"CERT {cert}").strip()
+        name = DISPLAY_NAME_OVERRIDES.get(cert) or str(b.get("NAME") or f"CERT {cert}").strip()
         inst.append((COUNTRY, cert, name))
         for field, desc in plan.items():
             if field not in b or b[field] is None:

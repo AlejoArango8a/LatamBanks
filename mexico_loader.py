@@ -17,6 +17,12 @@ Fuente (mensual, Excel en Portafolio de Información):
 Unidad: millones de MXN → monto_total en pesos enteros (×1_000_000).
 ins_cod: hash estable del nombre (+ tabla fija para grandes bancos).
 
+Nota cobertura — Nu México / Nubank:
+  El loader solo lee Banca Múltiple (BM). Nu operó como SOFIPO y, hasta el BM
+  202605 inclusive, no figura en Pm2. La autorización CNBV como banco (~jul 2026)
+  implica que aparecerá cuando el boletín BM lo publique como institución BM;
+  no inventamos filas ni pines hasta entonces.
+
 Modos:
   (sin flags)     Incremental
   --month AAAAMM
