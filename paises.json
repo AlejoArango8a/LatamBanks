@@ -61,9 +61,9 @@
       "systemName": "Uruguayan Banking System",
       "currency": "UYU",
       "locale": "es-UY",
-      "status": "coming_soon",
+      "status": "live",
       "frequency": "monthly",
-      "source": "BCU",
+      "source": "BCU / SSF (Boletín)",
       "flag": "assets/Uruguay flag.png",
       "aliases": ["uy", "uruguay"]
     }

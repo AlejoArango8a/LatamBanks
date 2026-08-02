@@ -255,6 +255,27 @@ export function bankName(code) {
     return name;
   }
 
+  // ---- Uruguay ----
+  if (ST.country === 'uruguay') {
+    const UY_DISPLAY = new Map([
+      [1,   'BROU'],
+      [91,  'BHU'],
+      [110, 'BANDES'],
+      [113, 'Itaú'],
+      [128, 'Scotiabank'],
+      [137, 'Santander'],
+      [153, 'BBVA'],
+      [157, 'HSBC'],
+      [162, 'Heritage'],
+      [205, 'Citibank'],
+      [246, 'Banco Nación'],
+    ]);
+    const numCode = Number(code);
+    if (UY_DISPLAY.has(numCode)) return UY_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    return titleCaseLatam(stripSociedadAnonima(raw));
+  }
+
   // ---- Chile ----
   // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
   // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
@@ -296,11 +317,16 @@ export function coIncomeStatementConceptHtml(label, isSection) {
 
 // ---- Account type resolver ----
 export function getTipo(code) {
-  const p = code[0];
+  const c = String(code || '');
+  // Uruguay BCU: subtotales S_* y resultado R_* viven en el estado de resultados.
+  if (c.startsWith('R_') || c.startsWith('S_')) return 'r1';
+  const p = c[0];
   if (p === '1' || p === '2' || p === '3') return 'b1';
   if (p === '4' || p === '5') return 'r1';
   if (p === '6') return 'b1';
   if (p === '8') return 'c1';
+  // UY PyG numérico sigue 4…23 (y sentinels arriba)
+  if (ST.country === 'uruguay' && /^[4-9]/.test(c)) return 'r1';
   return 'b1';
 }
 

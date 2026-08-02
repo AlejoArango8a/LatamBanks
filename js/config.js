@@ -163,6 +163,18 @@ export const LOGO_SLUGS = {
   'BR-1000080154': 'banrisul',
   'BR-1000080484': 'votorantim',
   'BR-1000081593': 'nordeste',
+  // Uruguay (UY) — código institución BCU / SSF
+  'UY-1':   'brou',
+  'UY-91':  'bhu',
+  'UY-110': 'bandes',
+  'UY-113': 'itau',
+  'UY-128': 'scotiabank',
+  'UY-137': 'santander',
+  'UY-153': 'bbva',
+  'UY-157': 'hsbc',
+  'UY-162': 'heritage',
+  'UY-205': 'citibank',
+  'UY-246': 'bna',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */

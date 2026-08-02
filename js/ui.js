@@ -347,16 +347,31 @@ export function syncResumenMoraChartButton() {
 // Resumo de Brasil (IF.data). Se deshabilitan sus botones cuando el país activo
 // es Brasil para no mostrar valores incorrectos.
 const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 export function syncCountryChartButtons() {
   const isBR = datasetIsoCountry() === 'BR';
-  BR_DISABLED_CHART_BTNS.forEach(id => {
+  const isUY = datasetIsoCountry() === 'UY';
+  const allIds = new Set([...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS]);
+  allIds.forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.disabled = isBR;
-    btn.classList.toggle('rcbtn-disabled', isBR);
-    if (isBR) btn.title = 'Sin dato confiable para Brasil por ahora';
-    else btn.removeAttribute('title');
+    const disable = (isBR && BR_DISABLED_CHART_BTNS.includes(id))
+      || (isUY && UY_DISABLED_CHART_BTNS.includes(id));
+    btn.disabled = disable;
+    btn.classList.toggle('rcbtn-disabled', disable);
+    if (disable) {
+      btn.title = isBR
+        ? 'Sin dato confiable para Brasil por ahora'
+        : 'Sin desglose para Uruguay por ahora';
+    } else {
+      btn.removeAttribute('title');
+    }
   });
+  // UY: botón Demand Dep. actúa como Total Deposits
+  const depVista = document.getElementById('btnResChartDepVista');
+  if (depVista && !isBR) {
+    depVista.textContent = isUY ? '🏦 Deposits' : '👁 Demand Dep.';
+  }
 }
 
 // Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
@@ -421,8 +436,17 @@ export function selectCountry(country) {
     return;
   }
 
-  const names    = { peru:'Perú', uruguay:'Uruguay' };
-  const flagImgs = { peru:'flagPeru', uruguay:'flagUruguay' };
+  if (country === 'uruguay') {
+    ST.country = 'uruguay';
+    if (overlay) overlay.style.display = 'none';
+    syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
+    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+    return;
+  }
+
+  const names    = { peru:'Perú' };
+  const flagImgs = { peru:'flagPeru' };
   if (overlay) {
     const nameEl = document.getElementById('countryOverlayName');
     const imgBtn = document.getElementById(flagImgs[country]);
@@ -537,6 +561,18 @@ export async function fetchUSDRate() {
         const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
         ST.usdDate = d.toISOString().slice(0, 10);
         const txt = `1 USD ≈ R$${ST.usdRate.toFixed(2)} BRL · ${ST.usdDate}`;
+        if (sbl) sbl.textContent = txt;
+      }
+      return;
+    }
+    if (ST.country === 'uruguay') {
+      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await resp.json();
+      if (data.result === 'success' && data.rates && data.rates.UYU) {
+        ST.usdRate = Number(data.rates.UYU);
+        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
+        ST.usdDate = d.toISOString().slice(0, 10);
+        const txt = `1 USD ≈ $${ST.usdRate.toFixed(2)} UYU · ${ST.usdDate}`;
         if (sbl) sbl.textContent = txt;
       }
       return;

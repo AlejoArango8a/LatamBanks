@@ -135,7 +135,13 @@ async function switchCountryDataset() {
     ST.compareMode = false;
     syncCompareToggleUI();
     const isoSwitch = datasetIsoCountry();
-    const defaultBank = isoSwitch === 'CO' ? 66 : isoSwitch === 'BR' ? 1000080336 : 59;
+    let defaultBank = 59;
+    if (isoSwitch === 'CO') defaultBank = 66;
+    else if (isoSwitch === 'BR') defaultBank = 1000080336;
+    else if (isoSwitch === 'UY') {
+      // Mayor equity del bootstrap; fallback BROU (1)
+      defaultBank = ST._patrimonioRanking?.[0] ?? 1;
+    }
     toggleBank(defaultBank, true);
     fillBankList();
     ST.desde = selDesde?.value ?? null;
@@ -197,7 +203,15 @@ async function init() {
     document.getElementById('selDesde').selectedIndex = desdeIdx;
     document.getElementById('selHasta').selectedIndex = n - 1;
     const isoInit = datasetIsoCountry();
-    toggleBank(isoInit === 'CO' ? 66 : isoInit === 'BR' ? 1000080336 : 59, true);
+    {
+      let def = 59;
+      if (isoInit === 'CO') def = 66;
+      else if (isoInit === 'BR') def = 1000080336;
+      else if (isoInit === 'UY') {
+        def = ST._patrimonioRanking?.[0] ?? 1;
+      }
+      toggleBank(def, true);
+    }
     fillBankList();
     syncResumenMoraChartButton();
     await run();
