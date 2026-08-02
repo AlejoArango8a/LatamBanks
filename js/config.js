@@ -175,6 +175,19 @@ export const LOGO_SLUGS = {
   'UY-162': 'heritage',
   'UY-205': 'citibank',
   'UY-246': 'bna',
+  // Perú (SBS B-2201) — reusa slugs compartidos cuando existe el PNG
+  'PE-1':   'bbva',
+  'PE-3':   'bcp',
+  'PE-5':   'banbif',
+  'PE-6':   'scotiabank',
+  'PE-7':   'citibank',
+  'PE-8':   'interbank',
+  'PE-9':   'mibanco',
+  'PE-11':  'falabella',
+  'PE-12':  'santander',
+  'PE-13':  'ripley',
+  'PE-17':  'bci',
+  'PE-18':  'compartamos',
 };
 
 /** Devuelve la URL relativa del logo, o null si no hay entrada para ese banco. */

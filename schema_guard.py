@@ -82,6 +82,14 @@ CRITICAL_ACCOUNTS: dict[str, list[str]] = {
         "2.1.3",        # Depósitos sector no financiero privado
         "R_EJERCICIO",  # Resultado del ejercicio
     ],
+    "PE": [
+        "TOTAL_ACTIVO",
+        "CREDITOS_NETOS",
+        "OBLIGACIONES_PUBLICO",
+        "TOTAL_PASIVO",
+        "PATRIMONIO",
+        "RESULTADO_NETO",
+    ],
 }
 
 # Cómo normalizar un número de cuenta antes de comparar (por país).
@@ -93,6 +101,7 @@ _NORMALIZERS = {
     "CL": lambda c: str(c or "").strip(),
     "BR": lambda c: str(c or "").strip(),
     "UY": lambda c: str(c or "").strip(),
+    "PE": lambda c: str(c or "").strip(),
 }
 
 # Umbral secundario: si aparecen/desaparecen más de esta cantidad de cuentas,

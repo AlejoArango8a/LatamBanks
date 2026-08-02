@@ -91,7 +91,7 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | Frontend | `dashboard.html` + ES modules (`js/`) | Vercel |
 | Backend | Express / Node.js (serverless `api/index.js`) | Vercel |
 | Base de datos | CockroachDB Serverless | AWS us-east-1 |
-| ETL | Python (`cmf_loader.py`, `colombia_loader.py`, `brasil_loader.py`, `uruguay_loader.py`) | Local / GitHub Actions |
+| ETL | Python (`cmf_loader.py`, `colombia_loader.py`, `brasil_loader.py`, `uruguay_loader.py`, `peru_loader.py`) | Local / GitHub Actions |
 
 ---
 
@@ -101,8 +101,10 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 |------|--------|
 | Chile | Activo (CMF, desde 2022) |
 | Colombia | Activo (CUIF / Socrata) |
-| Brasil | Activo (BCB IF.data, prudencial) |
-| Uruguay | Activo (BCU Boletín SSF → `uruguay_loader.py`; backfill desde ~2020) |
-| Perú | En desarrollo |
+| Brasil | Activo (BCB IF.data, prudencial; backfill hist. desde 201403) |
+| Uruguay | Activo (BCU Boletín SSF → `uruguay_loader.py`; desde ~2020) |
+| Perú | Activo (SBS B-2201 → `peru_loader.py`; desde ~2015) |
+
+Carga inicial / backfills: ver `LOADERS_MANANA.md`.
 
 `ST.country` en el cliente separa por jurisdicción la clave de caché local de datos; al sumar backends adicionales, conviene vaciar `ST.data` en el cambio de país.

@@ -14,6 +14,7 @@ function wireCbExportButton() {
   const slug = datasetIsoCountry() === 'CO' ? 'Colombian_Banking_System'
     : datasetIsoCountry() === 'BR' ? 'Brazilian_Banking_System'
     : datasetIsoCountry() === 'UY' ? 'Uruguayan_Banking_System'
+    : datasetIsoCountry() === 'PE' ? 'Peruvian_Banking_System'
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
@@ -21,6 +22,7 @@ import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, b
 import { CO_CUIF } from '../coCuentas.js?v=bmon39';
 import { BR_KPI } from '../brCuentas.js?v=bmon39';
 import { UY_KPI } from '../uyCuentas.js?v=bmon40';
+import { PE_KPI } from '../peCuentas.js?v=bmon41';
 import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon39';
 import { apiDatos } from '../api.js?v=bmon39';
 
@@ -90,14 +92,15 @@ export async function renderChileanBanks() {
     const isCO       = iso === 'CO';
     const isBR       = iso === 'BR';
     const isUY       = iso === 'UY';
+    const isPE       = iso === 'PE';
     // Cada KPI es un CONJUNTO de códigos equivalentes. En CL/CO es un único
     // código; en BR son dos (plan Cosif viejo ≤2024 + nuevo ≥2025), que nunca
     // coexisten en un mismo trimestre, así que sumarlos mantiene la serie continua.
-    // UY: códigos BCU (activos/patrimonio unitarios; colocaciones = suma 1.4.*).
-    const actCodes  = isBR ? BR_KPI.activos      : isCO ? [CO_CUIF.activos]      : isUY ? asCodes(UY_KPI.activos)      : ['100000000'];
-    const loanCodes = isBR ? BR_KPI.colocaciones : isCO ? [CO_CUIF.colocaciones] : isUY ? asCodes(UY_KPI.colocaciones) : ['144000000'];
-    const eqCodes   = isBR ? BR_KPI.patrimonio   : isCO ? [CO_CUIF.patrimonio]   : isUY ? asCodes(UY_KPI.patrimonio)   : ['300000000'];
-    const utilCodes = isBR ? BR_KPI.utilidad     : isCO ? [CO_CUIF.utilidadNet]  : isUY ? asCodes(UY_KPI.utilidad)     : ['590000000'];
+    // UY: códigos BCU. PE: slugs SBS B-2201.
+    const actCodes  = isBR ? BR_KPI.activos      : isCO ? [CO_CUIF.activos]      : isUY ? asCodes(UY_KPI.activos)      : isPE ? asCodes(PE_KPI.activos)      : ['100000000'];
+    const loanCodes = isBR ? BR_KPI.colocaciones : isCO ? [CO_CUIF.colocaciones] : isUY ? asCodes(UY_KPI.colocaciones) : isPE ? asCodes(PE_KPI.colocaciones) : ['144000000'];
+    const eqCodes   = isBR ? BR_KPI.patrimonio   : isCO ? [CO_CUIF.patrimonio]   : isUY ? asCodes(UY_KPI.patrimonio)   : isPE ? asCodes(PE_KPI.patrimonio)   : ['300000000'];
+    const utilCodes = isBR ? BR_KPI.utilidad     : isCO ? [CO_CUIF.utilidadNet]  : isUY ? asCodes(UY_KPI.utilidad)     : isPE ? asCodes(PE_KPI.utilidad)     : ['590000000'];
     const cuentas   = [...actCodes, ...loanCodes, ...eqCodes];
     const lastPYear   = parseInt(lastP.slice(0, 4));
     const lastPMonth  = lastP.slice(4, 6);

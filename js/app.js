@@ -138,9 +138,9 @@ async function switchCountryDataset() {
     let defaultBank = 59;
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
-    else if (isoSwitch === 'UY') {
-      // Mayor equity del bootstrap; fallback BROU (1)
-      defaultBank = ST._patrimonioRanking?.[0] ?? 1;
+    else if (isoSwitch === 'UY' || isoSwitch === 'PE') {
+      // Mayor equity del bootstrap; fallback BROU (1) / BCP (3)
+      defaultBank = ST._patrimonioRanking?.[0] ?? (isoSwitch === 'PE' ? 3 : 1);
     }
     toggleBank(defaultBank, true);
     fillBankList();
@@ -207,8 +207,8 @@ async function init() {
       let def = 59;
       if (isoInit === 'CO') def = 66;
       else if (isoInit === 'BR') def = 1000080336;
-      else if (isoInit === 'UY') {
-        def = ST._patrimonioRanking?.[0] ?? 1;
+      else if (isoInit === 'UY' || isoInit === 'PE') {
+        def = ST._patrimonioRanking?.[0] ?? (isoInit === 'PE' ? 3 : 1);
       }
       toggleBank(def, true);
     }

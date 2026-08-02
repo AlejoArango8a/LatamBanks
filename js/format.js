@@ -276,6 +276,35 @@ export function bankName(code) {
     return titleCaseLatam(stripSociedadAnonima(raw));
   }
 
+  // ---- Perú ----
+  if (ST.country === 'peru') {
+    const PE_DISPLAY = new Map([
+      [1,  'BBVA'],
+      [2,  'Bancom'],
+      [3,  'BCP'],
+      [4,  'Pichincha'],
+      [5,  'BanBif'],
+      [6,  'Scotiabank'],
+      [7,  'Citibank'],
+      [8,  'Interbank'],
+      [9,  'Mibanco'],
+      [10, 'GNB'],
+      [11, 'Falabella'],
+      [12, 'Santander'],
+      [13, 'Ripley'],
+      [14, 'Alfin'],
+      [15, 'ICBC'],
+      [16, 'Bank of China'],
+      [17, 'BCI'],
+      [18, 'Compartamos'],
+      [19, 'Santander Consumer'],
+    ]);
+    const numCode = Number(code);
+    if (PE_DISPLAY.has(numCode)) return PE_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    return titleCaseLatam(stripSociedadAnonima(raw));
+  }
+
   // ---- Chile ----
   // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
   // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
@@ -320,6 +349,12 @@ export function getTipo(code) {
   const c = String(code || '');
   // Uruguay BCU: subtotales S_* y resultado R_* viven en el estado de resultados.
   if (c.startsWith('R_') || c.startsWith('S_')) return 'r1';
+  // Perú SBS: slugs canónicos del PyG
+  if (ST.country === 'peru') {
+    const peR1 = /^(INGRESOS_|GASTOS_|MARGEN_|PROVISIONES_CREDITOS|RESULTADO_|IMPUESTO_RENTA|UTILIDAD_)/;
+    if (c === 'RESULTADO_NETO' || peR1.test(c)) return 'r1';
+    return 'b1';
+  }
   const p = c[0];
   if (p === '1' || p === '2' || p === '3') return 'b1';
   if (p === '4' || p === '5') return 'r1';

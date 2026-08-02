@@ -48,9 +48,9 @@
       "systemName": "Peruvian Banking System",
       "currency": "PEN",
       "locale": "es-PE",
-      "status": "coming_soon",
+      "status": "live",
       "frequency": "monthly",
-      "source": "SBS",
+      "source": "SBS (B-2201)",
       "flag": "assets/Peru flag.png",
       "aliases": ["pe", "peru", "perú"]
     },

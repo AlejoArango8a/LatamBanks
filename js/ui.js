@@ -348,21 +348,26 @@ export function syncResumenMoraChartButton() {
 // es Brasil para no mostrar valores incorrectos.
 const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
 export function syncCountryChartButtons() {
   const isBR = datasetIsoCountry() === 'BR';
   const isUY = datasetIsoCountry() === 'UY';
-  const allIds = new Set([...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS]);
+  const isPE = datasetIsoCountry() === 'PE';
+  const allIds = new Set([...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS, ...PE_DISABLED_CHART_BTNS]);
   allIds.forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
     const disable = (isBR && BR_DISABLED_CHART_BTNS.includes(id))
-      || (isUY && UY_DISABLED_CHART_BTNS.includes(id));
+      || (isUY && UY_DISABLED_CHART_BTNS.includes(id))
+      || (isPE && PE_DISABLED_CHART_BTNS.includes(id));
     btn.disabled = disable;
     btn.classList.toggle('rcbtn-disabled', disable);
     if (disable) {
       btn.title = isBR
         ? 'Sin dato confiable para Brasil por ahora'
-        : 'Sin desglose para Uruguay por ahora';
+        : isUY
+          ? 'Sin desglose para Uruguay por ahora'
+          : 'Sin dato para Perú por ahora';
     } else {
       btn.removeAttribute('title');
     }
@@ -445,14 +450,19 @@ export function selectCountry(country) {
     return;
   }
 
-  const names    = { peru:'Perú' };
-  const flagImgs = { peru:'flagPeru' };
+  if (country === 'peru') {
+    ST.country = 'peru';
+    if (overlay) overlay.style.display = 'none';
+    syncCurrencyToggleUI();
+    syncResumenMoraChartButton();
+    queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
+    return;
+  }
+
   if (overlay) {
     const nameEl = document.getElementById('countryOverlayName');
-    const imgBtn = document.getElementById(flagImgs[country]);
-    const img    = imgBtn ? imgBtn.querySelector('img') : null;
-    nameEl.innerHTML = (img ? `<img src="${img.src}" style="width:72px;height:72px;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 4px 16px rgba(0,0,0,0.5);">` : '') +
-      `<span style="font-size:36px;font-weight:700;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:2px;">${names[country] || country}</span>`;
+    nameEl.innerHTML =
+      `<span style="font-size:36px;font-weight:700;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:2px;">${country}</span>`;
     overlay.style.display = 'flex';
   }
 }
@@ -573,6 +583,18 @@ export async function fetchUSDRate() {
         const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
         ST.usdDate = d.toISOString().slice(0, 10);
         const txt = `1 USD ≈ $${ST.usdRate.toFixed(2)} UYU · ${ST.usdDate}`;
+        if (sbl) sbl.textContent = txt;
+      }
+      return;
+    }
+    if (ST.country === 'peru') {
+      const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await resp.json();
+      if (data.result === 'success' && data.rates && data.rates.PEN) {
+        ST.usdRate = Number(data.rates.PEN);
+        const d = data.time_last_update_unix ? new Date(data.time_last_update_unix * 1000) : new Date();
+        ST.usdDate = d.toISOString().slice(0, 10);
+        const txt = `1 USD ≈ S/ ${ST.usdRate.toFixed(3)} PEN · ${ST.usdDate}`;
         if (sbl) sbl.textContent = txt;
       }
       return;
