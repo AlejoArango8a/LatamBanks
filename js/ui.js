@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon44';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon44';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon44';
-import { setStatus, showErr } from './utils.js?v=bmon44';
-import { sumRows } from './api.js?v=bmon44';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon44';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon44';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon46';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon46';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon46';
+import { setStatus, showErr } from './utils.js?v=bmon46';
+import { sumRows } from './api.js?v=bmon46';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon46';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon46';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -276,7 +276,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Detail', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
