@@ -105,6 +105,32 @@
       "source": "CNBV (Boletín Banca Múltiple)",
       "flag": "assets/Mexico flag.png",
       "aliases": ["mx", "mexico", "méxico", "mex"]
+    },
+    "panama": {
+      "key": "panama",
+      "iso": "PA",
+      "name": "Panamá",
+      "systemName": "Panamanian Banking System",
+      "currency": "USD",
+      "locale": "es-PA",
+      "status": "live",
+      "frequency": "monthly",
+      "source": "SBP (Superintendencia de Bancos de Panamá)",
+      "flag": "assets/Panama flag.png",
+      "aliases": ["pa", "panama", "panamá"]
+    },
+    "paraguay": {
+      "key": "paraguay",
+      "iso": "PY",
+      "name": "Paraguay",
+      "systemName": "Paraguayan Banking System",
+      "currency": "PYG",
+      "locale": "es-PY",
+      "status": "soon",
+      "frequency": "monthly",
+      "source": "BCP (Banco Central del Paraguay)",
+      "flag": "assets/Paraguay flag.png",
+      "aliases": ["py", "paraguay"]
     }
   }
 }

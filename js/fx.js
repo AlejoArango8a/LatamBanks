@@ -1,5 +1,5 @@
 // ============================================================
-// FX — tipo de cambio USD → moneda local (CL/CO/BR/PE/UY/AR/MX; US = 1)
+// FX — tipo de cambio USD → moneda local (CL/CO/BR/PE/UY/AR/MX; US/PA = 1)
 // Fuentes en cascada; falla cerrada (usdRate = null) si todas fallan.
 // ============================================================
 import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon44';
@@ -117,12 +117,16 @@ export async function fetchUSDRate() {
 
   clearUsdRate();
 
-  // Estados Unidos: la moneda de reporte ya es USD (FDIC).
-  if (ccy === 'USD' || ST.country === 'usa') {
+  // US / Panamá: la moneda de reporte ya es USD (FDIC / SBP).
+  if (ccy === 'USD' || ST.country === 'usa' || ST.country === 'panama') {
     ST.usdRate = 1;
     ST.usdDate = todayISO();
     ST.usdFxSource = 'native';
-    if (sbl) sbl.textContent = 'Amounts in USD · FDIC Call Reports';
+    if (sbl) {
+      sbl.textContent = ST.country === 'panama'
+        ? 'Amounts in USD · SBP reportes individuales'
+        : 'Amounts in USD · FDIC Call Reports';
+    }
     return true;
   }
 

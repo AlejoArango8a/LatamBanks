@@ -439,9 +439,10 @@ export function getTipo(code) {
     if (['NETINC', 'INTINC', 'EINTEXP', 'NONII', 'NONIX'].includes(c)) return 'r1';
     return 'b1';
   }
-  // Argentina BCRA / México CNBV
-  if (ST.country === 'argentina' || ST.country === 'mexico') {
-    if (c === 'RESULTADO_NETO' || /^(INGRESOS_|EGRESOS_|GASTOS_|CARGO_|IMPUESTO_|RESULTADO_)/.test(c)) return 'r1';
+  // Argentina BCRA / México CNBV / Panamá SBP
+  if (ST.country === 'argentina' || ST.country === 'mexico' || ST.country === 'panama') {
+    if (c === 'RESULTADO_NETO' || c === 'UTILIDAD_ANTES_PROVISIONES'
+        || /^(INGRESOS_|EGRESOS_|GASTOS_|CARGO_|IMPUESTO_|RESULTADO_|UTILIDAD_)/.test(c)) return 'r1';
     return 'b1';
   }
   const p = c[0];
