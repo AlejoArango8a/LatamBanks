@@ -465,12 +465,13 @@
     }
 
     .flag-btn {
+      position: relative;
       width: 72px;
       height: 72px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.42);
-      /* Se ve a través del margen transparente de las PNGs circulares (= halo) */
-      background: rgba(0, 0, 0, 0.28);
+      /* Fondo que se ve por el margen transparente de la PNG (= halo) */
+      background: rgba(0, 0, 0, 0.32);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
@@ -479,6 +480,15 @@
       text-decoration: none;
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    /* Anillo interno translúcido — iguala el hueco disco↔borde de las banderas clásicas */
+    .flag-btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.38);
+      pointer-events: none;
     }
     .hero-flag-hit .flag-caption.live {
       text-decoration: none;
