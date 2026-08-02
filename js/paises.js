@@ -15,7 +15,9 @@ const FALLBACK = {
     brasil:   { key: 'brasil',   iso: 'BR', name: 'Brasil',   systemName: 'Brazilian Banking System',  currency: 'BRL', locale: 'pt-BR', status: 'live', frequency: 'quarterly', aliases: ['br', 'brasil', 'brazil'] },
     peru:     { key: 'peru',     iso: 'PE', name: 'Perú',     systemName: 'Peruvian Banking System',   currency: 'PEN', locale: 'es-PE', status: 'live', frequency: 'monthly', aliases: ['pe', 'peru', 'perú'] },
     uruguay:  { key: 'uruguay',  iso: 'UY', name: 'Uruguay',  systemName: 'Uruguayan Banking System',  currency: 'UYU', locale: 'es-UY', status: 'live', frequency: 'monthly', aliases: ['uy', 'uruguay'] },
-    usa:      { key: 'usa',      iso: 'US', name: 'United States', systemName: 'US Banking System', currency: 'USD', locale: 'en-US', status: 'live', frequency: 'quarterly', aliases: ['us', 'usa', 'eeuu', 'united states'] },
+    usa:       { key: 'usa',       iso: 'US', name: 'United States', systemName: 'US Banking System',       currency: 'USD', locale: 'en-US', status: 'live', frequency: 'quarterly', aliases: ['us', 'usa', 'eeuu', 'united states'] },
+    argentina: { key: 'argentina', iso: 'AR', name: 'Argentina',     systemName: 'Argentine Banking System', currency: 'ARS', locale: 'es-AR', status: 'live', frequency: 'monthly',  aliases: ['ar', 'argentina', 'arg'] },
+    mexico:    { key: 'mexico',    iso: 'MX', name: 'México',        systemName: 'Mexican Banking System',   currency: 'MXN', locale: 'es-MX', status: 'live', frequency: 'monthly',  aliases: ['mx', 'mexico', 'méxico', 'mex'] },
   },
 };
 

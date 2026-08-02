@@ -91,7 +91,7 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | Frontend | `dashboard.html` + ES modules (`js/`) | Vercel |
 | Backend | Express / Node.js (serverless `api/index.js`) | Vercel |
 | Base de datos | CockroachDB Serverless | AWS us-east-1 |
-| ETL | Python (`cmf_loader.py`, `colombia_loader.py`, `brasil_loader.py`, `uruguay_loader.py`, `peru_loader.py`, `usa_loader.py`) | Local / GitHub Actions |
+| ETL | Python (`cmf_loader.py`, `colombia_loader.py`, `brasil_loader.py`, `uruguay_loader.py`, `peru_loader.py`, `usa_loader.py`, `argentina_loader.py`, `mexico_loader.py`) | Local / GitHub Actions |
 
 ---
 

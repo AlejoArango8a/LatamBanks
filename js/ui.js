@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon42';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon39';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon42';
-import { setStatus, showErr } from './utils.js?v=bmon39';
-import { sumRows } from './api.js?v=bmon39';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon39';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon42';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon44';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon44';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon44';
+import { setStatus, showErr } from './utils.js?v=bmon44';
+import { sumRows } from './api.js?v=bmon44';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon44';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon44';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -353,26 +353,37 @@ const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'b
 const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
 const US_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const AR_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const MX_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 export function syncCountryChartButtons() {
   const iso = datasetIsoCountry();
   const isBR = iso === 'BR';
   const isUY = iso === 'UY';
   const isPE = iso === 'PE';
   const isUS = iso === 'US';
-  const allIds = new Set([...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS, ...PE_DISABLED_CHART_BTNS, ...US_DISABLED_CHART_BTNS]);
+  const isAR = iso === 'AR';
+  const isMX = iso === 'MX';
+  const allIds = new Set([
+    ...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS, ...PE_DISABLED_CHART_BTNS,
+    ...US_DISABLED_CHART_BTNS, ...AR_DISABLED_CHART_BTNS, ...MX_DISABLED_CHART_BTNS,
+  ]);
   allIds.forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
     const disable = (isBR && BR_DISABLED_CHART_BTNS.includes(id))
       || (isUY && UY_DISABLED_CHART_BTNS.includes(id))
       || (isPE && PE_DISABLED_CHART_BTNS.includes(id))
-      || (isUS && US_DISABLED_CHART_BTNS.includes(id));
+      || (isUS && US_DISABLED_CHART_BTNS.includes(id))
+      || (isAR && AR_DISABLED_CHART_BTNS.includes(id))
+      || (isMX && MX_DISABLED_CHART_BTNS.includes(id));
     btn.disabled = disable;
     btn.classList.toggle('rcbtn-disabled', disable);
     if (disable) {
       btn.title = isBR ? 'Sin dato confiable para Brasil por ahora'
         : isUY ? 'Sin desglose para Uruguay por ahora'
         : isUS ? 'FDIC top-N: sin desglose vista/plazo / NPL en este corte'
+        : isAR ? 'BCRA: depósitos totales (sin vista/plazo) · NPL no mapeado'
+        : isMX ? 'CNBV Pm2: captación total (sin vista/plazo) · NPL no mapeado'
         : 'Sin dato para Perú por ahora';
     } else {
       btn.removeAttribute('title');
@@ -380,12 +391,14 @@ export function syncCountryChartButtons() {
   });
   const depVista = document.getElementById('btnResChartDepVista');
   if (depVista && !isBR) {
-    depVista.textContent = (isUY || isUS) ? '🏦 Deposits' : '👁 Demand Dep.';
+    depVista.textContent = (isUY || isUS || isAR || isMX) ? '🏦 Deposits' : '👁 Demand Dep.';
   }
 }
 
-// Pestañas Account View: deshabilitar también para US (corte resumido FDIC)
+// Pestañas Account View: deshabilitar en cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2)
 const US_DISABLED_TABS = ['accountview'];
+const AR_DISABLED_TABS = ['accountview'];
+const MX_DISABLED_TABS = ['accountview'];
 
 // Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
 // Balance e Income Statement ya habilitados (Relatorios 2-4 cargados).
@@ -394,16 +407,22 @@ export function syncCountryDisabledTabs() {
   const iso = datasetIsoCountry();
   const disabled = iso === 'BR' ? BR_DISABLED_TABS
     : iso === 'US' ? US_DISABLED_TABS
+    : iso === 'AR' ? AR_DISABLED_TABS
+    : iso === 'MX' ? MX_DISABLED_TABS
     : [];
-  const allTabs = new Set([...BR_DISABLED_TABS, ...US_DISABLED_TABS]);
+  const allTabs = new Set([...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS, ...MX_DISABLED_TABS]);
   allTabs.forEach(t => {
     const btn = document.querySelector(`.tab[data-tab="${t}"]`);
     if (!btn) return;
     const off = disabled.includes(t);
     btn.disabled = off;
     btn.classList.toggle('tab-disabled', off);
-    if (off) btn.title = iso === 'US' ? 'Resumen FDIC — Account View no aplica' : 'No disponible para Brasil todavía';
-    else btn.removeAttribute('title');
+    if (off) {
+      btn.title = iso === 'US' ? 'Resumen FDIC — Account View no aplica'
+        : iso === 'AR' ? 'BCRA open data — Account View no aplica'
+        : iso === 'MX' ? 'CNBV Pm2 — Account View no aplica'
+        : 'No disponible para Brasil todavía';
+    } else btn.removeAttribute('title');
   });
   if (disabled.length) {
     const active = document.querySelector('.tab.active')?.getAttribute('data-tab');
@@ -413,7 +432,11 @@ export function syncCountryDisabledTabs() {
 
 // ---- Country overlay / dataset switch ----
 export function syncCountryFlagsVisual(activeCountryKey) {
-  const flags = { chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil', peru: 'flagPeru', uruguay: 'flagUruguay', usa: 'flagUSA' };
+  const flags = {
+    chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil',
+    peru: 'flagPeru', uruguay: 'flagUruguay', usa: 'flagUSA',
+    argentina: 'flagArgentina', mexico: 'flagMexico',
+  };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -422,7 +445,7 @@ export function syncCountryFlagsVisual(activeCountryKey) {
   });
 }
 
-const LIVE_COUNTRY_KEYS = ['chile', 'colombia', 'brasil', 'peru', 'uruguay', 'usa'];
+const LIVE_COUNTRY_KEYS = ['chile', 'colombia', 'brasil', 'peru', 'uruguay', 'usa', 'argentina', 'mexico'];
 
 export function selectCountry(country) {
   syncCountryFlagsVisual(country);

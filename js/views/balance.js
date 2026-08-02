@@ -1,15 +1,17 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon39';
-import { bankColor } from '../config.js?v=bmon39';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon39';
-import { sumRows } from '../api.js?v=bmon39';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon39';
-import { BAL_BR_SECTIONS, R1_BR_ROWS } from '../brCuentas.js?v=bmon39';
-import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon42';
-import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon42';
-import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon43';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon44';
+import { bankColor } from '../config.js?v=bmon44';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon44';
+import { sumRows } from '../api.js?v=bmon44';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon44';
+import { BAL_BR_SECTIONS, R1_BR_ROWS } from '../brCuentas.js?v=bmon44';
+import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon44';
+import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon44';
+import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon44';
+import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon44';
+import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon44';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -111,6 +113,8 @@ export function showBalTab(sec, bankCode) {
              : iso === 'UY' ? BAL_UY_SECTIONS[sec]
              : iso === 'PE' ? BAL_PE_SECTIONS[sec]
              : iso === 'US' ? BAL_US_SECTIONS[sec]
+             : iso === 'AR' ? BAL_AR_SECTIONS[sec]
+             : iso === 'MX' ? BAL_MX_SECTIONS[sec]
              : BAL_SECTIONS[sec];
   if (!rows) return;
 
@@ -119,6 +123,8 @@ export function showBalTab(sec, bankCode) {
   const isUY = iso === 'UY';
   const isPE = iso === 'PE';
   const isUS = iso === 'US';
+  const isAR = iso === 'AR';
+  const isMX = iso === 'MX';
   const sameIns = (row, code) => Number(row.ins_cod) === Number(code);
 
   let b1Map = null;
@@ -139,7 +145,7 @@ export function showBalTab(sec, bankCode) {
   if (banks.length === 1) {
     const code = banks[0];
     const amtLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
-    if (isCO || isBR || isUY || isPE || isUS) {
+    if (isCO || isBR || isUY || isPE || isUS || isAR || isMX) {
       let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
         <th class="cod">Account</th><th>Description</th>
         <th class="r">${amtLabel}</th>
@@ -250,6 +256,8 @@ export function renderResTable(m) {
                : datasetIsoCountry() === 'UY' ? R1_UY_ROWS
                : datasetIsoCountry() === 'PE' ? R1_PE_ROWS
                : datasetIsoCountry() === 'US' ? R1_US_ROWS
+               : datasetIsoCountry() === 'AR' ? R1_AR_ROWS
+               : datasetIsoCountry() === 'MX' ? R1_MX_ROWS
                : R1_ROWS;
 
   if (ST._series && ST._series.r1 && ST._lastP) {

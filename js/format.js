@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon39';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon39';
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon42';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon44';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon44';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon44';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -339,6 +339,51 @@ export function bankName(code) {
     return titleCaseLatam(cleaned || raw);
   }
 
+  // ---- Argentina (BCRA) ----
+  if (ST.country === 'argentina') {
+    const AR_DISPLAY = new Map([
+      [11, 'Nación'],
+      [7,  'Galicia'],
+      [14, 'Provincia'],
+      [17, 'BBVA'],
+      [72, 'Santander'],
+      [285, 'Macro'],
+      [34, 'Patagonia'],
+      [27, 'Supervielle'],
+      [29, 'Ciudad'],
+      [15, 'ICBC'],
+      [191, 'Credicoop'],
+      [299, 'Comafi'],
+      [16, 'Citibank'],
+    ]);
+    const numCode = Number(code);
+    if (AR_DISPLAY.has(numCode)) return AR_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    return titleCaseLatam(stripSociedadAnonima(raw).replace(/^BANCO\s+/i, '').trim() || raw);
+  }
+
+  // ---- México (CNBV) ----
+  if (ST.country === 'mexico') {
+    const MX_DISPLAY = new Map([
+      [12, 'BBVA'],
+      [14, 'Santander'],
+      [72, 'Banorte'],
+      [2,  'Banamex'],
+      [21, 'HSBC'],
+      [44, 'Scotiabank'],
+      [36, 'Inbursa'],
+      [9,  'Citi'],
+      [30, 'Bajío'],
+      [127, 'Azteca'],
+      [58, 'Banregio'],
+      [130, 'Compartamos'],
+    ]);
+    const numCode = Number(code);
+    if (MX_DISPLAY.has(numCode)) return MX_DISPLAY.get(numCode);
+    const raw = fromApi || `Bank ${code}`;
+    return titleCaseLatam(stripSociedadAnonima(raw).replace(/^BANCO\s+/i, '').trim() || raw);
+  }
+
   // ---- Chile ----
   // BANK_NAMES tiene nombres ya curados para todos los bancos conocidos.
   // Para bancos sin entrada (edge case), aplicar Title Case en vez de solo
@@ -392,6 +437,11 @@ export function getTipo(code) {
   // US FDIC
   if (ST.country === 'usa') {
     if (['NETINC', 'INTINC', 'EINTEXP', 'NONII', 'NONIX'].includes(c)) return 'r1';
+    return 'b1';
+  }
+  // Argentina BCRA / México CNBV
+  if (ST.country === 'argentina' || ST.country === 'mexico') {
+    if (c === 'RESULTADO_NETO' || /^(INGRESOS_|EGRESOS_|GASTOS_|CARGO_|IMPUESTO_|RESULTADO_)/.test(c)) return 'r1';
     return 'b1';
   }
   const p = c[0];

@@ -136,6 +136,10 @@ app.get('/api/bootstrap', async (req, res) => {
                 ? 'Sin períodos cargados para Perú (PE). Ejecuta peru_loader.py (SBS B-2201).'
                 : country === 'US'
                   ? 'Sin períodos cargados para Estados Unidos (US). Ejecuta usa_loader.py (FDIC top-100).'
+                : country === 'AR'
+                  ? 'Sin períodos cargados para Argentina (AR). Ejecuta argentina_loader.py (BCRA datos abiertos).'
+                : country === 'MX'
+                  ? 'Sin períodos cargados para México (MX). Ejecuta mexico_loader.py (CNBV Boletín BM).'
                 : country === 'BR'
                   ? 'Sin períodos cargados para Brasil (BR). Ejecuta brasil_loader.py (BCB IF.data).'
                   : country === 'CL'
@@ -180,6 +184,22 @@ app.get('/api/bootstrap', async (req, res) => {
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'US') {
         const eqCuenta = String(process.env.US_EQUITY_CUENTA || 'EQTOT').trim();
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
+           GROUP BY ins_cod`,
+          [country, eqCuenta, lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      } else if (country === 'AR') {
+        const eqCuenta = String(process.env.AR_EQUITY_CUENTA || 'PATRIMONIO_NETO').trim();
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
+           GROUP BY ins_cod`,
+          [country, eqCuenta, lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      } else if (country === 'MX') {
+        const eqCuenta = String(process.env.MX_EQUITY_CUENTA || 'CAPITAL_CONTABLE').trim();
         patrimonioRows = await query(
           `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
            WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
