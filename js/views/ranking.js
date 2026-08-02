@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon39';
-import { paisSystemName } from '../paises.js?v=bmon39';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon42';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon42';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -21,9 +21,9 @@ function wireCbExportButton() {
 import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon39';
 import { CO_CUIF } from '../coCuentas.js?v=bmon39';
 import { BR_KPI } from '../brCuentas.js?v=bmon39';
-import { UY_KPI } from '../uyCuentas.js?v=bmon40';
-import { PE_KPI } from '../peCuentas.js?v=bmon41';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon39';
+import { UY_KPI } from '../uyCuentas.js?v=bmon42';
+import { PE_KPI } from '../peCuentas.js?v=bmon42';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon42';
 import { apiDatos } from '../api.js?v=bmon39';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
@@ -32,13 +32,21 @@ function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/** Overrides por jurisdicción: el mismo `codigo` numérico es otro banco en CL vs CO. */
+/** Overrides por jurisdicción: el mismo `codigo` numérico es otro banco en cada país. */
 function cbRatingsStorageKey() {
-  return datasetIsoCountry() === 'CO' ? 'cbRatings_CO' : 'cbRatings_CL';
+  return `cbRatings_${datasetIsoCountry()}`;
+}
+
+function cbRatingsBase() {
+  const iso = datasetIsoCountry();
+  if (iso === 'CO') return BANK_RATINGS_CO;
+  if (iso === 'CL') return FELLER_RATINGS;
+  // PE / UY / BR: sin mapa sembrado (evitar colisión con códigos Feller CL)
+  return {};
 }
 
 export function getCBRatings() {
-  const base = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
+  const base = cbRatingsBase();
   const key = cbRatingsStorageKey();
   try {
     let raw = localStorage.getItem(key);
@@ -83,8 +91,15 @@ export async function renderChileanBanks() {
 
   const lastP        = ST.periodos[ST.periodos.length - 1];
   document.getElementById('cbPeriodLabel').textContent  = `Ranked by equity — ${periodLabel(lastP)}`;
-  document.getElementById('cbCurrencyLabel').textContent = ST.currency === 'USD' && ST.usdRate
-    ? `1 USD = $${Math.round(ST.usdRate).toLocaleString('es-CL')}` : '';
+  {
+    const elCcy = document.getElementById('cbCurrencyLabel');
+    if (elCcy) {
+      const loc = paisLocale(ST.country) || 'es-CL';
+      elCcy.textContent = ST.currency === 'USD' && Number(ST.usdRate) > 0
+        ? `1 USD = ${Number(ST.usdRate).toLocaleString(loc, { maximumFractionDigits: 4 })}`
+        : '';
+    }
+  }
 
   try {
     const allBanks   = Object.keys(ST.bancos).map(Number).filter(c => c !== 999);
@@ -261,10 +276,13 @@ export function renderRatingsEditor() {
   const RATING_OPTIONS = ['AAA','AA+','AA','AA-','A+','A','A-','BBB+','BBB','BB+','BB','—'];
   const stored = getCBRatings();
   const banks  = Object.keys(ST.bancos).map(Number).filter(c => c !== 999).sort((a, b) => a - b);
-  const defaultMap = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO : FELLER_RATINGS;
+  const isoR = datasetIsoCountry();
+  const defaultMap = cbRatingsBase();
 
-  const ratingColHdr = datasetIsoCountry() === 'CO' ? 'Rating (Fitch)' : 'Rating (Feller Rate)';
-  const sourceColHdr = datasetIsoCountry() === 'CO' ? 'Calificadora · perspectiva' : 'Source';
+  const ratingColHdr = isoR === 'CO' ? 'Rating (Fitch)'
+    : isoR === 'CL' ? 'Rating (Feller Rate)'
+    : 'Rating';
+  const sourceColHdr = isoR === 'CO' ? 'Calificadora · perspectiva' : 'Source';
   let html = `<table class="tbl"><thead><tr>
     <th>Bank</th>
     <th style="text-align:center;">${ratingColHdr}</th>
@@ -276,12 +294,12 @@ export function renderRatingsEditor() {
     const rating    = stored[code] || '—';
     const isDefault = defaultMap[code] !== undefined;
     const rColor    = RATING_COLORS[rating] || 'var(--text3)';
-    const meta      = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[code] : null;
+    const meta      = isoR === 'CO' ? BANK_RATINGS_CO_META[code] : null;
     const sourceLbl = !isDefault
       ? '✏️ Manual'
       : meta
         ? `${meta.agency} · ${meta.outlook}`
-        : (datasetIsoCountry() === 'CO' ? 'Referencia CO' : 'Feller Rate');
+        : (isoR === 'CO' ? 'Referencia CO' : isoR === 'CL' ? 'Feller Rate' : '—');
     const sourceTip = meta ? escapeAttr(meta.analysis) : '';
     html += `<tr>
       <td style="font-weight:500;">${name}</td>

@@ -5,16 +5,16 @@ import { API_BASE } from './config.js?v=bmon39';
 import { ST, datasetIsoCountry } from './state.js?v=bmon39';
 import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon39';
 import { fetchWithTimeout } from './api.js?v=bmon39';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon39';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon42';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon39';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon42';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon39';
+} from './views/balance.js?v=bmon42';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon39';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon39';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon42';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon39';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon39';
 
@@ -30,7 +30,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon39';
+} from './ui.js?v=bmon42';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon39';
@@ -102,7 +102,13 @@ async function fetchAndApplyBootstrap() {
   applyBootstrapPayload(j);
 }
 
+let _switchGen = 0;
+
 async function switchCountryDataset() {
+  const gen = ++_switchGen;
+  const targetCountry = ST.country;
+
+  // Limpiar estado de dataset anterior de inmediato (evitar bancos/KPIs cruzados)
   ST.data = {};
   ST._series = null;
   ST._kpiRaw = null;
@@ -113,13 +119,23 @@ async function switchCountryDataset() {
   ST._avAccount = null;
   ST._avTreeExpanded = {};
   ST._avGroup = '';
+  ST.periodos = [];
+  ST.bancos = {};
+  ST._patrimonioMap = {};
+  ST._patrimonioRanking = [];
+  ST.selected.clear();
+  ST.selectedOrder = [];
   showErr('');
   setStatus('loading', 'Updating data…');
   setDashboardLoadingOverlay(true, 'Switching country — loading data and charts…');
   try {
     await fetchAndApplyBootstrap();
+    if (gen !== _switchGen || ST.country !== targetCountry) return;
+
     fillPeriodSelectors();
-    await fetchUSDRate().catch(() => {});
+    await fetchUSDRate().catch(() => false);
+    if (gen !== _switchGen || ST.country !== targetCountry) return;
+    syncCurrencyToggleUI();
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
@@ -139,7 +155,6 @@ async function switchCountryDataset() {
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
     else if (isoSwitch === 'UY' || isoSwitch === 'PE') {
-      // Mayor equity del bootstrap; fallback BROU (1) / BCP (3)
       defaultBank = ST._patrimonioRanking?.[0] ?? (isoSwitch === 'PE' ? 3 : 1);
     }
     toggleBank(defaultBank, true);
@@ -148,6 +163,8 @@ async function switchCountryDataset() {
     ST.hasta = selHasta?.value ?? null;
 
     await run();
+    if (gen !== _switchGen || ST.country !== targetCountry) return;
+
     refreshBarLabelsToggleButtons();
     syncCountryChartButtons();
     syncCountryDisabledTabs();
@@ -157,14 +174,27 @@ async function switchCountryDataset() {
     if (activeTab === 'chileanbanks') await renderChileanBanks();
     else if (activeTab === 'accountview') initAccountView();
   } catch (e) {
+    if (gen !== _switchGen) return;
+    // Fail closed: no dejar datos del país anterior bajo la bandera nueva
+    ST.periodos = [];
+    ST.bancos = {};
+    ST._patrimonioMap = {};
+    ST._patrimonioRanking = [];
+    ST._series = null;
+    ST._kpiRaw = null;
+    ST._b1 = null;
+    fillPeriodSelectors();
+    fillBankList();
     setStatus('error', 'Country update');
     showErr(e.message || String(e));
     console.error('[switchCountryDataset]', e);
   } finally {
-    setDashboardLoadingOverlay(false);
-    syncCurrencyToggleUI();
-    syncFinStatementPanelLabels();
-    syncResumenMoraChartButton();
+    if (gen === _switchGen) {
+      setDashboardLoadingOverlay(false);
+      syncCurrencyToggleUI();
+      syncFinStatementPanelLabels();
+      syncResumenMoraChartButton();
+    }
   }
 }
 
@@ -190,7 +220,8 @@ async function init() {
     clearTimeout(wakeTimer);
 
     fillPeriodSelectors();
-    await fetchUSDRate().catch(() => {});
+    await fetchUSDRate().catch(() => false);
+    syncCurrencyToggleUI();
     fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];

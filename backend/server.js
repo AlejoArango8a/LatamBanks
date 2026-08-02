@@ -134,7 +134,11 @@ app.get('/api/bootstrap', async (req, res) => {
               ? 'Sin períodos cargados para Uruguay (UY). Ejecuta uruguay_loader.py (Boletín SSF BCU).'
               : country === 'PE'
                 ? 'Sin períodos cargados para Perú (PE). Ejecuta peru_loader.py (SBS B-2201).'
-                : 'No hay períodos en la base de datos',
+                : country === 'BR'
+                  ? 'Sin períodos cargados para Brasil (BR). Ejecuta brasil_loader.py (BCB IF.data).'
+                  : country === 'CL'
+                    ? 'Sin períodos cargados para Chile (CL). Ejecuta cmf_loader.py.'
+                    : 'No hay períodos en la base de datos',
       });
     }
 

@@ -25,6 +25,8 @@ export const ST = {
   currency: 'USD',
   usdRate: null,
   usdDate: null,
+  /** Fuente FX activa (open.er-api.com | currency-api | mindicador.cl) */
+  usdFxSource: null,
   fontSize: 14,
 
   // Account View state

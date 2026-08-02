@@ -7,8 +7,9 @@ import { ST } from './state.js?v=bmon39';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
-  const isUSD = ST.currency === 'USD' && ST.usdRate;
-  const val = isUSD ? clpRaw / ST.usdRate : clpRaw;
+  if (clpRaw == null || clpRaw === '' || !Number.isFinite(Number(clpRaw))) return '—';
+  const isUSD = ST.currency === 'USD' && Number(ST.usdRate) > 0;
+  const val = isUSD ? Number(clpRaw) / ST.usdRate : Number(clpRaw);
   const sym = isUSD ? 'USD ' : '$';
   const abs = Math.abs(val);
   const sign = val < 0 ? '-' : '';

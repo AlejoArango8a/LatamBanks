@@ -10,8 +10,11 @@ const FALLBACK = {
   version: 0,
   default: 'chile',
   paises: {
-    chile:    { key: 'chile',    iso: 'CL', name: 'Chile',    systemName: 'Chilean Banking System',  currency: 'CLP', locale: 'es-CL', status: 'live', frequency: 'monthly', aliases: ['cl', 'chile'] },
+    chile:    { key: 'chile',    iso: 'CL', name: 'Chile',    systemName: 'Chilean Banking System',    currency: 'CLP', locale: 'es-CL', status: 'live', frequency: 'monthly', aliases: ['cl', 'chile'] },
     colombia: { key: 'colombia', iso: 'CO', name: 'Colombia', systemName: 'Colombian Banking System', currency: 'COP', locale: 'es-CO', status: 'live', frequency: 'monthly', aliases: ['co', 'colombia'] },
+    brasil:   { key: 'brasil',   iso: 'BR', name: 'Brasil',   systemName: 'Brazilian Banking System',  currency: 'BRL', locale: 'pt-BR', status: 'live', frequency: 'quarterly', aliases: ['br', 'brasil', 'brazil'] },
+    peru:     { key: 'peru',     iso: 'PE', name: 'Perú',     systemName: 'Peruvian Banking System',   currency: 'PEN', locale: 'es-PE', status: 'live', frequency: 'monthly', aliases: ['pe', 'peru', 'perú'] },
+    uruguay:  { key: 'uruguay',  iso: 'UY', name: 'Uruguay',  systemName: 'Uruguayan Banking System',  currency: 'UYU', locale: 'es-UY', status: 'live', frequency: 'monthly', aliases: ['uy', 'uruguay'] },
   },
 };
 
@@ -25,7 +28,7 @@ export async function loadPaises() {
     const data = await r.json();
     if (data && data.paises && Object.keys(data.paises).length) REGISTRY = data;
   } catch (e) {
-    console.warn('paises.json no cargó; usando respaldo CL/CO:', e.message);
+    console.warn('paises.json no cargó; usando respaldo CL/CO/BR/PE/UY:', e.message);
   }
   return REGISTRY;
 }

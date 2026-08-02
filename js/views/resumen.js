@@ -1,13 +1,13 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon39';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon42';
 import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon39';
 import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon39';
 import { UY_KPI, uyB1AccountsForRun, uyR1AccountsForRun, uySum, uySeries } from '../uyCuentas.js?v=bmon40';
 import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from '../peCuentas.js?v=bmon41';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon39';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon39';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon42';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon42';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon39';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon39';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon39';
@@ -139,8 +139,7 @@ function refreshKPIsBase() {
     const firstBank  = ST.selectedOrder[0];
     const moraLbl = m.colocaciones && Number.isFinite(m.mora90)
       ? fmtChartPct(nplPctFromRaw(m.mora90, m.colocaciones), false)
-      : '—';
-    const moraSub = !m.colocaciones ? '—' : 'Total Deteriorated Loans vs Total Loans';
+      : null;
     const header     = document.getElementById('bankHeader');
     const headerName = document.getElementById('bankHeaderName');
     const headerSub  = document.getElementById('bankHeaderSub');
@@ -173,7 +172,7 @@ function refreshKPIsBase() {
     <div class="kpi blue"><div class="kpi-label">Net Income · 590000</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>`;
 
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">Deterioro (148·149)</div><div class="kpi-sub">Key Data: suma del activo en cuentas 148### y 149### (deterioro) sobre colocación bruta 140000.</div></div>
+    <div class="kpi" style="grid-column:1/-1;max-width:640px;"><div class="kpi-label">Credit quality · Colombia</div><div class="kpi-val">${moraLbl != null ? `NPL ${moraLbl}` : 'Deterioro (148·149)'}</div><div class="kpi-sub">Key Data: suma del activo en cuentas 148### y 149### (deterioro) sobre colocación bruta 140000.</div></div>
     <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Calificaciones (referencia)</div><div class="kpi-val">Davivienda, Scotiabank Colpatria y Banco Caja Social: AAA</div><div class="kpi-sub">Davivienda es AAA; Scotiabank Colpatria también es AAA; Banco Caja Social también lo es. Más bancos y perspectivas en la pestaña Banking System.</div></div>`;
     syncResChartCustomBtn();
     syncKpiResumenActive(ST._lastResChart || 'patrimonio');
@@ -269,8 +268,8 @@ function refreshKPIsBase() {
   }
 
   if (!(lastMonth >= 1 && lastMonth <= 12)) return;
-  const utilAnualizada = m.utilidad * (12 / lastMonth);
-  const roe        = m.patrimonio ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
+  const utilAnualizada = m.utilidad ? m.utilidad * (12 / lastMonth) : 0;
+  const roe        = m.patrimonio && m.utilidad ? (utilAnualizada / m.patrimonio * 100).toFixed(2) + '%' : '—';
   const roeSubLabel = `Month ${lastMonth} × ${Math.round(12 / lastMonth)}`;
 
   const firstBank  = ST.selectedOrder[0];

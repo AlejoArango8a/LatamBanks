@@ -7,8 +7,8 @@ import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctF
 import { sumRows } from '../api.js?v=bmon39';
 import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon39';
 import { BAL_BR_SECTIONS, R1_BR_ROWS } from '../brCuentas.js?v=bmon39';
-import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon40';
-import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon41';
+import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon42';
+import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon42';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
