@@ -323,7 +323,7 @@
       }
       .hero-left {
         grid-column: 1;
-        max-width: min(480px, 36vw);
+        max-width: min(420px, 32vw);
       }
       .hero-flags-fixed {
         position: absolute;
@@ -331,7 +331,9 @@
         top: 50%;
         transform: translate(-50%, -50%);
         grid-column: 1;
-        max-width: min(720px, calc(100vw - 2 * min(480px, 36vw) - 48px));
+        /* Usa casi todo el carril libre a la derecha del copy */
+        width: min(980px, calc(100vw - min(420px, 32vw) - 96px));
+        max-width: min(980px, calc(100vw - min(420px, 32vw) - 96px));
       }
     }
 
@@ -435,6 +437,11 @@
 
     .flags-zone {
       text-align: center;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(18px, 2.4vh, 28px);
     }
 
     .flags-label {
@@ -452,12 +459,36 @@
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       width: 100%;
-      max-width: min(100%, 560px);
+      max-width: min(100%, 720px);
       margin-inline: auto;
-      gap: clamp(16px, 2.6vw, 28px) clamp(16px, 2.8vw, 28px);
+      gap: clamp(22px, 3.2vw, 40px) clamp(20px, 3.4vw, 44px);
       justify-items: center;
       align-items: start;
       justify-content: center;
+    }
+
+    .flags-americas {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding-top: clamp(4px, 1vh, 10px);
+    }
+    .flags-americas .hero-flag-hit .flag-btn {
+      width: 88px;
+      height: 88px;
+      border-color: rgba(160, 200, 255, 0.55);
+      background: rgba(4, 18, 48, 0.55);
+    }
+    .flags-americas .hero-flag-hit:hover .flag-btn {
+      border-color: rgba(180, 215, 255, 0.85);
+    }
+    .flags-americas .flag-btn img {
+      object-fit: contain;
+      padding: 0;
+      transform: scale(1.02);
+    }
+    .flags-americas .flag-caption.live {
+      letter-spacing: 0.08em;
     }
 
     .flag-entry {
@@ -550,18 +581,26 @@
     /* Pantallas amplias (PC): banderas más grandes y con más aire entre ellas */
     @media (min-width: 900px) {
       .flags-row {
-        max-width: min(100%, 680px);
-        gap: clamp(22px, 2.8vw, 36px) clamp(24px, 3vw, 40px);
+        max-width: min(100%, 860px);
+        gap: clamp(28px, 3.6vw, 48px) clamp(28px, 3.8vw, 52px);
+      }
+      .flag-btn {
+        width: 80px;
+        height: 80px;
       }
     }
     @media (min-width: 1024px) {
       .flags-row {
-        max-width: min(100%, 760px);
-        gap: clamp(28px, 3vw, 44px) clamp(28px, 3.4vw, 48px);
+        max-width: min(100%, 940px);
+        gap: clamp(34px, 4vw, 56px) clamp(36px, 4.2vw, 60px);
       }
       .flag-btn {
-        width: 84px;
-        height: 84px;
+        width: 88px;
+        height: 88px;
+      }
+      .flags-americas .hero-flag-hit .flag-btn {
+        width: 104px;
+        height: 104px;
       }
       .flag-caption {
         font-size: 11px;
@@ -569,8 +608,22 @@
     }
     @media (min-width: 1280px) {
       .flags-row {
-        max-width: min(100%, 840px);
-        gap: clamp(32px, 3.4vw, 52px) clamp(36px, 4vw, 56px);
+        max-width: min(100%, 1040px);
+        gap: clamp(40px, 4.4vw, 64px) clamp(44px, 4.8vw, 72px);
+      }
+      .flag-btn {
+        width: 92px;
+        height: 92px;
+      }
+      .flags-americas .hero-flag-hit .flag-btn {
+        width: 112px;
+        height: 112px;
+      }
+    }
+    @media (min-width: 1600px) {
+      .flags-row {
+        max-width: min(100%, 1120px);
+        gap: clamp(48px, 5vw, 76px) clamp(52px, 5.2vw, 84px);
       }
     }
 
@@ -578,13 +631,17 @@
     @media (max-width: 520px) {
       .flags-row {
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        max-width: min(100%, 360px);
-        gap: clamp(10px, 2.4vw, 14px) clamp(6px, 1.6vw, 12px);
+        max-width: min(100%, 380px);
+        gap: clamp(12px, 2.8vw, 16px) clamp(8px, 2vw, 14px);
       }
       .flag-btn {
-        width: clamp(40px, 11vw, 52px);
-        height: clamp(40px, 11vw, 52px);
+        width: clamp(42px, 11.5vw, 54px);
+        height: clamp(42px, 11.5vw, 54px);
         border-width: 1.5px;
+      }
+      .flags-americas .hero-flag-hit .flag-btn {
+        width: clamp(56px, 14vw, 68px);
+        height: clamp(56px, 14vw, 68px);
       }
       .flag-entry {
         flex: 0 0 auto;
@@ -804,6 +861,14 @@
               <img src="assets/Paraguay%20flag.png" alt="" />
             </span>
             <span class="flag-caption">Paraguay</span>
+          </div>
+        </div>
+        <div class="flags-americas" role="list">
+          <div class="flag-entry" role="listitem">
+            <a class="hero-flag-hit" href="./americas.html" title="Open Americas cross-country monitor (USD)" aria-label="Americas: open cross-country USD monitor">
+              <span class="flag-btn flag-btn-americas"><img src="assets/americas-map.svg" alt="" /></span>
+              <span class="flag-caption live">Americas</span>
+            </a>
           </div>
         </div>
       </div>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Americas Monitor · USD — Latam Banks</title>
+  <meta name="description" content="Compare banks across the Americas in USD using common supervisory balance metrics." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070f24;
+      --bg2: #0c1733;
+      --bg3: #122042;
+      --text: #e8eef8;
+      --text2: #a9b6cc;
+      --text3: #7a879e;
+      --border: rgba(148, 163, 184, 0.18);
+      --accent: #6eb0ff;
+      --navy: #0A1464;
+      --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    html, body {
+      min-height: 100%;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(50, 110, 200, 0.22), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(20, 70, 140, 0.18), transparent 50%),
+        linear-gradient(180deg, #08122c 0%, var(--bg) 40%, #050b1a 100%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .am-nav {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 14px clamp(16px, 3vw, 36px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 12, 32, 0.72);
+      backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .am-nav-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .am-nav-brand img { height: 34px; width: auto; }
+    .am-nav-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .am-nav-titles strong {
+      font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: #fff;
+    }
+    .am-nav-titles span { font-size: 12px; color: var(--text3); }
+    .am-nav-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .am-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text); font: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+    }
+    .am-btn:hover { border-color: rgba(110, 176, 255, 0.45); text-decoration: none; }
+    .am-btn-primary {
+      background: linear-gradient(180deg, #1a3f8c, var(--navy));
+      border-color: rgba(110, 176, 255, 0.35); color: #fff;
+    }
+
+    main.am-main {
+      max-width: 1240px; margin: 0 auto;
+      padding: 28px clamp(16px, 3vw, 36px) 64px;
+    }
+    .am-hero {
+      display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 640px) {
+      .am-hero { grid-template-columns: 1fr; }
+    }
+    .am-hero-map {
+      width: 88px; height: 88px; border-radius: 50%;
+      border: 2px solid rgba(160, 200, 255, 0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .am-hero-map img { width: 100%; height: 100%; display: block; }
+    .am-hero h1 {
+      margin: 0 0 8px; font-size: clamp(26px, 3.4vw, 36px);
+      letter-spacing: -0.03em; line-height: 1.1;
+    }
+    .am-hero p { margin: 0; max-width: 62ch; color: var(--text2); font-size: 15px; line-height: 1.65; }
+    .am-status {
+      margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--text3);
+    }
+
+    .am-toolbar {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
+      margin-bottom: 18px; padding: 14px 0; border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .am-field { display: flex; flex-direction: column; gap: 6px; min-width: 160px; }
+    .am-field label {
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text3); font-family: var(--mono);
+    }
+    .am-field input, .am-field select {
+      padding: 9px 11px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg2); color: var(--text); font: inherit; font-size: 13px;
+      outline: none; min-width: 180px;
+    }
+    .am-field input:focus, .am-field select:focus { border-color: var(--accent); }
+    .am-toolbar-meta {
+      margin-left: auto; font-size: 12px; color: var(--text3); font-family: var(--mono);
+      padding-bottom: 10px;
+    }
+
+    .am-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: start;
+    }
+    @media (max-width: 980px) {
+      .am-grid { grid-template-columns: 1fr; }
+    }
+
+    .am-panel h2 {
+      margin: 0 0 12px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text3); font-family: var(--mono);
+    }
+    .am-chart-wrap {
+      position: relative; height: 300px; border: 1px solid var(--border);
+      background: rgba(8, 18, 42, 0.55); border-radius: 8px; overflow: hidden;
+    }
+    #amChart { width: 100%; height: 100%; display: block; }
+    #amChartEmpty {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--text3); font-size: 14px; padding: 24px; text-align: center;
+    }
+
+    .am-table-wrap {
+      border: 1px solid var(--border); border-radius: 8px; overflow: auto;
+      max-height: min(70vh, 720px); background: rgba(8, 18, 42, 0.4);
+    }
+    table.am-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.am-table thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: #101c3a; color: var(--text3); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; font-family: var(--mono); font-weight: 600;
+      text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    table.am-table td {
+      padding: 11px 10px; border-bottom: 1px solid rgba(148,163,184,0.1);
+      vertical-align: top;
+    }
+    table.am-table tr.is-selected { background: rgba(110, 176, 255, 0.08); }
+    table.am-table tr:hover { background: rgba(255,255,255,0.03); }
+    .am-bank { font-weight: 600; color: #fff; line-height: 1.3; }
+    .am-bank-meta { margin-top: 3px; font-size: 11px; color: var(--text3); font-family: var(--mono); }
+    .am-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+    .am-col-check { width: 34px; }
+    .am-col-rank { width: 36px; color: var(--text3); font-family: var(--mono); font-size: 11px; }
+    .am-col-link { white-space: nowrap; font-size: 12px; }
+    .am-empty { text-align: center; color: var(--text3); padding: 36px !important; }
+
+    .am-notes {
+      margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border);
+      color: var(--text3); font-size: 12px; line-height: 1.6;
+    }
+    .am-notes ul { margin: 8px 0 0 18px; }
+    .am-notes li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <header class="am-nav">
+    <div class="am-nav-brand">
+      <a href="./index.html" title="Back to landing"><img src="assets/LogoBTG-SinFondoBlanco.png" alt="BTG Pactual" /></a>
+      <div class="am-nav-titles">
+        <strong>Americas Monitor</strong>
+        <span>Cross-country · normalized USD</span>
+      </div>
+    </div>
+    <div class="am-nav-actions">
+      <a class="am-btn" href="./index.html">Landing</a>
+      <a class="am-btn am-btn-primary" href="./dashboard.html">Country monitor</a>
+    </div>
+  </header>
+
+  <main class="am-main">
+    <section class="am-hero">
+      <div class="am-hero-map" aria-hidden="true">
+        <img src="assets/americas-map.svg" alt="" />
+      </div>
+      <div>
+        <h1>Compare banks across the Americas</h1>
+        <p>
+          Latest supervisory snapshots from each live jurisdiction, mapped to five common balance metrics
+          and converted to USD. Select up to six banks to benchmark side by side.
+        </p>
+        <div class="am-status" id="amStatus">Loading…</div>
+      </div>
+    </section>
+
+    <div class="am-toolbar">
+      <div class="am-field">
+        <label for="amMetric">Rank by</label>
+        <select id="amMetric">
+          <option value="equity" selected>Equity</option>
+          <option value="assets">Total assets</option>
+          <option value="loans">Loans</option>
+          <option value="deposits">Deposits / funding</option>
+          <option value="net_income">Net income</option>
+        </select>
+      </div>
+      <div class="am-field">
+        <label for="amSearch">Search</label>
+        <input id="amSearch" type="search" placeholder="Bank, country, code…" autocomplete="off" />
+      </div>
+      <button type="button" class="am-btn" id="amClear">Clear selection</button>
+      <div class="am-toolbar-meta" id="amCount">—</div>
+    </div>
+
+    <div class="am-grid">
+      <section class="am-panel">
+        <h2>Universe (USD)</h2>
+        <div class="am-table-wrap">
+          <table class="am-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>#</th>
+                <th>Bank</th>
+                <th class="am-num">Equity</th>
+                <th class="am-num">Assets</th>
+                <th class="am-num">Loans</th>
+                <th class="am-num">Deposits</th>
+                <th class="am-num">Net income</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="amTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="am-panel">
+        <h2>Selected comparison</h2>
+        <div class="am-chart-wrap">
+          <canvas id="amChart"></canvas>
+          <div id="amChartEmpty">Select banks in the table to compare common metrics in USD.</div>
+        </div>
+        <div class="am-notes">
+          <strong>Notes</strong>
+          <ul id="amNotes"></ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/americasApp.js?v=am1"></script>
+</body>
+</html>

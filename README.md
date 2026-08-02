@@ -110,6 +110,8 @@ El dashboard permite elegir Colombia y llamar bootstrap/API con país `CO`; los 
 | Panamá | Activo (SBP reportes individuales → `panama_loader.py`; mensual; USD) |
 | Paraguay | En investigación (BCP; `status: soon` en selectors) |
 
+**Americas Monitor** (`americas.html`, landing map entry): cross-country comparison in **USD** using five common metrics (equity, assets, loans, deposits/funding, net income) from each jurisdiction’s latest loaded period. API: `GET /api/americas/snapshot`.
+
 Carga inicial / backfills: ver `LOADERS_MANANA.md`.
 
 ### Brasil — backfill / carga
