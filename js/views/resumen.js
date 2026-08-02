@@ -9,6 +9,7 @@ import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from 
 import { US_KPI, usB1AccountsForRun, usR1AccountsForRun, usSum, usSeries } from '../usCuentas.js?v=bmon44';
 import { AR_KPI, arB1AccountsForRun, arR1AccountsForRun, arSum, arSeries } from '../arCuentas.js?v=bmon44';
 import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from '../mxCuentas.js?v=bmon44';
+import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon44';
 import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon44';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon44';
 import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon44';
@@ -316,7 +317,7 @@ function refreshKPIsBase() {
     return;
   }
 
-  if (datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX') {
+  if (datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX' || datasetIsoCountry() === 'PA') {
     if (!(lastMonth >= 1 && lastMonth <= 12)) return;
     const isoAM = datasetIsoCountry();
     const utilAnualizada = m.utilidad ? m.utilidad * (12 / lastMonth) : 0;
@@ -347,7 +348,7 @@ function refreshKPIsBase() {
 
     document.getElementById('kpiBalance').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Total Assets</div><div class="kpi-val">${fmtKPI(m.totalAssets)}</div></div>
-    <div class="kpi green"><div class="kpi-label">${isoAM === 'MX' ? 'Loan portfolio' : 'Loans'}</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div></div>
+    <div class="kpi green"><div class="kpi-label">${isoAM === 'MX' || isoAM === 'PA' ? 'Loan portfolio' : 'Loans'}</div><div class="kpi-val">${fmtKPI(m.colocaciones)}</div></div>
     <div class="kpi yellow"><div class="kpi-label">Deposits</div><div class="kpi-val">${fmtKPI(m.depositos)}</div></div>
     <div class="kpi red"><div class="kpi-label">Equity</div><div class="kpi-val">${fmtKPI(m.patrimonio)}</div><div class="kpi-sub">Leverage ${m.patrimonio ? (m.totalAssets / m.patrimonio).toFixed(1) + 'x' : '—'}</div></div>`;
 
@@ -356,6 +357,8 @@ function refreshKPIsBase() {
 
     document.getElementById('kpiCalidad').innerHTML = isoAM === 'AR'
       ? `<div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Argentina · BCRA</div><div class="kpi-val">Datos abiertos entidades</div><div class="kpi-sub">Balance baldet (débito/crédito). Resultado neto = A−P−PN (rdos. integrales del período). NPL no mapeado en este corte.</div></div>`
+      : isoAM === 'PA'
+      ? `<div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Panamá · SBP</div><div class="kpi-val">Reportes individuales</div><div class="kpi-sub">Balance y PyG del Superintendencia de Bancos. Equity = PATRIMONIO · NI = RESULTADO_NETO (YTD). NPL no mapeado en este corte.</div></div>`
       : `<div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">México · CNBV</div><div class="kpi-val">Banca Múltiple</div><div class="kpi-sub">Principales rubros del Boletín Estadístico (Pm2). Captación total como proxy de depósitos. NPL no mapeado en este corte.</div></div>`;
     syncResChartCustomBtn();
     syncKpiResumenActive(ST._lastResChart || 'patrimonio');
@@ -955,13 +958,13 @@ export async function run() {
       return;
     }
 
-    if (datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX') {
+    if (datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX' || datasetIsoCountry() === 'PA') {
       const isoAM = datasetIsoCountry();
-      const KPI = isoAM === 'AR' ? AR_KPI : MX_KPI;
-      const b1Acc = isoAM === 'AR' ? arB1AccountsForRun() : mxB1AccountsForRun();
-      const r1Acc = isoAM === 'AR' ? arR1AccountsForRun() : mxR1AccountsForRun();
-      const sumFn = isoAM === 'AR' ? arSum : mxSum;
-      const seriesFn = isoAM === 'AR' ? arSeries : mxSeries;
+      const KPI = isoAM === 'AR' ? AR_KPI : isoAM === 'MX' ? MX_KPI : PA_KPI;
+      const b1Acc = isoAM === 'AR' ? arB1AccountsForRun() : isoAM === 'MX' ? mxB1AccountsForRun() : paB1AccountsForRun();
+      const r1Acc = isoAM === 'AR' ? arR1AccountsForRun() : isoAM === 'MX' ? mxR1AccountsForRun() : paR1AccountsForRun();
+      const sumFn = isoAM === 'AR' ? arSum : isoAM === 'MX' ? mxSum : paSum;
+      const seriesFn = isoAM === 'AR' ? arSeries : isoAM === 'MX' ? mxSeries : paSeries;
 
       const customAM = resolveCustomKpiForRun();
       const customTipo = customAM ? getTipo(customAM.cuenta) : null;
@@ -1031,7 +1034,9 @@ export async function run() {
       setRunLoadingBar(false);
       setStatus('ok', isoAM === 'AR'
         ? `Argentina BCRA · ${periodos.length} periods · ${ST.selected.size} bank(s)`
-        : `México CNBV · ${periodos.length} periods · ${ST.selected.size} bank(s)`);
+        : isoAM === 'PA'
+          ? `Panamá SBP · ${periodos.length} periods · ${ST.selected.size} bank(s)`
+          : `México CNBV · ${periodos.length} periods · ${ST.selected.size} bank(s)`);
       return;
     }
 
@@ -1230,8 +1235,9 @@ export function showResChart(tipo) {
   if (datasetIsoCountry() === 'US' && ['dep_plazo', 'bonos', 'mora'].includes(tipo)) {
     tipo = 'patrimonio';
   }
-  // AR BCRA / MX CNBV: depósitos totales; sin plazo/bonos/NPL.
-  if ((datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX') && ['dep_plazo', 'bonos', 'mora'].includes(tipo)) {
+  // AR BCRA / MX CNBV / PA SBP: depósitos totales; sin plazo/bonos/NPL.
+  if ((datasetIsoCountry() === 'AR' || datasetIsoCountry() === 'MX' || datasetIsoCountry() === 'PA')
+      && ['dep_plazo', 'bonos', 'mora'].includes(tipo)) {
     tipo = 'patrimonio';
   }
   if (tipo === 'customkpi' && !resolveCustomKpiForRun()) {
@@ -1343,6 +1349,15 @@ export function showResChart(tipo) {
       patrimonio: { rows: b1, cuenta: MX_KPI.patrimonio },
       utilidad:   { rows: r1, cuenta: MX_KPI.utilidad },
       dep_vista:  { rows: b1, cuenta: MX_KPI.depVista },
+    }
+    : datasetIsoCountry() === 'PA'
+    ? {
+      activos:    { rows: b1, cuenta: PA_KPI.activos },
+      coloc:      { rows: b1, cuenta: PA_KPI.colocaciones },
+      pasivos:    { rows: b1, cuenta: PA_KPI.pasivos },
+      patrimonio: { rows: b1, cuenta: PA_KPI.patrimonio },
+      utilidad:   { rows: r1, cuenta: PA_KPI.utilidad },
+      dep_vista:  { rows: b1, cuenta: PA_KPI.depVista },
     }
     : {
       activos:    { rows: b1, cuenta: '100000000' },
@@ -1606,6 +1621,7 @@ export async function showROEChart() {
                     : isoROE === 'PE' ? [PE_KPI.patrimonio]
                     : isoROE === 'AR' ? [AR_KPI.patrimonio]
                     : isoROE === 'MX' ? [MX_KPI.patrimonio]
+                    : isoROE === 'PA' ? [PA_KPI.patrimonio]
                     : isoROE === 'US' ? [US_KPI.patrimonio]
                     : ['300000000'];
     const utCuentas = isoROE === 'BR' ? BR_KPI.utilidad
@@ -1614,6 +1630,7 @@ export async function showROEChart() {
                     : isoROE === 'PE' ? [PE_KPI.utilidad]
                     : isoROE === 'AR' ? [AR_KPI.utilidad]
                     : isoROE === 'MX' ? [MX_KPI.utilidad]
+                    : isoROE === 'PA' ? [PA_KPI.utilidad]
                     : isoROE === 'US' ? [US_KPI.utilidad]
                     : ['590000000'];
 

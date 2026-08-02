@@ -156,8 +156,8 @@ async function switchCountryDataset() {
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
     else if (isoSwitch === 'UY' || isoSwitch === 'PE' || isoSwitch === 'US'
-          || isoSwitch === 'AR' || isoSwitch === 'MX') {
-      // UY BROU=1 · PE BCP=3 · US JPM=628 · AR Nación=11 · MX BBVA=12
+          || isoSwitch === 'AR' || isoSwitch === 'MX' || isoSwitch === 'PA') {
+      // UY BROU=1 · PE BCP=3 · US JPM=628 · AR Nación=11 · MX BBVA=12 · PA top equity
       defaultBank = ST._patrimonioRanking?.[0]
         ?? (isoSwitch === 'PE' ? 3
           : isoSwitch === 'US' ? 628
@@ -247,7 +247,7 @@ async function init() {
       if (isoInit === 'CO') def = 66;
       else if (isoInit === 'BR') def = 1000080336;
       else if (isoInit === 'UY' || isoInit === 'PE' || isoInit === 'US'
-            || isoInit === 'AR' || isoInit === 'MX') {
+            || isoInit === 'AR' || isoInit === 'MX' || isoInit === 'PA') {
         def = ST._patrimonioRanking?.[0]
           ?? (isoInit === 'PE' ? 3
             : isoInit === 'US' ? 628

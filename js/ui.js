@@ -379,6 +379,7 @@ const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
 const US_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const AR_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const MX_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+const PA_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 export function syncCountryChartButtons() {
   const iso = datasetIsoCountry();
   const isBR = iso === 'BR';
@@ -387,9 +388,11 @@ export function syncCountryChartButtons() {
   const isUS = iso === 'US';
   const isAR = iso === 'AR';
   const isMX = iso === 'MX';
+  const isPA = iso === 'PA';
   const allIds = new Set([
     ...BR_DISABLED_CHART_BTNS, ...UY_DISABLED_CHART_BTNS, ...PE_DISABLED_CHART_BTNS,
     ...US_DISABLED_CHART_BTNS, ...AR_DISABLED_CHART_BTNS, ...MX_DISABLED_CHART_BTNS,
+    ...PA_DISABLED_CHART_BTNS,
   ]);
   allIds.forEach(id => {
     const btn = document.getElementById(id);
@@ -399,7 +402,8 @@ export function syncCountryChartButtons() {
       || (isPE && PE_DISABLED_CHART_BTNS.includes(id))
       || (isUS && US_DISABLED_CHART_BTNS.includes(id))
       || (isAR && AR_DISABLED_CHART_BTNS.includes(id))
-      || (isMX && MX_DISABLED_CHART_BTNS.includes(id));
+      || (isMX && MX_DISABLED_CHART_BTNS.includes(id))
+      || (isPA && PA_DISABLED_CHART_BTNS.includes(id));
     btn.disabled = disable;
     btn.classList.toggle('rcbtn-disabled', disable);
     if (disable) {
@@ -408,6 +412,7 @@ export function syncCountryChartButtons() {
         : isUS ? 'FDIC top-N: sin desglose vista/plazo / NPL en este corte'
         : isAR ? 'BCRA: depósitos totales (sin vista/plazo) · NPL no mapeado'
         : isMX ? 'CNBV Pm2: captación total (sin vista/plazo) · NPL no mapeado'
+        : isPA ? 'SBP: depósitos totales (sin vista/plazo) · NPL no mapeado'
         : 'Sin dato para Perú por ahora';
     } else {
       btn.removeAttribute('title');
@@ -415,14 +420,15 @@ export function syncCountryChartButtons() {
   });
   const depVista = document.getElementById('btnResChartDepVista');
   if (depVista && !isBR) {
-    depVista.textContent = (isUY || isUS || isAR || isMX) ? '🏦 Deposits' : '👁 Demand Dep.';
+    depVista.textContent = (isUY || isUS || isAR || isMX || isPA) ? '🏦 Deposits' : '👁 Demand Dep.';
   }
 }
 
-// Pestañas Account View: deshabilitar en cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2)
+// Pestañas Account View: deshabilitar en cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2 / SBP)
 const US_DISABLED_TABS = ['accountview'];
 const AR_DISABLED_TABS = ['accountview'];
 const MX_DISABLED_TABS = ['accountview'];
+const PA_DISABLED_TABS = ['accountview'];
 
 // Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
 // Balance e Income Statement ya habilitados (Relatorios 2-4 cargados).
@@ -433,8 +439,12 @@ export function syncCountryDisabledTabs() {
     : iso === 'US' ? US_DISABLED_TABS
     : iso === 'AR' ? AR_DISABLED_TABS
     : iso === 'MX' ? MX_DISABLED_TABS
+    : iso === 'PA' ? PA_DISABLED_TABS
     : [];
-  const allTabs = new Set([...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS, ...MX_DISABLED_TABS]);
+  const allTabs = new Set([
+    ...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS,
+    ...MX_DISABLED_TABS, ...PA_DISABLED_TABS,
+  ]);
   allTabs.forEach(t => {
     const btn = document.querySelector(`.tab[data-tab="${t}"]`);
     if (!btn) return;
@@ -445,6 +455,7 @@ export function syncCountryDisabledTabs() {
       btn.title = iso === 'US' ? 'Resumen FDIC — Account View no aplica'
         : iso === 'AR' ? 'BCRA open data — Account View no aplica'
         : iso === 'MX' ? 'CNBV Pm2 — Account View no aplica'
+        : iso === 'PA' ? 'SBP reportes — Account View no aplica'
         : 'No disponible para Brasil todavía';
     } else btn.removeAttribute('title');
   });
@@ -460,6 +471,7 @@ export function syncCountryFlagsVisual(activeCountryKey) {
     chile: 'flagChile', colombia: 'flagColombia', brasil: 'flagBrasil',
     peru: 'flagPeru', uruguay: 'flagUruguay', usa: 'flagUSA',
     argentina: 'flagArgentina', mexico: 'flagMexico',
+    panama: 'flagPanama', paraguay: 'flagParaguay',
   };
   Object.entries(flags).forEach(([c, id]) => {
     const btn = document.getElementById(id);
@@ -469,7 +481,7 @@ export function syncCountryFlagsVisual(activeCountryKey) {
   });
 }
 
-const LIVE_COUNTRY_KEYS = ['chile', 'colombia', 'brasil', 'peru', 'uruguay', 'usa', 'argentina', 'mexico'];
+const LIVE_COUNTRY_KEYS = ['chile', 'colombia', 'brasil', 'peru', 'uruguay', 'usa', 'argentina', 'mexico', 'panama'];
 
 export function selectCountry(country) {
   syncCountryFlagsVisual(country);

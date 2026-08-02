@@ -140,6 +140,8 @@ app.get('/api/bootstrap', async (req, res) => {
                   ? 'Sin períodos cargados para Argentina (AR). Ejecuta argentina_loader.py (BCRA datos abiertos).'
                 : country === 'MX'
                   ? 'Sin períodos cargados para México (MX). Ejecuta mexico_loader.py (CNBV Boletín BM).'
+                : country === 'PA'
+                  ? 'Sin períodos cargados para Panamá (PA). Ejecuta panama_loader.py (SBP reportes individuales).'
                 : country === 'BR'
                   ? 'Sin períodos cargados para Brasil (BR). Ejecuta brasil_loader.py (BCB IF.data).'
                   : country === 'CL'
@@ -200,6 +202,14 @@ app.get('/api/bootstrap', async (req, res) => {
         ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'MX') {
         const eqCuenta = String(process.env.MX_EQUITY_CUENTA || 'CAPITAL_CONTABLE').trim();
+        patrimonioRows = await query(
+          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
+           GROUP BY ins_cod`,
+          [country, eqCuenta, lastPeriodo],
+        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+      } else if (country === 'PA') {
+        const eqCuenta = String(process.env.PA_EQUITY_CUENTA || 'PATRIMONIO').trim();
         patrimonioRows = await query(
           `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
            WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3

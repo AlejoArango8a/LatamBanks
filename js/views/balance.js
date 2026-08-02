@@ -12,6 +12,7 @@ import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon44';
 import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon44';
 import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon44';
 import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon44';
+import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon44';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -115,6 +116,7 @@ export function showBalTab(sec, bankCode) {
              : iso === 'US' ? BAL_US_SECTIONS[sec]
              : iso === 'AR' ? BAL_AR_SECTIONS[sec]
              : iso === 'MX' ? BAL_MX_SECTIONS[sec]
+             : iso === 'PA' ? BAL_PA_SECTIONS[sec]
              : BAL_SECTIONS[sec];
   if (!rows) return;
 
@@ -125,6 +127,7 @@ export function showBalTab(sec, bankCode) {
   const isUS = iso === 'US';
   const isAR = iso === 'AR';
   const isMX = iso === 'MX';
+  const isPA = iso === 'PA';
   const sameIns = (row, code) => Number(row.ins_cod) === Number(code);
 
   let b1Map = null;
@@ -145,7 +148,7 @@ export function showBalTab(sec, bankCode) {
   if (banks.length === 1) {
     const code = banks[0];
     const amtLabel = ST.currency === 'USD' ? 'USD' : `MM$ ${reportingLocalCurrencyISO()}`;
-    if (isCO || isBR || isUY || isPE || isUS || isAR || isMX) {
+    if (isCO || isBR || isUY || isPE || isUS || isAR || isMX || isPA) {
       let html = `<div style="overflow-x:auto"><table class="tbl"><thead><tr>
         <th class="cod">Account</th><th>Description</th>
         <th class="r">${amtLabel}</th>
@@ -258,6 +261,7 @@ export function renderResTable(m) {
                : datasetIsoCountry() === 'US' ? R1_US_ROWS
                : datasetIsoCountry() === 'AR' ? R1_AR_ROWS
                : datasetIsoCountry() === 'MX' ? R1_MX_ROWS
+               : datasetIsoCountry() === 'PA' ? R1_PA_ROWS
                : R1_ROWS;
 
   if (ST._series && ST._series.r1 && ST._lastP) {

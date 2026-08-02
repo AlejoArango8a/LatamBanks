@@ -18,6 +18,8 @@ const FALLBACK = {
     usa:       { key: 'usa',       iso: 'US', name: 'United States', systemName: 'US Banking System',       currency: 'USD', locale: 'en-US', status: 'live', frequency: 'quarterly', aliases: ['us', 'usa', 'eeuu', 'united states'] },
     argentina: { key: 'argentina', iso: 'AR', name: 'Argentina',     systemName: 'Argentine Banking System', currency: 'ARS', locale: 'es-AR', status: 'live', frequency: 'monthly',  aliases: ['ar', 'argentina', 'arg'] },
     mexico:    { key: 'mexico',    iso: 'MX', name: 'México',        systemName: 'Mexican Banking System',   currency: 'MXN', locale: 'es-MX', status: 'live', frequency: 'monthly',  aliases: ['mx', 'mexico', 'méxico', 'mex'] },
+    panama:    { key: 'panama',    iso: 'PA', name: 'Panamá',        systemName: 'Panamanian Banking System', currency: 'USD', locale: 'es-PA', status: 'live', frequency: 'monthly', aliases: ['pa', 'panama', 'panamá'] },
+    paraguay:  { key: 'paraguay',  iso: 'PY', name: 'Paraguay',      systemName: 'Paraguayan Banking System', currency: 'PYG', locale: 'es-PY', status: 'soon', frequency: 'monthly', aliases: ['py', 'paraguay'] },
   },
 };
 
