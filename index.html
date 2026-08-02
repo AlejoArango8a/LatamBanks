@@ -290,7 +290,7 @@
       gap: var(--hero-pitch-gap);
     }
 
-    /* Banderas: carril central fijo ⇒ siempre entre dos columnas iguales (centrado viewport) */
+    /* Banderas: carril central ⇒ centradas en el viewport entre dos columnas iguales */
     .hero-flags-fixed {
       grid-column: 2;
       justify-self: center;
@@ -311,6 +311,28 @@
     }
     .hero-flags-fixed .flags-zone {
       pointer-events: auto;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Pantalla amplia: anclar el bloque al centro real del hero (más aire vs. el copy) */
+    @media (min-width: 1180px) {
+      .hero-stage {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .hero-left {
+        grid-column: 1;
+        max-width: min(480px, 36vw);
+      }
+      .hero-flags-fixed {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        grid-column: 1;
+        max-width: min(720px, calc(100vw - 2 * min(480px, 36vw) - 48px));
+      }
     }
 
     .hero-copy-actions.hero-actions-row {
@@ -430,11 +452,12 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       width: 100%;
-      max-width: min(100%, 420px);
+      max-width: min(100%, 460px);
       margin-inline: auto;
-      gap: clamp(14px, 2.2vw, 22px) clamp(16px, 2.8vw, 28px);
+      gap: clamp(16px, 2.6vw, 28px) clamp(20px, 3.2vw, 36px);
       justify-items: center;
       align-items: start;
+      justify-content: center;
     }
 
     .flag-entry {
@@ -525,10 +548,16 @@
     }
 
     /* Pantallas amplias (PC): banderas más grandes y con más aire entre ellas */
+    @media (min-width: 900px) {
+      .flags-row {
+        max-width: min(100%, 560px);
+        gap: clamp(22px, 2.8vw, 36px) clamp(32px, 3.6vw, 48px);
+      }
+    }
     @media (min-width: 1024px) {
       .flags-row {
-        max-width: min(100%, 520px);
-        gap: clamp(20px, 2.4vw, 32px) clamp(28px, 3vw, 40px);
+        max-width: min(100%, 620px);
+        gap: clamp(28px, 3vw, 44px) clamp(40px, 4vw, 56px);
       }
       .flag-btn {
         width: 84px;
@@ -536,6 +565,12 @@
       }
       .flag-caption {
         font-size: 11px;
+      }
+    }
+    @media (min-width: 1280px) {
+      .flags-row {
+        max-width: min(100%, 700px);
+        gap: clamp(32px, 3.4vw, 52px) clamp(48px, 4.8vw, 68px);
       }
     }
 
