@@ -313,6 +313,7 @@ export function bankName(code) {
   // ---- United States (FDIC CERT) ----
   if (ST.country === 'usa') {
     const US_DISPLAY = new Map([
+      [35154, 'BTG Pactual Bank'],
       [628,   'JPMorgan Chase'],
       [3510,  'Bank of America'],
       [3511,  'Wells Fargo'],

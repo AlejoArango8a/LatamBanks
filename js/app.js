@@ -1,23 +1,23 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon46';
-import { ST, datasetIsoCountry } from './state.js?v=bmon46';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon46';
-import { fetchWithTimeout } from './api.js?v=bmon46';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon46';
+import { API_BASE } from './config.js?v=bmon47';
+import { ST, datasetIsoCountry } from './state.js?v=bmon47';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon47';
+import { fetchWithTimeout } from './api.js?v=bmon47';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon47';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon46';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon47';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon46';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon46';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon46';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon46';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon46';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon46';
+} from './views/balance.js?v=bmon47';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon47';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon47';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon47';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon47';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon47';
 
 // UI
 import {
@@ -31,11 +31,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon46';
+} from './ui.js?v=bmon47';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon46';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon46';
+import { exportTableById, exportChartTable } from './export.js?v=bmon47';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon47';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -155,12 +155,13 @@ async function switchCountryDataset() {
     let defaultBank = 59;
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
-    else if (isoSwitch === 'UY' || isoSwitch === 'PE' || isoSwitch === 'US'
-          || isoSwitch === 'AR' || isoSwitch === 'MX' || isoSwitch === 'PA') {
-      // UY BROU=1 · PE BCP=3 · US JPM=628 · AR Nación=11 · MX BBVA=12 · PA top equity
+    else if (isoSwitch === 'UY') defaultBank = 157;      // HSBC Uruguay
+    else if (isoSwitch === 'US') defaultBank = 35154;    // BTG Pactual Bank, N.A.
+    else if (isoSwitch === 'PE' || isoSwitch === 'AR'
+          || isoSwitch === 'MX' || isoSwitch === 'PA') {
+      // PE BCP=3 · AR Nación=11 · MX BBVA=12 · PA top equity
       defaultBank = ST._patrimonioRanking?.[0]
         ?? (isoSwitch === 'PE' ? 3
-          : isoSwitch === 'US' ? 628
           : isoSwitch === 'AR' ? 11
           : isoSwitch === 'MX' ? 12
           : 1);
@@ -246,11 +247,12 @@ async function init() {
       let def = 59;
       if (isoInit === 'CO') def = 66;
       else if (isoInit === 'BR') def = 1000080336;
-      else if (isoInit === 'UY' || isoInit === 'PE' || isoInit === 'US'
-            || isoInit === 'AR' || isoInit === 'MX' || isoInit === 'PA') {
+      else if (isoInit === 'UY') def = 157;       // HSBC Uruguay
+      else if (isoInit === 'US') def = 35154;     // BTG Pactual Bank, N.A.
+      else if (isoInit === 'PE' || isoInit === 'AR'
+            || isoInit === 'MX' || isoInit === 'PA') {
         def = ST._patrimonioRanking?.[0]
           ?? (isoInit === 'PE' ? 3
-            : isoInit === 'US' ? 628
             : isoInit === 'AR' ? 11
             : isoInit === 'MX' ? 12
             : 1);
