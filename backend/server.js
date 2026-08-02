@@ -284,6 +284,292 @@ app.get('/api/bootstrap', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/americas/snapshot — top banks per live country, common KPIs
+// Latest period per jurisdiction; amounts in local reporting units.
+// Client converts to USD via FX. Common metrics: assets, loans, equity,
+// deposits, net_income.
+// ============================================================
+const BR_AMERICAS_EXCLUDE = new Set([
+  1000081847, 1000081665, 1000086581, 1000084686, 1000081184, 1000086158, 1000084710,
+]);
+
+/** Canonical balance metrics available for every live LatamBanks country. */
+const AMERICAS_SPECS = {
+  CL: {
+    key: 'chile',
+    equityTipo: 'b1',
+    equityCuentas: ['300000000'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['100000000'] },
+      loans: { tipo: 'b1', cuentas: ['500000000'] },
+      equity: { tipo: 'b1', cuentas: ['300000000'] },
+      deposits: { tipo: 'b1', cuentas: ['241000000', '242000000'] },
+      net_income: { tipo: 'r1', cuentas: ['590000000'] },
+    },
+  },
+  CO: {
+    key: 'colombia',
+    equityTipo: 'b1',
+    equityCuentas: ['300000'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['100000'] },
+      loans: { tipo: 'b1', cuentas: ['140000'] },
+      equity: { tipo: 'b1', cuentas: ['300000'] },
+      deposits: { tipo: 'b1', cuentas: ['210500', '210700'] },
+      net_income: { tipo: 'r1', cuentas: ['590000'] },
+    },
+  },
+  BR: {
+    key: 'brasil',
+    equityTipo: 'p',
+    equityCuentas: ['78186', '140246'],
+    metrics: {
+      assets: { tipo: 'p', cuentas: ['78182', '140220'] },
+      loans: { tipo: 'p', cuentas: ['78183', '141873'] },
+      equity: { tipo: 'p', cuentas: ['78186', '140246'] },
+      deposits: { tipo: 'p', cuentas: ['78185', '140239'] },
+      net_income: { tipo: 'p', cuentas: ['78187', '141870'] },
+    },
+  },
+  PE: {
+    key: 'peru',
+    equityTipo: 'b1',
+    equityCuentas: ['PATRIMONIO'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['TOTAL_ACTIVO'] },
+      loans: { tipo: 'b1', cuentas: ['CREDITOS_NETOS'] },
+      equity: { tipo: 'b1', cuentas: ['PATRIMONIO'] },
+      deposits: { tipo: 'b1', cuentas: ['OBLIGACIONES_PUBLICO'] },
+      net_income: { tipo: 'r1', cuentas: ['RESULTADO_NETO'] },
+    },
+  },
+  UY: {
+    key: 'uruguay',
+    equityTipo: 'b1',
+    equityCuentas: ['3'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['1'] },
+      loans: { tipo: 'b1', cuentas: ['1.4.1', '1.4.2', '1.4.3'] },
+      equity: { tipo: 'b1', cuentas: ['3'] },
+      deposits: { tipo: 'b1', cuentas: ['2.1.2', '2.1.3', '2.1.4'] },
+      net_income: { tipo: 'r1', cuentas: ['R_EJERCICIO'] },
+    },
+  },
+  US: {
+    key: 'usa',
+    equityTipo: 'b1',
+    equityCuentas: ['EQTOT'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['ASSET'] },
+      loans: { tipo: 'b1', cuentas: ['LNLS'] },
+      equity: { tipo: 'b1', cuentas: ['EQTOT'] },
+      deposits: { tipo: 'b1', cuentas: ['DEP'] },
+      net_income: { tipo: 'r1', cuentas: ['NETINC'] },
+    },
+  },
+  AR: {
+    key: 'argentina',
+    equityTipo: 'b1',
+    equityCuentas: ['PATRIMONIO_NETO'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['TOTAL_ACTIVO'] },
+      loans: { tipo: 'b1', cuentas: ['PRESTAMOS'] },
+      equity: { tipo: 'b1', cuentas: ['PATRIMONIO_NETO'] },
+      deposits: { tipo: 'b1', cuentas: ['DEPOSITOS'] },
+      net_income: { tipo: 'r1', cuentas: ['RESULTADO_NETO'] },
+    },
+  },
+  MX: {
+    key: 'mexico',
+    equityTipo: 'b1',
+    equityCuentas: ['CAPITAL_CONTABLE'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['TOTAL_ACTIVO'] },
+      loans: { tipo: 'b1', cuentas: ['CARTERA_TOTAL'] },
+      equity: { tipo: 'b1', cuentas: ['CAPITAL_CONTABLE'] },
+      deposits: { tipo: 'b1', cuentas: ['CAPTACION_TOTAL'] },
+      net_income: { tipo: 'r1', cuentas: ['RESULTADO_NETO'] },
+    },
+  },
+  PA: {
+    key: 'panama',
+    equityTipo: 'b1',
+    equityCuentas: ['PATRIMONIO'],
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['TOTAL_ACTIVO'] },
+      loans: { tipo: 'b1', cuentas: ['CARTERA_CREDITICIA'] },
+      equity: { tipo: 'b1', cuentas: ['PATRIMONIO'] },
+      deposits: { tipo: 'b1', cuentas: ['DEPOSITOS'] },
+      net_income: { tipo: 'r1', cuentas: ['RESULTADO_NETO'] },
+    },
+  },
+};
+
+async function americasSnapshotForCountry(iso, topN) {
+  const meta = REGISTRY.paises[AMERICAS_SPECS[iso]?.key];
+  const spec = AMERICAS_SPECS[iso];
+  if (!meta || !spec || meta.status !== 'live') return null;
+
+  const periodRows = await query(
+    `SELECT DISTINCT periodo FROM datos_financieros WHERE country = $1 ORDER BY periodo ASC`,
+    [iso],
+  );
+  if (!periodRows.length) {
+    return {
+      iso,
+      key: meta.key,
+      name: meta.name,
+      currency: meta.currency,
+      period: null,
+      banks: [],
+      error: 'No periods loaded',
+    };
+  }
+  const period = periodRows[periodRows.length - 1].periodo;
+
+  let equityRows = await query(
+    `SELECT ins_cod::int AS ins_cod, SUM(monto_total::bigint) AS equity
+     FROM datos_financieros
+     WHERE country = $1 AND tipo = $2 AND cuenta = ANY($3) AND periodo = $4
+       AND ins_cod <> 999
+     GROUP BY ins_cod
+     ORDER BY equity DESC NULLS LAST
+     LIMIT $5`,
+    [iso, spec.equityTipo, spec.equityCuentas, period, topN * (iso === 'BR' ? 3 : 1)],
+  );
+
+  if (iso === 'BR') {
+    equityRows = equityRows
+      .filter((r) => !BR_AMERICAS_EXCLUDE.has(Number(r.ins_cod)))
+      .slice(0, topN);
+  } else {
+    equityRows = equityRows.slice(0, topN);
+  }
+
+  const codes = equityRows.map((r) => Number(r.ins_cod)).filter((n) => Number.isFinite(n));
+  if (!codes.length) {
+    return {
+      iso,
+      key: meta.key,
+      name: meta.name,
+      currency: meta.currency,
+      period,
+      banks: [],
+    };
+  }
+
+  const nameRows = await query(
+    `SELECT codigo::int AS codigo, razon_social FROM instituciones
+     WHERE country = $1 AND codigo = ANY($2::int[])`,
+    [iso, codes],
+  );
+  const nameMap = Object.fromEntries(nameRows.map((r) => [Number(r.codigo), r.razon_social]));
+
+  // Flatten all (tipo, cuenta) pairs for one query
+  const metricKeys = Object.keys(spec.metrics);
+  const tipoCuenta = [];
+  for (const mk of metricKeys) {
+    const m = spec.metrics[mk];
+    for (const c of m.cuentas) tipoCuenta.push({ tipo: m.tipo, cuenta: c, metric: mk });
+  }
+  const tipos = [...new Set(tipoCuenta.map((x) => x.tipo))];
+  const cuentas = [...new Set(tipoCuenta.map((x) => x.cuenta))];
+
+  const dataRows = await query(
+    `SELECT ins_cod::int AS ins_cod, tipo, cuenta, SUM(monto_total::bigint) AS monto_total
+     FROM datos_financieros
+     WHERE country = $1 AND periodo = $2 AND tipo = ANY($3) AND cuenta = ANY($4)
+       AND ins_cod = ANY($5::int[])
+     GROUP BY ins_cod, tipo, cuenta`,
+    [iso, period, tipos, cuentas, codes],
+  );
+
+  const byBank = new Map();
+  for (const code of codes) {
+    byBank.set(code, {
+      code,
+      name: nameMap[code] || `Bank ${code}`,
+      metrics: Object.fromEntries(metricKeys.map((k) => [k, 0])),
+    });
+  }
+  for (const row of dataRows) {
+    const bank = byBank.get(Number(row.ins_cod));
+    if (!bank) continue;
+    for (const tc of tipoCuenta) {
+      if (tc.tipo === row.tipo && tc.cuenta === row.cuenta) {
+        bank.metrics[tc.metric] += Number(row.monto_total) || 0;
+      }
+    }
+  }
+
+  const banks = codes
+    .map((c) => byBank.get(c))
+    .filter(Boolean)
+    .sort((a, b) => (b.metrics.equity || 0) - (a.metrics.equity || 0));
+
+  return {
+    iso,
+    key: meta.key,
+    name: meta.name,
+    currency: meta.currency,
+    period,
+    banks,
+  };
+}
+
+app.get('/api/americas/snapshot', async (req, res) => {
+  try {
+    const topN = Math.max(5, Math.min(40, parseInt(String(req.query.top || '15'), 10) || 15));
+    const isos = Object.keys(AMERICAS_SPECS).filter((iso) => {
+      const key = AMERICAS_SPECS[iso].key;
+      return REGISTRY.paises[key]?.status === 'live' && LIVE_ISOS.has(iso);
+    });
+
+    // Parallel per-country (pool max=2 → still OK; keep concurrency modest)
+    const countries = [];
+    for (const iso of isos) {
+      try {
+        // sequential batches of 2 to respect pool size
+        countries.push(await americasSnapshotForCountry(iso, topN));
+      } catch (e) {
+        const meta = REGISTRY.paises[AMERICAS_SPECS[iso].key];
+        countries.push({
+          iso,
+          key: meta?.key,
+          name: meta?.name || iso,
+          currency: meta?.currency || '',
+          period: null,
+          banks: [],
+          error: String(e.message || e),
+        });
+      }
+    }
+
+    res.json({
+      ok: true,
+      top: topN,
+      metrics: [
+        { key: 'equity', label: 'Equity' },
+        { key: 'assets', label: 'Total assets' },
+        { key: 'loans', label: 'Loans' },
+        { key: 'deposits', label: 'Deposits / funding' },
+        { key: 'net_income', label: 'Net income' },
+      ],
+      notes: [
+        'Each country uses its latest loaded supervisory period (may differ across jurisdictions).',
+        'Amounts are returned in local reporting currency; convert to USD on the client.',
+        'Deposit definitions vary (e.g. Brazil captações, Mexico captación total).',
+        'Net income is typically YTD and is not annualized across countries.',
+      ],
+      countries: countries.filter(Boolean),
+    });
+  } catch (e) {
+    console.error('/api/americas/snapshot error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // POST /api/datos — datos financieros filtrados
 // Body: { tipo|tipos[], periodos[], cuentas[], bancos[]?, select? }
 // ============================================================
