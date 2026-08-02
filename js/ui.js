@@ -87,7 +87,11 @@ export function fillBankList() {
 
   if (ST.selected.size === 0) {
     const iso = datasetIsoCountry();
-    const prefer = iso === 'BR' ? 1000080336 : iso === 'CO' ? 66 : 59;
+    const prefer = iso === 'BR' ? 1000080336
+      : iso === 'CO' ? 66
+      : iso === 'UY' ? 157
+      : iso === 'US' ? 35154
+      : 59;
     const def = codes.includes(prefer) ? prefer : codes[0];
     toggleBank(def, true); fillBankList();
     return;
