@@ -622,7 +622,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             periods = [p for p in periods if p <= args.to_dt]
         if not args.all and not args.to_dt and args.from_dt == MIN_PERIOD and not args.month:
             # incremental default: last few available
-            periods = periods[-4:]
+            periods = periods[-10:]
 
     if args.dry_run:
         print(f"Meses objetivo: {len(periods)}")

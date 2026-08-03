@@ -476,7 +476,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         )
     else:
         # Cron / default: solo meses recientes con índice
-        periods = [p for p in recent_candidate_periods(4) if index_exists(p)]
+        periods = [p for p in recent_candidate_periods(10) if index_exists(p)]
 
     if args.from_dt:
         periods = [p for p in periods if p >= args.from_dt]

@@ -135,19 +135,21 @@ def http_bytes(url: str, retries: int = 3, backoff: float = 3.0) -> bytes:
 
 
 def index_exists(periodo: str) -> bool:
+    """True only if the period .7z is actually downloadable (HEAD is unreliable on BCRA)."""
     url = file_url(periodo)
     try:
-        req = Request(url, method="HEAD", headers={"User-Agent": "LatamBanksAR/1.0"})
-        with urlopen(req, timeout=30) as r:
-            return 200 <= r.status < 400
-    except Exception:
-        # algunos hosts no soportan HEAD: probar GET corto
-        try:
-            req = Request(url, headers={"User-Agent": "LatamBanksAR/1.0", "Range": "bytes=0-16"})
-            with urlopen(req, timeout=45) as r:
+        req = Request(url, headers={"User-Agent": "LatamBanksAR/1.0", "Range": "bytes=0-16"})
+        with urlopen(req, timeout=45) as r:
+            chunk = r.read(4)
+            ctype = (r.headers.get("Content-Type") or "").lower()
+            if chunk.startswith(b"7z") or "7z" in ctype or "octet" in ctype:
                 return True
-        except Exception:
-            return False
+            # Some CDNs omit magic on ranged responses — try tiny full GET status only when CT looks binary
+            if "html" in ctype or chunk[:1] == b"<":
+                return False
+            return len(chunk) > 0 and 200 <= r.status < 400
+    except Exception:
+        return False
 
 
 def discover_available_periods(start: str = MIN_PERIOD, end: str | None = None) -> list[str]:
@@ -472,7 +474,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     elif args.all or args.to_dt or (args.from_dt and args.from_dt != MIN_PERIOD):
         periods = discover_available_periods(args.from_dt, args.to_dt)
     else:
-        periods = [p for p in recent_candidate_periods(4) if index_exists(p)]
+        periods = [p for p in recent_candidate_periods(10) if index_exists(p)]
 
     if args.from_dt:
         periods = [p for p in periods if p >= args.from_dt]
@@ -525,7 +527,13 @@ def main(argv: Iterable[str] | None = None) -> int:
             "…" if len(periods) > 6 else "",
         )
         for p in periods:
-            load_month(conn, p)
+            try:
+                load_month(conn, p)
+            except HTTPError as e:
+                if e.code == 404:
+                    log.warning("dt=%s no publicado aún (404) — skip", p)
+                    continue
+                raise
         return 0
     finally:
         conn.close()

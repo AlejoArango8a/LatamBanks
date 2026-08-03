@@ -171,14 +171,23 @@ def main():
         print(f'  {RD}Error al conectar con CockroachDB:{RS}\n  {e}\n')
         sys.exit(1)
 
+    force = ('--yes' in sys.argv) or (os.environ.get('CMF_FORCE', '').strip() in ('1', 'true', 'yes'))
     if periodo in loaded:
         print(f'  {YL}⚠  El período {_label(periodo)} ya está cargado.{RS}')
-        resp = input('     ¿Deseas sobreescribir los datos? [s/N]: ').strip().lower()
-        print()
-        if resp != 's':
-            print('  Operación cancelada.\n')
-            conn.close()
-            sys.exit(0)
+        if force:
+            print(f'  {YL}  --yes / CMF_FORCE: sobreescribiendo…{RS}')
+            print()
+        else:
+            if not sys.stdin.isatty():
+                print('  Operación cancelada (no-TTY; pasa --yes para sobreescribir).\n')
+                conn.close()
+                sys.exit(0)
+            resp = input('     ¿Deseas sobreescribir los datos? [s/N]: ').strip().lower()
+            print()
+            if resp != 's':
+                print('  Operación cancelada.\n')
+                conn.close()
+                sys.exit(0)
 
     # ── Animación + carga ────────────────────────────────────────────────────
     _setup_log()

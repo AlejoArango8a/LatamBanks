@@ -93,3 +93,9 @@ python usa_loader.py --dry-run --quarter 202603 --top 5
 - MX: hoja Pm2 del boletín; captación total como proxy de depósitos.
 - Sin BTG local en PE/UY/AR/MX/US → default = mayor patrimonio del ranking.
 - FX: ARS/MXN vía cascada er-api / currency-api (ya cubierta).
+
+## Freshness ops (Aug 2026)
+
+- Chile: `chile_loader.py` + `.github/workflows/chile-cmf-monthly.yml` (probe articles-ID).
+- Incremental lookback widened to **10 months** (PE/AR/MX/UY/PA) so missed months are recovered.
+- Catch-up run: PE→202606, CO→202605, PA→202606. AR May/Jun 2026 not published by BCRA yet.

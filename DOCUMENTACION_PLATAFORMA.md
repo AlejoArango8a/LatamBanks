@@ -83,7 +83,7 @@ invalidación de caché se hace con un query-string de versión en los imports
 1. Los **loaders** Python descargan del regulador, transforman al esquema común
    y hacen UPSERT en CockroachDB.
 2. **GitHub Actions** corre los loaders periódicamente (CO mensual, BR mensual
-   revisando si hay trimestre nuevo). Chile hoy es manual.
+   revisando si hay trimestre nuevo). Chile: GHA `chile-cmf-monthly.yml` + carga manual vía `cargar_zip.py` si hace falta.
 3. El **backend** lee de CockroachDB y expone JSON por HTTP.
 4. El **frontend** llama al backend, arma KPIs/gráficos y los muestra.
 
@@ -247,7 +247,7 @@ Todos los loaders comparten el mismo patrón:
 - **Códigos de cuenta:** 9 dígitos (ej. `100000000` activos, `300000000`
   patrimonio, `144000000` colocaciones, `590000000` utilidad).
 - **Desglose por moneda:** único país que usa `monto_clp/uf/tc/ext`.
-- **Automatización:** hoy **manual** (no hay workflow de GitHub para CL).
+- **Automatización:** `.github/workflows/chile-cmf-monthly.yml` + `chile_loader.py` (probe de `articles-{ID}_recurso_1.zip`, cron día 25). `cargar_zip.py` sigue disponible para carga manual local.
 
 ### 6.2 Colombia — Superfinanciera vía Socrata (mensual, automático)
 
