@@ -824,6 +824,40 @@ body.light .kpi-custom-badge {
   border-color:rgba(7,89,133,0.35);
 }
 
+
+/* BTG Banks compare sheet */
+.btg-banks-hero {
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  margin-bottom:18px; padding:14px 16px;
+  background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+  border-left:4px solid #001E62;
+}
+.btg-banks-logo { height:42px; width:auto; flex-shrink:0; }
+body:not(.light) .btg-banks-logo { filter:brightness(0) invert(1); opacity:0.95; }
+.btg-banks-eyebrow {
+  font-size:10px; font-family:var(--mono); letter-spacing:1.4px; text-transform:uppercase;
+  color:var(--text3); margin-bottom:3px;
+}
+.btg-banks-title { font-size:20px; font-weight:700; color:var(--white); line-height:1.1; }
+.btg-banks-sub { font-size:12px; color:var(--text2); margin-top:4px; max-width:560px; line-height:1.45; }
+.btg-banks-status { padding:24px 8px; color:var(--text2); font-size:13px; }
+.btg-banks-notes {
+  margin:14px 0 0; padding-left:18px; color:var(--text3); font-size:11px; line-height:1.55;
+}
+#btgBanksTable table.data { width:100%; border-collapse:collapse; font-size:12px; }
+#btgBanksTable table.data th,
+#btgBanksTable table.data td {
+  padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top;
+}
+#btgBanksTable table.data th {
+  text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--text2); background:var(--bg3); position:sticky; top:0;
+}
+#btgBanksTable table.data th.r,
+#btgBanksTable table.data td.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+#btgBanksTable table.data tbody tr:hover { background:rgba(13,59,102,0.04); }
+body.light #btgBanksKpis .kpi-val { color:#0c4a6e; }
+
 /* PANEL */
 .panel { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
 .panel-head {
@@ -952,6 +986,7 @@ body.light .kpi-custom-badge {
         <button type="button" class="tab primary active" data-tab="resumen" onclick="showTab('resumen')">Bank Monitor</button>
         <button type="button" class="tab primary" data-tab="bankdetail" onclick="showTab('bankdetail')">Bank Profile</button>
         <button type="button" class="tab primary" data-tab="chileanbanks" onclick="showTab('chileanbanks')">Banking System</button>
+        <button type="button" class="tab primary" data-tab="btgbanks" onclick="showTab('btgbanks')">BTG Banks</button>
         <div style="width:1px;background:var(--border);margin:10px 6px;flex-shrink:0;opacity:0.4;"></div>
         <button type="button" class="tab secondary" data-tab="accountview" onclick="showTab('accountview')">Account View</button>
         <button type="button" class="tab secondary" data-tab="balance" onclick="showTab('balance')">Balance Sheet</button>
@@ -1183,6 +1218,11 @@ body.light .kpi-custom-badge {
           </div>
         </div>
 
+
+        <!-- BTG BANKS -->
+        <div id="tab-btgbanks" style="display:none;">
+          <div id="btgBanksRoot"></div>
+        </div>
 
         <!-- BANK PROFILE -->
         <div id="tab-bankdetail" style="display:none;">
@@ -1512,7 +1552,7 @@ body.light .kpi-custom-badge {
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon52"></script>
+<script type="module" src="js/app.js?v=bmon53"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
