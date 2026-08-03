@@ -572,6 +572,140 @@ app.get('/api/americas/snapshot', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/bank-profile?country=BR&codigo=1000080329
+// Curated profile from bank_profiles + live assets/equity + avg ROE 3y
+// from datos_financieros (year-end Dec periods).
+// ============================================================
+function isYearEndPeriod(periodo) {
+  const p = String(periodo || '');
+  return p.length >= 6 && p.slice(-2) === '12';
+}
+
+function yearFromPeriod(periodo) {
+  return String(periodo || '').slice(0, 4);
+}
+
+async function sumMetricForPeriod(iso, codigo, period, metricSpec) {
+  if (!metricSpec?.cuentas?.length) return 0;
+  const rows = await query(
+    `SELECT COALESCE(SUM(monto_total::bigint), 0)::bigint AS monto
+     FROM datos_financieros
+     WHERE country = $1 AND ins_cod = $2 AND periodo = $3
+       AND tipo = $4 AND cuenta = ANY($5)`,
+    [iso, codigo, period, metricSpec.tipo, metricSpec.cuentas],
+  );
+  return Number(rows[0]?.monto) || 0;
+}
+
+async function liveBankMetrics(iso, codigo) {
+  const spec = AMERICAS_SPECS[iso];
+  if (!spec) return null;
+
+  const periodRows = await query(
+    `SELECT DISTINCT periodo FROM datos_financieros
+     WHERE country = $1 AND ins_cod = $2
+     ORDER BY periodo ASC`,
+    [iso, codigo],
+  );
+  const periods = periodRows.map((r) => r.periodo);
+  if (!periods.length) {
+    return {
+      period: null,
+      assets: null,
+      equity: null,
+      net_income: null,
+      roe_avg_3y: null,
+      roe_years: [],
+      currency: REGISTRY.paises[spec.key]?.currency || null,
+    };
+  }
+
+  const latest = periods[periods.length - 1];
+  const assets = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.assets);
+  const equity = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.equity);
+  const netIncome = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.net_income);
+
+  const yearEnds = periods.filter(isYearEndPeriod).reverse(); // newest first
+  const roeYears = [];
+  for (const ye of yearEnds) {
+    if (roeYears.length >= 3) break;
+    const eq = await sumMetricForPeriod(iso, codigo, ye, spec.metrics.equity);
+    const ni = await sumMetricForPeriod(iso, codigo, ye, spec.metrics.net_income);
+    if (!eq || !Number.isFinite(eq) || !Number.isFinite(ni)) continue;
+    const roe = (ni / eq) * 100;
+    if (!Number.isFinite(roe)) continue;
+    roeYears.push({
+      year: yearFromPeriod(ye),
+      period: ye,
+      equity: eq,
+      net_income: ni,
+      roe,
+    });
+  }
+
+  let roeAvg = null;
+  if (roeYears.length) {
+    roeAvg = roeYears.reduce((s, y) => s + y.roe, 0) / roeYears.length;
+  }
+
+  return {
+    period: latest,
+    assets: assets || null,
+    equity: equity || null,
+    net_income: netIncome || null,
+    roe_avg_3y: roeAvg,
+    roe_years: roeYears,
+    currency: REGISTRY.paises[spec.key]?.currency || null,
+    note: 'ROE uses year-end (December) supervisory figures: net income / equity for each year, then simple average of up to the last 3 available years. Brazil uses IF.data prudential consolidado.',
+  };
+}
+
+app.get('/api/bank-profile', async (req, res) => {
+  try {
+    const country = resolveDatasetCountry(req.query.country);
+    const codigo = parseInt(String(req.query.codigo ?? ''), 10);
+    if (!Number.isFinite(codigo)) {
+      return res.status(400).json({ ok: false, error: 'codigo required' });
+    }
+
+    const profileRows = await query(
+      `SELECT country, codigo, short_name, legal_name, founded, ownership, controlling,
+              shareholders, origin_country, origin_country_name, employees_in_country,
+              employees_as_of, business_focus, hq_city, history, context, website, ir_url,
+              ratings, news, sources, updated_at
+       FROM bank_profiles
+       WHERE country = $1 AND codigo = $2`,
+      [country, codigo],
+    );
+    const profile = profileRows[0] || null;
+
+    let instName = null;
+    try {
+      const inst = await query(
+        `SELECT razon_social FROM instituciones WHERE country = $1 AND codigo = $2`,
+        [country, codigo],
+      );
+      instName = inst[0]?.razon_social || null;
+    } catch (_) { /* non-fatal */ }
+
+    const metrics = await liveBankMetrics(country, codigo);
+
+    res.json({
+      ok: true,
+      country,
+      codigo,
+      institution_name: instName,
+      curated: !!profile,
+      profile,
+      metrics,
+    });
+  } catch (e) {
+    console.error('/api/bank-profile error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // POST /api/datos — datos financieros filtrados
 // Body: { tipo|tipos[], periodos[], cuentas[], bancos[]?, select? }
 // ============================================================

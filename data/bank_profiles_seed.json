@@ -1,0 +1,879 @@
+[
+  {
+    "country": "BR",
+    "codigo": 1000080329,
+    "short_name": "Banco do Brasil",
+    "legal_name": "Banco do Brasil S.A.",
+    "founded": "1808",
+    "ownership": "Mixed-economy public company (B3: BBAS3); Federal Government controlling shareholder (~50%)",
+    "controlling": "União Federal (Brazilian Federal Government) — controlling shareholder with ~50% of capital",
+    "shareholders": [
+      "União Federal (~50.0% — control)",
+      "Free float (~49.6% — Brazilian and foreign investors)",
+      "Treasury shares (~0.4%)"
+    ],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": 86574,
+    "employees_as_of": "2024 (company disclosures / Reference Form)",
+    "business_focus": "Universal bank: retail, wholesale, agribusiness (largest rural-credit franchise in Brazil), government services, asset management, insurance (BB Seguridade) and payments",
+    "hq_city": "Brasília",
+    "history": "Founded 12 October 1808 by Dom João VI in Rio de Janeiro — the oldest bank in continuous operation in Brazil and among the oldest in the Americas. Evolved into a mixed-economy listed company with the Federal Government as controlling shareholder. Head office is in Brasília (Setor de Autarquias Norte). Systemically important Brazilian bank with a nationwide branch and digital franchise and a leading role in agribusiness credit.",
+    "context": "Typically among Brazil’s top banks by assets and equity (with Itaú, Bradesco, Caixa and Santander). Peer set is the large Brazilian universal banks; competitive edge in agribusiness and public-sector relationships.",
+    "website": "https://www.bb.com.br",
+    "ir_url": "https://ri.bb.com.br",
+    "news": [
+      {
+        "title": "Banco do Brasil — news",
+        "url": "https://news.google.com/search?q=Banco%20do%20Brasil%20BBAS3",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco do Brasil Reference Form / IR", "url": "https://ri.bb.com.br" },
+      { "label": "Company profile (Yahoo Finance)", "url": "https://finance.yahoo.com/quote/BBAS3.SA/profile/" },
+      { "label": "Wikipedia — Banco do Brasil", "url": "https://en.wikipedia.org/wiki/Banco_do_Brasil" }
+    ]
+  },
+  {
+    "country": "BR",
+    "codigo": 1000080099,
+    "short_name": "Itaú Unibanco",
+    "legal_name": "Itaú Unibanco Holding S.A. / Itaú Unibanco S.A.",
+    "founded": "2008 merger (Itaú 1945 / Unibanco roots 1924)",
+    "ownership": "Public (B3 / NYSE: ITUB); joint control via IUPAR / Itaúsa / Companhia E. Johnston",
+    "controlling": "IUPAR (Itaú Unibanco Participações), Itaúsa and Companhia E. Johnston — Villela/Setubal and Moreira Salles family control structure",
+    "shareholders": [
+      "IUPAR — Itaú Unibanco Participações S.A. (joint control)",
+      "Itaúsa S.A. (joint control)",
+      "Companhia E. Johnston de Participações (joint control)",
+      "Free float (ITUB4 / ADRs)"
+    ],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": 86228,
+    "employees_as_of": "Dec 2024 (Itaú Unibanco Holding 6-K — Brazil workforce)",
+    "business_focus": "Universal bank: mass and premium retail, SME, corporate & investment banking (Itaú BBA), asset management, insurance distribution and LatAm affiliates",
+    "hq_city": "São Paulo",
+    "history": "Formed by the 2008 Itaú–Unibanco merger (roots: Banco Itaú 1945; Unibanco from Casa Moreira Salles 1924). Largest private Brazilian bank by many franchise metrics. HQ at Praça Alfredo Egydio de Souza Aranha, São Paulo.",
+    "context": "Primary peer of Banco do Brasil, Bradesco and Santander Brasil in the Brazilian commercial-banking oligopoly; usually leads private banks by market capitalization.",
+    "website": "https://www.itau.com.br",
+    "ir_url": "https://www.itau.com.br/relacoes-com-investidores",
+    "news": [
+      {
+        "title": "Itaú Unibanco — news",
+        "url": "https://news.google.com/search?q=Ita%C3%BA%20Unibanco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Itaú Unibanco IR / 6-K employee disclosure", "url": "https://www.itau.com.br/relacoes-com-investidores" },
+      { "label": "SEC 6-K (employees Brazil 2024)", "url": "https://www.sec.gov/Archives/edgar/data/1132597/000129281425000384/ex99-1.htm" }
+    ]
+  },
+  {
+    "country": "BR",
+    "codigo": 1000080075,
+    "short_name": "Bradesco",
+    "legal_name": "Banco Bradesco S.A.",
+    "founded": "1943",
+    "ownership": "Public (B3: BBDC3/BBDC4; NYSE: BBD); concentrated control block + free float",
+    "controlling": "Long-standing Cidade de Deus / Fundação Bradesco-linked control structure (voting control block)",
+    "shareholders": [
+      "Control block associated with Cidade de Deus / Fundação Bradesco structures",
+      "Free float (BBDC3/BBDC4, ADRs)"
+    ],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": 82095,
+    "employees_as_of": "Company disclosures (~2024–2025)",
+    "business_focus": "Universal bank with large insurance/pension franchise (Bradesco Seguros): retail, SME, corporate, cards, asset management",
+    "hq_city": "Osasco (Cidade de Deus, São Paulo state)",
+    "history": "Founded 10 March 1943 by Amador Aguiar in Marília (SP) as Banco Brasileiro de Descontos. HQ moved to Cidade de Deus, Osasco. One of Brazil’s largest private banks with a deep insurance cross-sell platform.",
+    "context": "Competes directly with Itaú and Banco do Brasil for mass retail and insurance distribution; often #3–4 by equity/assets among Brazilian banks.",
+    "website": "https://banco.bradesco",
+    "ir_url": "https://www.bradescori.com.br",
+    "news": [
+      {
+        "title": "Bradesco — news",
+        "url": "https://news.google.com/search?q=Bradesco%20BBDC4",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Wikipedia — Banco Bradesco", "url": "https://en.wikipedia.org/wiki/Banco_Bradesco" },
+      { "label": "Bradesco IR", "url": "https://www.bradescori.com.br" }
+    ]
+  },
+  {
+    "country": "BR",
+    "codigo": 1000080738,
+    "short_name": "Caixa Econômica Federal",
+    "legal_name": "Caixa Econômica Federal",
+    "founded": "1861",
+    "ownership": "100% Brazilian Federal Government (state-owned enterprise)",
+    "controlling": "União Federal (Brazilian Federal Government)",
+    "shareholders": ["União Federal (100%)"],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": 86000,
+    "employees_as_of": "~2021 company / public disclosures (order of magnitude; verify latest IR)",
+    "business_focus": "Public universal bank: housing/mortgage (FGTS), savings, social programs, lotteries, retail and SME credit; strong government-policy role",
+    "hq_city": "Brasília",
+    "history": "Founded 12 January 1861 by Emperor Pedro II in Rio de Janeiro as a savings institution. Consolidated into present-day Caixa Econômica Federal; headquartered in Brasília. Largest fully government-owned bank in Latin America and a core channel for Brazilian housing finance and social programs.",
+    "context": "Peer of BB on the public side of Brazilian banking; largest mortgage/FGTS franchise. Not listed — ownership is entirely federal.",
+    "website": "https://www.caixa.gov.br",
+    "ir_url": "https://www.caixa.gov.br",
+    "news": [
+      {
+        "title": "Caixa Econômica Federal — news",
+        "url": "https://news.google.com/search?q=Caixa%20Econ%C3%B4mica%20Federal",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Wikipedia — Caixa Econômica Federal", "url": "https://en.wikipedia.org/wiki/Caixa_Econ%C3%B4mica_Federal" },
+      { "label": "Caixa institutional site", "url": "https://www.caixa.gov.br" }
+    ]
+  },
+  {
+    "country": "BR",
+    "codigo": 1000080185,
+    "short_name": "Santander Brasil",
+    "legal_name": "Banco Santander (Brasil) S.A.",
+    "founded": "1982 (Santander franchise in Brazil; major scale via Banespa and other acquisitions)",
+    "ownership": "Public subsidiary of Banco Santander S.A. (Spain) — B3: SANB11 / NYSE: BSBR",
+    "controlling": "Banco Santander S.A. (Spain) / Santander Group",
+    "shareholders": [
+      "Banco Santander S.A. (controlling parent, Spain)",
+      "Free float (SANB11 units / ADRs)"
+    ],
+    "origin_country": "ES",
+    "origin_country_name": "Spain",
+    "employees_in_country": 49661,
+    "employees_as_of": "2025 management report (group employees in Brazil franchise)",
+    "business_focus": "Universal commercial bank: retail, consumer finance, SME, wholesale/CIB, cards and payments (Getnet adjacency)",
+    "hq_city": "São Paulo",
+    "history": "Santander entered Brazil in the 1980s and built scale through acquisitions culminating in Banespa (2000) and the ABN AMRO Brazil franchise. Headquartered in São Paulo (Av. Juscelino Kubitschek). Largest Santander Group franchise outside Europe by contribution.",
+    "context": "Fifth large Brazilian universal bank; Spanish origin distinguishes it from locally controlled peers Itaú/Bradesco/BB/Caixa.",
+    "website": "https://www.santander.com.br",
+    "ir_url": "https://www.santander.com.br/ri",
+    "news": [
+      {
+        "title": "Santander Brasil — news",
+        "url": "https://news.google.com/search?q=Santander%20Brasil%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Wikipedia — Santander Brasil", "url": "https://en.wikipedia.org/wiki/Santander_Brasil" },
+      { "label": "Santander Brasil IR / SEC filings", "url": "https://www.santander.com.br/ri" }
+    ]
+  },
+  {
+    "country": "BR",
+    "codigo": 1000080336,
+    "short_name": "BTG Pactual",
+    "legal_name": "Banco BTG Pactual S.A.",
+    "founded": "1983",
+    "ownership": "Public (B3: BPAC11); partnership / controlling partners + free float",
+    "controlling": "Controlling partnership around founding/senior partners (incl. André Esteves as leading partner historically)",
+    "shareholders": [
+      "Controlling partners / partnership block",
+      "Free float (BPAC11 units)"
+    ],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Investment bank + wealth/asset management with expanding commercial and digital retail banking",
+    "hq_city": "São Paulo",
+    "history": "Founded 1983 in Rio de Janeiro as an investment bank; today headquartered in São Paulo. Leading Brazilian IB/wealth franchise that expanded into asset management and commercial banking; listed via units on B3.",
+    "context": "Competes with Itaú BBA, XP and global bulge brackets in IB/wealth; smaller balance sheet than the big-five universal banks but high ROE franchise historically.",
+    "website": "https://www.btgpactual.com",
+    "ir_url": "https://ri.btgpactual.com",
+    "news": [
+      {
+        "title": "BTG Pactual — news",
+        "url": "https://news.google.com/search?q=BTG%20Pactual",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BTG Pactual IR", "url": "https://ri.btgpactual.com" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 1,
+    "short_name": "Banco de Chile",
+    "legal_name": "Banco de Chile",
+    "founded": "1893",
+    "ownership": "Public (SSE: CHILE); LQ Inversiones Financieras / Quiñenco–Citigroup control structure",
+    "controlling": "LQ Inversiones Financieras (Quiñenco) with historical Citigroup joint-control arrangements",
+    "shareholders": [
+      "LQ Inversiones Financieras / Quiñenco ecosystem",
+      "Citigroup (via historical joint control arrangements)",
+      "Free float"
+    ],
+    "origin_country": "CL",
+    "origin_country_name": "Chile",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal commercial bank: retail, SME, corporate and treasury",
+    "hq_city": "Santiago",
+    "history": "One of Chile’s oldest commercial banks (1893). Combines a large retail franchise with corporate and treasury businesses. Part of the Quiñenco financial ecosystem with historical Citigroup ties.",
+    "context": "Top-tier Chilean private bank by equity and loans; core competitor to Santander, BCI and Itaú Chile.",
+    "website": "https://www.bancochile.cl",
+    "ir_url": "https://www.bancochile.cl",
+    "news": [
+      {
+        "title": "Banco de Chile — news",
+        "url": "https://news.google.com/search?q=Banco%20de%20Chile",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco de Chile", "url": "https://www.bancochile.cl" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 37,
+    "short_name": "Santander Chile",
+    "legal_name": "Banco Santander-Chile",
+    "founded": "1978 (Santander franchise in Chile)",
+    "ownership": "Public subsidiary of Banco Santander S.A. (Spain)",
+    "controlling": "Banco Santander S.A. (Spain)",
+    "shareholders": ["Banco Santander S.A.", "Free float"],
+    "origin_country": "ES",
+    "origin_country_name": "Spain",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank: retail, consumer lending, SME, corporate and digital banking",
+    "hq_city": "Santiago",
+    "history": "Chilean unit of the Santander Group. Broad retail and corporate franchise with strong digital and consumer lending presence.",
+    "context": "Usually among the largest private banks in Chile by assets and customers.",
+    "website": "https://banco.santander.cl",
+    "ir_url": "https://banco.santander.cl",
+    "news": [
+      {
+        "title": "Santander Chile — news",
+        "url": "https://news.google.com/search?q=Santander%20Chile%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Santander Chile", "url": "https://banco.santander.cl" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 16,
+    "short_name": "BCI",
+    "legal_name": "Banco de Crédito e Inversiones",
+    "founded": "1937",
+    "ownership": "Public; controlling interest historically linked to the Yarur family / Empresas Juan Yarur",
+    "controlling": "Yarur family control structure (Empresas Juan Yarur / related holdings)",
+    "shareholders": ["Yarur family control block", "Free float"],
+    "origin_country": "CL",
+    "origin_country_name": "Chile",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank: retail, commercial, corporate; also City National Bank of Florida (US subsidiary of the group)",
+    "hq_city": "Santiago",
+    "history": "Founded 1937 in Santiago. One of Chile’s major private banks; the BCI group also owns City National Bank of Florida in the United States.",
+    "context": "Peer of Banco de Chile, Santander and Itaú among Chile’s large private banks.",
+    "website": "https://www.bci.cl",
+    "ir_url": "https://www.bci.cl",
+    "news": [
+      {
+        "title": "BCI — news",
+        "url": "https://news.google.com/search?q=BCI%20banco%20Chile",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BCI", "url": "https://www.bci.cl" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 12,
+    "short_name": "BancoEstado",
+    "legal_name": "Banco del Estado de Chile",
+    "founded": "1953 as BancoEstado (roots 1855 Caja de Crédito Hipotecario)",
+    "ownership": "100% Republic of Chile (state-owned)",
+    "controlling": "Republic of Chile",
+    "shareholders": ["Republic of Chile (100%)"],
+    "origin_country": "CL",
+    "origin_country_name": "Chile",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Public universal bank with national coverage emphasis: retail, mortgages, SME, government-related financial services",
+    "hq_city": "Santiago",
+    "history": "Created in 1953 by merging several state savings/credit institutions whose oldest root is the 1855 Caja de Crédito Hipotecario. Chile’s only fully public commercial bank; HQ at Av. Libertador Bernardo O’Higgins 1111, Santiago.",
+    "context": "Often among the largest Chilean banks by customers and geographic coverage; peers are the large private banks on franchise size.",
+    "website": "https://www.bancoestado.cl",
+    "ir_url": "https://www.bancoestado.cl",
+    "news": [
+      {
+        "title": "BancoEstado — news",
+        "url": "https://news.google.com/search?q=BancoEstado%20Chile",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Wikipedia — Banco del Estado de Chile", "url": "https://en.wikipedia.org/wiki/Banco_del_Estado_de_Chile" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 59,
+    "short_name": "BTG Pactual Chile",
+    "legal_name": "Banco BTG Pactual Chile",
+    "founded": "2012 (banking license / BTG franchise in Chile)",
+    "ownership": "Subsidiary of BTG Pactual (Brazil)",
+    "controlling": "BTG Pactual",
+    "shareholders": ["BTG Pactual group"],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Corporate, investment-banking adjacency and wealth / private banking (not mass-market retail)",
+    "hq_city": "Santiago",
+    "history": "Chilean commercial bank of the BTG Pactual group. Focuses on corporate, capital-markets adjacency and wealth rather than mass retail.",
+    "context": "Niche franchise versus large Chilean universal banks. Origin country is Brazil.",
+    "website": "https://www.btgpactual.cl",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "BTG Pactual Chile — news",
+        "url": "https://news.google.com/search?q=BTG%20Pactual%20Chile%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BTG Pactual Chile", "url": "https://www.btgpactual.cl" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 14,
+    "short_name": "Scotiabank Chile",
+    "legal_name": "Scotiabank Chile",
+    "founded": "1990s (Scotiabank franchise; earlier local predecessors)",
+    "ownership": "Subsidiary of The Bank of Nova Scotia (Canada)",
+    "controlling": "The Bank of Nova Scotia",
+    "shareholders": ["Bank of Nova Scotia / Nova Scotia Inversiones"],
+    "origin_country": "CA",
+    "origin_country_name": "Canada",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal commercial bank: retail, consumer, SME and corporate",
+    "hq_city": "Santiago",
+    "history": "Chilean banking unit of Scotiabank (Canada). Built through acquisitions including parts of the former Banco del Desarrollo / Sud Americano franchises over time.",
+    "context": "Among Chile’s larger private banks; Canadian origin parent.",
+    "website": "https://www.scotiabank.cl",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "Scotiabank Chile — news",
+        "url": "https://news.google.com/search?q=Scotiabank%20Chile",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Scotiabank Chile", "url": "https://www.scotiabank.cl" }
+    ]
+  },
+  {
+    "country": "CL",
+    "codigo": 39,
+    "short_name": "Itaú Chile",
+    "legal_name": "Banco Itaú Chile",
+    "founded": "Chile franchise via Corpbanca / Itaú merger path",
+    "ownership": "Subsidiary of Itaú Unibanco (Brazil)",
+    "controlling": "Itaú Unibanco",
+    "shareholders": ["Itaú Unibanco group"],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal commercial bank in Chile under the Itaú brand",
+    "hq_city": "Santiago",
+    "history": "Itaú’s Chilean bank after the combination with Corpbanca. Brazilian-origin franchise competing in Chile’s large-bank peer set.",
+    "context": "Brazilian origin; peers are Banco de Chile, Santander, BCI and Scotiabank.",
+    "website": "https://banco.itau.cl",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "Itaú Chile — news",
+        "url": "https://news.google.com/search?q=Ita%C3%BA%20Chile%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Itaú Chile", "url": "https://banco.itau.cl" }
+    ]
+  },
+  {
+    "country": "CO",
+    "codigo": 7,
+    "short_name": "Bancolombia",
+    "legal_name": "Bancolombia S.A.",
+    "founded": "1875 (as Banco de Colombia; Bancolombia brand after 1998 merger)",
+    "ownership": "Public (BVC / NYSE ADR CIB); parent holding Grupo Cibest (2025 reorganization)",
+    "controlling": "Grupo Cibest / historical Grupo Sura–Argos ecosystem influence",
+    "shareholders": [
+      "Grupo Cibest (holding parent after 2025 reorganization)",
+      "Institutional and free float (BVC / NYSE: CIB)"
+    ],
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "employees_in_country": 23600,
+    "employees_as_of": "~2025 public figures (group order of magnitude)",
+    "business_focus": "Universal bank: retail, SME, corporate, leasing, trust, investment and Central American affiliates",
+    "hq_city": "Medellín",
+    "history": "Roots in Banco de Colombia (1875). 1998 merger of Banco de Colombia and Banco Industrial Colombiano created Bancolombia. Colombia’s largest bank by assets. HQ in Medellín. In 2025 the listed holding evolved to Grupo Cibest.",
+    "context": "Systemically important Colombian bank; primary peers Bogotá, Davivienda and Occidente.",
+    "website": "https://www.bancolombia.com",
+    "ir_url": "https://www.grupobancolombia.com/investor-relations",
+    "news": [
+      {
+        "title": "Bancolombia — news",
+        "url": "https://news.google.com/search?q=Bancolombia",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Grupo Bancolombia / Cibest IR FAQ", "url": "https://www.grupobancolombia.com/investor-relations/faq" },
+      { "label": "Wikipedia — Bancolombia", "url": "https://en.wikipedia.org/wiki/Grupo_Bancolombia" }
+    ]
+  },
+  {
+    "country": "CO",
+    "codigo": 1,
+    "short_name": "Banco de Bogotá",
+    "legal_name": "Banco de Bogotá S.A.",
+    "founded": "1870",
+    "ownership": "Public; controlled by Grupo Aval (Sarmiento Angulo)",
+    "controlling": "Grupo Aval / Luis Carlos Sarmiento Angulo",
+    "shareholders": [
+      "Grupo Aval (~majority control)",
+      "Other Sarmiento-related holdings",
+      "Free float"
+    ],
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "employees_in_country": 15231,
+    "employees_as_of": "Sep 2025 corporate presentation",
+    "business_focus": "Universal bank: commercial, consumer and mortgage lending; Aval-group flagship",
+    "hq_city": "Bogotá",
+    "history": "Founded 15 November 1870 — Colombia’s oldest commercial bank. Flagship of Grupo Aval. Listed on the BVC.",
+    "context": "Core Aval bank; peers Bancolombia, Davivienda and Occidente.",
+    "website": "https://www.bancodebogota.com",
+    "ir_url": "https://www.bancodebogota.com",
+    "news": [
+      {
+        "title": "Banco de Bogotá — news",
+        "url": "https://news.google.com/search?q=Banco%20de%20Bogot%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco de Bogotá corporate presentation", "url": "https://www.bancodebogota.com" },
+      { "label": "Wikipedia — Banco de Bogotá", "url": "https://en.wikipedia.org/wiki/Banco_de_Bogot%C3%A1" }
+    ]
+  },
+  {
+    "country": "CO",
+    "codigo": 39,
+    "short_name": "Davivienda",
+    "legal_name": "Banco Davivienda S.A.",
+    "founded": "1972",
+    "ownership": "Controlled by Grupo Empresarial Bolívar / Davivienda Group holding",
+    "controlling": "Grupo Empresarial Bolívar",
+    "shareholders": ["Grupo Empresarial Bolívar / Davivienda Group", "Free float"],
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank: retail, mortgage heritage, SME, corporate; Central American franchises",
+    "hq_city": "Bogotá",
+    "history": "Started in 1972 as a savings-and-loan corporation (Corporación de Ahorro y Vivienda) and later became Banco Davivienda. Owned by Grupo Empresarial Bolívar. Regional presence in Central America and the U.S.",
+    "context": "One of Colombia’s Big-Four banks with Bancolombia, Bogotá and Occidente.",
+    "website": "https://www.davivienda.com",
+    "ir_url": "https://ir.davivienda.com",
+    "news": [
+      {
+        "title": "Davivienda — news",
+        "url": "https://news.google.com/search?q=Davivienda",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Davivienda IR — About", "url": "https://ir.davivienda.com/en/about/" }
+    ]
+  },
+  {
+    "country": "CO",
+    "codigo": 66,
+    "short_name": "BTG Pactual Colombia",
+    "legal_name": "Banco BTG Pactual Colombia S.A.",
+    "founded": "Commercial banking license under BTG franchise (2010s)",
+    "ownership": "Subsidiary of BTG Pactual (Brazil)",
+    "controlling": "BTG Pactual",
+    "shareholders": ["BTG Pactual group"],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Investment-banking led franchise expanded into commercial banking and wealth",
+    "hq_city": "Bogotá",
+    "history": "Colombian banking unit of Brazilian BTG Pactual. Capital-markets and wealth oriented versus large retail incumbents.",
+    "context": "Niche corporate/capital-markets bank. Origin country is Brazil (not Colombia).",
+    "website": "https://www.btgpactual.com.co",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "BTG Pactual Colombia — news",
+        "url": "https://news.google.com/search?q=BTG%20Pactual%20Colombia",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BTG Pactual Colombia", "url": "https://www.btgpactual.com.co" }
+    ]
+  },
+  {
+    "country": "CO",
+    "codigo": 13,
+    "short_name": "BBVA Colombia",
+    "legal_name": "BBVA Colombia S.A.",
+    "founded": "BBVA franchise in Colombia (local predecessors earlier)",
+    "ownership": "Subsidiary of BBVA (Spain)",
+    "controlling": "Banco Bilbao Vizcaya Argentaria, S.A.",
+    "shareholders": ["BBVA"],
+    "origin_country": "ES",
+    "origin_country_name": "Spain",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal commercial bank under the BBVA brand",
+    "hq_city": "Bogotá",
+    "history": "Colombian unit of Spanish BBVA. Retail and commercial franchise competing with large local banks.",
+    "context": "Spanish-origin bank in Colombia’s mid-to-large tier.",
+    "website": "https://www.bbva.com.co",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "BBVA Colombia — news",
+        "url": "https://news.google.com/search?q=BBVA%20Colombia",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BBVA Colombia", "url": "https://www.bbva.com.co" }
+    ]
+  },
+  {
+    "country": "PE",
+    "codigo": 3,
+    "short_name": "BCP",
+    "legal_name": "Banco de Crédito del Perú",
+    "founded": "1889",
+    "ownership": "Subsidiary of Credicorp Ltd.",
+    "controlling": "Credicorp Ltd.",
+    "shareholders": ["Credicorp Ltd."],
+    "origin_country": "PE",
+    "origin_country_name": "Peru",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank: nationwide retail and corporate; Credicorp flagship",
+    "hq_city": "Lima",
+    "history": "Founded 1889. Peru’s largest bank and flagship of Credicorp.",
+    "context": "Leads Peruvian banking by loans and deposits; peers Interbank, BBVA Perú and Scotiabank Perú.",
+    "website": "https://www.viabcp.com",
+    "ir_url": "https://www.credicorp.com",
+    "news": [
+      {
+        "title": "BCP / Credicorp — news",
+        "url": "https://news.google.com/search?q=Banco%20de%20Cr%C3%A9dito%20del%20Per%C3%BA%20OR%20Credicorp",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Credicorp IR", "url": "https://www.credicorp.com" }
+    ]
+  },
+  {
+    "country": "UY",
+    "codigo": 1,
+    "short_name": "BROU",
+    "legal_name": "Banco de la República Oriental del Uruguay",
+    "founded": "1896",
+    "ownership": "State-owned",
+    "controlling": "Oriental Republic of Uruguay",
+    "shareholders": ["Oriental Republic of Uruguay"],
+    "origin_country": "UY",
+    "origin_country_name": "Uruguay",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Public commercial bank: retail, government-related franchise, nationwide coverage",
+    "hq_city": "Montevideo",
+    "history": "Uruguay’s largest bank and the main public commercial bank (founded 1896).",
+    "context": "Systemically important; peers include Itaú Uruguay, Santander and Scotiabank.",
+    "website": "https://www.brou.com.uy",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "BROU — news",
+        "url": "https://news.google.com/search?q=BROU%20banco%20Uruguay",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BROU", "url": "https://www.brou.com.uy" }
+    ]
+  },
+  {
+    "country": "UY",
+    "codigo": 157,
+    "short_name": "HSBC Uruguay",
+    "legal_name": "HSBC Bank (Uruguay) S.A.",
+    "founded": "HSBC franchise in Uruguay",
+    "ownership": "Subsidiary of HSBC Holdings (United Kingdom)",
+    "controlling": "HSBC Holdings plc",
+    "shareholders": ["HSBC group"],
+    "origin_country": "GB",
+    "origin_country_name": "United Kingdom",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Commercial and retail banking under the HSBC brand",
+    "hq_city": "Montevideo",
+    "history": "Uruguayan banking subsidiary of HSBC. UK-origin international bank.",
+    "context": "Foreign-owned mid-size franchise versus BROU and regional peers.",
+    "website": "https://www.hsbc.com.uy",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "HSBC Uruguay — news",
+        "url": "https://news.google.com/search?q=HSBC%20Uruguay",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "HSBC Uruguay", "url": "https://www.hsbc.com.uy" }
+    ]
+  },
+  {
+    "country": "MX",
+    "codigo": 12,
+    "short_name": "BBVA México",
+    "legal_name": "BBVA México, S.A.",
+    "founded": "BBVA Bancomer franchise (Bancomer roots earlier)",
+    "ownership": "Subsidiary of BBVA (Spain)",
+    "controlling": "Banco Bilbao Vizcaya Argentaria, S.A.",
+    "shareholders": ["BBVA"],
+    "origin_country": "ES",
+    "origin_country_name": "Spain",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank with deep retail penetration in Mexico",
+    "hq_city": "Mexico City",
+    "history": "Largest bank in Mexico by many franchise metrics after the BBVA Bancomer integration.",
+    "context": "Competes with Banorte, Santander México, Citibanamex and HSBC México.",
+    "website": "https://www.bbva.mx",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "BBVA México — news",
+        "url": "https://news.google.com/search?q=BBVA%20M%C3%A9xico%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "BBVA México", "url": "https://www.bbva.mx" }
+    ]
+  },
+  {
+    "country": "MX",
+    "codigo": 72,
+    "short_name": "Banorte",
+    "legal_name": "Banco Mercantil del Norte, S.A. (Banorte)",
+    "founded": "1899 (roots) / modern Banorte group",
+    "ownership": "Public (BMV: GFNORTE); controlling group around Grupo Financiero Banorte",
+    "controlling": "Grupo Financiero Banorte",
+    "shareholders": ["Grupo Financiero Banorte control / free float"],
+    "origin_country": "MX",
+    "origin_country_name": "Mexico",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal bank: retail, commercial, government and corporate",
+    "hq_city": "Monterrey",
+    "history": "Leading Mexican-controlled universal bank; core of Grupo Financiero Banorte, headquartered in Monterrey.",
+    "context": "Primary Mexican-owned peer to BBVA México and Santander México.",
+    "website": "https://www.banorte.com",
+    "ir_url": "https://investors.banorte.com",
+    "news": [
+      {
+        "title": "Banorte — news",
+        "url": "https://news.google.com/search?q=Banorte",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banorte IR", "url": "https://investors.banorte.com" }
+    ]
+  },
+  {
+    "country": "AR",
+    "codigo": 7,
+    "short_name": "Banco Galicia",
+    "legal_name": "Banco de Galicia y Buenos Aires S.A.U.",
+    "founded": "1905",
+    "ownership": "Subsidiary of Grupo Financiero Galicia",
+    "controlling": "Grupo Financiero Galicia",
+    "shareholders": ["Grupo Financiero Galicia"],
+    "origin_country": "AR",
+    "origin_country_name": "Argentina",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal private bank: retail and SME franchise",
+    "hq_city": "Buenos Aires",
+    "history": "One of Argentina’s leading private banks with a large retail and SME franchise under Grupo Financiero Galicia.",
+    "context": "Peers include Santander Río, BBVA Argentina, Macro and Nación (public).",
+    "website": "https://www.galicia.ar",
+    "ir_url": "https://www.gfgsa.com",
+    "news": [
+      {
+        "title": "Banco Galicia — news",
+        "url": "https://news.google.com/search?q=Banco%20Galicia%20Argentina",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Grupo Financiero Galicia", "url": "https://www.gfgsa.com" }
+    ]
+  },
+  {
+    "country": "AR",
+    "codigo": 11,
+    "short_name": "Banco Nación",
+    "legal_name": "Banco de la Nación Argentina",
+    "founded": "1891",
+    "ownership": "State-owned",
+    "controlling": "Argentine Republic",
+    "shareholders": ["Argentine Republic"],
+    "origin_country": "AR",
+    "origin_country_name": "Argentina",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Public universal bank with nationwide coverage and government-related franchise",
+    "hq_city": "Buenos Aires",
+    "history": "Argentina’s main public commercial bank, founded 1891.",
+    "context": "Largest public bank; peers are large private banks on commercial metrics.",
+    "website": "https://www.bna.com.ar",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "Banco Nación — news",
+        "url": "https://news.google.com/search?q=Banco%20Naci%C3%B3n%20Argentina",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco Nación", "url": "https://www.bna.com.ar" }
+    ]
+  },
+  {
+    "country": "US",
+    "codigo": 35154,
+    "short_name": "BTG Pactual Bank",
+    "legal_name": "BTG Pactual Bank, N.A.",
+    "founded": "FDIC CERT 35154 (ex M.Y. Safra Bank, FSB; rebranded ~Dec 2025)",
+    "ownership": "Subsidiary of BTG Pactual (Brazil)",
+    "controlling": "BTG Pactual",
+    "shareholders": ["BTG Pactual group"],
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "U.S. national bank supporting BTG’s U.S. banking franchise",
+    "hq_city": "United States (see Call Report / bank charter location)",
+    "history": "U.S. national bank (FDIC CERT 35154). Formerly M.Y. Safra Bank, FSB; rebranded to BTG Pactual Bank, N.A. around December 2025. Distinct from Safra National Bank of New York (CERT 26876).",
+    "context": "Small U.S. banking subsidiary of Brazilian BTG Pactual; pinned in LatamBanks when equity is below the default FDIC top cut.",
+    "website": "https://www.btgpactual.com",
+    "ir_url": "https://ri.btgpactual.com",
+    "news": [
+      {
+        "title": "BTG Pactual Bank — news",
+        "url": "https://news.google.com/search?q=BTG%20Pactual%20Bank%20NA%20OR%20%22M.Y.%20Safra%22",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "FDIC BankFind", "url": "https://banks.data.fdic.gov/bankfind-suite/bankfind" }
+    ]
+  },
+  {
+    "country": "PA",
+    "codigo": 1,
+    "short_name": "Banco Nacional de Panamá",
+    "legal_name": "Banco Nacional de Panamá",
+    "founded": "1904",
+    "ownership": "State-owned",
+    "controlling": "Republic of Panama",
+    "shareholders": ["Republic of Panama"],
+    "origin_country": "PA",
+    "origin_country_name": "Panama",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Public bank and government financial agent",
+    "hq_city": "Panama City",
+    "history": "Panama’s state bank, founded 1904; acts as government financial agent alongside commercial banking activities.",
+    "context": "Public peer to large private banks such as Banco General.",
+    "website": "https://www.banconal.com.pa",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "Banco Nacional de Panamá — news",
+        "url": "https://news.google.com/search?q=Banco%20Nacional%20de%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco Nacional de Panamá", "url": "https://www.banconal.com.pa" }
+    ]
+  },
+  {
+    "country": "PA",
+    "codigo": 3,
+    "short_name": "Banco General",
+    "legal_name": "Banco General, S.A.",
+    "founded": "1955",
+    "ownership": "Private; leading Panamanian private bank",
+    "controlling": "Local private shareholders / Motta-related historical influence (verify latest filings)",
+    "shareholders": ["Private Panamanian shareholders"],
+    "origin_country": "PA",
+    "origin_country_name": "Panama",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "Universal private bank: retail, commercial and corporate",
+    "hq_city": "Panama City",
+    "history": "Founded 1955. Typically Panama’s largest private bank by many franchise metrics.",
+    "context": "Primary private peer to Banco Nacional and Banistmo.",
+    "website": "https://www.bgeneral.com",
+    "ir_url": null,
+    "news": [
+      {
+        "title": "Banco General — news",
+        "url": "https://news.google.com/search?q=Banco%20General%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      { "label": "Banco General", "url": "https://www.bgeneral.com" }
+    ]
+  }
+]
