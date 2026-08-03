@@ -825,14 +825,21 @@ body.light .kpi-custom-badge {
 }
 
 
-/* BTG Banks compare sheet */
+/* BTG Banks compare sheet — mirror Bank Monitor #bankHeader (text left, logo right) */
 .btg-banks-hero {
-  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-  margin-bottom:18px; padding:14px 16px;
-  background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  margin-bottom:18px; padding:11px 16px;
+  background:var(--bg2); border:1px solid var(--border); border-radius:6px;
   border-left:4px solid #001E62;
 }
-.btg-banks-logo { height:48px; width:auto; max-width:160px; object-fit:contain; flex-shrink:0; background:#fff; border-radius:8px; padding:4px 8px; box-sizing:border-box; }
+.btg-banks-hero-text { min-width:0; flex:1 1 auto; }
+.btg-banks-hero-logo {
+  flex-shrink:0; display:flex; align-items:center; justify-content:center; margin-right:10px;
+}
+.btg-banks-logo {
+  max-height:42px; max-width:210px; width:auto; height:auto;
+  object-fit:contain; display:block;
+}
 .btg-banks-loading {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:18px; padding:72px 16px 56px; text-align:center;
@@ -1558,7 +1565,7 @@ body.light #btgBanksKpis .kpi-val { color:#0c4a6e; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon56"></script>
+<script type="module" src="js/app.js?v=bmon57"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
