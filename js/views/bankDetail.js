@@ -4,13 +4,13 @@
 // IMPORTANT: import shared modules with the same ?v= as the rest of the app.
 // A different query string creates a second ST instance and the profile tab
 // always looks "unselected".
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon55';
-import { bankName, fmtKPI } from '../format.js?v=bmon55';
-import { pais } from '../paises.js?v=bmon55';
-import { resolveBankProfile } from '../bankProfiles.js?v=bmon55';
-import { getCBRatings } from './ranking.js?v=bmon55';
-import { API_BASE, bankLogoUrl } from '../config.js?v=bmon55';
-import { fetchWithTimeout } from '../api.js?v=bmon55';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon56';
+import { bankName, fmtKPI } from '../format.js?v=bmon56';
+import { pais } from '../paises.js?v=bmon56';
+import { resolveBankProfile } from '../bankProfiles.js?v=bmon56';
+import { getCBRatings } from './ranking.js?v=bmon56';
+import { API_BASE, bankLogoUrl } from '../config.js?v=bmon56';
+import { fetchWithTimeout } from '../api.js?v=bmon56';
 
 let _bdReq = 0;
 
