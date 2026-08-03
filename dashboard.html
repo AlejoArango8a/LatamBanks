@@ -833,7 +833,7 @@ body.light .kpi-custom-badge {
   border-left:4px solid #001E62;
 }
 .btg-banks-logo { height:42px; width:auto; flex-shrink:0; }
-body:not(.light) .btg-banks-logo { filter:brightness(0) invert(1); opacity:0.95; }
+/* Keep the white-background BTG mark (same as landing); no dark invert. */
 .btg-banks-eyebrow {
   font-size:10px; font-family:var(--mono); letter-spacing:1.4px; text-transform:uppercase;
   color:var(--text3); margin-bottom:3px;
@@ -1552,7 +1552,7 @@ body.light #btgBanksKpis .kpi-val { color:#0c4a6e; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon53"></script>
+<script type="module" src="js/app.js?v=bmon54"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
