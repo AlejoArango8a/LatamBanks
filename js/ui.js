@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon52';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon52';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon52';
-import { setStatus, showErr } from './utils.js?v=bmon52';
-import { sumRows } from './api.js?v=bmon52';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon52';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon52';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon53';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon53';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon53';
+import { setStatus, showErr } from './utils.js?v=bmon53';
+import { sumRows } from './api.js?v=bmon53';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon53';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon53';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -276,7 +276,7 @@ export function showTab(tab) {
     : isoTab === 'PA' ? PA_DISABLED_TABS
     : [];
   if (blocked.includes(tab)) return;
-  ['resumen','bankdetail','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
+  ['resumen','bankdetail','chileanbanks','btgbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -286,7 +286,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -294,7 +294,7 @@ export function showTab(tab) {
   const bankPick    = document.getElementById('sidebarBankPick');
   const periodPick  = document.getElementById('sidebarPeriodPick');
   if (sidebarEl) sidebarEl.style.display = '';
-  const muteBankPeriod = ['chileanbanks', 'accountview'].includes(tab);
+  const muteBankPeriod = ['chileanbanks', 'accountview', 'btgbanks'].includes(tab);
   [bankPick, periodPick].forEach(section => {
     if (!section) return;
     section.classList.toggle('sidebar-disabled', muteBankPeriod);
@@ -314,6 +314,7 @@ export function showTab(tab) {
   }
   if (tab === 'config')       { window.populateConfig(); window.loadVisitStats(); }
   if (tab === 'chileanbanks') window.renderChileanBanks();
+  if (tab === 'btgbanks')     window.renderBtgBanks?.();
   if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();

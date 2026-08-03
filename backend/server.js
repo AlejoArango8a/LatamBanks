@@ -572,6 +572,227 @@ app.get('/api/americas/snapshot', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/btg-banks/snapshot — fixed BTG franchise set across countries
+// Brasil / Chile / Colombia / Uruguay (HSBC) / USA — latest period each.
+// Amounts in local reporting units; client converts to USD.
+// ============================================================
+const BTG_BANKS = [
+  { iso: 'BR', code: 1000080336, shortName: 'BTG Pactual', countryLabel: 'Brazil' },
+  { iso: 'CL', code: 59, shortName: 'BTG Pactual Chile', countryLabel: 'Chile' },
+  { iso: 'CO', code: 66, shortName: 'BTG Pactual Colombia', countryLabel: 'Colombia' },
+  { iso: 'UY', code: 157, shortName: 'HSBC', countryLabel: 'Uruguay' },
+  { iso: 'US', code: 35154, shortName: 'BTG Pactual Bank', countryLabel: 'United States' },
+];
+
+/** Extended common KPIs aligned with Bank Monitor Financial Highlights. */
+const BTG_METRIC_SPECS = {
+  CL: {
+    key: 'chile',
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['100000000'] },
+      loans: { tipo: 'b1', cuentas: ['500000000'] },
+      equity: { tipo: 'b1', cuentas: ['300000000'] },
+      liabilities: { tipo: 'b1', cuentas: ['200000000'] },
+      demand_deposits: { tipo: 'b1', cuentas: ['241000000'] },
+      time_deposits: { tipo: 'b1', cuentas: ['242000000'] },
+      bonds: { tipo: 'b1', cuentas: ['245000000'] },
+      net_income: { tipo: 'r1', cuentas: ['590000000'] },
+    },
+  },
+  CO: {
+    key: 'colombia',
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['100000'] },
+      loans: { tipo: 'b1', cuentas: ['140000'] },
+      equity: { tipo: 'b1', cuentas: ['300000'] },
+      liabilities: { tipo: 'b1', cuentas: ['200000'] },
+      demand_deposits: { tipo: 'b1', cuentas: ['210500'] },
+      time_deposits: { tipo: 'b1', cuentas: ['210700'] },
+      bonds: { tipo: 'b1', cuentas: ['250000'] },
+      net_income: { tipo: 'r1', cuentas: ['590000'] },
+    },
+  },
+  BR: {
+    key: 'brasil',
+    metrics: {
+      assets: { tipo: 'p', cuentas: ['78182', '140220'] },
+      loans: { tipo: 'p', cuentas: ['78183', '141873'] },
+      equity: { tipo: 'p', cuentas: ['78186', '140246'] },
+      liabilities: { tipo: 'p', cuentas: ['78184', '140244'] },
+      demand_deposits: { tipo: 'p', cuentas: ['78185', '140239'] },
+      time_deposits: { tipo: 'p', cuentas: [] },
+      bonds: { tipo: 'p', cuentas: [] },
+      net_income: { tipo: 'p', cuentas: ['78187', '141870'] },
+    },
+  },
+  UY: {
+    key: 'uruguay',
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['1'] },
+      loans: { tipo: 'b1', cuentas: ['1.4.1', '1.4.2', '1.4.3'] },
+      equity: { tipo: 'b1', cuentas: ['3'] },
+      liabilities: { tipo: 'b1', cuentas: ['2'] },
+      demand_deposits: { tipo: 'b1', cuentas: ['2.1.2', '2.1.3', '2.1.4'] },
+      time_deposits: { tipo: 'b1', cuentas: [] },
+      bonds: { tipo: 'b1', cuentas: [] },
+      net_income: { tipo: 'r1', cuentas: ['R_EJERCICIO'] },
+    },
+  },
+  US: {
+    key: 'usa',
+    metrics: {
+      assets: { tipo: 'b1', cuentas: ['ASSET'] },
+      loans: { tipo: 'b1', cuentas: ['LNLS'] },
+      equity: { tipo: 'b1', cuentas: ['EQTOT'] },
+      liabilities: { tipo: 'b1', cuentas: ['LIAB'] },
+      demand_deposits: { tipo: 'b1', cuentas: ['DEP'] },
+      time_deposits: { tipo: 'b1', cuentas: [] },
+      bonds: { tipo: 'b1', cuentas: [] },
+      net_income: { tipo: 'r1', cuentas: ['NETINC'] },
+    },
+  },
+};
+
+async function btgBankSnapshot(entry) {
+  const spec = BTG_METRIC_SPECS[entry.iso];
+  const meta = REGISTRY.paises[spec?.key];
+  if (!spec || !meta) {
+    return {
+      ...entry,
+      currency: null,
+      period: null,
+      name: entry.shortName,
+      metrics: {},
+      error: 'Unknown country spec',
+    };
+  }
+
+  const periodRows = await query(
+    `SELECT DISTINCT periodo FROM datos_financieros WHERE country = $1 ORDER BY periodo ASC`,
+    [entry.iso],
+  );
+  if (!periodRows.length) {
+    return {
+      iso: entry.iso,
+      key: meta.key,
+      countryLabel: entry.countryLabel,
+      shortName: entry.shortName,
+      code: entry.code,
+      currency: meta.currency,
+      period: null,
+      name: entry.shortName,
+      metrics: {},
+      error: 'No periods loaded',
+    };
+  }
+  const period = periodRows[periodRows.length - 1].periodo;
+
+  const nameRows = await query(
+    `SELECT codigo::int AS codigo, razon_social FROM instituciones
+     WHERE country = $1 AND codigo = $2`,
+    [entry.iso, entry.code],
+  );
+  const name = nameRows[0]?.razon_social || entry.shortName;
+
+  const metricKeys = Object.keys(spec.metrics);
+  const tipoCuenta = [];
+  for (const mk of metricKeys) {
+    const m = spec.metrics[mk];
+    for (const c of m.cuentas || []) tipoCuenta.push({ tipo: m.tipo, cuenta: c, metric: mk });
+  }
+  const tipos = [...new Set(tipoCuenta.map((x) => x.tipo))];
+  const cuentas = [...new Set(tipoCuenta.map((x) => x.cuenta))];
+
+  const metrics = Object.fromEntries(metricKeys.map((k) => [k, null]));
+  if (tipos.length && cuentas.length) {
+    const dataRows = await query(
+      `SELECT tipo, cuenta, SUM(monto_total::bigint) AS monto_total
+       FROM datos_financieros
+       WHERE country = $1 AND periodo = $2 AND tipo = ANY($3) AND cuenta = ANY($4)
+         AND ins_cod = $5
+       GROUP BY tipo, cuenta`,
+      [entry.iso, period, tipos, cuentas, entry.code],
+    );
+    for (const mk of metricKeys) {
+      if (!(spec.metrics[mk].cuentas || []).length) {
+        metrics[mk] = null;
+        continue;
+      }
+      let sum = 0;
+      let hit = false;
+      for (const row of dataRows) {
+        for (const tc of tipoCuenta) {
+          if (tc.metric === mk && tc.tipo === row.tipo && tc.cuenta === row.cuenta) {
+            sum += Number(row.monto_total) || 0;
+            hit = true;
+          }
+        }
+      }
+      metrics[mk] = hit ? sum : null;
+    }
+  }
+
+  return {
+    iso: entry.iso,
+    key: meta.key,
+    countryLabel: entry.countryLabel,
+    shortName: entry.shortName,
+    code: entry.code,
+    currency: meta.currency,
+    period,
+    name,
+    metrics,
+  };
+}
+
+app.get('/api/btg-banks/snapshot', async (req, res) => {
+  try {
+    const banks = [];
+    for (const entry of BTG_BANKS) {
+      try {
+        banks.push(await btgBankSnapshot(entry));
+      } catch (e) {
+        banks.push({
+          ...entry,
+          key: BTG_METRIC_SPECS[entry.iso]?.key,
+          currency: REGISTRY.paises[BTG_METRIC_SPECS[entry.iso]?.key]?.currency || null,
+          period: null,
+          name: entry.shortName,
+          metrics: {},
+          error: String(e.message || e),
+        });
+      }
+    }
+    res.json({
+      ok: true,
+      metrics: [
+        { key: 'equity', label: 'Equity' },
+        { key: 'assets', label: 'Total Assets' },
+        { key: 'net_income', label: 'Net Income' },
+        { key: 'loans', label: 'Total Loans' },
+        { key: 'liabilities', label: 'Total Liabilities' },
+        { key: 'demand_deposits', label: 'Demand Deposits / Deposits' },
+        { key: 'time_deposits', label: 'Time Deposits' },
+        { key: 'bonds', label: 'Bonds' },
+        { key: 'loans_equity', label: 'Loans / Equity' },
+        { key: 'roe', label: 'Annual ROE' },
+      ],
+      notes: [
+        'Franchise set: BTG Brasil, Chile, Colombia, USA + HSBC Uruguay.',
+        'Each row uses that country latest loaded supervisory period (may differ).',
+        'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
+        'Demand Deposits may be total deposits / funding where vista/plazo is not published.',
+        'Annual ROE approximates YTD net income x (12 / period month) / equity (Bank Monitor convention).',
+      ],
+      banks,
+    });
+  } catch (e) {
+    console.error('/api/btg-banks/snapshot error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // GET /api/bank-profile?country=BR&codigo=1000080329
 // Curated profile from bank_profiles + live assets/equity + avg ROE 3y
 // from datos_financieros (year-end Dec periods).
