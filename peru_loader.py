@@ -543,7 +543,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             else discover_available_periods(args.from_dt, args.to_dt)
         )
     else:
-        periods = [p for p in recent_candidate_periods(4) if index_exists(p)]
+        periods = [p for p in recent_candidate_periods(10) if index_exists(p)]
 
     if args.from_dt:
         periods = [p for p in periods if p >= args.from_dt]

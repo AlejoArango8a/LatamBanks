@@ -1,0 +1,51 @@
+name: Chile CMF Balance Bancos (monthly)
+
+on:
+  schedule:
+    # Día 25 — CMF suele publicar el mes anterior con ~3–4 semanas de rezago
+    - cron: '0 14 25 * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'incremental | article | zip-url'
+        required: false
+        default: 'incremental'
+      article_id:
+        description: 'CMF articles-{ID} (mode=article)'
+        required: false
+        default: ''
+      zip_url:
+        description: 'URL directa al ZIP (mode=zip-url)'
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite if period already loaded (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load Chile CMF
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'incremental' }}"
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          if [ "$MODE" = "article" ]; then
+            python chile_loader.py --article-id "${{ github.event.inputs.article_id }}" $FORCE_FLAG
+          elif [ "$MODE" = "zip-url" ]; then
+            python chile_loader.py --zip-url "${{ github.event.inputs.zip_url }}" $FORCE_FLAG
+          else
+            python chile_loader.py $FORCE_FLAG
+          fi
