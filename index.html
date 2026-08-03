@@ -424,6 +424,16 @@
       gap: clamp(20px, 2.6vh, 32px);
     }
 
+    /* BTG access — own row, visually separated from country flags */
+    .flags-btg-row {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding-bottom: clamp(18px, 2.4vh, 28px);
+      margin-bottom: clamp(4px, 0.8vh, 10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
     .flags-label {
       font-size: 11px;
       letter-spacing: 0.09em;
@@ -533,19 +543,24 @@
       display: block;
     }
 
-    /* BTG franchise entry — blue wordmark on white disk */
+    /* BTG franchise entry — official mark on navy blue disk */
     .flag-btn.flag-btn-btg {
-      background: #ffffff;
-      border-color: rgba(255, 255, 255, 0.72);
+      background: #001e62;
+      border-color: rgba(200, 220, 255, 0.55);
+      box-shadow: 0 4px 18px rgba(0, 20, 60, 0.55);
     }
     .flag-btn.flag-btn-btg img {
-      object-fit: contain;
-      padding: 18%;
+      object-fit: cover;
+      padding: 0;
       box-sizing: border-box;
-      border-radius: 0;
+      border-radius: 50%;
     }
     .flag-btn.flag-btn-btg::after {
-      box-shadow: inset 0 0 0 3px rgba(6, 38, 80, 0.12);
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.28);
+    }
+    .hero-flag-hit:hover .flag-btn.flag-btn-btg {
+      border-color: rgba(180, 210, 255, 0.9);
+      box-shadow: 0 8px 28px rgba(0, 30, 98, 0.55);
     }
 
     .flag-btn.is-disabled {
@@ -789,13 +804,15 @@
     </div>
     <aside class="hero-flags-fixed" aria-label="Country selection">
       <div class="flags-zone">
-        <div class="flags-row" role="list">
+        <div class="flags-btg-row" role="list" aria-label="BTG Banks">
           <div class="flag-entry" role="listitem">
             <a class="hero-flag-hit" href="./dashboard.html?tab=btgbanks" title="Open BTG Banks compare" aria-label="BTG Banks: open franchise compare">
-              <span class="flag-btn flag-btn-btg"><img src="assets/logos/logo-btg.png" alt="" /></span>
+              <span class="flag-btn flag-btn-btg"><img src="assets/btg-flag-circle.png" alt="" /></span>
               <span class="flag-caption live">BTG</span>
             </a>
           </div>
+        </div>
+        <div class="flags-row" role="list" aria-label="Countries">
           <div class="flag-entry" role="listitem">
             <a class="hero-flag-hit" href="./dashboard.html?country=brasil" title="Open Brazil monitor" aria-label="Brazil: open monitor">
               <span class="flag-btn"><img src="assets/Brasil%20flag%203.png" alt="" /></span>
