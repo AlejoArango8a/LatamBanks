@@ -584,7 +584,7 @@ const BTG_BANKS = [
   { iso: 'UY', code: 157, shortName: 'HSBC', countryLabel: 'Uruguay' },
 ];
 
-/** Extended common KPIs aligned with Bank Monitor Financial Highlights. */
+/** Extended common KPIs — only metrics comparable across the full franchise set. */
 const BTG_METRIC_SPECS = {
   CL: {
     key: 'chile',
@@ -593,9 +593,8 @@ const BTG_METRIC_SPECS = {
       loans: { tipo: 'b1', cuentas: ['500000000'] },
       equity: { tipo: 'b1', cuentas: ['300000000'] },
       liabilities: { tipo: 'b1', cuentas: ['200000000'] },
-      demand_deposits: { tipo: 'b1', cuentas: ['241000000'] },
-      time_deposits: { tipo: 'b1', cuentas: ['242000000'] },
-      bonds: { tipo: 'b1', cuentas: ['245000000'] },
+      // Vista + plazo = total customer deposits (comparable across franchise)
+      total_deposits: { tipo: 'b1', cuentas: ['241000000', '242000000'] },
       net_income: { tipo: 'r1', cuentas: ['590000000'] },
     },
   },
@@ -606,9 +605,8 @@ const BTG_METRIC_SPECS = {
       loans: { tipo: 'b1', cuentas: ['140000'] },
       equity: { tipo: 'b1', cuentas: ['300000'] },
       liabilities: { tipo: 'b1', cuentas: ['200000'] },
-      demand_deposits: { tipo: 'b1', cuentas: ['210500'] },
-      time_deposits: { tipo: 'b1', cuentas: ['210700'] },
-      bonds: { tipo: 'b1', cuentas: ['250000'] },
+      // Cuenta corriente + CDTs
+      total_deposits: { tipo: 'b1', cuentas: ['210500', '210700'] },
       net_income: { tipo: 'r1', cuentas: ['590000'] },
     },
   },
@@ -619,9 +617,8 @@ const BTG_METRIC_SPECS = {
       loans: { tipo: 'p', cuentas: ['78183', '141873'] },
       equity: { tipo: 'p', cuentas: ['78186', '140246'] },
       liabilities: { tipo: 'p', cuentas: ['78184', '140244'] },
-      demand_deposits: { tipo: 'p', cuentas: ['78185', '140239'] },
-      time_deposits: { tipo: 'p', cuentas: [] },
-      bonds: { tipo: 'p', cuentas: [] },
+      // Cosif Depósitos (140228); old Relatorio uses 78185 Captações as fallback era
+      total_deposits: { tipo: 'p', cuentas: ['78185', '140228'] },
       net_income: { tipo: 'p', cuentas: ['78187', '141870'] },
     },
   },
@@ -632,9 +629,8 @@ const BTG_METRIC_SPECS = {
       loans: { tipo: 'b1', cuentas: ['1.4.1', '1.4.2', '1.4.3'] },
       equity: { tipo: 'b1', cuentas: ['3'] },
       liabilities: { tipo: 'b1', cuentas: ['2'] },
-      demand_deposits: { tipo: 'b1', cuentas: ['2.1.2', '2.1.3', '2.1.4'] },
-      time_deposits: { tipo: 'b1', cuentas: [] },
-      bonds: { tipo: 'b1', cuentas: [] },
+      // Deposits by sector (BCU Situación Patrimonial has no vista/plazo split)
+      total_deposits: { tipo: 'b1', cuentas: ['2.1.2', '2.1.3', '2.1.4'] },
       net_income: { tipo: 'r1', cuentas: ['R_EJERCICIO'] },
     },
   },
@@ -645,9 +641,7 @@ const BTG_METRIC_SPECS = {
       loans: { tipo: 'b1', cuentas: ['LNLS'] },
       equity: { tipo: 'b1', cuentas: ['EQTOT'] },
       liabilities: { tipo: 'b1', cuentas: ['LIAB'] },
-      demand_deposits: { tipo: 'b1', cuentas: ['DEP'] },
-      time_deposits: { tipo: 'b1', cuentas: [] },
-      bonds: { tipo: 'b1', cuentas: [] },
+      total_deposits: { tipo: 'b1', cuentas: ['DEP'] },
       net_income: { tipo: 'r1', cuentas: ['NETINC'] },
     },
   },
@@ -771,9 +765,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
         { key: 'net_income', label: 'Net Income' },
         { key: 'loans', label: 'Total Loans' },
         { key: 'liabilities', label: 'Total Liabilities' },
-        { key: 'demand_deposits', label: 'Demand Deposits / Deposits' },
-        { key: 'time_deposits', label: 'Time Deposits' },
-        { key: 'bonds', label: 'Bonds' },
+        { key: 'total_deposits', label: 'Total Deposits' },
         { key: 'loans_equity', label: 'Loans / Equity' },
         { key: 'roe', label: 'Annual ROE' },
       ],
@@ -781,7 +773,8 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
         'Franchise set: BTG Brazil, Chile, USA, Colombia + HSBC Uruguay.',
         'Each row uses that country latest loaded supervisory period (may differ).',
         'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
-        'Demand Deposits may be total deposits / funding where vista/plazo is not published.',
+        'Only KPIs available for every franchise country are shown (Time Deposits / Bonds removed — not published uniformly).',
+        'Total Deposits: CL vista+plazo, CO corriente+CDTs, BR Cosif Depósitos, UY sector deposits, US DEP.',
         'Annual ROE approximates YTD net income x (12 / period month) / equity (Bank Monitor convention).',
       ],
       banks,

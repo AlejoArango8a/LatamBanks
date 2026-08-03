@@ -2,17 +2,19 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay (HSBC) / USA
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon57';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon58';
 
+/**
+ * Only KPIs available for EVERY franchise country.
+ * Time Deposits / Bonds intentionally omitted (CL/CO-only or misaligned).
+ */
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
   { key: 'assets', label: 'Total Assets', kind: 'money' },
   { key: 'net_income', label: 'Net Income', kind: 'money' },
   { key: 'loans', label: 'Total Loans', kind: 'money' },
   { key: 'liabilities', label: 'Total Liabilities', kind: 'money' },
-  { key: 'demand_deposits', label: 'Demand Deposits', kind: 'money' },
-  { key: 'time_deposits', label: 'Time Deposits', kind: 'money' },
-  { key: 'bonds', label: 'Bonds', kind: 'money' },
+  { key: 'total_deposits', label: 'Total Deposits', kind: 'money' },
   { key: 'loans_equity', label: 'Loans / Equity', kind: 'ratio' },
   { key: 'roe', label: 'Annual ROE', kind: 'pct' },
 ];
@@ -146,22 +148,20 @@ async function fetchFxRates(currencies) {
 
 function enrichBank(raw) {
   const local = raw.metrics || {};
+  const usd = {};
   const equityL = local.equity;
   const loansL = local.loans;
-  const niL = local.net_income;
-  const usd = {};
   for (const m of METRICS) {
     if (m.key === 'loans_equity') {
       usd.loans_equity = (equityL > 0 && loansL != null && Number.isFinite(Number(loansL)))
         ? Number(loansL) / Number(equityL)
         : null;
-      continue;
-    }
-    if (m.key === 'roe') {
+    } else if (m.key === 'roe') {
+      const niL = local.net_income;
       usd.roe = annualRoe(niL, equityL, raw.period);
-      continue;
+    } else {
+      usd[m.key] = toUsd(local[m.key], raw.currency);
     }
-    usd[m.key] = toUsd(local[m.key], raw.currency);
   }
   return {
     ...raw,
@@ -184,20 +184,18 @@ async function loadSnapshot(force = false) {
     const r = await fetch(`${API_BASE}/api/btg-banks/snapshot`, { cache: 'no-store' });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
-    await fetchFxRates((j.banks || []).map((b) => b.currency).filter(Boolean));
-    const byIso = Object.fromEntries((j.banks || []).map((b) => [b.iso, enrichBank(b)]));
+    const rawBanks = Array.isArray(j.banks) ? j.banks : [];
+    await fetchFxRates(rawBanks.map((b) => b.currency).filter(Boolean));
+    const byIso = Object.fromEntries(rawBanks.map((b) => [b.iso, enrichBank(b)]));
     state.banks = BANK_ORDER.map((iso) => byIso[iso]).filter(Boolean);
-    state.notes = j.notes || [];
+    state.notes = Array.isArray(j.notes) ? j.notes : [];
     state.loaded = true;
   } catch (e) {
     console.error('[btgBanks]', e);
     state.error = String(e.message || e);
+    state.banks = [];
   } finally {
     state.loading = false;
-    if (state._loadMsgTimer) {
-      clearInterval(state._loadMsgTimer);
-      state._loadMsgTimer = null;
-    }
     render();
   }
 }
@@ -206,27 +204,21 @@ function renderShellLoading() {
   const root = document.getElementById('btgBanksRoot');
   if (!root) return;
   const msgs = [
-    'Gathering BTG franchise figures across LatAm & the U.S.…',
-    'Converting supervisory amounts to USD…',
-    'Building Financial Highlights for Brazil, Chile, USA, Colombia and Uruguay…',
+    'Loading franchise snapshot…',
+    'Fetching supervisory KPIs…',
+    'Converting to USD…',
   ];
-  const msg = msgs[Math.floor(Date.now() / 2800) % msgs.length];
   root.innerHTML = `
     <div class="btg-banks-loading">
-      <div class="ls-bars" style="height:40px;">
-        ${Array.from({ length: 10 }, (_, i) => `<div class="ls-bar" style="--i:${i}"></div>`).join('')}
-      </div>
-      <div class="ls-msg" id="btgBanksLoadMsg">${esc(msg)}</div>
+      <div class="ls-bars" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+      <div class="ls-msg" id="btgBanksLoadMsg">${esc(msgs[0])}</div>
       <div class="btg-banks-load-sub">Comparing equity, assets, loans and funding across the franchise</div>
     </div>`;
-  // Rotate copy while waiting (API + FX can take a few seconds).
-  if (state._loadMsgTimer) clearInterval(state._loadMsgTimer);
   let i = 0;
-  state._loadMsgTimer = setInterval(() => {
+  const t = setInterval(() => {
     const el = document.getElementById('btgBanksLoadMsg');
-    if (!el || !state.loading) {
-      clearInterval(state._loadMsgTimer);
-      state._loadMsgTimer = null;
+    if (!el) {
+      clearInterval(t);
       return;
     }
     i = (i + 1) % msgs.length;
@@ -235,6 +227,7 @@ function renderShellLoading() {
 }
 
 function setMetric(key) {
+  if (!METRICS.some((m) => m.key === key)) return;
   state.metric = key;
   render();
 }
@@ -253,6 +246,7 @@ function renderHighlightCards() {
     return `<div class="kpi-col">
       <div class="kpi-col-title">${esc(b.countryLabel)}</div>
       <div class="kpi blue" style="border-left:3px solid ${b.color};">
+        <div class="kpi-label" style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;">${esc(m.label)}</div>
         <div class="kpi-val">${fmtMetric(m.kind, val)}</div>
         <div class="kpi-sub">${esc(b.shortName)} · ${esc(periodLabel(b.period))}</div>
       </div>
@@ -303,7 +297,6 @@ function drawChart() {
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
   const rawMax = Math.max(1, ...banks.map((b) => Math.abs(b.usd[m.key] || 0)));
-  // Headroom so bars never kiss the top axis (~18–25% depending on magnitude).
   const niceCeil = (v) => {
     if (!(v > 0)) return 1;
     const padded = v * 1.22;
@@ -316,7 +309,6 @@ function drawChart() {
   const maxV = niceCeil(rawMax);
   const barW = Math.min(56, (plotW / banks.length) * 0.55);
 
-  // grid
   ctx.strokeStyle = 'rgba(148,163,184,0.28)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
@@ -389,7 +381,7 @@ function render() {
       </div>
     </div>
 
-    <div class="res-section-head" style="display:flex;align-items:center;gap:8px;margin:8px 0 16px;padding-left:4px;">
+    <div class="res-section-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 12px;padding-left:4px;">
       <span class="res-section-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#001E62;flex-shrink:0;">
         <svg width="12" height="12" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="1" y="10" width="4" height="7" rx="1" fill="white"/>
@@ -397,9 +389,12 @@ function render() {
           <rect x="13" y="1" width="4" height="16" rx="1" fill="white"/>
         </svg>
       </span>
-      <span style="font-size:15px;font-weight:500;color:var(--white);">Financial highlights</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:8px;">${fxLine}</span>
+      <span style="font-size:15px;font-weight:500;color:var(--white);">Financial highlights · ${esc(m.label)}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:4px;">${fxLine}</span>
     </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding-left:4px;" id="btgMetricBtns">${renderMetricButtons()}</div>
+    <div style="font-size:11px;color:var(--text3);margin:-6px 0 14px;padding-left:4px;">Select a KPI — highlight cards and chart update together</div>
 
     <div class="kpi-grid" id="btgBanksKpis" style="margin-bottom:22px;">${renderHighlightCards()}</div>
 
@@ -410,7 +405,7 @@ function render() {
           <polyline points="13,2 17,2 17,6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </span>
-      <span style="font-size:15px;font-weight:500;color:var(--white);">Historical evolution · cross-country</span>
+      <span style="font-size:15px;font-weight:500;color:var(--white);">${esc(m.label)} · cross-country</span>
     </div>
 
     <div class="panel">
@@ -421,7 +416,6 @@ function render() {
         </div>
       </div>
       <div class="panel-body">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="btgMetricBtns">${renderMetricButtons()}</div>
         <div class="chart-wrap" style="position:relative;min-height:300px;">
           <canvas id="btgBanksChart" height="300" style="width:100%;height:300px;"></canvas>
           <div id="btgBanksChartEmpty" style="display:none;position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--text3);font-size:13px;">No values for this KPI</div>
@@ -433,7 +427,7 @@ function render() {
       <div class="panel-head">
         <div>
           <div class="panel-title">Comparison table · USD</div>
-          <div class="panel-sub">All Financial Highlights KPIs</div>
+          <div class="panel-sub">Franchise KPIs available in every country</div>
         </div>
       </div>
       <div class="panel-body" style="overflow-x:auto;padding:0;" id="btgBanksTable">${renderTable()}</div>
@@ -448,7 +442,7 @@ function render() {
   requestAnimationFrame(() => drawChart());
 }
 
-/** Called when the BTG Banks tab becomes active. */
-export function renderBtgBanks(force = false) {
-  loadSnapshot(force);
+export function renderBtgBanks() {
+  if (!state.loaded && !state.loading) loadSnapshot();
+  else render();
 }
