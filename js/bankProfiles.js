@@ -117,6 +117,26 @@ export const BANK_PROFILES = {
       website: 'https://www.bancoestado.cl',
       news: [{ title: 'BancoEstado — news', url: 'https://news.google.com/search?q=BancoEstado%20Chile', source: 'Google News' }],
     },
+    14: {
+      shortName: 'Scotiabank Chile',
+      legalName: 'Scotiabank Chile',
+      hq: 'Santiago',
+      hqCity: 'Santiago',
+      ownership: 'Subsidiary of The Bank of Nova Scotia',
+      controlling: 'The Bank of Nova Scotia',
+      originCountry: 'CA',
+      originCountryName: 'Canada',
+      businessFocus: 'Universal bank: retail, consumer, SME and corporate',
+      history: 'Chilean franchise of Scotiabank (Bank of Nova Scotia). Systemically important private bank in Chile.',
+      context: 'Peers the large private Chilean banks; local solvency at the top of the national scale.',
+      ratings: [
+        { agency: 'Fitch Chile', rating: 'AAA(cl)', outlook: 'Estable' },
+        { agency: 'ICR', rating: 'AAA', outlook: 'Estable' },
+      ],
+      website: 'https://www.scotiabankchile.cl',
+      irUrl: 'https://www.scotiabankchile.cl/investor-relations/Ratings',
+      news: [{ title: 'Scotiabank Chile — news', url: 'https://news.google.com/search?q=Scotiabank%20Chile', source: 'Google News' }],
+    },
   },
   colombia: {
     66: {

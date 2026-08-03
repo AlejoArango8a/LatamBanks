@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon58';
+import { ST, datasetIsoCountry } from './state.js?v=bmon59';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -22,7 +22,7 @@ export const BANK_COLORS = {
   53: '#5E2C8B',
   59: '#2563eb',
   62: '#00A9E4',
-  66: '#2563eb',
+  66: '#2563eb', // CO BTG Pactual (codigo 66)
   1000080336: '#2563eb',
   10001: '#047857',
 };
@@ -369,7 +369,6 @@ export const BANK_LOGOS = {
   60:  'https://www.ccb.cn/favicon.ico',
   61:  'https://www.bankofchina.com/favicon.ico',
   62:  'https://www.tanner.cl/favicon.ico',
-  66:  'https://www.btgpactual.com/favicon.ico',
 };
 
 export const MESES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -384,27 +383,102 @@ export const CUENTAS_PRINCIPALES = {
   '800000000': 'Supplementary information',
 };
 
+/**
+ * Chile — solvencia local (largo plazo). Preferimos Feller Rate cuando existe;
+ * si el banco no está clasificado por Feller, usamos Fitch Chile / ICR / Humphreys.
+ * Claves = `instituciones.codigo` CMF.
+ *
+ * Verificado (fuentes públicas, 2025–2026):
+ * - Feller: Chile, Estado, BCI, Santander, Itaú, BICE, Internacional, Falabella,
+ *   Consorcio, BTG Chile, CCB, HSBC, JP Morgan, Bank of China → ver listado bancos CL.
+ * - Scotiabank (14): Fitch AAA(cl) + ICR AAA (IR Scotiabank Chile) — no Feller.
+ * - Security (49): ICR AA+ (post fusión BICECORP / Grupo Security).
+ * - Ripley (53): Humphreys / Fitch Chile / ICR AA- (IR Ripley).
+ * - Tanner (62): Humphreys / ICR AA- (Tanner Banco Digital).
+ */
 export const FELLER_RATINGS = {
-  1:  'AAA',
-  9:  'AA',
-  12: 'AAA',
-  14: 'AA+',
-  16: 'AAA',
-  28: 'AA+',
-  31: 'AAA',
-  37: 'AAA',
-  39: 'AAA',
-  41: 'AAA',
-  51: 'AA',
-  53: 'AA-',
-  55: 'AA',
-  49: 'AA+',
-  59: 'AA',
-  60: 'AAA',
-  61: 'AAA',
-  62: 'AA-',
-  66: 'AA',
+  1:  'AAA', // Banco de Chile — Feller
+  9:  'AA',  // Banco Internacional — Feller
+  12: 'AAA', // BancoEstado — Feller
+  14: 'AAA', // Scotiabank Chile — Fitch Chile / ICR (no Feller)
+  16: 'AAA', // BCI — Feller
+  28: 'AA+', // Banco BICE — Feller
+  31: 'AAA', // HSBC Bank (Chile) — Feller
+  37: 'AAA', // Santander-Chile — Feller
+  39: 'AAA', // Itaú Chile — Feller
+  41: 'AAA', // JPMorgan Chase N.A. (CL) — Feller
+  49: 'AA+', // Banco Security — ICR
+  51: 'AA',  // Banco Falabella — Feller
+  53: 'AA-', // Banco Ripley — Humphreys / Fitch Chile / ICR
+  55: 'AA',  // Banco Consorcio — Feller
+  59: 'AA',  // BTG Pactual Chile — Feller
+  60: 'AAA', // China Construction Bank Agencia CL — Feller
+  61: 'AAA', // Bank of China Agencia CL — Feller
+  62: 'AA-', // Tanner Banco Digital — Humphreys / ICR
 };
+
+/**
+ * Perspectiva / calificadora (Chile). Tooltip en Banking System y Config.
+ */
+export const BANK_RATINGS_CL_META = Object.freeze({
+  14: {
+    outlook: 'Estable',
+    agency: 'Fitch Chile / ICR',
+    analysis:
+      'Solvencia local AAA(cl) / AAA. Fitch Chile (largo plazo) e ICR confirman la nota máxima; respaldo de The Bank of Nova Scotia.',
+  },
+  1: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Máxima categoría de solvencia local (AAA) con perspectivas estables.',
+  },
+  12: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Banco público soberano; solvencia AAA con perspectivas estables.',
+  },
+  16: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Solvencia AAA (Feller); una de las franquicias privadas de mayor escala en Chile.',
+  },
+  37: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Solvencia AAA; filial chilena de Banco Santander S.A.',
+  },
+  39: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Solvencia AAA; franquicia Itaú en Chile.',
+  },
+  28: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Solvencia AA+ (Feller); en proceso de integración con Banco Security.',
+  },
+  49: {
+    outlook: 'Estable',
+    agency: 'ICR',
+    analysis:
+      'ICR subió la solvencia a AA+ tras el acuerdo de fusión BICECORP / Grupo Security.',
+  },
+  53: {
+    outlook: 'Estable',
+    agency: 'Humphreys / Fitch / ICR',
+    analysis: 'Banco Ripley Chile en AA- (distinto de Ripley Corp / Ripley Chile retail).',
+  },
+  62: {
+    outlook: 'Estable',
+    agency: 'Humphreys / ICR',
+    analysis: 'Tanner Banco Digital clasificado en AA- tras el inicio de operaciones bancarias.',
+  },
+  59: {
+    outlook: 'Estable',
+    agency: 'Feller Rate',
+    analysis: 'Solvencia AA; banco chileno del grupo BTG Pactual.',
+  },
+});
 
 /**
  * Fitch / BRC — escala nacional largo plazo.
@@ -449,10 +523,10 @@ export const BANK_RATINGS_CO = Object.freeze({
  */
 export const BANK_RATINGS_CO_META = Object.freeze({
   39: {
-    outlook: 'Negativa',
+    outlook: 'Estable',
     agency: 'Fitch / BRC',
     analysis:
-      'Mantiene la nota máxima nacional por su sólida posición competitiva, aunque la perspectiva es negativa reflejando el entorno soberano de Colombia.',
+      'AAA(col) nacional con perspectiva estable (Fitch). El IDR internacional mantiene outlook negativo por el soberano; la nota local sigue en la máxima categoría.',
   },
   42: {
     outlook: 'Estable',
