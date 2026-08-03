@@ -1,23 +1,23 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon49';
-import { ST, datasetIsoCountry } from './state.js?v=bmon49';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon49';
-import { fetchWithTimeout } from './api.js?v=bmon49';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon49';
+import { API_BASE } from './config.js?v=bmon50';
+import { ST, datasetIsoCountry } from './state.js?v=bmon50';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon50';
+import { fetchWithTimeout } from './api.js?v=bmon50';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon50';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon49';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon50';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon49';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon49';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon49';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon49';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon49';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon49';
+} from './views/balance.js?v=bmon50';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon50';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon50';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon50';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon50';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon50';
 
 // UI
 import {
@@ -31,11 +31,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon49';
+} from './ui.js?v=bmon50';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon49';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon49';
+import { exportTableById, exportChartTable } from './export.js?v=bmon50';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon50';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
