@@ -579,9 +579,9 @@ app.get('/api/americas/snapshot', async (req, res) => {
 const BTG_BANKS = [
   { iso: 'BR', code: 1000080336, shortName: 'BTG Pactual', countryLabel: 'Brazil' },
   { iso: 'CL', code: 59, shortName: 'BTG Pactual Chile', countryLabel: 'Chile' },
+  { iso: 'US', code: 35154, shortName: 'BTG Pactual Bank', countryLabel: 'United States' },
   { iso: 'CO', code: 66, shortName: 'BTG Pactual Colombia', countryLabel: 'Colombia' },
   { iso: 'UY', code: 157, shortName: 'HSBC', countryLabel: 'Uruguay' },
-  { iso: 'US', code: 35154, shortName: 'BTG Pactual Bank', countryLabel: 'United States' },
 ];
 
 /** Extended common KPIs aligned with Bank Monitor Financial Highlights. */
@@ -778,7 +778,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
         { key: 'roe', label: 'Annual ROE' },
       ],
       notes: [
-        'Franchise set: BTG Brasil, Chile, Colombia, USA + HSBC Uruguay.',
+        'Franchise set: BTG Brazil, Chile, USA, Colombia + HSBC Uruguay.',
         'Each row uses that country latest loaded supervisory period (may differ).',
         'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
         'Demand Deposits may be total deposits / funding where vista/plazo is not published.',
