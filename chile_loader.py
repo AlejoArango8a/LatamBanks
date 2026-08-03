@@ -49,7 +49,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger("chile_loader")
 
 UA = {"User-Agent": "LatamBanksBot/1.0 (+https://github.com/AlejoArango8a/LatamBanks)"}
-ZIP_URL = "https://www.cmfchile.cl/portal/estadisticas/617/articles-{aid}_recurso_1.zip"
+ZIP_URLS = [
+    "https://www.cmfchile.cl/portal/estadisticas/617/articles-{aid}_recurso_1.zip",
+    "https://www.cmfchile.cl/portal/estadisticas/626/articles-{aid}_recurso_1.zip",
+]
+ARTICLE_URL = "https://www.cmfchile.cl/portal/estadisticas/626/w4-article-{aid}.html"
 
 # Seed of known article IDs → period (local zips + portal). Used to anchor probes.
 KNOWN_ARTICLE_PERIODS: dict[int, str] = {
@@ -68,10 +72,14 @@ KNOWN_ARTICLE_PERIODS: dict[int, str] = {
     97065: "202506",
     98081: "202507",
     99065: "202508",
+    109125: "202602",
+    110813: "202604",
     111486: "202605",
+    112240: "202606",
 }
 
-PROBE_AHEAD_DEFAULT = 120  # article IDs to scan past the max known/seed ID
+# Gaps between consecutive months can exceed 700 IDs (May→Jun 2026: 111486→112240).
+PROBE_AHEAD_DEFAULT = 1000
 
 
 def _http_get(url: str, timeout: int = 60) -> bytes:
@@ -81,20 +89,32 @@ def _http_get(url: str, timeout: int = 60) -> bytes:
 
 
 def download_article_zip(article_id: int) -> bytes | None:
-    url = ZIP_URL.format(aid=article_id)
+    for tmpl in ZIP_URLS:
+        url = tmpl.format(aid=article_id)
+        try:
+            data = _http_get(url)
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 403):
+                continue
+            log.warning("HTTP %s for article %s: %s", e.code, article_id, e)
+            continue
+        except Exception as e:
+            log.warning("Download failed article %s (%s): %s", article_id, url, e)
+            continue
+        if data and data[:2] == b"PK":
+            return data
+    return None
+
+
+def related_article_ids(article_id: int) -> list[int]:
+    """Scrape CMF article HTML for sibling publication IDs (Relacionados)."""
     try:
-        data = _http_get(url)
-    except urllib.error.HTTPError as e:
-        if e.code in (404, 403):
-            return None
-        log.warning("HTTP %s for article %s: %s", e.code, article_id, e)
-        return None
+        html = _http_get(ARTICLE_URL.format(aid=article_id)).decode("utf-8", "ignore")
     except Exception as e:
-        log.warning("Download failed article %s: %s", article_id, e)
-        return None
-    if not data or data[:2] != b"PK":
-        return None
-    return data
+        log.debug("No article page %s: %s", article_id, e)
+        return []
+    ids = sorted({int(x) for x in re.findall(r"(?:w4-article-|articles-)(\d+)", html)})
+    return ids
 
 
 def period_from_zip_bytes(zip_bytes: bytes) -> str | None:
@@ -122,8 +142,9 @@ def seed_article_ids_from_zips_dir(zips_dir: Path) -> dict[int, str]:
 
 
 def discover_new_article_ids(anchor_id: int, ahead: int = PROBE_AHEAD_DEFAULT) -> list[tuple[int, bytes]]:
-    """Probe article IDs after anchor; return (id, zip_bytes) for real ZIPs found."""
+    """Probe article IDs after anchor; also expand via Relacionados pages."""
     found: list[tuple[int, bytes]] = []
+    seen: set[int] = set()
     start = max(1, anchor_id - 2)
     end = anchor_id + ahead
     log.info("Probing CMF article IDs %s … %s", start, end)
@@ -131,7 +152,26 @@ def discover_new_article_ids(anchor_id: int, ahead: int = PROBE_AHEAD_DEFAULT) -
         data = download_article_zip(aid)
         if data:
             found.append((aid, data))
+            seen.add(aid)
             log.info("Found ZIP articles-%s (%d KB)", aid, len(data) // 1024)
+
+    # Expand from the newest hits via Relacionados (catches IDs outside linear probe).
+    expand_from = sorted(seen | {anchor_id}, reverse=True)[:5]
+    extra_ids: set[int] = set()
+    for aid in expand_from:
+        for rid in related_article_ids(aid):
+            if rid not in seen and rid > anchor_id - 50:
+                extra_ids.add(rid)
+    if extra_ids:
+        log.info("Relacionados candidates: %s", sorted(extra_ids)[-20:])
+    for aid in sorted(extra_ids):
+        if aid in seen:
+            continue
+        data = download_article_zip(aid)
+        if data:
+            found.append((aid, data))
+            seen.add(aid)
+            log.info("Found ZIP via Relacionados articles-%s (%d KB)", aid, len(data) // 1024)
     return found
 
 
