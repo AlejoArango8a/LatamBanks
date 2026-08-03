@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon58';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon58';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon59';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon59';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,17 +22,17 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon58';
-import { CO_CUIF } from '../coCuentas.js?v=bmon58';
-import { BR_KPI } from '../brCuentas.js?v=bmon58';
-import { UY_KPI } from '../uyCuentas.js?v=bmon58';
-import { PE_KPI } from '../peCuentas.js?v=bmon58';
-import { US_KPI } from '../usCuentas.js?v=bmon58';
-import { AR_KPI } from '../arCuentas.js?v=bmon58';
-import { MX_KPI } from '../mxCuentas.js?v=bmon58';
-import { PA_KPI } from '../paCuentas.js?v=bmon58';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon58';
-import { apiDatos } from '../api.js?v=bmon58';
+import { FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon59';
+import { CO_CUIF } from '../coCuentas.js?v=bmon59';
+import { BR_KPI } from '../brCuentas.js?v=bmon59';
+import { UY_KPI } from '../uyCuentas.js?v=bmon59';
+import { PE_KPI } from '../peCuentas.js?v=bmon59';
+import { US_KPI } from '../usCuentas.js?v=bmon59';
+import { AR_KPI } from '../arCuentas.js?v=bmon59';
+import { MX_KPI } from '../mxCuentas.js?v=bmon59';
+import { PA_KPI } from '../paCuentas.js?v=bmon59';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon59';
+import { apiDatos } from '../api.js?v=bmon59';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 
@@ -246,9 +246,12 @@ export function renderCBTable() {
       ? `background:${btgRgba(0.08)};border-left:3px solid ${btgBlue()};`
       : 'border-left:3px solid transparent;';
     const nameStyle = isBTG ? `font-weight:700;color:${btgBlue()};` : 'font-weight:500;color:var(--text);';
-    const metaCo = datasetIsoCountry() === 'CO' ? BANK_RATINGS_CO_META[b.code] : null;
-    const tip = metaCo
-      ? `Perspectiva: ${metaCo.outlook}. ${metaCo.agency}. ${metaCo.analysis}`
+    const isoTip = datasetIsoCountry();
+    const metaTip = isoTip === 'CO' ? BANK_RATINGS_CO_META[b.code]
+      : isoTip === 'CL' ? BANK_RATINGS_CL_META[b.code]
+      : null;
+    const tip = metaTip
+      ? `Perspectiva: ${metaTip.outlook}. ${metaTip.agency}. ${metaTip.analysis}`
       : '';
     const tipAttr = tip ? ` title="${escapeAttr(tip)}"` : '';
     html += `<tr style="${rowStyle}transition:background 0.1s;cursor:pointer;"
@@ -260,7 +263,7 @@ export function renderCBTable() {
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
       <td class="cb-col-rating" style="text-align:center;">
-        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaCo ? 'cursor:help;' : ''}">${rating}</span>
+        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaTip ? 'cursor:help;' : ''}">${rating}</span>
       </td>
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? `color:${btgBlue()};` : ''}">${fmtKPIDecimal(b.equity)}</td>
@@ -309,10 +312,10 @@ export function renderRatingsEditor() {
   const isoR = datasetIsoCountry();
   const defaultMap = cbRatingsBase();
 
-  const ratingColHdr = isoR === 'CO' ? 'Rating (Fitch)'
-    : isoR === 'CL' ? 'Rating (Feller Rate)'
+  const ratingColHdr = isoR === 'CO' ? 'Rating (nacional)'
+    : isoR === 'CL' ? 'Rating (solvencia local)'
     : 'Rating';
-  const sourceColHdr = isoR === 'CO' ? 'Calificadora · perspectiva' : 'Source';
+  const sourceColHdr = (isoR === 'CO' || isoR === 'CL') ? 'Calificadora · perspectiva' : 'Source';
   let html = `<table class="tbl"><thead><tr>
     <th>Bank</th>
     <th style="text-align:center;">${ratingColHdr}</th>
@@ -324,12 +327,14 @@ export function renderRatingsEditor() {
     const rating    = stored[code] || '—';
     const isDefault = defaultMap[code] !== undefined;
     const rColor    = RATING_COLORS[rating] || 'var(--text3)';
-    const meta      = isoR === 'CO' ? BANK_RATINGS_CO_META[code] : null;
+    const meta      = isoR === 'CO' ? BANK_RATINGS_CO_META[code]
+      : isoR === 'CL' ? BANK_RATINGS_CL_META[code]
+      : null;
     const sourceLbl = !isDefault
       ? '✏️ Manual'
       : meta
         ? `${meta.agency} · ${meta.outlook}`
-        : (isoR === 'CO' ? 'Referencia CO' : isoR === 'CL' ? 'Feller Rate' : '—');
+        : (isoR === 'CO' ? 'Referencia CO' : isoR === 'CL' ? 'Solvencia local' : '—');
     const sourceTip = meta ? escapeAttr(meta.analysis) : '';
     html += `<tr>
       <td style="font-weight:500;">${name}</td>
