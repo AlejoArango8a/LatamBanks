@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon54';
+import { ST, datasetIsoCountry } from './state.js?v=bmon55';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -493,5 +493,7 @@ export const RATING_COLORS = {
 };
 
 export const BTG_LOGO_DARK_SRC = 'assets/btg-logo-dark.png';
-/** Same mark as landing / Americas (white-background BTG wordmark). */
-export const BTG_LOGO_LIGHT_SRC = 'assets/LogoBTG-SinFondoBlanco.png';
+/** Same mark as dashboard brand / light theme (blue BTG on white square). */
+export const BTG_LOGO_LIGHT_SRC = 'assets/btg-logo-light.png';
+/** Blue wordmark (transparent) — landing circle / dark-friendly accents. */
+export const BTG_LOGO_BLUE_SRC = 'assets/logos/logo-btg.png';

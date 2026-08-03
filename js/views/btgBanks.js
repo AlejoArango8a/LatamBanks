@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay (HSBC) / USA
 // ============================================================
-import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon54';
+import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon55';
 
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -16,6 +16,9 @@ const METRICS = [
   { key: 'loans_equity', label: 'Loans / Equity', kind: 'ratio' },
   { key: 'roe', label: 'Annual ROE', kind: 'pct' },
 ];
+
+/** Display order: Brazil → Chile → United States → Colombia → Uruguay */
+const BANK_ORDER = ['BR', 'CL', 'US', 'CO', 'UY'];
 
 const BANK_COLORS = {
   BR: '#2563eb',
@@ -71,7 +74,13 @@ function fmtMetric(kind, n) {
   return fmtUsd(n);
 }
 
-function periodLabel(p) {
+function btgHeroLogoSrc() {
+  // Prefer the exact brand mark already loaded in the topbar (light theme).
+  const brand = document.querySelector('.brand img');
+  if (brand?.dataset?.lightSrc) return brand.dataset.lightSrc;
+  if (brand?.getAttribute('src')?.startsWith('data:')) return brand.getAttribute('src');
+  return BTG_LOGO_LIGHT_SRC;
+}
   const s = String(p || '');
   if (s.length < 6) return s || '—';
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -177,7 +186,8 @@ async function loadSnapshot(force = false) {
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
     await fetchFxRates((j.banks || []).map((b) => b.currency).filter(Boolean));
-    state.banks = (j.banks || []).map(enrichBank);
+    const byIso = Object.fromEntries((j.banks || []).map((b) => [b.iso, enrichBank(b)]));
+    state.banks = BANK_ORDER.map((iso) => byIso[iso]).filter(Boolean);
     state.notes = j.notes || [];
     state.loaded = true;
   } catch (e) {
@@ -185,6 +195,10 @@ async function loadSnapshot(force = false) {
     state.error = String(e.message || e);
   } finally {
     state.loading = false;
+    if (state._loadMsgTimer) {
+      clearInterval(state._loadMsgTimer);
+      state._loadMsgTimer = null;
+    }
     render();
   }
 }
@@ -192,7 +206,33 @@ async function loadSnapshot(force = false) {
 function renderShellLoading() {
   const root = document.getElementById('btgBanksRoot');
   if (!root) return;
-  root.innerHTML = `<div class="btg-banks-status">Loading BTG franchise metrics…</div>`;
+  const msgs = [
+    'Gathering BTG franchise figures across LatAm & the U.S.…',
+    'Converting supervisory amounts to USD…',
+    'Building Financial Highlights for Brazil, Chile, USA, Colombia and Uruguay…',
+  ];
+  const msg = msgs[Math.floor(Date.now() / 2800) % msgs.length];
+  root.innerHTML = `
+    <div class="btg-banks-loading">
+      <div class="ls-bars" style="height:40px;">
+        ${Array.from({ length: 10 }, (_, i) => `<div class="ls-bar" style="--i:${i}"></div>`).join('')}
+      </div>
+      <div class="ls-msg" id="btgBanksLoadMsg">${esc(msg)}</div>
+      <div class="btg-banks-load-sub">Comparing equity, assets, loans and funding across the franchise</div>
+    </div>`;
+  // Rotate copy while waiting (API + FX can take a few seconds).
+  if (state._loadMsgTimer) clearInterval(state._loadMsgTimer);
+  let i = 0;
+  state._loadMsgTimer = setInterval(() => {
+    const el = document.getElementById('btgBanksLoadMsg');
+    if (!el || !state.loading) {
+      clearInterval(state._loadMsgTimer);
+      state._loadMsgTimer = null;
+      return;
+    }
+    i = (i + 1) % msgs.length;
+    el.textContent = msgs[i];
+  }, 2800);
 }
 
 function setMetric(key) {
@@ -260,10 +300,21 @@ function drawChart() {
   }
   if (empty) empty.style.display = 'none';
 
-  const pad = { t: 28, r: 20, b: 64, l: 64 };
+  const pad = { t: 36, r: 20, b: 64, l: 68 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
-  const maxV = Math.max(1, ...banks.map((b) => Math.abs(b.usd[m.key] || 0)));
+  const rawMax = Math.max(1, ...banks.map((b) => Math.abs(b.usd[m.key] || 0)));
+  // Headroom so bars never kiss the top axis (~18–25% depending on magnitude).
+  const niceCeil = (v) => {
+    if (!(v > 0)) return 1;
+    const padded = v * 1.22;
+    const exp = Math.floor(Math.log10(padded));
+    const base = 10 ** exp;
+    const n = padded / base;
+    const step = n <= 1.2 ? 1.2 : n <= 1.5 ? 1.5 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 3 ? 3 : n <= 4 ? 4 : n <= 5 ? 5 : n <= 6 ? 6 : n <= 8 ? 8 : 10;
+    return step * base;
+  };
+  const maxV = niceCeil(rawMax);
   const barW = Math.min(56, (plotW / banks.length) * 0.55);
 
   // grid
@@ -275,8 +326,6 @@ function drawChart() {
     ctx.moveTo(pad.l, y);
     ctx.lineTo(pad.l + plotW, y);
     ctx.stroke();
-    ctx.fillStyle = 'var(--text3)';
-    // canvas can't use CSS vars reliably — hardcode soft gray
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.textAlign = 'right';
@@ -295,10 +344,11 @@ function drawChart() {
     ctx.fillStyle = '#64748b';
     ctx.font = '11px Inter, "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(b.countryLabel, cx, cssH - 36);
+    const label = b.iso === 'US' ? 'USA' : b.countryLabel;
+    ctx.fillText(label, cx, cssH - 36);
     ctx.fillStyle = '#0f172a';
     ctx.font = '600 11px Inter, "DM Sans", system-ui, sans-serif';
-    ctx.fillText(fmtMetric(m.kind, v), cx, y - 8);
+    ctx.fillText(fmtMetric(m.kind, v), cx, Math.max(14, y - 8));
   });
 
   ctx.fillStyle = '#475569';
@@ -311,7 +361,7 @@ function render() {
   const root = document.getElementById('btgBanksRoot');
   if (!root) return;
 
-  if (state.loading && !state.loaded) {
+  if (state.loading) {
     renderShellLoading();
     return;
   }
@@ -329,11 +379,12 @@ function render() {
 
   root.innerHTML = `
     <div class="btg-banks-hero">
-      <img class="btg-banks-logo" src="${BTG_LOGO_LIGHT_SRC}" alt="BTG Pactual" />
+      <img class="btg-banks-logo" src="${btgHeroLogoSrc()}" alt="BTG Pactual"
+        onerror="this.onerror=null;this.src='${BTG_LOGO_LIGHT_SRC}'" />
       <div>
         <div class="btg-banks-eyebrow">ALM · Franchise compare</div>
         <div class="btg-banks-title">BTG Banks</div>
-        <div class="btg-banks-sub">Brasil · Chile · Colombia · Uruguay (HSBC) · USA — Financial Highlights in USD</div>
+        <div class="btg-banks-sub">Brazil · Chile · United States · Colombia · Uruguay (HSBC) — Financial Highlights in USD</div>
       </div>
       <button type="button" class="rcbtn" id="btgBanksRefresh" style="margin-left:auto;">↻ Refresh</button>
     </div>
