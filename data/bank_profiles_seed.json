@@ -27903,7 +27903,7 @@
     "codigo": 1000080202,
     "short_name": "Volkswagen",
     "legal_name": "VOLKSWAGEN - PRUDENCIAL",
-    "founded": null,
+    "founded": "1937 (industrial parent; local banking license later)",
     "ownership": "Captive finance bank of an industrial/auto group",
     "controlling": "Captive auto / equipment finance affiliate",
     "shareholders": [],
@@ -27913,7 +27913,7 @@
     "employees_as_of": null,
     "business_focus": "Vehicle / equipment captive financing",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1937 per Wikidata (Q246).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -27929,6 +27929,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q246",
+        "url": "https://www.wikidata.org/wiki/Q246"
       }
     ]
   },
@@ -28005,7 +28009,7 @@
     "codigo": 1000080233,
     "short_name": "Paraná Banco",
     "legal_name": "PARANÁ BANCO - PRUDENCIAL",
-    "founded": null,
+    "founded": "1979",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
@@ -28015,7 +28019,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1979 per Wikidata (Q7135579).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28031,6 +28035,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q7135579",
+        "url": "https://www.wikidata.org/wiki/Q7135579"
       }
     ]
   },
@@ -28334,7 +28342,7 @@
     "codigo": 1000080374,
     "short_name": "PINE",
     "legal_name": "PINE - PRUDENCIAL",
-    "founded": null,
+    "founded": "1989",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
@@ -28344,7 +28352,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1989 per Wikidata (Q598868).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28360,6 +28368,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q598868",
+        "url": "https://www.wikidata.org/wiki/Q598868"
       }
     ]
   },
@@ -28606,7 +28618,7 @@
     "codigo": 1000080491,
     "short_name": "Credit Agricole",
     "legal_name": "CREDIT AGRICOLE - PRUDENCIAL",
-    "founded": null,
+    "founded": "2000",
     "ownership": "Subsidiary / affiliate of Crédit Agricole (France)",
     "controlling": "Crédit Agricole",
     "shareholders": [],
@@ -28616,7 +28628,7 @@
     "employees_as_of": null,
     "business_focus": "Corporate and investment banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 2000 per Wikidata; employees 150,000 on Wikidata (Q590952).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28632,6 +28644,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q590952",
+        "url": "https://www.wikidata.org/wiki/Q590952"
       }
     ]
   },
@@ -28674,7 +28690,7 @@
     "codigo": 1000080532,
     "short_name": "Deutsche",
     "legal_name": "DEUTSCHE - PRUDENCIAL",
-    "founded": null,
+    "founded": "1925",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
@@ -28684,7 +28700,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1925 per Wikidata (Q157273).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28700,6 +28716,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q157273",
+        "url": "https://www.wikidata.org/wiki/Q157273"
       }
     ]
   },
@@ -28776,7 +28796,7 @@
     "codigo": 1000080563,
     "short_name": "Mercedes-Benz",
     "legal_name": "MERCEDES-BENZ - PRUDENCIAL",
-    "founded": null,
+    "founded": "1926 (industrial parent; local banking license later)",
     "ownership": "Captive finance bank of an industrial/auto group",
     "controlling": "Captive auto / equipment finance affiliate",
     "shareholders": [],
@@ -28786,7 +28806,7 @@
     "employees_as_of": null,
     "business_focus": "Vehicle / equipment captive financing",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1926 per Wikidata (Q36008).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28802,6 +28822,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q36008",
+        "url": "https://www.wikidata.org/wiki/Q36008"
       }
     ]
   },
@@ -28810,7 +28834,7 @@
     "codigo": 1000080587,
     "short_name": "Planner",
     "legal_name": "PLANNER - PRUDENCIAL",
-    "founded": null,
+    "founded": "1969",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
@@ -28820,7 +28844,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1969 per Wikidata (Q2349274).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28836,6 +28860,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q2349274",
+        "url": "https://www.wikidata.org/wiki/Q2349274"
       }
     ]
   },
@@ -28844,17 +28872,17 @@
     "codigo": 1000080611,
     "short_name": "Honda",
     "legal_name": "HONDA - PRUDENCIAL",
-    "founded": null,
+    "founded": "1948 (industrial parent; local banking license later)",
     "ownership": "Captive finance bank of an industrial/auto group",
     "controlling": "Captive auto / equipment finance affiliate",
     "shareholders": [],
     "origin_country": "BR",
     "origin_country_name": "Brazil",
-    "employees_in_country": null,
-    "employees_as_of": null,
+    "employees_in_country": 204035,
+    "employees_as_of": "Wikidata (verify date)",
     "business_focus": "Vehicle / equipment captive financing",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1948 per Wikidata; employees 204,035 on Wikidata (Q9584).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28870,6 +28898,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q9584",
+        "url": "https://www.wikidata.org/wiki/Q9584"
       }
     ]
   },
@@ -28878,7 +28910,7 @@
     "codigo": 1000080628,
     "short_name": "Morgan Stanley",
     "legal_name": "MORGAN STANLEY - PRUDENCIAL",
-    "founded": null,
+    "founded": "2008",
     "ownership": "Subsidiary of Morgan Stanley",
     "controlling": "Morgan Stanley",
     "shareholders": [],
@@ -28888,7 +28920,7 @@
     "employees_as_of": null,
     "business_focus": "Investment banking, wealth and capital markets",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 2008 per Wikidata; employees 68,000 on Wikidata (Q334204).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28904,6 +28936,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q334204",
+        "url": "https://www.wikidata.org/wiki/Q334204"
       }
     ]
   },
@@ -28912,17 +28948,17 @@
     "codigo": 1000080635,
     "short_name": "BMW",
     "legal_name": "BMW - PRUDENCIAL",
-    "founded": null,
+    "founded": "1916 (industrial parent; local banking license later)",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
     "origin_country_name": "Brazil",
-    "employees_in_country": null,
-    "employees_as_of": null,
+    "employees_in_country": 118909,
+    "employees_as_of": "Wikidata (verify date)",
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1916 per Wikidata; employees 118,909 on Wikidata (Q26678).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28938,6 +28974,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q26678",
+        "url": "https://www.wikidata.org/wiki/Q26678"
       }
     ]
   },
@@ -28956,7 +28996,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1534 per Wikidata (Q499922).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -28972,6 +29012,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q499922",
+        "url": "https://www.wikidata.org/wiki/Q499922"
       }
     ]
   },
@@ -29048,7 +29092,7 @@
     "codigo": 1000080673,
     "short_name": "Bnp Paribas",
     "legal_name": "BNP PARIBAS - PRUDENCIAL",
-    "founded": null,
+    "founded": "1848 (parent group; local franchise later)",
     "ownership": "Subsidiary / affiliate of BNP Paribas (France)",
     "controlling": "BNP Paribas",
     "shareholders": [],
@@ -29058,7 +29102,7 @@
     "employees_as_of": null,
     "business_focus": "Corporate and investment banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1848 per Wikidata; employees 192,000 on Wikidata (Q499707).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29074,6 +29118,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q499707",
+        "url": "https://www.wikidata.org/wiki/Q499707"
       }
     ]
   },
@@ -29116,7 +29164,7 @@
     "codigo": 1000080697,
     "short_name": "Mizuho",
     "legal_name": "MIZUHO - PRUDENCIAL",
-    "founded": null,
+    "founded": "2003",
     "ownership": "Subsidiary of Mizuho (Japan)",
     "controlling": "Mizuho Financial Group",
     "shareholders": [],
@@ -29126,7 +29174,7 @@
     "employees_as_of": null,
     "business_focus": "Corporate and wholesale banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 2003 per Wikidata (Q166621).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29142,6 +29190,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q166621",
+        "url": "https://www.wikidata.org/wiki/Q166621"
       }
     ]
   },
@@ -29184,7 +29236,7 @@
     "codigo": 1000080714,
     "short_name": "Goldman Sachs",
     "legal_name": "GOLDMAN SACHS - PRUDENCIAL",
-    "founded": null,
+    "founded": "1869 (parent group; local franchise later)",
     "ownership": "Subsidiary of Goldman Sachs",
     "controlling": "Goldman Sachs Group",
     "shareholders": [],
@@ -29194,7 +29246,7 @@
     "employees_as_of": null,
     "business_focus": "Investment banking, markets and private banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1869 per Wikidata; employees 34,000 on Wikidata (Q193326).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29210,6 +29262,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q193326",
+        "url": "https://www.wikidata.org/wiki/Q193326"
       }
     ]
   },
@@ -29296,7 +29352,7 @@
     "codigo": 1000080745,
     "short_name": "Sicredi",
     "legal_name": "Banco Cooperativo Sicredi",
-    "founded": null,
+    "founded": "1902",
     "ownership": "Cooperative",
     "controlling": "Sicredi cooperative system",
     "shareholders": [],
@@ -29306,7 +29362,7 @@
     "employees_as_of": null,
     "business_focus": "Cooperative banking (Sicredi)",
     "hq_city": "Porto Alegre",
-    "history": null,
+    "history": "Founded 1902 per Wikidata (Q3483060).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29322,6 +29378,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q3483060",
+        "url": "https://www.wikidata.org/wiki/Q3483060"
       }
     ]
   },
@@ -29364,17 +29424,17 @@
     "codigo": 1000080776,
     "short_name": "Scania",
     "legal_name": "SCANIA - PRUDENCIAL",
-    "founded": null,
+    "founded": "1911 (industrial parent; local banking license later)",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
     "origin_country_name": "Brazil",
-    "employees_in_country": null,
-    "employees_as_of": null,
+    "employees_in_country": 56927,
+    "employees_as_of": "Wikidata (verify date)",
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1911 per Wikidata; employees 56,927 on Wikidata (Q219960).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29390,6 +29450,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q219960",
+        "url": "https://www.wikidata.org/wiki/Q219960"
       }
     ]
   },
@@ -29704,17 +29768,17 @@
     "codigo": 1000080886,
     "short_name": "Western Union",
     "legal_name": "WESTERN UNION - PRUDENCIAL",
-    "founded": null,
+    "founded": "1851 (industrial parent; local banking license later)",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
     "origin_country_name": "Brazil",
-    "employees_in_country": null,
-    "employees_as_of": null,
+    "employees_in_country": 11000,
+    "employees_as_of": "Wikidata (verify date)",
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1851 per Wikidata; employees 11,000 on Wikidata (Q861042).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29730,6 +29794,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q861042",
+        "url": "https://www.wikidata.org/wiki/Q861042"
       }
     ]
   },
@@ -29806,7 +29874,7 @@
     "codigo": 1000080910,
     "short_name": "Bny Mellon",
     "legal_name": "BNY MELLON - PRUDENCIAL",
-    "founded": null,
+    "founded": "2007",
     "ownership": null,
     "controlling": null,
     "shareholders": [],
@@ -29816,7 +29884,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 2007 per Wikidata (Q589288).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29832,6 +29900,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q589288",
+        "url": "https://www.wikidata.org/wiki/Q589288"
       }
     ]
   },
@@ -29840,7 +29912,7 @@
     "codigo": 1000080927,
     "short_name": "Caixa Geral",
     "legal_name": "CAIXA GERAL - PRUDENCIAL",
-    "founded": null,
+    "founded": "1876",
     "ownership": "Government-controlled",
     "controlling": "União Federal / public sector",
     "shareholders": [],
@@ -29850,7 +29922,7 @@
     "employees_as_of": null,
     "business_focus": "Commercial banking",
     "hq_city": "São Paulo",
-    "history": null,
+    "history": "Founded 1876 per Wikidata (Q1026044).",
     "context": "Supervised institution in Brazil. Live assets, equity and ROE come from LatamBanks supervisory data.",
     "website": null,
     "ir_url": null,
@@ -29866,6 +29938,10 @@
       {
         "label": "LatamBanks supervisory dataset",
         "url": "https://latambanks.co"
+      },
+      {
+        "label": "Wikidata Q1026044",
+        "url": "https://www.wikidata.org/wiki/Q1026044"
       }
     ]
   },
@@ -31065,7 +31141,7 @@
     "short_name": "Banco Porto Real De Invest.S.A",
     "legal_name": "BANCO PORTO REAL DE INVEST.S.A - PRUDENCIAL",
     "founded": null,
-    "ownership": null,
+    "ownership": "State-controlled regional bank",
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
@@ -31575,7 +31651,7 @@
     "short_name": "Banco DO EST. DO PA S.A.",
     "legal_name": "BCO DO EST. DO PA S.A. - PRUDENCIAL",
     "founded": null,
-    "ownership": null,
+    "ownership": "State-controlled regional bank",
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
@@ -31745,7 +31821,7 @@
     "short_name": "Banco DO EST. DE SE S.A.",
     "legal_name": "BCO DO EST. DE SE S.A. - PRUDENCIAL",
     "founded": null,
-    "ownership": null,
+    "ownership": "State-controlled regional bank",
     "controlling": null,
     "shareholders": [],
     "origin_country": "BR",
