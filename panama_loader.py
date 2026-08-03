@@ -7,10 +7,11 @@ Fuente (Excel individual por banco, miles de balboas = USD×1000):
   .../reportes_estadisticos/{YYYY}/{MM}/balance_individual_por_banco/RE-BALANCE-BANCO-en-{Slug}.xlsx
   .../reportes_estadisticos/{YYYY}/{MM}/estado_de_resultado_individual_por_banco/RE-ESTADO-BANCO-en-{Slug}.xlsx
 
-Universo MVP: Bancos Oficiales + Licencia General (excluye Licencia Internacional).
+Universo: Bancos Oficiales + Licencia General + Licencia Internacional
+  (usar --domestic-only para excluir Licencia Internacional).
 PyG: RESULTADO_NETO se guarda como YTD (suma de flujos mensuales ene→mes).
 
-Modos: --month / --all / --from / --to / --dry-run / --wipe / --include-international
+Modos: --month / --all / --from / --to / --dry-run / --wipe / --domestic-only
 """
 from __future__ import annotations
 
@@ -91,6 +92,13 @@ FALLBACK_SLUGS_DOMESTIC = [
     "China", "BCTBankIntSA", "bibank", "Canal", "Citi", "Credicorp", "fpbbank",
     "Global", "ICBCL", "Korea", "ICBC", "MercantilPanama", "Metrobank", "MMG",
     "Multibanksub", "Pacificogral", "Stgeorge", "Scotia", "Tower", "Unibank",
+]
+
+# Licencia Internacional (índice SBP 2026). Incluye Banco de Occidente (Panamá).
+FALLBACK_SLUGS_INTERNATIONAL = [
+    "ANDBANC", "Atlantic", "Austrobank", "ASBbank", "BBVA", "BCreditoAndorra",
+    "Davint", "Bogotaint", "CreditoPeru", "Argentina", "Occidente", "Bancolombia",
+    "BHDint", "BPR", "GNB", "Inteligo", "Unionbank", "Itau", "Popular",
 ]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -181,7 +189,7 @@ def discover_periods(from_dt: str, to_dt: str | None) -> list[str]:
     return ok
 
 
-def scrape_slugs_for_year(year: int, include_international: bool = False) -> list[str] | None:
+def scrape_slugs_for_year(year: int, include_international: bool = True) -> list[str] | None:
     node = YEAR_INDEX_NODES.get(year)
     if not node:
         return None
@@ -229,13 +237,19 @@ def scrape_slugs_for_year(year: int, include_international: bool = False) -> lis
     return out or None
 
 
-def slugs_for_period(periodo: str, include_international: bool = False) -> list[str]:
+def slugs_for_period(periodo: str, include_international: bool = True) -> list[str]:
     y, _ = period_to_ym(periodo)
     scraped = scrape_slugs_for_year(y, include_international=include_international)
     if scraped:
         return scraped
-    # fallback: domestic catalog (± try a few intl only if requested — skip)
-    return list(FALLBACK_SLUGS_DOMESTIC)
+    out = list(FALLBACK_SLUGS_DOMESTIC)
+    if include_international:
+        seen = set(out)
+        for s in FALLBACK_SLUGS_INTERNATIONAL:
+            if s not in seen:
+                out.append(s)
+                seen.add(s)
+    return out
 
 
 def _norm(s) -> str:
@@ -418,7 +432,7 @@ def fetch_bank(periodo: str, slug: str) -> tuple[str, tuple | None, str | None]:
         return slug, None, str(e)
 
 
-def build_month_rows(periodo: str, include_international: bool = False, workers: int = 8):
+def build_month_rows(periodo: str, include_international: bool = True, workers: int = 8):
     slugs = slugs_for_period(periodo, include_international=include_international)
     inst = []
     data_rows = []
@@ -502,10 +516,11 @@ def get_loaded_periods(conn) -> set[str]:
     return {r[0] for r in cur.fetchall()}
 
 
-def load_month(conn, periodo: str, include_international: bool = False) -> None:
+def load_month(conn, periodo: str, include_international: bool = True) -> None:
     from schema_guard import detect_schema_changes, get_known_accounts, record_schema_result
 
-    log.info("dt=%s cargando SBP Oficiales+General…", periodo)
+    scope = "Oficiales+General+Internacional" if include_international else "Oficiales+General"
+    log.info("dt=%s cargando SBP %s…", periodo, scope)
     inst_rows, all_rows, plan, ok, skip = build_month_rows(
         periodo, include_international=include_international
     )
@@ -581,10 +596,21 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument(
         "--include-international",
         action="store_true",
-        help="Incluir Licencia Internacional (MVP default: no)",
+        default=True,
+        help="Incluir Licencia Internacional (default: sí)",
+    )
+    ap.add_argument(
+        "--domestic-only",
+        action="store_true",
+        help="Solo Oficiales + Licencia General (excluye Internacional)",
     )
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args(list(argv) if argv is not None else None)
+    include_international = not args.domestic_only
+    # Allow explicit --include-international for backwards compatibility with older cron scripts.
+    if args.include_international and args.domestic_only:
+        log.warning("--domestic-only gana sobre --include-international")
+        include_international = False
 
     if args.month:
         periods = [args.month]
@@ -606,10 +632,10 @@ def main(argv: Iterable[str] | None = None) -> int:
             print("  …")
         if periods:
             p = periods[-1]
-            slugs = slugs_for_period(p, args.include_international)
+            slugs = slugs_for_period(p, include_international)
             print(f"Slugs ({p}): {len(slugs)} → {slugs[:8]}…")
-            # sample Nacional + General
-            for slug in ("Nacional", "General"):
+            # sample Nacional + General + Occidente (intl)
+            for slug in ("Nacional", "General", "Occidente"):
                 s, payload, err = fetch_bank(p, slug)
                 if err or not payload:
                     print(f"  {slug}: ERROR {err}")
@@ -630,9 +656,15 @@ def main(argv: Iterable[str] | None = None) -> int:
             if not periods:
                 log.info("Panamá al día. Nada nuevo.")
                 return 0
-        log.info("Cargando %d mes(es): %s%s", len(periods), periods[:6], "…" if len(periods) > 6 else "")
+        log.info(
+            "Cargando %d mes(es) (intl=%s): %s%s",
+            len(periods),
+            include_international,
+            periods[:6],
+            "…" if len(periods) > 6 else "",
+        )
         for p in periods:
-            load_month(conn, p, include_international=args.include_international)
+            load_month(conn, p, include_international=include_international)
         return 0
     finally:
         conn.close()

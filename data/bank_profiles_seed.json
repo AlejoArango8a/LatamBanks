@@ -52151,6 +52151,164 @@
   },
   {
     "country": "PA",
+    "codigo": 72,
+    "short_name": "Itaú Panamá",
+    "legal_name": "Itaú (Panamá) S.A.",
+    "ownership": "Subsidiary of Itaú Unibanco (Brazil)",
+    "controlling": "Itaú Unibanco",
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
+    "business_focus": "International-license banking from Panama",
+    "hq_city": "Panama City",
+    "website": "https://www.itau.com",
+    "news": [
+      {
+        "title": "Itaú Panamá — news",
+        "url": "https://news.google.com/search?q=Ita%C3%BA%20Panam%C3%A1%20banco",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "SBP",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ],
+    "shareholders": [],
+    "ratings": []
+  },
+  {
+    "country": "PA",
+    "codigo": 75,
+    "short_name": "Bancolombia Panamá Int.",
+    "legal_name": "Bancolombia (Panamá), S.A.",
+    "ownership": "Subsidiary of Bancolombia / Grupo Cibest (Colombia)",
+    "controlling": "Bancolombia / Grupo Cibest",
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "business_focus": "International-license banking from Panama",
+    "hq_city": "Panama City",
+    "history": "Panama international-license franchise of Bancolombia.",
+    "website": "https://www.bancolombia.com",
+    "news": [
+      {
+        "title": "Bancolombia Panamá — news",
+        "url": "https://news.google.com/search?q=Bancolombia%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "SBP",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ],
+    "shareholders": [],
+    "ratings": []
+  },
+  {
+    "country": "PA",
+    "codigo": 76,
+    "short_name": "Banco de Bogotá Int.",
+    "legal_name": "Banco de Bogotá, S.A. (Licencia Internacional)",
+    "founded": null,
+    "ownership": "Subsidiary of Banco de Bogotá / Grupo Aval (Colombia)",
+    "controlling": "Banco de Bogotá / Grupo Aval",
+    "shareholders": [
+      "Grupo Aval"
+    ],
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "business_focus": "International-license banking from Panama",
+    "hq_city": "Panama City",
+    "history": "Panama international-license unit of Banco de Bogotá (Grupo Aval).",
+    "context": "Distinct from Banco de Bogotá’s general-license presence in Panama when both appear.",
+    "website": "https://www.bancodebogota.com",
+    "news": [
+      {
+        "title": "Banco de Bogotá Panamá — news",
+        "url": "https://news.google.com/search?q=Banco%20de%20Bogot%C3%A1%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "SBP",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ],
+    "ratings": []
+  },
+  {
+    "country": "PA",
+    "codigo": 79,
+    "short_name": "GNB Sudameris Bank",
+    "legal_name": "GNB Sudameris Bank, S.A.",
+    "ownership": "Affiliate of GNB Sudameris / Gilinski group",
+    "controlling": "Gilinski group / GNB Sudameris",
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "business_focus": "International-license banking from Panama",
+    "hq_city": "Panama City",
+    "news": [
+      {
+        "title": "GNB Sudameris Bank — news",
+        "url": "https://news.google.com/search?q=GNB%20Sudameris%20Bank%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "SBP",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ],
+    "shareholders": [],
+    "ratings": []
+  },
+  {
+    "country": "PA",
+    "codigo": 108,
+    "short_name": "Banco de Occidente Panamá",
+    "legal_name": "Banco de Occidente (Panamá), S.A.",
+    "founded": "1982",
+    "ownership": "Subsidiary of Banco de Occidente S.A. (Colombia) / Grupo Aval",
+    "controlling": "Banco de Occidente S.A. (Cali) → Grupo Aval",
+    "shareholders": [
+      "Banco de Occidente S.A. (Colombia)",
+      "Grupo Aval"
+    ],
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "employees_in_country": null,
+    "employees_as_of": null,
+    "business_focus": "International-license banking from Panama — corporate, trade and offshore-oriented services for non-resident clients",
+    "hq_city": "Panama City",
+    "history": "Opened 30 June 1982 under SBP International Banking License (Resolution 9-82 of 16 March 1982). Subsidiary of Banco de Occidente (Cali), itself part of Grupo Aval. HQ at Pacific Center, Paitilla, Panama City.",
+    "context": "Panama international-license franchise of Colombian Banco de Occidente / Aval. Peer set is other LatAm international-license banks in Panama (Bogotá Int, Bancolombia Int, Davivienda Int), not the large general-license retail banks.",
+    "website": "https://bancoccidente.com.pa",
+    "ir_url": null,
+    "ratings": [],
+    "news": [
+      {
+        "title": "Banco de Occidente Panamá — news",
+        "url": "https://news.google.com/search?q=Banco%20de%20Occidente%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "Banco de Occidente Panamá — Quiénes somos",
+        "url": "https://bancoccidente.com.pa/bancodeoccidente-panama/quienes-somos.html"
+      },
+      {
+        "label": "SBP reportes individuales (Occidente)",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ]
+  },
+  {
+    "country": "PA",
     "codigo": 117,
     "short_name": "Bank of China Panamá",
     "legal_name": "BANK OF CHINA LIMITED",
@@ -53018,6 +53176,35 @@
         "url": "https://latambanks.co"
       }
     ]
+  },
+  {
+    "country": "PA",
+    "codigo": 253,
+    "short_name": "Davivienda Internacional Panamá",
+    "legal_name": "Banco Davivienda Internacional (Panamá), S.A.",
+    "ownership": "Subsidiary of Davivienda / Grupo Bolívar (Colombia)",
+    "controlling": "Grupo Empresarial Bolívar",
+    "origin_country": "CO",
+    "origin_country_name": "Colombia",
+    "business_focus": "International-license banking from Panama",
+    "hq_city": "Panama City",
+    "history": "Panama international-license unit of Davivienda.",
+    "website": "https://www.davivienda.com",
+    "news": [
+      {
+        "title": "Davivienda Internacional Panamá — news",
+        "url": "https://news.google.com/search?q=Davivienda%20Internacional%20Panam%C3%A1",
+        "source": "Google News"
+      }
+    ],
+    "sources": [
+      {
+        "label": "SBP",
+        "url": "https://www.superbancos.gob.pa"
+      }
+    ],
+    "shareholders": [],
+    "ratings": []
   },
   {
     "country": "PA",
