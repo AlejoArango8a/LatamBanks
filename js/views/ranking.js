@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon53';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon53';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon54';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon54';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,17 +22,17 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon53';
-import { CO_CUIF } from '../coCuentas.js?v=bmon53';
-import { BR_KPI } from '../brCuentas.js?v=bmon53';
-import { UY_KPI } from '../uyCuentas.js?v=bmon53';
-import { PE_KPI } from '../peCuentas.js?v=bmon53';
-import { US_KPI } from '../usCuentas.js?v=bmon53';
-import { AR_KPI } from '../arCuentas.js?v=bmon53';
-import { MX_KPI } from '../mxCuentas.js?v=bmon53';
-import { PA_KPI } from '../paCuentas.js?v=bmon53';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon53';
-import { apiDatos } from '../api.js?v=bmon53';
+import { FELLER_RATINGS, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon54';
+import { CO_CUIF } from '../coCuentas.js?v=bmon54';
+import { BR_KPI } from '../brCuentas.js?v=bmon54';
+import { UY_KPI } from '../uyCuentas.js?v=bmon54';
+import { PE_KPI } from '../peCuentas.js?v=bmon54';
+import { US_KPI } from '../usCuentas.js?v=bmon54';
+import { AR_KPI } from '../arCuentas.js?v=bmon54';
+import { MX_KPI } from '../mxCuentas.js?v=bmon54';
+import { PA_KPI } from '../paCuentas.js?v=bmon54';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon54';
+import { apiDatos } from '../api.js?v=bmon54';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 
@@ -164,7 +164,10 @@ export async function renderChileanBanks() {
       loans:       getVal(c, loanCodes),
       equity:      getVal(c, eqCodes),
       netIncome12: getNetIncome12M(c),
-    })).filter(b => b.assets > 0);
+    })).filter(b => b.assets > 0).map(b => ({
+      ...b,
+      roe12: b.equity ? (b.netIncome12 / b.equity) * 100 : null,
+    }));
 
     if (!ST._cbSort) ST._cbSort = { col: 'equity', dir: -1 };
     renderCBTable();
@@ -200,7 +203,11 @@ export function renderCBTable() {
       const order = ['AAA','AA+','AA','AA-','A+','A','A-','BBB+','BBB','—'];
       return dir * (order.indexOf(ratings[a.code] || '—') - order.indexOf(ratings[b.code] || '—'));
     }
-    return dir * ((a[col] || 0) - (b[col] || 0));
+    const av = a[col];
+    const bv = b[col];
+    const an = (av == null || !Number.isFinite(Number(av))) ? -Infinity : Number(av);
+    const bn = (bv == null || !Number.isFinite(Number(bv))) ? -Infinity : Number(bv);
+    return dir * (an - bn);
   });
 
   const thStyle  = `padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:0.5px;
@@ -212,13 +219,14 @@ export function renderCBTable() {
   let html = `<div style="overflow-x:auto"><table class="tbl tbl-banking-system" style="table-layout:fixed;width:100%;">
     <thead><tr style="background:var(--bg4);">
       <th class="cb-col-rank" style="${thStyle}width:4%;text-align:center;">#</th>
-      <th class="cb-col-bank" style="${thStyleL}width:22%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
-      <th class="cb-col-rating" style="${thStyle}width:7%;text-align:center;" onclick="sortCBBy('rating')">Rating${arrow('rating')}</th>
-      <th class="cb-col-assets r" style="${thStyle}width:14%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
-      <th class="cb-col-equity r" style="${thStyle}width:13%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
-      <th class="cb-col-loans r" style="${thStyle}width:13%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
-      <th class="cb-col-ni r" style="${thStyle}width:14%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
-      <th class="cb-col-loanseq r" style="${thStyle}width:13%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
+      <th class="cb-col-bank" style="${thStyleL}width:20%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
+      <th class="cb-col-rating" style="${thStyle}width:6%;text-align:center;" onclick="sortCBBy('rating')">Rating${arrow('rating')}</th>
+      <th class="cb-col-assets r" style="${thStyle}width:12%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
+      <th class="cb-col-equity r" style="${thStyle}width:11%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
+      <th class="cb-col-loans r" style="${thStyle}width:11%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
+      <th class="cb-col-ni r" style="${thStyle}width:12%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
+      <th class="cb-col-roe r" style="${thStyle}width:10%;" onclick="sortCBBy('roe12')">ROE % 12M${arrow('roe12')}</th>
+      <th class="cb-col-loanseq r" style="${thStyle}width:12%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
     </tr></thead>
     <tbody>`;
 
@@ -229,6 +237,10 @@ export function renderCBTable() {
     const rColor   = RATING_COLORS[rating] || 'var(--text3)';
     const loansEq  = b.equity ? (b.loans / b.equity).toFixed(1) + 'x' : '—';
     b.loansEq      = b.equity ? b.loans / b.equity : 0;
+    const roe12    = b.roe12;
+    const roeLbl   = roe12 != null && Number.isFinite(roe12) ? `${roe12.toFixed(2)}%` : '—';
+    const roeColor = roe12 == null || !Number.isFinite(roe12) ? 'var(--text3)'
+      : roe12 >= 0 ? 'var(--green)' : 'var(--red)';
     const niColor  = b.netIncome12 >= 0 ? 'var(--green)' : 'var(--red)';
     const rowStyle = isBTG
       ? `background:${btgRgba(0.08)};border-left:3px solid ${btgBlue()};`
@@ -254,6 +266,7 @@ export function renderCBTable() {
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? `color:${btgBlue()};` : ''}">${fmtKPIDecimal(b.equity)}</td>
       <td class="cb-col-loans r">${fmtKPIDecimal(b.loans)}</td>
       <td class="cb-col-ni r" style="color:${niColor};font-weight:600;">${b.netIncome12 !== 0 ? fmtKPIDecimal(b.netIncome12) : '—'}</td>
+      <td class="cb-col-roe r" style="color:${roeColor};font-weight:600;font-family:var(--mono);">${roeLbl}</td>
       <td class="cb-col-loanseq r" style="color:var(--text2);font-family:var(--mono);">${loansEq}</td>
     </tr>`;
   });
@@ -264,6 +277,10 @@ export function renderCBTable() {
     acc.netIncome12 += b.netIncome12; return acc;
   }, { assets:0, loans:0, equity:0, netIncome12:0 });
   const totLoansEq = tot.equity ? (tot.loans / tot.equity).toFixed(1) + 'x' : '—';
+  const totRoe12 = tot.equity ? (tot.netIncome12 / tot.equity) * 100 : null;
+  const totRoeLbl = totRoe12 != null && Number.isFinite(totRoe12) ? `${totRoe12.toFixed(2)}%` : '—';
+  const totRoeColor = totRoe12 == null || !Number.isFinite(totRoe12) ? 'var(--text3)'
+    : totRoe12 >= 0 ? 'var(--green)' : 'var(--red)';
   const totNiColor = tot.netIncome12 >= 0 ? 'var(--green)' : 'var(--red)';
 
   html += `<tr style="background:var(--bg4);border-top:2px solid var(--border2);border-left:3px solid transparent;">
@@ -274,6 +291,7 @@ export function renderCBTable() {
     <td class="cb-col-equity r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.equity)}</td>
     <td class="cb-col-loans r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.loans)}</td>
     <td class="cb-col-ni r" style="font-weight:700;color:${totNiColor};">${fmtKPIDecimal(tot.netIncome12)}</td>
+    <td class="cb-col-roe r" style="font-weight:700;color:${totRoeColor};font-family:var(--mono);">${totRoeLbl}</td>
     <td class="cb-col-loanseq r" style="font-weight:700;color:var(--text2);font-family:var(--mono);">${totLoansEq}</td>
   </tr>`;
 

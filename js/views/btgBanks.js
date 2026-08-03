@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay (HSBC) / USA
 // ============================================================
-import { API_BASE, BTG_LOGO_DARK_SRC, btgBlue } from '../config.js?v=bmon53';
+import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon54';
 
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -329,7 +329,7 @@ function render() {
 
   root.innerHTML = `
     <div class="btg-banks-hero">
-      <img class="btg-banks-logo" src="${BTG_LOGO_DARK_SRC}" alt="BTG Pactual" />
+      <img class="btg-banks-logo" src="${BTG_LOGO_LIGHT_SRC}" alt="BTG Pactual" />
       <div>
         <div class="btg-banks-eyebrow">ALM · Franchise compare</div>
         <div class="btg-banks-title">BTG Banks</div>
