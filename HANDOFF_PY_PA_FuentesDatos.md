@@ -136,7 +136,7 @@ No existe un único Excel multi-banco con todo el sistema en columnas (a diferen
 | Un archivo por banco (~130 descargas/mes bal+PyG) | Media | Parallel download + cache; scrape índice una vez |
 | Slugs cambian con M&A / renombres | Media | Catálogo por código `A8`; alerta si falta banco esperado |
 | PyG mensual vs acumulado | Alta (calidad KPI) | Tests de consistencia; convención YTD explícita |
-| Licencia Internacional mezcla bancos “offshore” | Producto | MVP: Oficiales + Licencia General; Internacional opcional |
+| Licencia Internacional mezcla bancos “offshore” | Producto | Incluidos por defecto (negocios LatAm); `--domestic-only` para excluir |
 | Histórico pre-2019 path distinto | Baja | MVP desde 2020; backfill antiguo después |
 | Sin API | Baja | HTTP directo estable |
 
@@ -157,7 +157,7 @@ No existe un único Excel multi-banco con todo el sistema en columnas (a diferen
 | Ítem | Recomendación |
 |------|----------------|
 | Desde | **`202001`** (path Excel estable; opcional backfill `201908`) |
-| Universo | Bancos **Oficiales + Licencia General** (excluir Licencia Internacional en v1) |
+| Universo | Bancos **Oficiales + Licencia General + Licencia Internacional** (usar `--domestic-only` para excluir intl) |
 | KPIs | Activos, Cartera, Depósitos, Patrimonio, Utilidad (YTD), ROE |
 | Moneda | `USD` / `country=PA` |
 | Prioridad vs PY | **Implementar PA primero** |
@@ -363,6 +363,6 @@ Patrón histórico (roto en live): `https://www.bcp.gov.py/userfiles/files/1_BOL
 | **Panamá** | `PA` | `USD` (PAB 1:1) | SBP Excel individual mensuales | **Sí** — URLs y layout validados |
 | **Paraguay** | `PY` | `PYG` | BCP Boletín Estadístico-Financiero (+ tablas) | **Parcial** — muestra `1_BOLB` 2023-03 vía Wayback; live = CF + Liferay 403 |
 
-**Próximo paso concreto:** implementar `panama_loader.py` con backfill desde `202001` (Oficiales + Licencia General). En paralelo, un humano descarga el Excel **tablas** (o `1_BOLB` latest) del hub PY y confirma si el layout sigue `/tmp/py-bcp/1_BOLB_032023(2).xlsx`.
+**Estado PA:** `panama_loader.py` carga Oficiales + General + Internacional desde `202001` (p. ej. Occidente `108`). En paralelo, un humano descarga el Excel **tablas** (o `1_BOLB` latest) del hub PY y confirma si el layout sigue `/tmp/py-bcp/1_BOLB_032023(2).xlsx`.
 
 Este documento es especificación de fuentes; no implementa loaders.
