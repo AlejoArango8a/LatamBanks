@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay (HSBC) / USA
 // ============================================================
-import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon56';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon57';
 
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -74,12 +74,9 @@ function fmtMetric(kind, n) {
   return fmtUsd(n);
 }
 
+/** Same asset as Bank Monitor banner (`bankHeaderLogo` → logo-btg.png). */
 function btgHeroLogoSrc() {
-  // Prefer the exact brand mark already loaded in the topbar (light theme).
-  const brand = document.querySelector('.brand img');
-  if (brand?.dataset?.lightSrc) return brand.dataset.lightSrc;
-  if (brand?.getAttribute('src')?.startsWith('data:')) return brand.getAttribute('src');
-  return BTG_LOGO_LIGHT_SRC;
+  return BTG_LOGO_BLUE_SRC;
 }
 
 function periodLabel(p) {
@@ -381,14 +378,15 @@ function render() {
 
   root.innerHTML = `
     <div class="btg-banks-hero">
-      <img class="btg-banks-logo" src="${btgHeroLogoSrc()}" alt="BTG Pactual"
-        onerror="this.onerror=null;this.src='${BTG_LOGO_LIGHT_SRC}'" />
-      <div>
+      <div class="btg-banks-hero-text">
         <div class="btg-banks-eyebrow">ALM · Franchise compare</div>
         <div class="btg-banks-title">BTG Banks</div>
         <div class="btg-banks-sub">Brazil · Chile · United States · Colombia · Uruguay (HSBC) — Financial Highlights in USD</div>
       </div>
-      <button type="button" class="rcbtn" id="btgBanksRefresh" style="margin-left:auto;">↻ Refresh</button>
+      <div class="btg-banks-hero-logo">
+        <img class="btg-banks-logo" src="${btgHeroLogoSrc()}" alt="BTG Pactual"
+          onerror="this.onerror=null;this.src='${BTG_LOGO_BLUE_SRC}'" />
+      </div>
     </div>
 
     <div class="res-section-head" style="display:flex;align-items:center;gap:8px;margin:8px 0 16px;padding-left:4px;">
@@ -444,7 +442,6 @@ function render() {
     <ul class="btg-banks-notes">${(state.notes || []).map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
   `;
 
-  document.getElementById('btgBanksRefresh')?.addEventListener('click', () => loadSnapshot(true));
   document.querySelectorAll('#btgMetricBtns [data-btg-metric]').forEach((btn) => {
     btn.addEventListener('click', () => setMetric(btn.getAttribute('data-btg-metric')));
   });
