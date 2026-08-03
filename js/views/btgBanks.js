@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay (HSBC) / USA
 // ============================================================
-import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon55';
+import { API_BASE, BTG_LOGO_LIGHT_SRC, btgBlue } from '../config.js?v=bmon56';
 
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -81,6 +81,8 @@ function btgHeroLogoSrc() {
   if (brand?.getAttribute('src')?.startsWith('data:')) return brand.getAttribute('src');
   return BTG_LOGO_LIGHT_SRC;
 }
+
+function periodLabel(p) {
   const s = String(p || '');
   if (s.length < 6) return s || '—';
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
