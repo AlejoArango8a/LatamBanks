@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon51';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon51';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon51';
-import { setStatus, showErr } from './utils.js?v=bmon51';
-import { sumRows } from './api.js?v=bmon51';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon51';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon51';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon52';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon52';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon52';
+import { setStatus, showErr } from './utils.js?v=bmon52';
+import { sumRows } from './api.js?v=bmon52';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon52';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon52';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -269,7 +269,13 @@ export function initTopbarTabsOverflow() {
 // ---- Tab routing ----
 export function showTab(tab) {
   const isoTab = datasetIsoCountry();
-  if ((isoTab === 'BR' || isoTab === 'US') && tab === 'accountview') return;
+  const blocked = isoTab === 'BR' ? BR_DISABLED_TABS
+    : isoTab === 'US' ? US_DISABLED_TABS
+    : isoTab === 'AR' ? AR_DISABLED_TABS
+    : isoTab === 'MX' ? MX_DISABLED_TABS
+    : isoTab === 'PA' ? PA_DISABLED_TABS
+    : [];
+  if (blocked.includes(tab)) return;
   ['resumen','bankdetail','chileanbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
@@ -428,15 +434,22 @@ export function syncCountryChartButtons() {
   }
 }
 
-// Pestañas Account View: deshabilitar en cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2 / SBP)
-const US_DISABLED_TABS = ['accountview'];
-const AR_DISABLED_TABS = ['accountview'];
-const MX_DISABLED_TABS = ['accountview'];
-const PA_DISABLED_TABS = ['accountview'];
+// Pestañas que requieren plan de cuentas detallado (cuenta a cuenta).
+// Cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2 / SBP agregados): sin AV / Balance / PyG.
+const US_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
+const AR_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
+const MX_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
+const PA_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
 
-// Pestañas que dependen de granularidad de cuentas aún no disponible para Brasil.
-// Balance e Income Statement ya habilitados (Relatorios 2-4 cargados).
+// Brasil: Relatorios 2–4 habilitan Balance e Income; Account View aún no.
 const BR_DISABLED_TABS = ['accountview'];
+
+const DETAIL_TAB_TITLES = {
+  accountview: 'Account View',
+  balance: 'Balance Sheet',
+  resultados: 'Income Statement',
+};
+
 export function syncCountryDisabledTabs() {
   const iso = datasetIsoCountry();
   const disabled = iso === 'BR' ? BR_DISABLED_TABS
@@ -449,6 +462,11 @@ export function syncCountryDisabledTabs() {
     ...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS,
     ...MX_DISABLED_TABS, ...PA_DISABLED_TABS,
   ]);
+  const reason = iso === 'US' ? 'FDIC summary — no account-level detail'
+    : iso === 'AR' ? 'BCRA open data — no account-level detail'
+    : iso === 'MX' ? 'CNBV Pm2 — no account-level detail'
+    : iso === 'PA' ? 'SBP individual KPIs — no full chart of accounts'
+    : 'Not available for Brazil yet';
   allTabs.forEach(t => {
     const btn = document.querySelector(`.tab[data-tab="${t}"]`);
     if (!btn) return;
@@ -456,11 +474,8 @@ export function syncCountryDisabledTabs() {
     btn.disabled = off;
     btn.classList.toggle('tab-disabled', off);
     if (off) {
-      btn.title = iso === 'US' ? 'Resumen FDIC — Account View no aplica'
-        : iso === 'AR' ? 'BCRA open data — Account View no aplica'
-        : iso === 'MX' ? 'CNBV Pm2 — Account View no aplica'
-        : iso === 'PA' ? 'SBP reportes — Account View no aplica'
-        : 'No disponible para Brasil todavía';
+      const label = DETAIL_TAB_TITLES[t] || t;
+      btn.title = `${reason} · ${label} disabled`;
     } else btn.removeAttribute('title');
   });
   if (disabled.length) {
