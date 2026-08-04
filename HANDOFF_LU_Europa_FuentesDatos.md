@@ -135,19 +135,22 @@ Requiere: `paises.json` LU, `luCuentas.js`, loader, ranking, sidebar, GHA.
 
 | Pieza | Ubicación |
 |-------|-----------|
-| Seed anual YE2024 | `data/btg_europe_luxembourg.json` |
+| Seed anual **YE2025** (IFRS) | `data/btg_europe_luxembourg.json` |
 | País `luxembourg` status `franchise` | `paises.json` (no entra en LIVE_ISOS / landing) |
 | Snapshot API | `GET /api/btg-banks/snapshot` → fila `LU` |
 | UI | `js/views/btgBanks.js` (orden + AuM en subtitle) |
 | Profile | `js/bankProfiles.js` → `luxembourg[79983]` |
 
-**Datos sembrados hoy (cuentas anuales + Pillar 3 del banco, YE2024, IFRS):** assets **€662,9 m**; loans (clientes) **€226,9 m**; equity **€212,5 m**; liabilities **€450,4 m**; deposits **€309,5 m**; net income IFRS **−€1,55 m** (Lux GAAP −€0,94 m); AuM **€1.674 m**; CET1 absoluto **€206,3 m**; RWA **€360,7 m**; CET1 ratio **57,19%**. Ya **no** quedan lines en `null`.
+**Fuente pública confirmada:** `https://www.btgpactual.eu/downloads` → PDFs en `static.btgpactual.com/media/`.
+
+**YE2025 (seed actual):** assets **€1.258 m**; loans **€498,0 m**; equity **€415,5 m**; liabilities **€842,5 m**; deposits **€551,8 m**; net income **€2,97 m**; CET1 **€402,8 m**; CET1 ratio **59,42%**.
+
+**YE2024 (en `extras.prior_year`):** equity **€212,5 m**; CET1 **€206,3 m**; ratio **57,19%**; net income IFRS **−€1,55 m** (Lux GAAP −€0,94 m).
 
 ## 8. Próximos pasos
 
-1. **Bump a YE2025** cuando se decida (assets €1.258 m; equity €415,5 m; deposits €551,8 m; net profit €2,97 m; CET1 €402,8 m; ratio 59,42%): editar `period` → `202512` y métricas.  
-2. Checklist anual: descargar el último `annual-accounts-YYYY.pdf` + `disclosure-report-YYYY.pdf` de `btgpactual.eu/downloads` → actualizar seed.  
-3. Decidir base contable a mostrar: IFRS (usada) vs Lux GAAP statutory (net loss −€0,94 m, coincide con Moody’s).
+1. Checklist anual: descargar el último `annual-accounts-YYYY.pdf` + `disclosure-report-YYYY.pdf` de `btgpactual.eu/downloads` → actualizar seed.  
+2. Actualizar AuM cuando Moody’s / IR publiquen YE2025 (hoy AuM en seed sigue siendo YE2024).
 
 ---
 
