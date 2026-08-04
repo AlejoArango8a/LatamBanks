@@ -65039,36 +65039,36 @@
   {
     "country": "UY",
     "codigo": 157,
-    "short_name": "HSBC Uruguay",
-    "legal_name": "HSBC Bank (Uruguay) S.A.",
-    "founded": "HSBC franchise in Uruguay",
-    "ownership": "Subsidiary of HSBC Holdings (United Kingdom)",
-    "controlling": "HSBC Holdings plc",
+    "short_name": "BTG Pactual Uruguay",
+    "legal_name": "BTG Pactual Uruguay S.A.",
+    "founded": "BTG Pactual franchise in Uruguay (BCU code 157)",
+    "ownership": "Subsidiary of BTG Pactual",
+    "controlling": "BTG Pactual",
     "shareholders": [
-      "HSBC group"
+      "BTG Pactual group"
     ],
-    "origin_country": "GB",
-    "origin_country_name": "United Kingdom",
+    "origin_country": "BR",
+    "origin_country_name": "Brazil",
     "employees_in_country": null,
     "employees_as_of": null,
-    "business_focus": "Commercial and retail banking under the HSBC brand",
+    "business_focus": "Commercial and private banking under the BTG Pactual franchise",
     "hq_city": "Montevideo",
-    "history": "Uruguayan banking subsidiary of HSBC. UK-origin international bank.",
-    "context": "Foreign-owned mid-size franchise versus BROU and regional peers.",
-    "website": "https://www.hsbc.com.uy",
+    "history": "Uruguayan banking franchise of BTG Pactual (formerly operated under the HSBC brand; BCU institution code 157).",
+    "context": "BTG franchise in Uruguay; peers include BROU, Itaú, Santander and Scotiabank.",
+    "website": "https://www.btgpactual.com",
     "ir_url": null,
     "ratings": [],
     "news": [
       {
-        "title": "HSBC Uruguay — news",
-        "url": "https://news.google.com/search?q=HSBC%20Uruguay",
+        "title": "BTG Pactual Uruguay — news",
+        "url": "https://news.google.com/search?q=BTG%20Pactual%20Uruguay",
         "source": "Google News"
       }
     ],
     "sources": [
       {
-        "label": "HSBC Uruguay",
-        "url": "https://www.hsbc.com.uy"
+        "label": "BTG Pactual Uruguay",
+        "url": "https://www.btgpactual.com"
       }
     ]
   },

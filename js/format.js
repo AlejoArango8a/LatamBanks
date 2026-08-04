@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon59';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon59';
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon59';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon60';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon60';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon60';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -270,7 +270,7 @@ export function bankName(code) {
       [128, 'Scotiabank'],
       [137, 'Santander'],
       [153, 'BBVA'],
-      [157, 'HSBC'],
+      [157, 'BTG Pactual Uruguay'],
       [162, 'Heritage'],
       [205, 'Citibank'],
       [246, 'Banco Nación'],

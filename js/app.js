@@ -1,24 +1,24 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon59';
-import { ST, datasetIsoCountry } from './state.js?v=bmon59';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon59';
-import { fetchWithTimeout } from './api.js?v=bmon59';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon59';
+import { API_BASE } from './config.js?v=bmon60';
+import { ST, datasetIsoCountry } from './state.js?v=bmon60';
+import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon60';
+import { fetchWithTimeout } from './api.js?v=bmon60';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon60';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon59';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon60';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon59';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon59';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon59';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon59';
-import { renderBtgBanks } from './views/btgBanks.js?v=bmon59';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon59';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon59';
+} from './views/balance.js?v=bmon60';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon60';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon60';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon60';
+import { renderBtgBanks } from './views/btgBanks.js?v=bmon60';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon60';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon60';
 
 // UI
 import {
@@ -32,11 +32,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon59';
+} from './ui.js?v=bmon60';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon59';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon59';
+import { exportTableById, exportChartTable } from './export.js?v=bmon60';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon60';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -171,7 +171,7 @@ async function switchCountryDataset() {
     let defaultBank = 59;
     if (isoSwitch === 'CO') defaultBank = 66;
     else if (isoSwitch === 'BR') defaultBank = 1000080336;
-    else if (isoSwitch === 'UY') defaultBank = 157;      // HSBC Uruguay
+    else if (isoSwitch === 'UY') defaultBank = 157;      // BTG Pactual Uruguay
     else if (isoSwitch === 'US') defaultBank = 35154;    // BTG Pactual Bank, N.A.
     else if (isoSwitch === 'PE' || isoSwitch === 'AR'
           || isoSwitch === 'MX' || isoSwitch === 'PA') {
@@ -263,7 +263,7 @@ async function init() {
       let def = 59;
       if (isoInit === 'CO') def = 66;
       else if (isoInit === 'BR') def = 1000080336;
-      else if (isoInit === 'UY') def = 157;       // HSBC Uruguay
+      else if (isoInit === 'UY') def = 157;       // BTG Pactual Uruguay
       else if (isoInit === 'US') def = 35154;     // BTG Pactual Bank, N.A.
       else if (isoInit === 'PE' || isoInit === 'AR'
             || isoInit === 'MX' || isoInit === 'PA') {
