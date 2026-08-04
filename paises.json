@@ -131,6 +131,19 @@
       "source": "BCP (Banco Central del Paraguay)",
       "flag": "assets/Paraguay flag.png",
       "aliases": ["py", "paraguay"]
+    },
+    "luxembourg": {
+      "key": "luxembourg",
+      "iso": "LU",
+      "name": "Luxembourg",
+      "systemName": "BTG Pactual Europe (franchise)",
+      "currency": "EUR",
+      "locale": "en-LU",
+      "status": "franchise",
+      "frequency": "annual",
+      "source": "Moody's / RCSL B79983 (manual seed)",
+      "flag": null,
+      "aliases": ["lu", "luxembourg", "luxemburgo", "europe", "europa"]
     }
   }
 }

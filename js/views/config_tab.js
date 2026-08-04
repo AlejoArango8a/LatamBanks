@@ -1,11 +1,11 @@
 // ============================================================
 // CONFIG TAB — settings panel, visit counter, period/bank info
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon60';
-import { API_BASE } from '../config.js?v=bmon60';
-import { MESES } from '../config.js?v=bmon60';
-import { bankName, periodLabel } from '../format.js?v=bmon60';
-import { fetchWithTimeout } from '../api.js?v=bmon60';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon61';
+import { API_BASE } from '../config.js?v=bmon61';
+import { MESES } from '../config.js?v=bmon61';
+import { bankName, periodLabel } from '../format.js?v=bmon61';
+import { fetchWithTimeout } from '../api.js?v=bmon61';
 
 export function populateConfig() {
   const statusEl = document.getElementById('configStatus');

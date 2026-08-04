@@ -1,12 +1,13 @@
 // ============================================================
 // BTG Banks — cross-country franchise comparison in USD
-// Brasil / Chile / Colombia / Uruguay / USA
+// Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (Europe)
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon60';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon61';
 
 /**
- * Only KPIs available for EVERY franchise country.
+ * Core KPIs for the franchise compare.
  * Time Deposits / Bonds intentionally omitted (CL/CO-only or misaligned).
+ * Luxembourg may have nulls for BS lines until RCSL accounts are seeded.
  */
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -19,8 +20,8 @@ const METRICS = [
   { key: 'roe', label: 'Annual ROE', kind: 'pct' },
 ];
 
-/** Display order: Brazil → Chile → United States → Colombia → Uruguay */
-const BANK_ORDER = ['BR', 'CL', 'US', 'CO', 'UY'];
+/** Display order: Brazil → Chile → United States → Colombia → Uruguay → Luxembourg */
+const BANK_ORDER = ['BR', 'CL', 'US', 'CO', 'UY', 'LU'];
 
 const BANK_COLORS = {
   BR: '#2563eb',
@@ -28,6 +29,7 @@ const BANK_COLORS = {
   CO: '#1d4ed8',
   UY: '#2563eb',
   US: '#062650',
+  LU: '#0b3d91',
 };
 
 const state = {
@@ -146,6 +148,13 @@ async function fetchFxRates(currencies) {
   state.rates = rates;
 }
 
+function fmtAumLine(b) {
+  const aum = b?.extras?.aum;
+  if (aum == null || !Number.isFinite(Number(aum))) return '';
+  const usd = toUsd(aum, b.currency);
+  return usd != null ? `AuM ${fmtUsd(usd)}` : 'AuM —';
+}
+
 function enrichBank(raw) {
   const local = raw.metrics || {};
   const usd = {};
@@ -167,6 +176,7 @@ function enrichBank(raw) {
     ...raw,
     local,
     usd,
+    extras: raw.extras || {},
     color: BANK_COLORS[raw.iso] || btgBlue(),
   };
 }
@@ -243,12 +253,14 @@ function renderHighlightCards() {
   const m = METRICS.find((x) => x.key === state.metric) || METRICS[0];
   return state.banks.map((b) => {
     const val = b.usd[m.key];
+    const aum = fmtAumLine(b);
+    const freq = b.frequency === 'annual' || b.source === 'manual_seed' ? ' · annual' : '';
     return `<div class="kpi-col">
       <div class="kpi-col-title">${esc(b.countryLabel)}</div>
       <div class="kpi blue" style="border-left:3px solid ${b.color};">
         <div class="kpi-label" style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;">${esc(m.label)}</div>
         <div class="kpi-val">${fmtMetric(m.kind, val)}</div>
-        <div class="kpi-sub">${esc(b.shortName)} · ${esc(periodLabel(b.period))}</div>
+        <div class="kpi-sub">${esc(b.shortName)} · ${esc(periodLabel(b.period))}${freq}${aum ? ` · ${esc(aum)}` : ''}</div>
       </div>
     </div>`;
   }).join('');
@@ -258,10 +270,12 @@ function renderTable() {
   const head = METRICS.map((m) => `<th class="r">${esc(m.label)}</th>`).join('');
   const rows = state.banks.map((b) => {
     const cells = METRICS.map((m) => `<td class="r">${fmtMetric(m.kind, b.usd[m.key])}</td>`).join('');
+    const aum = fmtAumLine(b);
+    const freq = b.frequency === 'annual' || b.source === 'manual_seed' ? ' · annual seed' : '';
     return `<tr>
       <td>
         <div style="font-weight:600;color:var(--white);">${esc(b.shortName)}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${esc(b.countryLabel)} · ${esc(b.iso)} · ${esc(periodLabel(b.period))} · ${esc(b.currency || '—')}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${esc(b.countryLabel)} · ${esc(b.iso)} · ${esc(periodLabel(b.period))} · ${esc(b.currency || '—')}${freq}${aum ? ` · ${esc(aum)}` : ''}</div>
       </td>
       ${cells}
     </tr>`;
@@ -373,7 +387,7 @@ function render() {
       <div class="btg-banks-hero-text">
         <div class="btg-banks-eyebrow">ALM · Franchise compare</div>
         <div class="btg-banks-title">BTG Banks</div>
-        <div class="btg-banks-sub">Brazil · Chile · United States · Colombia · Uruguay — Financial Highlights in USD</div>
+        <div class="btg-banks-sub">Brazil · Chile · United States · Colombia · Uruguay · Luxembourg — Financial Highlights in USD</div>
       </div>
       <div class="btg-banks-hero-logo">
         <img class="btg-banks-logo" src="${btgHeroLogoSrc()}" alt="BTG Pactual"

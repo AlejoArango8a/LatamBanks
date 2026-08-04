@@ -1,0 +1,59 @@
+{
+  "iso": "LU",
+  "key": "luxembourg",
+  "code": 79983,
+  "shortName": "BTG Pactual Europe",
+  "countryLabel": "Luxembourg",
+  "legalName": "BTG Pactual Europe S.A.",
+  "rcs": "B79983",
+  "currency": "EUR",
+  "period": "202412",
+  "frequency": "annual",
+  "metrics": {
+    "assets": null,
+    "loans": null,
+    "equity": null,
+    "liabilities": null,
+    "total_deposits": null,
+    "net_income": -940000
+  },
+  "extras": {
+    "aum": 1674000000,
+    "aum_prior": 408000000,
+    "cet1_ratio": 0.65,
+    "capital_injections_eur": [
+      { "date": "2023-09", "amount": 55000000, "note": "Post-acquisition support" },
+      { "date": "2024-01", "amount": 150000000, "note": "Included in YE2024 capital base" },
+      { "date": "2025-04", "amount": 200000000, "note": "After YE2024 — not in period metrics" }
+    ]
+  },
+  "ratings": [
+    {
+      "agency": "Moody's",
+      "rating": "Baa3",
+      "outlook": "Stable",
+      "note": "LT issuer; deposits Baa2 / P-2"
+    }
+  ],
+  "sources": [
+    {
+      "label": "Moody's Ratings — Baa3 issuer (28 May 2025)",
+      "url": "https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf"
+    },
+    {
+      "label": "RCS Luxembourg B79983",
+      "url": "https://www.northdata.com/BTG%20Pactual%20Europe%20SA,%20Luxembourg/B79983"
+    },
+    {
+      "label": "BTG Pactual Europe",
+      "url": "https://www.btgpactual.eu"
+    }
+  ],
+  "notes": [
+    "Annual snapshot (not a monthly supervisory feed). YE2024 net income and AuM from Moody's disclosure.",
+    "Full balance-sheet lines (assets, equity, loans, deposits) pending RCSL annual accounts — left null rather than estimated.",
+    "Former FIS Privatbank S.A.; renamed BTG Pactual Europe S.A. on 15 Jan 2024."
+  ],
+  "asOf": "2025-05-28",
+  "updated": "2026-08-04"
+}
