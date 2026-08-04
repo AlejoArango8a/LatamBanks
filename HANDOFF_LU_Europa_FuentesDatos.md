@@ -1,7 +1,7 @@
 # LatamBanks — Handoff: BTG Europa (Luxemburgo)
 
 **Fecha:** agosto 2026  
-**Estado:** análisis de viabilidad (sin implementación).  
+**Estado:** **Opción A implementada** — franchise snapshot en BTG Banks + profile + seed anual (`data/btg_europe_luxembourg.json`). Sin Banking System LU.  
 **Entidad:** BTG Pactual Europe S.A. (ex FIS Privatbank S.A., RCS **B79983**)  
 **HQ:** 29, Avenue de la Porte-Neuve, L-2227 Luxembourg  
 **Supervisor:** CSSF (Less Significant Institution bajo CRR/CRD)
@@ -116,13 +116,23 @@ Requiere: `paises.json` LU, `luCuentas.js`, loader, ranking, sidebar, GHA.
 
 ---
 
-## 7. Próximos pasos sugeridos (cuando se apruebe)
+## 7. Qué quedó implementado (Opción A)
 
-1. Confirmar con producto: ¿solo card en BTG Banks o también país LU?  
-2. Seed YE2024 (y YE2023 si existe) de Assets / Equity / NI / Deposits (+ AuM opcional).  
-3. Profile + logo BTG + fila en `/api/btg-banks/snapshot`.  
-4. Documentar proceso de actualización anual (checklist).  
-5. Evaluar LBR API / compra de accounts solo si se quiere automatizar C.
+| Pieza | Ubicación |
+|-------|-----------|
+| Seed anual YE2024 | `data/btg_europe_luxembourg.json` |
+| País `luxembourg` status `franchise` | `paises.json` (no entra en LIVE_ISOS / landing) |
+| Snapshot API | `GET /api/btg-banks/snapshot` → fila `LU` |
+| UI | `js/views/btgBanks.js` (orden + AuM en subtitle) |
+| Profile | `js/bankProfiles.js` → `luxembourg[79983]` |
+
+**Datos sembrados hoy (Moody's 28-may-2025):** net income YE2024 **−€0,94 m**; AuM **€1.674 m**; CET1 **65%**. Assets / equity / loans / deposits = `null` (sin inventar balance).
+
+## 8. Próximos pasos
+
+1. Completar BS lines cuando haya cuentas RCSL / LBR (editar el JSON seed).  
+2. Checklist anual: revisar Moody’s + filing B79983 → bump `period` / métricas.  
+3. Evaluar LBR API solo si se quiere automatizar Opción C.
 
 ---
 

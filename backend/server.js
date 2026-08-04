@@ -1,5 +1,7 @@
 const express = require('express');
 const cors    = require('cors');
+const fs = require('fs');
+const path = require('path');
 const { Pool } = require('pg');
 require('dotenv').config();
 
@@ -10,6 +12,12 @@ const LIVE_ISOS = new Set(
   Object.values(REGISTRY.paises).filter((p) => p.status === 'live').map((p) => p.iso),
 );
 const DEFAULT_ISO = REGISTRY.paises[REGISTRY.default].iso;
+
+/** Annual franchise seed for BTG Pactual Europe S.A. (no monthly CSSF dump). */
+function loadBtgEuropeSeed() {
+  const p = path.join(__dirname, '..', 'data', 'btg_europe_luxembourg.json');
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
 
 const app = express();
 
@@ -573,7 +581,7 @@ app.get('/api/americas/snapshot', async (req, res) => {
 
 // ============================================================
 // GET /api/btg-banks/snapshot — fixed BTG franchise set across countries
-// Brasil / Chile / Colombia / Uruguay / USA — latest period each.
+// Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (annual seed).
 // Amounts in local reporting units; client converts to USD.
 // ============================================================
 const BTG_BANKS = [
@@ -582,6 +590,7 @@ const BTG_BANKS = [
   { iso: 'US', code: 35154, shortName: 'BTG Pactual Bank', countryLabel: 'United States' },
   { iso: 'CO', code: 66, shortName: 'BTG Pactual Colombia', countryLabel: 'Colombia' },
   { iso: 'UY', code: 157, shortName: 'BTG Pactual Uruguay', countryLabel: 'Uruguay' },
+  { iso: 'LU', code: 79983, shortName: 'BTG Pactual Europe', countryLabel: 'Luxembourg' },
 ];
 
 /** Extended common KPIs — only metrics comparable across the full franchise set. */
@@ -647,7 +656,29 @@ const BTG_METRIC_SPECS = {
   },
 };
 
+function btgEuropeSnapshot(entry) {
+  const seed = loadBtgEuropeSeed();
+  const meta = REGISTRY.paises.luxembourg || {};
+  return {
+    iso: entry.iso,
+    key: meta.key || 'luxembourg',
+    countryLabel: entry.countryLabel,
+    shortName: entry.shortName,
+    code: entry.code,
+    currency: seed.currency || meta.currency || 'EUR',
+    period: seed.period,
+    name: seed.legalName || entry.shortName,
+    metrics: { ...(seed.metrics || {}) },
+    extras: seed.extras || {},
+    source: 'manual_seed',
+    frequency: seed.frequency || 'annual',
+    notes: seed.notes || [],
+  };
+}
+
 async function btgBankSnapshot(entry) {
+  if (entry.iso === 'LU') return btgEuropeSnapshot(entry);
+
   const spec = BTG_METRIC_SPECS[entry.iso];
   const meta = REGISTRY.paises[spec?.key];
   if (!spec || !meta) {
@@ -770,10 +801,11 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
         { key: 'roe', label: 'Annual ROE' },
       ],
       notes: [
-        'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay.',
-        'Each row uses that country latest loaded supervisory period (may differ).',
+        'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay, Luxembourg (Europe).',
+        'LatAm / US rows use each country latest loaded supervisory period (may differ).',
+        'Luxembourg is an annual seed (Moody\'s YE2024 disclosure + RCS B79983). Balance-sheet lines stay blank until RCSL accounts are loaded.',
         'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
-        'Only KPIs available for every franchise country are shown (Time Deposits / Bonds removed — not published uniformly).',
+        'Only KPIs available across the franchise set are shown as columns (Time Deposits / Bonds removed — not published uniformly).',
         'Total Deposits: CL vista+plazo, CO corriente+CDTs, BR Cosif Depósitos, UY sector deposits, US DEP.',
         'Annual ROE approximates YTD net income x (12 / period month) / equity (Bank Monitor convention).',
       ],

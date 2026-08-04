@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon60';
+import { ST, datasetIsoCountry } from './state.js?v=bmon61';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -45,6 +45,7 @@ export const isBtgCode = (code) => {
   if (iso === 'BR') return n === 1000080336;
   if (iso === 'US') return n === 35154;
   if (iso === 'UY') return n === 157;
+  if (iso === 'LU') return n === 79983;
   return false;
 };
 
@@ -185,6 +186,8 @@ export const LOGO_SLUGS = {
   'UY-162': 'heritage',
   'UY-205': 'citibank',
   'UY-246': 'bna',
+  // Luxembourg (LU) — franchise-only BTG Europe (RCS B79983)
+  'LU-79983': 'btg',
   // Perú (SBS B-2201) — slugs con PNG en assets/logos/ (resto → generico)
   'PE-1':   'bbva',
   'PE-3':   'bcp',

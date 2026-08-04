@@ -385,6 +385,33 @@ export const BANK_PROFILES = {
       news: [{ title: 'BTG Pactual Uruguay — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Uruguay', source: 'Google News' }],
     },
   },
+  luxembourg: {
+    79983: {
+      shortName: 'BTG Pactual Europe',
+      legalName: 'BTG Pactual Europe S.A.',
+      hq: 'Luxembourg',
+      hqCity: 'Luxembourg City',
+      founded: '2001 (as FIS Privatbank; BTG franchise from 2023/24)',
+      ownership: 'Subsidiary of Banco BTG Pactual S.A.',
+      controlling: 'BTG Pactual',
+      shareholders: ['BTG Pactual group'],
+      originCountry: 'BR',
+      originCountryName: 'Brazil',
+      businessFocus: 'Private banking and wealth management; European hub for LatAm clients',
+      history: 'Acquired as FIS Privatbank S.A. in 2023 (EUR 21.3m). Renamed BTG Pactual Europe S.A. on 15 January 2024 (RCS B79983). CSSF-supervised credit institution in Luxembourg.',
+      context: 'Franchise-only in LatamBanks (annual seed). Not a full Banking System country — no monthly CSSF multi-bank dump.',
+      ratings: [
+        { agency: "Moody's", rating: 'Baa3', outlook: 'Stable' },
+      ],
+      website: 'https://www.btgpactual.eu',
+      irUrl: 'https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf',
+      news: [{ title: 'BTG Pactual Europe — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Europe%20Luxembourg', source: 'Google News' }],
+      sources: [
+        { label: 'RCS B79983', url: 'https://www.northdata.com/BTG%20Pactual%20Europe%20SA,%20Luxembourg/B79983' },
+        { label: "Moody's Baa3", url: 'https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf' },
+      ],
+    },
+  },
   argentina: {
     // Galicia — code depends on BCRA catalog; soft-match by name in resolver
   },
