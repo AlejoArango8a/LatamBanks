@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (Europe)
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon62';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon63';
 
 /**
  * Core KPIs for the franchise compare.
@@ -49,13 +49,79 @@ const BANK_COLORS = {
 const state = {
   loaded: false,
   loading: false,
+  refreshing: false,
   banks: [],
   rates: { USD: 1 },
   fxMeta: null,
   notes: [],
   metric: 'equity',
   error: null,
+  cacheMeta: null,
 };
+
+const LOCAL_SNAPSHOT_KEY = 'btgBanksSnapshot_v1';
+const LOCAL_FX_KEY = 'btgBanksFx_v1';
+
+function readLocalSnapshot() {
+  try {
+    const raw = localStorage.getItem(LOCAL_SNAPSHOT_KEY);
+    if (!raw) return null;
+    const j = JSON.parse(raw);
+    if (!Array.isArray(j?.banks) || !j.banks.length) return null;
+    return j;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalSnapshot(payload) {
+  try {
+    localStorage.setItem(LOCAL_SNAPSHOT_KEY, JSON.stringify({
+      banks: payload.banks,
+      notes: payload.notes || [],
+      cachedAt: payload.cachedAt || payload.builtAt || new Date().toISOString(),
+      savedAt: new Date().toISOString(),
+    }));
+  } catch { /* quota / private mode */ }
+}
+
+function readLocalFx() {
+  try {
+    const raw = localStorage.getItem(LOCAL_FX_KEY);
+    if (!raw) return null;
+    const j = JSON.parse(raw);
+    if (!j?.rates || typeof j.rates !== 'object') return null;
+    return j;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalFx(rates, meta) {
+  try {
+    localStorage.setItem(LOCAL_FX_KEY, JSON.stringify({
+      rates,
+      fxMeta: meta,
+      savedAt: new Date().toISOString(),
+    }));
+  } catch { /* ignore */ }
+}
+
+function applySnapshotPayload(j, { fromLocal = false } = {}) {
+  const rawBanks = Array.isArray(j.banks) ? j.banks : [];
+  const enriched = rawBanks.map((b) => enrichBank(b));
+  state.banks = sortBanksByEquityDesc(enriched);
+  state.notes = Array.isArray(j.notes) ? j.notes : [];
+  state.loaded = state.banks.length > 0;
+  state.cacheMeta = {
+    fromLocal,
+    cached: !!j.cached || fromLocal,
+    stale: !!j.stale,
+    refreshing: !!j.refreshing || state.refreshing,
+    cachedAt: j.cachedAt || j.builtAt || null,
+  };
+  if (!fromLocal && state.banks.length) writeLocalSnapshot(j);
+}
 
 function esc(s) {
   return String(s ?? '')
@@ -128,6 +194,7 @@ async function fetchFxRates(currencies) {
   if (!need.length) {
     state.rates = rates;
     state.fxMeta = { source: 'native', date: new Date().toISOString().slice(0, 10) };
+    writeLocalFx(rates, state.fxMeta);
     return;
   }
   try {
@@ -160,6 +227,7 @@ async function fetchFxRates(currencies) {
     };
   }
   state.rates = rates;
+  writeLocalFx(rates, state.fxMeta);
 }
 
 function fmtAumLine(b) {
@@ -197,29 +265,69 @@ function enrichBank(raw) {
 
 async function loadSnapshot(force = false) {
   if (state.loading) return;
-  if (state.loaded && !force) {
+  if (state.loaded && !force && !state.refreshing) {
     render();
     return;
   }
-  state.loading = true;
-  state.error = null;
-  renderShellLoading();
+
+  // Paint last-known snapshot immediately (local), then refresh from API/DB cache.
+  const local = !force ? readLocalSnapshot() : null;
+  const localFx = readLocalFx();
+  if (localFx?.rates) {
+    state.rates = { USD: 1, ...localFx.rates };
+    state.fxMeta = localFx.fxMeta || state.fxMeta;
+  }
+  if (local?.banks?.length) {
+    applySnapshotPayload(local, { fromLocal: true });
+    state.refreshing = true;
+    state.loading = false;
+    state.error = null;
+    render();
+  } else {
+    state.loading = true;
+    state.error = null;
+    renderShellLoading();
+  }
+
+  let keepRefreshing = false;
   try {
-    const r = await fetch(`${API_BASE}/api/btg-banks/snapshot`, { cache: 'no-store' });
+    const url = force
+      ? `${API_BASE}/api/btg-banks/snapshot?rebuild=1`
+      : `${API_BASE}/api/btg-banks/snapshot`;
+    const r = await fetch(url, { cache: 'no-store' });
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
-    const rawBanks = Array.isArray(j.banks) ? j.banks : [];
-    await fetchFxRates(rawBanks.map((b) => b.currency).filter(Boolean));
-    const enriched = rawBanks.map((b) => enrichBank(b));
-    state.banks = sortBanksByEquityDesc(enriched);
-    state.notes = Array.isArray(j.notes) ? j.notes : [];
-    state.loaded = true;
+    const currencies = (j.banks || []).map((b) => b.currency).filter(Boolean);
+    await fetchFxRates(currencies);
+    applySnapshotPayload(j, { fromLocal: false });
+    state.error = null;
+
+    // If server served a stale/old cache, kick a background rebuild once.
+    if (!force && (j.stale || j.refreshing)) {
+      keepRefreshing = true;
+      state.refreshing = true;
+      fetch(`${API_BASE}/api/btg-banks/snapshot?rebuild=1`, { cache: 'no-store' })
+        .then((rr) => rr.json())
+        .then(async (jj) => {
+          if (!jj?.ok || !Array.isArray(jj.banks)) return;
+          await fetchFxRates(jj.banks.map((b) => b.currency).filter(Boolean));
+          applySnapshotPayload(jj, { fromLocal: false });
+        })
+        .catch((e) => console.warn('[btgBanks] background rebuild failed', e))
+        .finally(() => {
+          state.refreshing = false;
+          render();
+        });
+    }
   } catch (e) {
     console.error('[btgBanks]', e);
-    state.error = String(e.message || e);
-    state.banks = [];
+    if (!state.banks.length) {
+      state.error = String(e.message || e);
+      state.banks = [];
+    }
   } finally {
     state.loading = false;
+    if (!keepRefreshing) state.refreshing = false;
     render();
   }
 }
@@ -394,6 +502,14 @@ function render() {
   const fxLine = state.fxMeta
     ? `FX ${esc(state.fxMeta.date || '—')} · ${esc(state.fxMeta.source || '—')}`
     : '';
+  const cacheBits = [];
+  if (state.refreshing) cacheBits.push('Updating…');
+  else if (state.cacheMeta?.cached) cacheBits.push(state.cacheMeta.stale ? 'Cached · refreshing' : 'Cached');
+  if (state.cacheMeta?.cachedAt) {
+    const d = String(state.cacheMeta.cachedAt).slice(0, 10);
+    if (d) cacheBits.push(d);
+  }
+  const cacheLine = cacheBits.length ? cacheBits.join(' · ') : '';
   const m = METRICS.find((x) => x.key === state.metric) || METRICS[0];
 
   root.innerHTML = `
@@ -418,7 +534,7 @@ function render() {
         </svg>
       </span>
       <span style="font-size:15px;font-weight:500;color:var(--white);">Financial highlights · ${esc(m.label)}</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:4px;">${fxLine}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:4px;">${fxLine}${cacheLine ? ` · ${esc(cacheLine)}` : ''}</span>
     </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding-left:4px;" id="btgMetricBtns">${renderMetricButtons()}</div>
