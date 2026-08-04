@@ -67,6 +67,11 @@ GROUP_FILES = ("grupo99.xls", "grupo997.xls")  # oficiales + privados
 # IDs de agregados del boletín (no son bancos individuales).
 AGGREGATE_IDS = frozenset({99, 997})
 
+# Display / DB names when BCU XLS still carries a legacy brand.
+RAZON_SOCIAL_OVERRIDES = {
+    157: "BTG Pactual Uruguay",
+}
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("uruguay_loader")
 
@@ -386,6 +391,8 @@ def load_month(conn, periodo: str) -> None:
         # Preferir nombre del Excel; fallback al del grupo
         if not nombre or nombre.startswith("Institución"):
             nombre = banks.get(iid, nombre)
+        if iid in RAZON_SOCIAL_OVERRIDES:
+            nombre = RAZON_SOCIAL_OVERRIDES[iid]
         inst_rows.append((COUNTRY, iid, nombre))
         all_rows.extend(rows)
         plan.update(plan_i)

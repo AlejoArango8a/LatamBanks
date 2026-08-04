@@ -573,7 +573,7 @@ app.get('/api/americas/snapshot', async (req, res) => {
 
 // ============================================================
 // GET /api/btg-banks/snapshot — fixed BTG franchise set across countries
-// Brasil / Chile / Colombia / Uruguay (HSBC) / USA — latest period each.
+// Brasil / Chile / Colombia / Uruguay / USA — latest period each.
 // Amounts in local reporting units; client converts to USD.
 // ============================================================
 const BTG_BANKS = [
@@ -581,7 +581,7 @@ const BTG_BANKS = [
   { iso: 'CL', code: 59, shortName: 'BTG Pactual Chile', countryLabel: 'Chile' },
   { iso: 'US', code: 35154, shortName: 'BTG Pactual Bank', countryLabel: 'United States' },
   { iso: 'CO', code: 66, shortName: 'BTG Pactual Colombia', countryLabel: 'Colombia' },
-  { iso: 'UY', code: 157, shortName: 'HSBC', countryLabel: 'Uruguay' },
+  { iso: 'UY', code: 157, shortName: 'BTG Pactual Uruguay', countryLabel: 'Uruguay' },
 ];
 
 /** Extended common KPIs — only metrics comparable across the full franchise set. */
@@ -770,7 +770,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
         { key: 'roe', label: 'Annual ROE' },
       ],
       notes: [
-        'Franchise set: BTG Brazil, Chile, USA, Colombia + HSBC Uruguay.',
+        'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay.',
         'Each row uses that country latest loaded supervisory period (may differ).',
         'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
         'Only KPIs available for every franchise country are shown (Time Deposits / Bonds removed — not published uniformly).',

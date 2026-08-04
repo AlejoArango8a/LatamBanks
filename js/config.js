@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon59';
+import { ST, datasetIsoCountry } from './state.js?v=bmon60';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -44,6 +44,7 @@ export const isBtgCode = (code) => {
   if (iso === 'CO') return n === 66;
   if (iso === 'BR') return n === 1000080336;
   if (iso === 'US') return n === 35154;
+  if (iso === 'UY') return n === 157;
   return false;
 };
 
@@ -180,7 +181,7 @@ export const LOGO_SLUGS = {
   'UY-128': 'scotiabank',
   'UY-137': 'santander',
   'UY-153': 'bbva',
-  'UY-157': 'hsbc',
+  'UY-157': 'btg',
   'UY-162': 'heritage',
   'UY-205': 'citibank',
   'UY-246': 'bna',
