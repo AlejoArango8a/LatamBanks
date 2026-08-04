@@ -136,7 +136,7 @@ Requiere: `paises.json` LU, `luCuentas.js`, loader, ranking, sidebar, GHA.
 
 ---
 
-## 8. Referencias
+## 9. Referencias
 
 - Moody’s: https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf  
 - North Data: https://www.northdata.com/BTG%20Pactual%20Europe%20SA,%20Luxembourg/B79983  
