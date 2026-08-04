@@ -399,7 +399,7 @@ export const BANK_PROFILES = {
       originCountryName: 'Brazil',
       businessFocus: 'Private banking and wealth management; European hub for LatAm clients',
       history: 'Acquired as FIS Privatbank S.A. in 2023 (EUR 21.3m). Renamed BTG Pactual Europe S.A. on 15 January 2024 (RCS B79983). CSSF-supervised credit institution in Luxembourg.',
-      context: 'Franchise-only in LatamBanks (annual seed). Not a full Banking System country — no monthly CSSF multi-bank dump. YE2024 balance sheet + own funds now sourced from the bank\'s published annual accounts and Pillar 3 disclosure.',
+      context: 'Franchise-only in LatamBanks (annual seed). Balance sheet + own funds from btgpactual.eu/downloads (audited annual accounts + Pillar 3). Latest seed: YE2025 IFRS equity EUR 415.5m; CET1 EUR 402.8m.',
       employeesInCountry: 54,
       employeesAsOf: '2024-12-31',
       ratings: [
@@ -409,10 +409,10 @@ export const BANK_PROFILES = {
       irUrl: 'https://www.btgpactual.eu/downloads',
       news: [{ title: 'BTG Pactual Europe — news', url: 'https://news.google.com/search?q=BTG%20Pactual%20Europe%20Luxembourg', source: 'Google News' }],
       sources: [
+        { label: 'Annual accounts 2025 (IFRS)', url: 'https://static.btgpactual.com/media/btg-pactual-europe-sa-annual-accounts-2025.pdf' },
+        { label: 'Pillar 3 Disclosure Report 2025', url: 'https://static.btgpactual.com/media/btg-pactual-europe-disclosure-report-2025.pdf' },
         { label: 'Annual accounts 2024 (Lux GAAP)', url: 'https://static.btgpactual.com/media/btg-pactual-europe-sa-annual-accounts-2024.pdf' },
-        { label: 'Annual accounts 2025 (IFRS, YE2024 comparative)', url: 'https://static.btgpactual.com/media/btg-pactual-europe-sa-annual-accounts-2025.pdf' },
-        { label: 'Pillar 3 Disclosure Report 2024 (own funds)', url: 'https://static.btgpactual.com/media/btg-pactual-europe-disclosure-report-2024.pdf' },
-        { label: 'RCS B79983', url: 'https://www.northdata.com/BTG%20Pactual%20Europe%20SA,%20Luxembourg/B79983' },
+        { label: 'Pillar 3 Disclosure Report 2024', url: 'https://static.btgpactual.com/media/btg-pactual-europe-disclosure-report-2024.pdf' },
         { label: "Moody's Baa3", url: 'https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf' },
       ],
     },
