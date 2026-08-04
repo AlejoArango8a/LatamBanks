@@ -692,11 +692,13 @@ async function btgBankSnapshot(entry) {
     };
   }
 
+  // MAX(periodo) avoids scanning DISTINCT over full country history.
   const periodRows = await query(
-    `SELECT DISTINCT periodo FROM datos_financieros WHERE country = $1 ORDER BY periodo ASC`,
+    `SELECT MAX(periodo) AS periodo FROM datos_financieros WHERE country = $1`,
     [entry.iso],
   );
-  if (!periodRows.length) {
+  const period = periodRows[0]?.periodo || null;
+  if (!period) {
     return {
       iso: entry.iso,
       key: meta.key,
@@ -710,7 +712,6 @@ async function btgBankSnapshot(entry) {
       error: 'No periods loaded',
     };
   }
-  const period = periodRows[periodRows.length - 1].periodo;
 
   const nameRows = await query(
     `SELECT codigo::int AS codigo, razon_social FROM instituciones
@@ -770,14 +771,76 @@ async function btgBankSnapshot(entry) {
   };
 }
 
-app.get('/api/btg-banks/snapshot', async (req, res) => {
+const BTG_SNAPSHOT_CACHE_KEY = 'default';
+/** Serve DB-cached snapshot without rebuild for this long. */
+const BTG_SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000;
+let btgSnapshotRebuildInFlight = null;
+
+function btgSnapshotResponseMeta() {
+  return {
+    metrics: [
+      { key: 'equity', label: 'Equity' },
+      { key: 'assets', label: 'Total Assets' },
+      { key: 'net_income', label: 'Net Income' },
+      { key: 'loans', label: 'Total Loans' },
+      { key: 'liabilities', label: 'Total Liabilities' },
+      { key: 'total_deposits', label: 'Total Deposits' },
+      { key: 'loans_equity', label: 'Loans / Equity' },
+      { key: 'roe', label: 'Annual ROE' },
+    ],
+    notes: [
+      'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay, Luxembourg (Europe).',
+      'LatAm / US rows use each country latest loaded supervisory period (may differ).',
+      'Luxembourg is an annual seed (latest: YE2025 IFRS). Balance sheet + own funds from btgpactual.eu/downloads (annual accounts + Pillar 3). Public cadence is annual — not a monthly CSSF open feed.',
+      'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
+      'Only KPIs available across the franchise set are shown as columns (Time Deposits / Bonds removed — not published uniformly).',
+      'Total Deposits: CL vista+plazo, CO corriente+CDTs, BR Cosif Depósitos, UY sector deposits, US DEP.',
+      'Annual ROE approximates YTD net income x (12 / period month) / equity (Bank Monitor convention).',
+      'Server caches the last successful franchise snapshot in CockroachDB for fast loads; ?rebuild=1 forces a live refresh.',
+    ],
+  };
+}
+
+async function readBtgSnapshotCache() {
   try {
-    const banks = [];
-    for (const entry of BTG_BANKS) {
+    const rows = await query(
+      `SELECT payload, built_at, updated_at
+       FROM btg_franchise_snapshot_cache WHERE cache_key = $1`,
+      [BTG_SNAPSHOT_CACHE_KEY],
+    );
+    if (!rows.length) return null;
+    const row = rows[0];
+    const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+    return { payload, builtAt: row.built_at, updatedAt: row.updated_at };
+  } catch (e) {
+    console.warn('[btg-snapshot-cache] read failed:', e.message);
+    return null;
+  }
+}
+
+async function writeBtgSnapshotCache(payload) {
+  try {
+    await query(
+      `INSERT INTO btg_franchise_snapshot_cache (cache_key, payload, built_at, updated_at)
+       VALUES ($1, $2::jsonb, now(), now())
+       ON CONFLICT (cache_key) DO UPDATE SET
+         payload = EXCLUDED.payload,
+         built_at = EXCLUDED.built_at,
+         updated_at = now()`,
+      [BTG_SNAPSHOT_CACHE_KEY, JSON.stringify(payload)],
+    );
+  } catch (e) {
+    console.warn('[btg-snapshot-cache] write failed:', e.message);
+  }
+}
+
+async function buildBtgFranchiseSnapshot() {
+  const banks = await Promise.all(
+    BTG_BANKS.map(async (entry) => {
       try {
-        banks.push(await btgBankSnapshot(entry));
+        return await btgBankSnapshot(entry);
       } catch (e) {
-        banks.push({
+        return {
           ...entry,
           key: BTG_METRIC_SPECS[entry.iso]?.key,
           currency: REGISTRY.paises[BTG_METRIC_SPECS[entry.iso]?.key]?.currency || null,
@@ -785,34 +848,92 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
           name: entry.shortName,
           metrics: {},
           error: String(e.message || e),
-        });
+        };
       }
+    }),
+  );
+  return {
+    ok: true,
+    ...btgSnapshotResponseMeta(),
+    banks,
+    builtAt: new Date().toISOString(),
+  };
+}
+
+function scheduleBtgSnapshotRebuild() {
+  if (btgSnapshotRebuildInFlight) return btgSnapshotRebuildInFlight;
+  btgSnapshotRebuildInFlight = buildBtgFranchiseSnapshot()
+    .then(async (payload) => {
+      await writeBtgSnapshotCache(payload);
+      return payload;
+    })
+    .catch((e) => {
+      console.error('[btg-snapshot-cache] rebuild failed:', e);
+      throw e;
+    })
+    .finally(() => {
+      btgSnapshotRebuildInFlight = null;
+    });
+  return btgSnapshotRebuildInFlight;
+}
+
+app.get('/api/btg-banks/snapshot', async (req, res) => {
+  try {
+    const forceRebuild = String(req.query.rebuild || '') === '1'
+      || String(req.query.refresh || '') === '1';
+    const cached = forceRebuild ? null : await readBtgSnapshotCache();
+    const builtAtMs = cached?.builtAt ? new Date(cached.builtAt).getTime() : 0;
+    const ageMs = builtAtMs ? Date.now() - builtAtMs : Infinity;
+    const cacheFresh = Number.isFinite(ageMs) && ageMs >= 0 && ageMs < BTG_SNAPSHOT_TTL_MS;
+
+    if (cached?.payload?.banks && cacheFresh) {
+      if (ageMs > BTG_SNAPSHOT_TTL_MS / 2) {
+        scheduleBtgSnapshotRebuild().catch(() => {});
+      }
+      return res.json({
+        ...cached.payload,
+        ok: true,
+        cached: true,
+        refreshing: ageMs > BTG_SNAPSHOT_TTL_MS / 2,
+        cachedAt: cached.builtAt,
+        cacheAgeMs: ageMs,
+      });
     }
+
+    if (cached?.payload?.banks && !forceRebuild) {
+      scheduleBtgSnapshotRebuild().catch(() => {});
+      return res.json({
+        ...cached.payload,
+        ok: true,
+        cached: true,
+        stale: true,
+        refreshing: true,
+        cachedAt: cached.builtAt,
+        cacheAgeMs: ageMs,
+      });
+    }
+
+    const payload = await scheduleBtgSnapshotRebuild();
     res.json({
+      ...payload,
       ok: true,
-      metrics: [
-        { key: 'equity', label: 'Equity' },
-        { key: 'assets', label: 'Total Assets' },
-        { key: 'net_income', label: 'Net Income' },
-        { key: 'loans', label: 'Total Loans' },
-        { key: 'liabilities', label: 'Total Liabilities' },
-        { key: 'total_deposits', label: 'Total Deposits' },
-        { key: 'loans_equity', label: 'Loans / Equity' },
-        { key: 'roe', label: 'Annual ROE' },
-      ],
-      notes: [
-        'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay, Luxembourg (Europe).',
-        'LatAm / US rows use each country latest loaded supervisory period (may differ).',
-        'Luxembourg is an annual seed (latest: YE2025 IFRS). Balance sheet + own funds from btgpactual.eu/downloads (annual accounts + Pillar 3). Public cadence is annual — not a monthly CSSF open feed.',
-        'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
-        'Only KPIs available across the franchise set are shown as columns (Time Deposits / Bonds removed — not published uniformly).',
-        'Total Deposits: CL vista+plazo, CO corriente+CDTs, BR Cosif Depósitos, UY sector deposits, US DEP.',
-        'Annual ROE approximates YTD net income x (12 / period month) / equity (Bank Monitor convention).',
-      ],
-      banks,
+      cached: false,
+      rebuilt: true,
+      cachedAt: payload.builtAt,
     });
   } catch (e) {
     console.error('/api/btg-banks/snapshot error:', e);
+    const cached = await readBtgSnapshotCache();
+    if (cached?.payload?.banks) {
+      return res.json({
+        ...cached.payload,
+        ok: true,
+        cached: true,
+        stale: true,
+        error: String(e.message || e),
+        cachedAt: cached.builtAt,
+      });
+    }
     res.status(500).json({ ok: false, error: String(e.message) });
   }
 });
@@ -1202,6 +1323,18 @@ async function ensureVisitTable() {
   `);
 }
 ensureVisitTable().catch(e => console.warn('ensureVisitTable:', e.message));
+
+async function ensureBtgSnapshotCacheTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS btg_franchise_snapshot_cache (
+      cache_key   STRING PRIMARY KEY,
+      payload     JSONB NOT NULL,
+      built_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+}
+ensureBtgSnapshotCacheTable().catch((e) => console.warn('ensureBtgSnapshotCacheTable:', e.message));
 
 // POST /api/visits  — registra una visita con país
 app.post('/api/visits', async (req, res) => {

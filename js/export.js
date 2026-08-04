@@ -1,9 +1,9 @@
 // ============================================================
 // EXPORT — Excel export helpers (uses XLSX from CDN script tag)
 // ============================================================
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon62';
-import { periodLabel } from './format.js?v=bmon62';
-import { paisLocale } from './paises.js?v=bmon62';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon63';
+import { periodLabel } from './format.js?v=bmon63';
+import { paisLocale } from './paises.js?v=bmon63';
 
 export function parseExportVal(text) {
   if (!text || text === '—' || text === '') return text;
