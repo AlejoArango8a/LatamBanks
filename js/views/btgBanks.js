@@ -2,12 +2,11 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (Europe)
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon61';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon62';
 
 /**
  * Core KPIs for the franchise compare.
  * Time Deposits / Bonds intentionally omitted (CL/CO-only or misaligned).
- * Luxembourg may have nulls for BS lines until RCSL accounts are seeded.
  */
 const METRICS = [
   { key: 'equity', label: 'Equity', kind: 'money' },
@@ -20,8 +19,23 @@ const METRICS = [
   { key: 'roe', label: 'Annual ROE', kind: 'pct' },
 ];
 
-/** Display order: Brazil → Chile → United States → Colombia → Uruguay → Luxembourg */
-const BANK_ORDER = ['BR', 'CL', 'US', 'CO', 'UY', 'LU'];
+/** Fallback ISO order when USD equity is missing (tie-break / nulls last). */
+const BANK_ORDER = ['BR', 'CL', 'LU', 'US', 'CO', 'UY'];
+
+function equitySortKey(b) {
+  const eq = b?.usd?.equity;
+  return eq != null && Number.isFinite(Number(eq)) ? Number(eq) : -Infinity;
+}
+
+/** KPIs, chart and table: largest equity (USD) first. */
+function sortBanksByEquityDesc(banks) {
+  const orderIdx = Object.fromEntries(BANK_ORDER.map((iso, i) => [iso, i]));
+  return [...banks].sort((a, b) => {
+    const d = equitySortKey(b) - equitySortKey(a);
+    if (d !== 0) return d;
+    return (orderIdx[a.iso] ?? 99) - (orderIdx[b.iso] ?? 99);
+  });
+}
 
 const BANK_COLORS = {
   BR: '#2563eb',
@@ -196,8 +210,8 @@ async function loadSnapshot(force = false) {
     if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
     const rawBanks = Array.isArray(j.banks) ? j.banks : [];
     await fetchFxRates(rawBanks.map((b) => b.currency).filter(Boolean));
-    const byIso = Object.fromEntries(rawBanks.map((b) => [b.iso, enrichBank(b)]));
-    state.banks = BANK_ORDER.map((iso) => byIso[iso]).filter(Boolean);
+    const enriched = rawBanks.map((b) => enrichBank(b));
+    state.banks = sortBanksByEquityDesc(enriched);
     state.notes = Array.isArray(j.notes) ? j.notes : [];
     state.loaded = true;
   } catch (e) {
@@ -387,7 +401,7 @@ function render() {
       <div class="btg-banks-hero-text">
         <div class="btg-banks-eyebrow">ALM · Franchise compare</div>
         <div class="btg-banks-title">BTG Banks</div>
-        <div class="btg-banks-sub">Brazil · Chile · United States · Colombia · Uruguay · Luxembourg — Financial Highlights in USD</div>
+        <div class="btg-banks-sub">Franchise compare · ordered by equity (USD) · Financial Highlights</div>
       </div>
       <div class="btg-banks-hero-logo">
         <img class="btg-banks-logo" src="${btgHeroLogoSrc()}" alt="BTG Pactual"
@@ -408,7 +422,7 @@ function render() {
     </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding-left:4px;" id="btgMetricBtns">${renderMetricButtons()}</div>
-    <div style="font-size:11px;color:var(--text3);margin:-6px 0 14px;padding-left:4px;">Select a KPI — highlight cards and chart update together</div>
+    <div style="font-size:11px;color:var(--text3);margin:-6px 0 14px;padding-left:4px;">Select a KPI — cards, chart and table stay ranked by equity (USD)</div>
 
     <div class="kpi-grid" id="btgBanksKpis" style="margin-bottom:22px;">${renderHighlightCards()}</div>
 
@@ -426,7 +440,7 @@ function render() {
       <div class="panel-head">
         <div>
           <div class="panel-title">${esc(m.label)} comparison</div>
-          <div class="panel-sub">Latest supervisory period per country · converted to USD</div>
+          <div class="panel-sub">Ranked by equity (USD) · latest period per country</div>
         </div>
       </div>
       <div class="panel-body">
@@ -441,7 +455,7 @@ function render() {
       <div class="panel-head">
         <div>
           <div class="panel-title">Comparison table · USD</div>
-          <div class="panel-sub">Franchise KPIs available in every country</div>
+          <div class="panel-sub">Ranked by equity (USD) · franchise KPIs</div>
         </div>
       </div>
       <div class="panel-body" style="overflow-x:auto;padding:0;" id="btgBanksTable">${renderTable()}</div>
