@@ -803,7 +803,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
       notes: [
         'Franchise set: BTG Brazil, Chile, USA, Colombia, Uruguay, Luxembourg (Europe).',
         'LatAm / US rows use each country latest loaded supervisory period (may differ).',
-        'Luxembourg is an annual seed (Moody\'s YE2024 disclosure + RCS B79983). Balance-sheet lines stay blank until RCSL accounts are loaded.',
+        'Luxembourg is an annual seed (YE2024). Balance sheet + own funds sourced from BTG Pactual Europe published annual accounts and Pillar 3 disclosure; net income is IFRS (Lux GAAP loss was EUR 0.94m).',
         'Amounts are local reporting units; the BTG Banks sheet converts to USD on the client.',
         'Only KPIs available across the franchise set are shown as columns (Time Deposits / Bonds removed — not published uniformly).',
         'Total Deposits: CL vista+plazo, CO corriente+CDTs, BR Cosif Depósitos, UY sector deposits, US DEP.',
