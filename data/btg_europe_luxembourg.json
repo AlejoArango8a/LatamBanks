@@ -7,24 +7,44 @@
   "legalName": "BTG Pactual Europe S.A.",
   "rcs": "B79983",
   "currency": "EUR",
-  "period": "202412",
+  "period": "202512",
   "frequency": "annual",
+  "basis": "IFRS audited annual accounts (FY2025). YE2024 comparative also published in the same statements.",
   "metrics": {
-    "assets": null,
-    "loans": null,
-    "equity": null,
-    "liabilities": null,
-    "total_deposits": null,
-    "net_income": -940000
+    "assets": 1257971000,
+    "loans": 498019000,
+    "equity": 415483000,
+    "liabilities": 842488000,
+    "total_deposits": 551797000,
+    "net_income": 2971000
   },
   "extras": {
     "aum": 1674000000,
     "aum_prior": 408000000,
-    "cet1_ratio": 0.65,
+    "aum_as_of": "2024-12-31",
+    "aum_note": "AuM from Moody's YE2024 disclosure; not restated to YE2025 in free Moody's excerpt.",
+    "cet1_ratio": 0.5942,
+    "cet1_capital_eur": 402781379,
+    "total_capital_eur": 402781379,
+    "rwa_eur": 677836778,
+    "leverage_ratio": null,
+    "prior_year": {
+      "period": "202412",
+      "assets": 662902000,
+      "loans": 226910000,
+      "equity": 212512000,
+      "liabilities": 450390000,
+      "total_deposits": 309542000,
+      "net_income": -1554000,
+      "net_income_lux_gaap": -936000,
+      "cet1_capital_eur": 206291697,
+      "cet1_ratio": 0.5719,
+      "rwa_eur": 360699089
+    },
     "capital_injections_eur": [
-      { "date": "2023-09", "amount": 55000000, "note": "Post-acquisition support" },
-      { "date": "2024-01", "amount": 150000000, "note": "Included in YE2024 capital base" },
-      { "date": "2025-04", "amount": 200000000, "note": "After YE2024 — not in period metrics" }
+      { "date": "2023-09", "amount": 55000000, "note": "Share premium at 1 Jan 2024 = EUR 55m" },
+      { "date": "2024-01", "amount": 150000000, "note": "Share premium to EUR 205m at YE2024" },
+      { "date": "2025-04", "amount": 200000000, "note": "Share premium to EUR 405m at YE2025" }
     ]
   },
   "ratings": [
@@ -32,28 +52,41 @@
       "agency": "Moody's",
       "rating": "Baa3",
       "outlook": "Stable",
-      "note": "LT issuer; deposits Baa2 / P-2"
+      "note": "LT issuer; deposits Baa2 / P-2 (28 May 2025)"
     }
   ],
   "sources": [
     {
+      "label": "BTG Pactual Europe S.A. — Annual accounts 2025 (IFRS, audited)",
+      "url": "https://static.btgpactual.com/media/btg-pactual-europe-sa-annual-accounts-2025.pdf"
+    },
+    {
+      "label": "BTG Pactual Europe S.A. — Annual accounts 2024 (Lux GAAP, audited)",
+      "url": "https://static.btgpactual.com/media/btg-pactual-europe-sa-annual-accounts-2024.pdf"
+    },
+    {
+      "label": "BTG Pactual Europe S.A. — Pillar 3 / Disclosure Report 2025 (CET1 EUR 402,781,379)",
+      "url": "https://static.btgpactual.com/media/btg-pactual-europe-disclosure-report-2025.pdf"
+    },
+    {
+      "label": "BTG Pactual Europe S.A. — Pillar 3 / Disclosure Report 2024 (CET1 EUR 206,291,697)",
+      "url": "https://static.btgpactual.com/media/btg-pactual-europe-disclosure-report-2024.pdf"
+    },
+    {
+      "label": "BTG Pactual Europe — downloads",
+      "url": "https://www.btgpactual.eu/downloads"
+    },
+    {
       "label": "Moody's Ratings — Baa3 issuer (28 May 2025)",
       "url": "https://static.btgpactual.com/media/moodys-ratings-assigns-baa3.pdf"
-    },
-    {
-      "label": "RCS Luxembourg B79983",
-      "url": "https://www.northdata.com/BTG%20Pactual%20Europe%20SA,%20Luxembourg/B79983"
-    },
-    {
-      "label": "BTG Pactual Europe",
-      "url": "https://www.btgpactual.eu"
     }
   ],
   "notes": [
-    "Annual snapshot (not a monthly supervisory feed). YE2024 net income and AuM from Moody's disclosure.",
-    "Full balance-sheet lines (assets, equity, loans, deposits) pending RCSL annual accounts — left null rather than estimated.",
-    "Former FIS Privatbank S.A.; renamed BTG Pactual Europe S.A. on 15 Jan 2024."
+    "Public source is the bank's own site (btgpactual.eu/downloads → static.btgpactual.com/media/), not the paywalled LBR portal.",
+    "YE2025 IFRS equity EUR 415.483m; CET1 EUR 402.781m (Pillar 3). YE2024 IFRS equity was EUR 212.512m; CET1 EUR 206.292m; audited CET1 ratio 57.19% (Moody's free note said ~65% — approximate).",
+    "Public disclosure cadence is ANNUAL: audited annual accounts + annual Pillar 3 (CRR Art. 431+). FINREP to CSSF is supervisory (typically quarterly) and not open data.",
+    "Former FIS Privatbank S.A.; renamed 15 Jan 2024. Subscribed capital EUR 9,989,000."
   ],
-  "asOf": "2025-05-28",
+  "asOf": "2025-12-31",
   "updated": "2026-08-04"
 }
