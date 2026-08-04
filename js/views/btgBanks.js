@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (Europe)
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon63';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon64';
 
 /**
  * Core KPIs for the franchise compare.
@@ -18,6 +18,9 @@ const METRICS = [
   { key: 'loans_equity', label: 'Loans / Equity', kind: 'ratio' },
   { key: 'roe', label: 'Annual ROE', kind: 'pct' },
 ];
+
+/** Money KPIs subtracted when eliminating subsidiaries (ratios/ROE recomputed after). */
+const MONEY_KEYS = METRICS.filter((m) => m.kind === 'money').map((m) => m.key);
 
 /** Fallback ISO order when USD equity is missing (tie-break / nulls last). */
 const BANK_ORDER = ['BR', 'CL', 'LU', 'US', 'CO', 'UY'];
@@ -57,10 +60,87 @@ const state = {
   metric: 'equity',
   error: null,
   cacheMeta: null,
+  eliminateSubsidiaries: false,
 };
 
 const LOCAL_SNAPSHOT_KEY = 'btgBanksSnapshot_v1';
 const LOCAL_FX_KEY = 'btgBanksFx_v1';
+const LOCAL_ELIM_KEY = 'btgBanksElimSubs_v1';
+
+function readElimPreference() {
+  try {
+    return localStorage.getItem(LOCAL_ELIM_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeElimPreference(on) {
+  try {
+    localStorage.setItem(LOCAL_ELIM_KEY, on ? '1' : '0');
+  } catch { /* ignore */ }
+}
+
+state.eliminateSubsidiaries = readElimPreference();
+
+/**
+ * Societal tree (franchise reporting):
+ * - All entities sit under BTG Brazil → BR − Σ(other banks) in USD
+ * - Colombia sits under Chile → CL − CO in USD
+ * Subsidiaries stay visible; only parent KPIs are de-consolidated.
+ */
+function applySubsidiaryElimination(banks) {
+  if (!state.eliminateSubsidiaries || !banks.length) {
+    return banks.map((b) => ({ ...b, elimNote: null }));
+  }
+  const byIso = Object.fromEntries(banks.map((b) => [b.iso, b]));
+  const othersThanBr = banks.filter((b) => b.iso !== 'BR');
+
+  return banks.map((b) => {
+    if (b.iso !== 'BR' && b.iso !== 'CL') return { ...b, elimNote: null };
+
+    const usd = { ...b.usd };
+    const deduct = (fromIsoList) => {
+      for (const key of MONEY_KEYS) {
+        const base = usd[key];
+        if (base == null || !Number.isFinite(Number(base))) continue;
+        let sub = 0;
+        let hit = false;
+        for (const iso of fromIsoList) {
+          const v = byIso[iso]?.usd?.[key];
+          if (v != null && Number.isFinite(Number(v))) {
+            sub += Number(v);
+            hit = true;
+          }
+        }
+        if (hit) usd[key] = Number(base) - sub;
+      }
+    };
+
+    let elimNote = null;
+    if (b.iso === 'BR') {
+      deduct(othersThanBr.map((o) => o.iso));
+      elimNote = 'ex-subsidiaries';
+    } else if (b.iso === 'CL') {
+      deduct(['CO']);
+      elimNote = 'ex-Colombia';
+    }
+
+    const equityU = usd.equity;
+    const loansU = usd.loans;
+    usd.loans_equity = (equityU > 0 && loansU != null && Number.isFinite(Number(loansU)))
+      ? Number(loansU) / Number(equityU)
+      : null;
+    // Ratio is FX-invariant; USD amounts work the same as local for ROE.
+    usd.roe = annualRoe(usd.net_income, usd.equity, b.period);
+
+    return { ...b, usd, elimNote };
+  });
+}
+
+function displayBanks() {
+  return sortBanksByEquityDesc(applySubsidiaryElimination(state.banks));
+}
 
 function readLocalSnapshot() {
   try {
@@ -364,6 +444,12 @@ function setMetric(key) {
   render();
 }
 
+function setEliminateSubsidiaries(on) {
+  state.eliminateSubsidiaries = !!on;
+  writeElimPreference(state.eliminateSubsidiaries);
+  render();
+}
+
 function renderMetricButtons() {
   return METRICS.map((m) => {
     const on = state.metric === m.key;
@@ -371,33 +457,35 @@ function renderMetricButtons() {
   }).join('');
 }
 
-function renderHighlightCards() {
+function renderHighlightCards(banks) {
   const m = METRICS.find((x) => x.key === state.metric) || METRICS[0];
-  return state.banks.map((b) => {
+  return banks.map((b) => {
     const val = b.usd[m.key];
     const aum = fmtAumLine(b);
     const freq = b.frequency === 'annual' || b.source === 'manual_seed' ? ' · annual' : '';
+    const elim = b.elimNote ? ` · ${b.elimNote}` : '';
     return `<div class="kpi-col">
       <div class="kpi-col-title">${esc(b.countryLabel)}</div>
       <div class="kpi blue" style="border-left:3px solid ${b.color};">
-        <div class="kpi-label" style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;">${esc(m.label)}</div>
+        <div class="kpi-label">${esc(m.label)}</div>
         <div class="kpi-val">${fmtMetric(m.kind, val)}</div>
-        <div class="kpi-sub">${esc(b.shortName)} · ${esc(periodLabel(b.period))}${freq}${aum ? ` · ${esc(aum)}` : ''}</div>
+        <div class="kpi-sub">${esc(b.shortName)} · ${esc(periodLabel(b.period))}${freq}${elim}${aum ? ` · ${esc(aum)}` : ''}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-function renderTable() {
+function renderTable(banks) {
   const head = METRICS.map((m) => `<th class="r">${esc(m.label)}</th>`).join('');
-  const rows = state.banks.map((b) => {
+  const rows = banks.map((b) => {
     const cells = METRICS.map((m) => `<td class="r">${fmtMetric(m.kind, b.usd[m.key])}</td>`).join('');
     const aum = fmtAumLine(b);
     const freq = b.frequency === 'annual' || b.source === 'manual_seed' ? ' · annual seed' : '';
+    const elim = b.elimNote ? ` · ${b.elimNote}` : '';
     return `<tr>
       <td>
         <div style="font-weight:600;color:var(--white);">${esc(b.shortName)}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${esc(b.countryLabel)} · ${esc(b.iso)} · ${esc(periodLabel(b.period))} · ${esc(b.currency || '—')}${freq}${aum ? ` · ${esc(aum)}` : ''}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${esc(b.countryLabel)} · ${esc(b.iso)} · ${esc(periodLabel(b.period))} · ${esc(b.currency || '—')}${freq}${elim}${aum ? ` · ${esc(aum)}` : ''}</div>
       </td>
       ${cells}
     </tr>`;
@@ -408,7 +496,7 @@ function renderTable() {
   </table>`;
 }
 
-function drawChart() {
+function drawChart(banks) {
   const canvas = document.getElementById('btgBanksChart');
   const empty = document.getElementById('btgBanksChartEmpty');
   if (!canvas) return;
@@ -422,8 +510,8 @@ function drawChart() {
   ctx.clearRect(0, 0, cssW, cssH);
 
   const m = METRICS.find((x) => x.key === state.metric) || METRICS[0];
-  const banks = state.banks.filter((b) => b.usd[m.key] != null && Number.isFinite(b.usd[m.key]));
-  if (!banks.length) {
+  const plotBanks = banks.filter((b) => b.usd[m.key] != null && Number.isFinite(b.usd[m.key]));
+  if (!plotBanks.length) {
     if (empty) empty.style.display = 'block';
     return;
   }
@@ -432,7 +520,7 @@ function drawChart() {
   const pad = { t: 36, r: 20, b: 64, l: 68 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
-  const rawMax = Math.max(1, ...banks.map((b) => Math.abs(b.usd[m.key] || 0)));
+  const rawMax = Math.max(1, ...plotBanks.map((b) => Math.abs(b.usd[m.key] || 0)));
   const niceCeil = (v) => {
     if (!(v > 0)) return 1;
     const padded = v * 1.22;
@@ -443,7 +531,7 @@ function drawChart() {
     return step * base;
   };
   const maxV = niceCeil(rawMax);
-  const barW = Math.min(56, (plotW / banks.length) * 0.55);
+  const barW = Math.min(56, (plotW / plotBanks.length) * 0.55);
 
   ctx.strokeStyle = 'rgba(148,163,184,0.28)';
   ctx.lineWidth = 1;
@@ -460,10 +548,10 @@ function drawChart() {
     ctx.fillText(m.kind === 'pct' ? fmtPct(tick) : m.kind === 'ratio' ? fmtRatio(tick) : fmtUsd(tick), pad.l - 8, y + 4);
   }
 
-  banks.forEach((b, i) => {
+  plotBanks.forEach((b, i) => {
     const v = b.usd[m.key] || 0;
     const h = (Math.abs(v) / maxV) * plotH;
-    const cx = pad.l + (i + 0.5) * (plotW / banks.length);
+    const cx = pad.l + (i + 0.5) * (plotW / plotBanks.length);
     const x = cx - barW / 2;
     const y = pad.t + plotH - h;
     ctx.fillStyle = b.color;
@@ -481,7 +569,8 @@ function drawChart() {
   ctx.fillStyle = '#475569';
   ctx.font = '600 12px Inter, "DM Sans", system-ui, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`${m.label} · USD`, pad.l, 18);
+  const elimTag = state.eliminateSubsidiaries ? ' · ex-subsidiaries' : '';
+  ctx.fillText(`${m.label} · USD${elimTag}`, pad.l, 18);
 }
 
 function render() {
@@ -499,6 +588,7 @@ function render() {
     return;
   }
 
+  const banks = displayBanks();
   const fxLine = state.fxMeta
     ? `FX ${esc(state.fxMeta.date || '—')} · ${esc(state.fxMeta.source || '—')}`
     : '';
@@ -511,6 +601,10 @@ function render() {
   }
   const cacheLine = cacheBits.length ? cacheBits.join(' · ') : '';
   const m = METRICS.find((x) => x.key === state.metric) || METRICS[0];
+  const elimOn = state.eliminateSubsidiaries;
+  const elimHint = elimOn
+    ? 'Brazil − other franchise banks; Chile − Colombia (USD). Subsidiaries remain listed.'
+    : 'Optional: strip consolidated subsidiary amounts from parent KPIs.';
 
   root.innerHTML = `
     <div class="btg-banks-hero">
@@ -525,56 +619,66 @@ function render() {
       </div>
     </div>
 
-    <div class="res-section-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 12px;padding-left:4px;">
-      <span class="res-section-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#001E62;flex-shrink:0;">
+    <div class="btg-banks-section-head">
+      <span class="res-section-icon btg-banks-section-icon">
         <svg width="12" height="12" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="1" y="10" width="4" height="7" rx="1" fill="white"/>
           <rect x="7" y="5" width="4" height="12" rx="1" fill="white"/>
           <rect x="13" y="1" width="4" height="16" rx="1" fill="white"/>
         </svg>
       </span>
-      <span style="font-size:15px;font-weight:500;color:var(--white);">Financial highlights · ${esc(m.label)}</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:4px;">${fxLine}${cacheLine ? ` · ${esc(cacheLine)}` : ''}</span>
+      <div class="btg-banks-section-copy">
+        <div class="btg-banks-section-title">Financial highlights · ${esc(m.label)}</div>
+        <div class="btg-banks-section-meta">${fxLine}${cacheLine ? ` · ${esc(cacheLine)}` : ''}${elimOn ? ' · Eliminate subsidiaries on' : ''}</div>
+      </div>
     </div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding-left:4px;" id="btgMetricBtns">${renderMetricButtons()}</div>
-    <div style="font-size:11px;color:var(--text3);margin:-6px 0 14px;padding-left:4px;">Select a KPI — cards, chart and table stay ranked by equity (USD)</div>
+    <div class="btg-banks-toolbar">
+      <div class="btg-banks-metric-row" id="btgMetricBtns">${renderMetricButtons()}</div>
+      <label class="btg-banks-elim" title="${esc(elimHint)}">
+        <input type="checkbox" id="btgElimSubs" ${elimOn ? 'checked' : ''} />
+        <span class="btg-banks-elim-text">Eliminate subsidiaries</span>
+      </label>
+    </div>
+    <div class="btg-banks-hint">Select a KPI — cards, chart and table stay ranked by equity (USD). ${esc(elimHint)}</div>
 
-    <div class="kpi-grid" id="btgBanksKpis" style="margin-bottom:22px;">${renderHighlightCards()}</div>
+    <div class="kpi-grid btg-banks-kpi-grid" id="btgBanksKpis">${renderHighlightCards(banks)}</div>
 
-    <div class="res-section-head" style="display:flex;align-items:center;gap:8px;margin:4px 0 16px;padding-left:4px;">
-      <span class="res-section-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#001E62;flex-shrink:0;">
+    <div class="btg-banks-section-head btg-banks-section-head--chart">
+      <span class="res-section-icon btg-banks-section-icon">
         <svg width="12" height="12" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
           <polyline points="1,13 5,8 9,10 13,5 17,2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           <polyline points="13,2 17,2 17,6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </span>
-      <span style="font-size:15px;font-weight:500;color:var(--white);">${esc(m.label)} · cross-country</span>
+      <div class="btg-banks-section-copy">
+        <div class="btg-banks-section-title">${esc(m.label)} · cross-country</div>
+      </div>
     </div>
 
-    <div class="panel">
+    <div class="panel btg-banks-panel">
       <div class="panel-head">
         <div>
           <div class="panel-title">${esc(m.label)} comparison</div>
-          <div class="panel-sub">Ranked by equity (USD) · latest period per country</div>
+          <div class="panel-sub">Ranked by equity (USD) · latest period per country${elimOn ? ' · ex-subsidiaries' : ''}</div>
         </div>
       </div>
       <div class="panel-body">
         <div class="chart-wrap" style="position:relative;min-height:300px;">
           <canvas id="btgBanksChart" height="300" style="width:100%;height:300px;"></canvas>
-          <div id="btgBanksChartEmpty" style="display:none;position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--text3);font-size:13px;">No values for this KPI</div>
+          <div id="btgBanksChartEmpty" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:var(--text3);font-size:13px;">No values for this KPI</div>
         </div>
       </div>
     </div>
 
-    <div class="panel" style="margin-top:12px;">
+    <div class="panel btg-banks-panel">
       <div class="panel-head">
         <div>
           <div class="panel-title">Comparison table · USD</div>
-          <div class="panel-sub">Ranked by equity (USD) · franchise KPIs</div>
+          <div class="panel-sub">Ranked by equity (USD) · franchise KPIs${elimOn ? ' · ex-subsidiaries' : ''}</div>
         </div>
       </div>
-      <div class="panel-body" style="overflow-x:auto;padding:0;" id="btgBanksTable">${renderTable()}</div>
+      <div class="panel-body" style="overflow-x:auto;padding:0;" id="btgBanksTable">${renderTable(banks)}</div>
     </div>
 
     <ul class="btg-banks-notes">${(state.notes || []).map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
@@ -583,7 +687,10 @@ function render() {
   document.querySelectorAll('#btgMetricBtns [data-btg-metric]').forEach((btn) => {
     btn.addEventListener('click', () => setMetric(btn.getAttribute('data-btg-metric')));
   });
-  requestAnimationFrame(() => drawChart());
+  document.getElementById('btgElimSubs')?.addEventListener('change', (e) => {
+    setEliminateSubsidiaries(e.target.checked);
+  });
+  requestAnimationFrame(() => drawChart(banks));
 }
 
 export function renderBtgBanks() {
