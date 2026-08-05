@@ -976,11 +976,22 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 }
 .fa-group-list { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
 .fa-group-row {
-  display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text);
-  cursor:pointer; padding:4px 0;
+  display:grid;
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-areas:
+    "check name count del"
+    ". members members members";
+  align-items:center; gap:4px 8px; font-size:12px; color:var(--text);
+  cursor:pointer; padding:6px 0; border-bottom:1px solid var(--border);
 }
-.fa-group-name { flex:1; min-width:0; }
+.fa-group-row input[type=checkbox] { grid-area: check; }
+.fa-group-name { grid-area: name; min-width:0; font-weight:600; }
+.fa-group-row .fa-chip-n { grid-area: count; }
+.fa-group-members {
+  grid-area: members; font-size:11px; color:var(--text3); line-height:1.35;
+}
 .fa-group-del {
+  grid-area: del;
   border:none; background:transparent; color:var(--text3); cursor:pointer;
   font-size:16px; line-height:1; padding:0 4px;
 }
@@ -990,18 +1001,25 @@ body.light .btg-banks-elim-text { color:#0f172a; }
   display:flex; flex-direction:column; gap:10px;
 }
 .fa-input {
-  width:100%; max-width:360px; padding:8px 10px; border-radius:4px;
+  width:100%; max-width:420px; padding:8px 10px; border-radius:4px;
   border:1px solid var(--border); background:var(--bg3); color:var(--white); font-size:13px;
 }
 .fa-group-bank-grid {
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
-  gap:6px 10px; max-height:220px; overflow:auto; padding:4px 0;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:6px 10px; max-height:260px; overflow:auto; padding:4px 0;
 }
 .fa-bank-check {
-  display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); cursor:pointer;
+  display:flex; align-items:flex-start; gap:6px; font-size:12px; color:var(--text2); cursor:pointer;
+  line-height:1.35;
 }
+.fa-bank-check span { min-width:0; }
 .fa-group-editor-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .fa-bank-tabs .rcbtn:disabled { opacity:0.55; cursor:default; }
+.fa-chart-head {
+  display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between;
+  gap:10px 16px;
+}
+.fa-chart-styles { display:flex; flex-wrap:wrap; gap:6px; }
 .tab.tab-disabled { opacity:0.42; cursor:not-allowed; }
 
 /* PANEL */

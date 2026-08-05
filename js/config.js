@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon68';
+import { ST, datasetIsoCountry } from './state.js?v=bmon69';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;

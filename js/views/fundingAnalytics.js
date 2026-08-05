@@ -58,6 +58,8 @@ const state = {
   showGroupEditor: false,
   draftGroupName: '',
   draftGroupCodes: [],
+  bankSearch: '',
+  chartStyle: 'bars', // bars | lines | area
 };
 
 function esc(s) {
@@ -115,9 +117,28 @@ function saveCustomGroups(groups) {
 }
 
 function knownBankCodes() {
-  return Object.keys(ST.bancos || {})
+  const codes = Object.keys(ST.bancos || {})
     .map(Number)
     .filter((c) => Number.isFinite(c) && c !== 999);
+  if (ST._patrimonioRanking?.length) {
+    const rankMap = {};
+    ST._patrimonioRanking.forEach((r, i) => { rankMap[Number(r)] = i; });
+    codes.sort((a, b) => (rankMap[a] ?? 9999) - (rankMap[b] ?? 9999) || a - b);
+  } else {
+    codes.sort((a, b) => a - b);
+  }
+  return codes;
+}
+
+function bankDisplayName(code) {
+  return bankName(Number(code)) || `Bank ${code}`;
+}
+
+function groupMemberPreview(codes, max = 3) {
+  const names = (codes || []).map((c) => bankDisplayName(c)).filter(Boolean);
+  if (!names.length) return 'no banks';
+  if (names.length <= max) return names.join(', ');
+  return `${names.slice(0, max).join(', ')} +${names.length - max}`;
 }
 
 function banksByRating() {
@@ -187,7 +208,7 @@ function resolveEntities() {
   // selection — one entity per sidebar bank
   return selectedBanks().slice(0, MAX_COMPARE_ENTITIES).map((code, i) => {
     const n = Number(code);
-    const nm = bankName(n);
+    const nm = bankDisplayName(n);
     return {
       id: `b:${n}`,
       label: nm,
@@ -220,6 +241,7 @@ function cfg() {
       specialLabel: 'Tax-advantaged eligible',
       notes: [
         '<strong>Compare:</strong> overlay banks from the sidebar, rating baskets (when ratings exist), or custom groups you save in this tab.',
+        '<strong>Chart style:</strong> switch Bars / Lines / Area on the chart panel to see which read is clearest for the active metric.',
         '<strong>Groups</strong> aggregate member stocks (sum) before ratios — peer basket, not a simple average of percentages.',
         '<strong>Eligible ≠ exempt:</strong> Cosif reports the instrument issued (LCA/LCI), not whether the holder is a tax-exempt individual.',
         '<strong>CRA / CRI</strong> are liabilities of securitizadoras, not of the bank — excluded from this funding stack.',
@@ -276,6 +298,7 @@ function cfg() {
       specialLabel: 'UF / FX mix',
       notes: [
         '<strong>Compare:</strong> overlay banks, rating baskets (Feller / local solvency), or custom groups saved in this browser.',
+        '<strong>Chart style:</strong> switch Bars / Lines / Area on the chart panel to see which read is clearest for the active metric.',
         '<strong>Groups</strong> sum member stocks before computing UF/FX share and cost — basket view for ALM peers.',
         '<strong>No LCI/LCA equivalent:</strong> Chile has no public bank-issued letter whose coupon is generally tax-exempt for individuals.',
         '<strong>UF vs FX:</strong> <code>monto_uf</code> is CLP indexed to UF; <code>monto_ext</code> is payable in foreign currency.',
@@ -782,7 +805,12 @@ function drawCompareChart(entities, c) {
     emptyMessage = c.iso === 'CL' ? 'No UF-share series.' : 'No tax-eligible series.';
   }
 
-  drawLineChart('faCompareChart', periodos, series, { valueScale, emptyMessage, height: 300 });
+  drawLineChart('faCompareChart', periodos, series, {
+    valueScale,
+    emptyMessage,
+    height: 300,
+    style: state.chartStyle || 'bars',
+  });
 }
 
 function setMetric(m) {
@@ -849,6 +877,12 @@ function toggleGroupId(id) {
 
 function setCompare(on) {
   state.compare = !!on;
+  render();
+}
+
+function setChartStyle(style) {
+  if (!['bars', 'lines', 'area'].includes(style)) return;
+  state.chartStyle = style;
   render();
 }
 
@@ -930,20 +964,32 @@ function renderPeerToolbar(c) {
           <span class="fa-group-name">${esc(g.name)}</span>
           <span class="fa-chip-n">${g.codes.length}</span>
           <button type="button" class="fa-group-del" data-fa-del-group="${esc(g.id)}" title="Delete group">×</button>
+          <div class="fa-group-members">${esc(groupMemberPreview(g.codes))}</div>
         </label>`;
       }).join('')
       : '<div class="fa-peer-hint">No custom groups yet — create one below.</div>';
 
-    const banks = knownBankCodes();
+    const q = (state.bankSearch || '').trim().toLowerCase();
+    const banks = knownBankCodes().filter((code) => {
+      if (!q) return true;
+      const nm = bankDisplayName(code).toLowerCase();
+      return nm.includes(q) || String(code).includes(q);
+    });
+    // Keep the picker usable in BR (1300+ institutions): show ranked matches first.
+    const shown = banks.slice(0, q ? 80 : 40);
+    const more = banks.length - shown.length;
+
     const editor = state.showGroupEditor ? `
       <div class="fa-group-editor">
         <input type="text" id="faGroupName" class="fa-input" maxlength="48" placeholder="Group name (e.g. Big 4 peers)" value="${esc(state.draftGroupName)}">
+        <input type="search" id="faBankSearch" class="fa-input" placeholder="Search banks…" value="${esc(state.bankSearch)}" autocomplete="off">
         <div class="fa-group-bank-grid">
-          ${banks.map((code) => {
+          ${shown.map((code) => {
             const on = state.draftGroupCodes.includes(code);
-            return `<label class="fa-bank-check"><input type="checkbox" data-fa-draft-bank="${code}" ${on ? 'checked' : ''}> ${esc(bankName(code))}</label>`;
-          }).join('')}
+            return `<label class="fa-bank-check"><input type="checkbox" data-fa-draft-bank="${code}" ${on ? 'checked' : ''}> <span>${esc(bankDisplayName(code))}</span></label>`;
+          }).join('') || '<div class="fa-peer-hint">No banks match that search.</div>'}
         </div>
+        ${more > 0 ? `<div class="fa-peer-hint">Showing ${shown.length} of ${banks.length} — type to narrow.</div>` : ''}
         <div class="fa-group-editor-actions">
           <button type="button" class="rcbtn active" id="faSaveGroup">Save group</button>
           <button type="button" class="rcbtn" id="faCancelGroup">Cancel</button>
@@ -986,21 +1032,51 @@ function bindPeerToolbar() {
   document.getElementById('faNewGroup')?.addEventListener('click', () => {
     state.showGroupEditor = true;
     state.draftGroupCodes = selectedBanks().map(Number);
+    state.bankSearch = '';
     render();
   });
   document.getElementById('faCancelGroup')?.addEventListener('click', () => {
     state.showGroupEditor = false;
+    state.bankSearch = '';
     render();
   });
   document.getElementById('faSaveGroup')?.addEventListener('click', () => {
     state.draftGroupName = document.getElementById('faGroupName')?.value || '';
-    state.draftGroupCodes = [...document.querySelectorAll('[data-fa-draft-bank]:checked')]
+    // Keep previously selected banks that may be filtered out of the current search view
+    const visibleChecked = [...document.querySelectorAll('[data-fa-draft-bank]:checked')]
       .map((el) => Number(el.getAttribute('data-fa-draft-bank')));
+    const visibleCodes = new Set(
+      [...document.querySelectorAll('[data-fa-draft-bank]')].map((el) => Number(el.getAttribute('data-fa-draft-bank'))),
+    );
+    const keptHidden = state.draftGroupCodes.filter((c) => !visibleCodes.has(c));
+    state.draftGroupCodes = [...new Set([...keptHidden, ...visibleChecked])];
     saveDraftGroup();
   });
   document.getElementById('faGroupName')?.addEventListener('input', (e) => {
     state.draftGroupName = e.target.value;
   });
+  const searchEl = document.getElementById('faBankSearch');
+  if (searchEl) {
+    searchEl.addEventListener('input', (e) => {
+      // Preserve draft checks across re-render
+      const visibleChecked = [...document.querySelectorAll('[data-fa-draft-bank]:checked')]
+        .map((el) => Number(el.getAttribute('data-fa-draft-bank')));
+      const visibleCodes = new Set(
+        [...document.querySelectorAll('[data-fa-draft-bank]')].map((el) => Number(el.getAttribute('data-fa-draft-bank'))),
+      );
+      const keptHidden = state.draftGroupCodes.filter((c) => !visibleCodes.has(c));
+      state.draftGroupCodes = [...new Set([...keptHidden, ...visibleChecked])];
+      state.draftGroupName = document.getElementById('faGroupName')?.value || state.draftGroupName;
+      state.bankSearch = e.target.value || '';
+      render();
+      const again = document.getElementById('faBankSearch');
+      if (again) {
+        again.focus();
+        const len = again.value.length;
+        again.setSelectionRange(len, len);
+      }
+    });
+  }
 }
 
 function render() {
@@ -1082,9 +1158,20 @@ function render() {
     { key: 'cost', label: 'Cost proxy' },
   ].map((m) => `<button type="button" class="rcbtn ${state.metric === m.key ? 'active' : ''}" data-fa-metric="${m.key}">${m.label}</button>`).join('');
 
-  const chartId = comparing ? 'faCompareChart'
-    : state.metric === 'mix' ? 'faMixChart'
-      : state.metric === 'cost' ? 'faCostChart' : 'faTaxChart';
+  // Stacked instrument charts only for Single + Bars on mix / special composition.
+  const stackedNative = !comparing
+    && state.chartStyle === 'bars'
+    && (state.metric === 'mix' || state.metric === c.specialMetric);
+
+  const chartId = stackedNative
+    ? (state.metric === 'mix' ? 'faMixChart' : 'faTaxChart')
+    : 'faCompareChart';
+
+  const styleBtns = [
+    { key: 'bars', label: 'Bars' },
+    { key: 'lines', label: 'Lines' },
+    { key: 'area', label: 'Area' },
+  ].map((s) => `<button type="button" class="rcbtn ${state.chartStyle === s.key ? 'active' : ''}" data-fa-style="${s.key}">${s.label}</button>`).join('');
 
   const panelTitle = comparing
     ? (state.metric === 'mix' ? 'Total funding · peer compare'
@@ -1118,11 +1205,12 @@ function render() {
     ${comparing ? renderCompareKpis(entities, c) : renderKpis(latestSnapshotFor(active.codes), c)}
 
     <div class="panel fa-panel" style="margin-top:22px;">
-      <div class="panel-head">
+      <div class="panel-head fa-chart-head">
         <div>
           <div class="panel-title">${esc(panelTitle)}</div>
           <div class="panel-sub" id="faTaxSub">${esc(focusLabel)} · ${esc(periodLabel(state.periodos[0]))} — ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
         </div>
+        <div class="fa-chart-styles" role="group" aria-label="Chart style">${styleBtns}</div>
       </div>
       <div class="panel-body">
         <div class="chart-wrap" style="position:relative;min-height:280px;">
@@ -1159,16 +1247,16 @@ function render() {
   document.querySelectorAll('[data-fa-metric]').forEach((btn) => {
     btn.addEventListener('click', () => setMetric(btn.getAttribute('data-fa-metric')));
   });
+  document.querySelectorAll('[data-fa-style]').forEach((btn) => {
+    btn.addEventListener('click', () => setChartStyle(btn.getAttribute('data-fa-style')));
+  });
 
   requestAnimationFrame(() => {
-    if (comparing) {
-      drawCompareChart(entities, c);
-    } else if (state.metric === 'mix') {
-      drawMixChart(active.codes, c);
-    } else if (state.metric === 'cost') {
-      drawCostChart(active.codes, c);
+    if (stackedNative) {
+      if (state.metric === 'mix') drawMixChart(active.codes, c);
+      else drawSpecialChart(active.codes, c);
     } else {
-      drawSpecialChart(active.codes, c);
+      drawCompareChart(comparing ? entities : [active], c);
     }
   });
 }

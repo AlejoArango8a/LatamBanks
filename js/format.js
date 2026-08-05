@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon68';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon68';
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon68';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon69';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon69';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon69';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {
@@ -163,9 +163,25 @@ function titleCaseLatam(raw) {
     if (KNOWN_ACRONYMS.has(orig.toUpperCase())) return orig.toUpperCase();
     // 3. Heuristic: pure alpha, all-caps, <=4 chars -> acronym
     if (/^[A-Z]+$/.test(orig) && orig.length <= 4) return orig;
+    // Hyphenated tokens (SANTANDER-CHILE → Santander-Chile)
+    if (orig.includes('-') && !/^[A-Z]+$/.test(orig)) {
+      return orig.split('-').map((part, j) => {
+        if (!part) return part;
+        const pl = part.toLowerCase();
+        if (j > 0 && LATAM_PARTICLES.has(pl)) return pl;
+        if (/^[A-Z]+$/.test(part) && part.length <= 4) return part;
+        if (KNOWN_ACRONYMS.has(part.toUpperCase())) return part.toUpperCase();
+        return pl.charAt(0).toUpperCase() + pl.slice(1);
+      }).join('-');
+    }
     // 4. Words with non-alpha prefix like "(BRASIL)" -> capitalize alpha part
-    const m = orig.match(/^(\W*)([A-Za-z].*)$/);
-    if (m) return m[1] + m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase();
+    const m = orig.match(/^(\W*)([A-Za-zÀ-ÿ].*)$/);
+    if (m) {
+      const body = m[2];
+      // Keep trailing corporate suffixes like N.A. readable
+      if (/^[A-Z](\.[A-Z])+\.?$/.test(body)) return m[1] + body.toUpperCase();
+      return m[1] + body.charAt(0).toUpperCase() + body.slice(1).toLowerCase();
+    }
     // 5. Default
     return lower.charAt(0).toUpperCase() + lower.slice(1);
   }).join(' ');
@@ -215,7 +231,12 @@ export function polishColombianBankDisplay(raw) {
 }
 
 export function bankName(code) {
-  const fromApi = ST.bancos[code];
+  const numCode = Number(code);
+  const fromApi =
+    ST.bancos[code]
+    ?? ST.bancos[numCode]
+    ?? ST.bancos[String(code)]
+    ?? (Number.isFinite(numCode) ? ST.bancos[String(numCode)] : undefined);
 
   // ---- Brasil ----
   if (ST.country === 'brasil') {
@@ -240,11 +261,15 @@ export function bankName(code) {
       [1000080336, 'BTG Pactual'],
       [1000080154, 'Banrisul'],
     ]);
-    const numCode = Number(code);
-    if (BR_DISPLAY.has(numCode)) return BR_DISPLAY.get(numCode);
+    if (Number.isFinite(numCode) && BR_DISPLAY.has(numCode)) return BR_DISPLAY.get(numCode);
     // Nombre generico: quitar sufijo prudencial y S.A., luego Title Case
     const raw = fromApi || `Bank ${code}`;
-    const stripped = stripSociedadAnonima(raw.replace(/\s*-\s*PRUDENCIAL\s*$/i, '').trim());
+    const stripped = stripSociedadAnonima(
+      raw
+        .replace(/\s*[-–—]?\s*PRUDENCIAL\s*$/i, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    );
     return titleCaseLatam(stripped);
   }
 
@@ -421,7 +446,10 @@ export function bankName(code) {
 
   // ---- Chile ----
   // BANK_NAMES is Chile-only. Do not use these codes for other countries.
-  if (ST.country === 'chile' && BANK_NAMES[code]) return BANK_NAMES[code];
+  if (ST.country === 'chile') {
+    const curated = BANK_NAMES[numCode] || BANK_NAMES[code] || BANK_NAMES[String(code)];
+    if (curated) return curated;
+  }
   return titleCaseLatam(fromApi || `Bank ${code}`);
 }
 
