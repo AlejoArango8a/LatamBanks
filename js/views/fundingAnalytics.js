@@ -803,7 +803,7 @@ function setPeerSource(src) {
     const byGrade = banksByRating();
     const grades = sortedRatingGrades(byGrade);
     if (!state.selectedRatings.length && grades.length) {
-      // Default: top two grades with the most banks (useful peer baskets)
+      // Default: first two grades in solvency order (e.g. AAA vs AA+)
       state.selectedRatings = grades.slice(0, Math.min(2, grades.length));
     }
     if (state.selectedRatings.length >= 2) state.compare = true;
