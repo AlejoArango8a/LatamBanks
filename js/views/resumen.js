@@ -1,22 +1,22 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon68';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon68';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon68';
-import { UY_KPI, uyB1AccountsForRun, uyR1AccountsForRun, uySum, uySeries } from '../uyCuentas.js?v=bmon68';
-import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from '../peCuentas.js?v=bmon68';
-import { US_KPI, usB1AccountsForRun, usR1AccountsForRun, usSum, usSeries } from '../usCuentas.js?v=bmon68';
-import { AR_KPI, arB1AccountsForRun, arR1AccountsForRun, arSum, arSeries } from '../arCuentas.js?v=bmon68';
-import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from '../mxCuentas.js?v=bmon68';
-import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon68';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon68';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon68';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon68';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon68';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon68';
-import { setStatus, showErr } from '../utils.js?v=bmon68';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon68';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon69';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon69';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon69';
+import { UY_KPI, uyB1AccountsForRun, uyR1AccountsForRun, uySum, uySeries } from '../uyCuentas.js?v=bmon69';
+import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from '../peCuentas.js?v=bmon69';
+import { US_KPI, usB1AccountsForRun, usR1AccountsForRun, usSum, usSeries } from '../usCuentas.js?v=bmon69';
+import { AR_KPI, arB1AccountsForRun, arR1AccountsForRun, arSum, arSeries } from '../arCuentas.js?v=bmon69';
+import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from '../mxCuentas.js?v=bmon69';
+import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon69';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon69';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon69';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon69';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon69';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon69';
+import { setStatus, showErr } from '../utils.js?v=bmon69';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon69';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');

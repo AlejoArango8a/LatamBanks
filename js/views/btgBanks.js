@@ -2,7 +2,7 @@
 // BTG Banks — cross-country franchise comparison in USD
 // Brasil / Chile / Colombia / Uruguay / USA / Luxembourg (Europe)
 // ============================================================
-import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon68';
+import { API_BASE, BTG_LOGO_BLUE_SRC, btgBlue } from '../config.js?v=bmon69';
 
 /**
  * Core KPIs for the franchise compare.

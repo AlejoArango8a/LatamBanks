@@ -1,8 +1,8 @@
 // ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon68';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon68';
+import { ST, CHART_STATE } from './state.js?v=bmon69';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon69';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -182,8 +182,9 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const groupW = cW / n;
   const barPad = Math.max(groupW * 0.1, 2);
   const barW   = Math.max((groupW - barPad * 2) / nSeries, 2);
+  const chartStyle = opts.style === 'lines' || opts.style === 'area' ? opts.style : 'bars';
 
-  CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr, valueScale };
+  CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr, valueScale, chartStyle };
 
   /** On narrow canvas, do not auto-show bar top labels (readable axes first; user uses 123 toggle). */
   const showLabels =
@@ -194,29 +195,79 @@ export function drawLineChart(canvasId, periodos, series, opts) {
         : narrowCanvas ? false : nSeries === 1;
   const labelsToDraw = [];
 
-  series.forEach((s, si) => {
-    const color = COLORS[s.color] || s.color;
-    s.data.forEach((v, i) => {
-      if (v === null) return;
-      const x = PAD.l + i * groupW + barPad + si * barW;
-      const refY = Math.min(Math.max(zeroY, PAD.t), PAD.t + cH);
-      const valY = Math.min(Math.max(toY(v), PAD.t), PAD.t + cH);
-      const barTop = Math.min(refY, valY);
-      const barBottom = Math.max(refY, valY);
-      const h = Math.max(1, barBottom - barTop);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.roundRect(x, barTop, barW, h, 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
+  if (chartStyle === 'lines' || chartStyle === 'area') {
+    series.forEach((s) => {
+      const color = COLORS[s.color] || s.color;
+      const pts = [];
+      s.data.forEach((v, i) => {
+        if (v === null || !isFinite(v)) return;
+        const x = PAD.l + i * groupW + groupW / 2;
+        const y = Math.min(Math.max(toY(v), PAD.t), PAD.t + cH);
+        pts.push({ x, y, i, v });
+        CHART_STATE[canvasId].bars.push({
+          x: x - 6, y: y - 6, w: 12, h: 12, val: v, periodo: periodos[i], label: s.label, color,
+        });
+      });
+      if (pts.length < 1) return;
 
-      if (showLabels) {
-        labelsToDraw.push({ labelX: x + barW / 2, barTop, txt: fmtVal(v, axisCompact) });
+      if (chartStyle === 'area' && pts.length >= 2) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, zeroY);
+        pts.forEach((p) => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(pts[pts.length - 1].x, zeroY);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.18;
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
+
+      ctx.beginPath();
+      pts.forEach((p, pi) => {
+        if (pi === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.strokeStyle = color;
+      ctx.lineWidth = nSeries > 3 ? 1.75 : 2.25;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      pts.forEach((p) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        if (showLabels) {
+          labelsToDraw.push({ labelX: p.x, barTop: p.y, txt: fmtVal(p.v, axisCompact) });
+        }
+      });
     });
-  });
+  } else {
+    series.forEach((s, si) => {
+      const color = COLORS[s.color] || s.color;
+      s.data.forEach((v, i) => {
+        if (v === null) return;
+        const x = PAD.l + i * groupW + barPad + si * barW;
+        const refY = Math.min(Math.max(zeroY, PAD.t), PAD.t + cH);
+        const valY = Math.min(Math.max(toY(v), PAD.t), PAD.t + cH);
+        const barTop = Math.min(refY, valY);
+        const barBottom = Math.max(refY, valY);
+        const h = Math.max(1, barBottom - barTop);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.roundRect(x, barTop, barW, h, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        CHART_STATE[canvasId].bars.push({ x, y: barTop, w: barW, h, val: v, periodo: periodos[i], label: s.label, color });
+
+        if (showLabels) {
+          labelsToDraw.push({ labelX: x + barW / 2, barTop, txt: fmtVal(v, axisCompact) });
+        }
+      });
+    });
+  }
 
   const labelPx = veryNarrow ? 9 : narrowCanvas ? 10 : 12;
   ctx.font = `bold ${labelPx}px DM Mono, monospace`;
