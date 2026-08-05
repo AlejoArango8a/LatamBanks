@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon64';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon64';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon64';
-import { setStatus, showErr } from './utils.js?v=bmon64';
-import { sumRows } from './api.js?v=bmon64';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon64';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon64';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon65';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon65';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon65';
+import { setStatus, showErr } from './utils.js?v=bmon65';
+import { sumRows } from './api.js?v=bmon65';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon65';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon65';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -274,9 +274,10 @@ export function showTab(tab) {
     : isoTab === 'AR' ? AR_DISABLED_TABS
     : isoTab === 'MX' ? MX_DISABLED_TABS
     : isoTab === 'PA' ? PA_DISABLED_TABS
-    : [];
-  if (blocked.includes(tab)) return;
-  ['resumen','bankdetail','chileanbanks','btgbanks','accountview','balance','resultados','comparativo','config'].forEach(t => {
+    : NON_BR_FUNDING_DISABLED;
+  const blockedEff = isoTab === 'BR' ? blocked : [...new Set([...blocked, 'funding'])];
+  if (blockedEff.includes(tab)) return;
+  ['resumen','bankdetail','chileanbanks','btgbanks','funding','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -286,7 +287,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -315,6 +316,7 @@ export function showTab(tab) {
   if (tab === 'config')       { window.populateConfig(); window.loadVisitStats(); }
   if (tab === 'chileanbanks') window.renderChileanBanks();
   if (tab === 'btgbanks')     window.renderBtgBanks?.();
+  if (tab === 'funding')      window.renderFundingAnalytics?.();
   if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();
@@ -381,10 +383,8 @@ export function syncResumenMoraChartButton() {
   moraBtn.textContent = '⚠️ NPL %';
 }
 
-// Cuentas del gráfico "Banking System Evolution" sin dato confiable en el
-// Resumo de Brasil (IF.data). Se deshabilitan sus botones cuando el país activo
-// es Brasil para no mostrar valores incorrectos.
-const BR_DISABLED_CHART_BTNS = ['btnResChartDepVista', 'btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
+// Chart buttons without reliable data by country.
+const BR_DISABLED_CHART_BTNS = ['btnResChartMora'];
 const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
 const US_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
@@ -418,7 +418,7 @@ export function syncCountryChartButtons() {
     btn.disabled = disable;
     btn.classList.toggle('rcbtn-disabled', disable);
     if (disable) {
-      btn.title = isBR ? 'Sin dato confiable para Brasil por ahora'
+      btn.title = isBR ? 'NPL requiere cartera detallada (dados_3) — aún no cargada'
         : isUY ? 'Sin desglose para Uruguay por ahora'
         : isUS ? 'FDIC top-N: sin desglose vista/plazo / NPL en este corte'
         : isAR ? 'BCRA: depósitos totales (sin vista/plazo) · NPL no mapeado'
@@ -430,59 +430,56 @@ export function syncCountryChartButtons() {
     }
   });
   const depVista = document.getElementById('btnResChartDepVista');
-  if (depVista && !isBR) {
+  if (depVista) {
     depVista.textContent = (isUY || isUS || isAR || isMX || isPA) ? '🏦 Deposits' : '👁 Demand Dep.';
+  }
+  const bonosBtn = document.getElementById('btnResChartBonos');
+  if (bonosBtn) {
+    bonosBtn.textContent = isBR ? '📄 LCA+LCI' : '📄 Bonds';
   }
 }
 
 // Pestañas que requieren plan de cuentas detallado (cuenta a cuenta).
-// Cortes resumidos (FDIC / BCRA KPIs / CNBV Pm2 / SBP agregados): sin AV / Balance / PyG.
-const US_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
-const AR_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
-const MX_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
-const PA_DISABLED_TABS = ['accountview', 'balance', 'resultados'];
-
-// Brasil: Relatorios 2–4 habilitan Balance e Income; Account View aún no.
-const BR_DISABLED_TABS = ['accountview'];
+const US_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
+const AR_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
+const MX_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
+const PA_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
+const BR_DISABLED_TABS = [];
+const NON_BR_FUNDING_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
   accountview: 'Account View',
   balance: 'Balance Sheet',
   resultados: 'Income Statement',
+  funding: 'Funding Analytics',
 };
 
 export function syncCountryDisabledTabs() {
   const iso = datasetIsoCountry();
-  const disabled = iso === 'BR' ? BR_DISABLED_TABS
-    : iso === 'US' ? US_DISABLED_TABS
-    : iso === 'AR' ? AR_DISABLED_TABS
-    : iso === 'MX' ? MX_DISABLED_TABS
-    : iso === 'PA' ? PA_DISABLED_TABS
-    : [];
-  const allTabs = new Set([
-    ...BR_DISABLED_TABS, ...US_DISABLED_TABS, ...AR_DISABLED_TABS,
-    ...MX_DISABLED_TABS, ...PA_DISABLED_TABS,
-  ]);
-  const reason = iso === 'US' ? 'FDIC summary — no account-level detail'
-    : iso === 'AR' ? 'BCRA open data — no account-level detail'
-    : iso === 'MX' ? 'CNBV Pm2 — no account-level detail'
-    : iso === 'PA' ? 'SBP individual KPIs — no full chart of accounts'
-    : 'Not available for Brazil yet';
-  allTabs.forEach(t => {
-    const btn = document.querySelector(`.tab[data-tab="${t}"]`);
-    if (!btn) return;
-    const off = disabled.includes(t);
-    btn.disabled = off;
+  let disabled = iso === 'BR' ? [...BR_DISABLED_TABS]
+    : iso === 'US' ? [...US_DISABLED_TABS]
+    : iso === 'AR' ? [...AR_DISABLED_TABS]
+    : iso === 'MX' ? [...MX_DISABLED_TABS]
+    : iso === 'PA' ? [...PA_DISABLED_TABS]
+    : [...NON_BR_FUNDING_DISABLED];
+  if (iso !== 'BR' && !disabled.includes('funding')) disabled.push('funding');
+
+  document.querySelectorAll('.tab[data-tab]').forEach((btn) => {
+    const key = btn.getAttribute('data-tab');
+    if (!Object.prototype.hasOwnProperty.call(DETAIL_TAB_TITLES, key)) return;
+    const off = disabled.includes(key);
     btn.classList.toggle('tab-disabled', off);
+    btn.disabled = off;
     if (off) {
-      const label = DETAIL_TAB_TITLES[t] || t;
-      btn.title = `${reason} · ${label} disabled`;
-    } else btn.removeAttribute('title');
+      btn.title = key === 'funding'
+        ? 'Funding Analytics is available for Brazil'
+        : `${DETAIL_TAB_TITLES[key]} not available for this country`;
+    } else {
+      btn.removeAttribute('title');
+    }
   });
-  if (disabled.length) {
-    const active = document.querySelector('.tab.active')?.getAttribute('data-tab');
-    if (disabled.includes(active)) showTab('resumen');
-  }
+  const active = document.querySelector('.tab.active')?.getAttribute('data-tab');
+  if (active && disabled.includes(active)) showTab('resumen');
 }
 
 // ---- Country overlay / dataset switch ----

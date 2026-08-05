@@ -1,18 +1,18 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon64';
-import { bankColor } from '../config.js?v=bmon64';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon64';
-import { sumRows } from '../api.js?v=bmon64';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon64';
-import { BAL_BR_SECTIONS, R1_BR_ROWS } from '../brCuentas.js?v=bmon64';
-import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon64';
-import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon64';
-import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon64';
-import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon64';
-import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon64';
-import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon64';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon65';
+import { bankColor } from '../config.js?v=bmon65';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon65';
+import { sumRows } from '../api.js?v=bmon65';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon65';
+import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon65';
+import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon65';
+import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon65';
+import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon65';
+import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon65';
+import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon65';
+import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon65';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -144,6 +144,8 @@ export function showBalTab(sec, bankCode) {
   }
 
   const b1Period = isCO ? ST._b1.filter(r => r.periodo === ST._lastP) : null;
+  const brRowTotal = (row, code) => brRowCodes(row)
+    .reduce((s, c) => s + getRows(c, code).reduce((ss, r) => ss + (r.monto_total || 0), 0), 0);
 
   if (banks.length === 1) {
     const code = banks[0];
@@ -156,10 +158,13 @@ export function showBalTab(sec, bankCode) {
       rows.forEach(row => {
         const tot = isCO
           ? coSumB1BalanceRow(b1Period.filter(r => sameIns(r, code)), row.c)
-          : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
+          : isBR
+            ? brRowTotal(row, code)
+            : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
         const neg = tot < 0 ? 'neg' : '';
+        const codLabel = isBR && row.old ? `${row.c} / ${row.old}` : row.c;
         html += `<tr>
-        <td class="cod">${row.c}</td>
+        <td class="cod">${codLabel}</td>
         <td class="${row.cls}">${row.l}</td>
         <td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}" data-export="${rawForExport(tot)}">${fmtKPI(tot)}</td>
       </tr>`;
@@ -215,7 +220,9 @@ export function showBalTab(sec, bankCode) {
       banks.forEach(code => {
         const tot = isCO
           ? coSumB1BalanceRow(b1Period.filter(r => sameIns(r, code)), row.c)
-          : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
+          : isBR
+            ? brRowTotal(row, code)
+            : getRows(row.c, code).reduce((s, r) => s + (r.monto_total || 0), 0);
         const neg = tot < 0 ? 'neg' : '';
         html += `<td class="r ${row.cls === 'hl' ? 'hl' : ''} ${neg}" data-export="${rawForExport(tot)}">${fmtKPI(tot)}</td>`;
       });
@@ -268,9 +275,15 @@ export function renderResTable(m) {
     const r1    = ST._series.r1;
     const lastP = ST._lastP;
     const isCOPl = datasetIsoCountry() === 'CO';
-    const getVal = (cuenta, code) => {
+    const isBRPl = datasetIsoCountry() === 'BR';
+    const getVal = (cuentaOrRow, code) => {
       const slice = r1.filter(r => r.periodo === lastP && Number(r.ins_cod) === Number(code));
-      if (isCOPl) return coSumR1PlRow(slice, cuenta);
+      if (isCOPl) return coSumR1PlRow(slice, cuentaOrRow);
+      if (isBRPl && typeof cuentaOrRow === 'object') {
+        const set = new Set(brRowCodes(cuentaOrRow));
+        return slice.filter(r => set.has(r.cuenta)).reduce((s, r) => s + (r.monto_total || 0), 0);
+      }
+      const cuenta = typeof cuentaOrRow === 'object' ? cuentaOrRow.c : cuentaOrRow;
       return slice.filter(r => r.cuenta === cuenta).reduce((s, r) => s + (r.monto_total || 0), 0);
     };
 
@@ -294,7 +307,7 @@ export function renderResTable(m) {
         : `<td class="${row.cls}">${row.l}</td>`;
       html += `<tr>${conceptTd}`;
       banks.forEach(code => {
-        const v = getVal(row.c, code);
+        const v = isBRPl ? getVal(row, code) : getVal(row.c, code);
         html += `<td class="r ${v < 0 ? 'neg' : ''} ${row.cls === 'hl' ? 'hl' : ''}" data-export="${rawForExport(v)}">${fmtKPI(v)}</td>`;
       });
       html += `</tr>`;

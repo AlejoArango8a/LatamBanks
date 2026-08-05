@@ -1,16 +1,18 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon64';
-import { accountViewLevel } from '../coCuentas.js?v=bmon64';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon64';
-import { apiDatos } from '../api.js?v=bmon64';
-import { btgBlue, btgRgba } from '../config.js?v=bmon64';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon65';
+import { accountViewLevel } from '../coCuentas.js?v=bmon65';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon65';
+import { apiDatos } from '../api.js?v=bmon65';
+import { btgBlue, btgRgba } from '../config.js?v=bmon65';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 
 // ---- Hierarchy level helper (Chile 9-digit CMF vs Colombia 6-digit CUIF) ----
+// Brazil IF.data Conta codes are opaque sequential IDs → flat list.
 export function avGetLevel(c) {
+  if (datasetIsoCountry() === 'BR') return 1;
   return accountViewLevel(String(c), _isoCt());
 }
 
@@ -27,7 +29,35 @@ export function initAccountView() {
     desde.selectedIndex = Math.max(0, n - 13);
     hasta.selectedIndex  = n - 1;
   }
+  syncAvGroupButtonsForCountry();
   if (!ST._avGroup) avSelectGroup('1');
+}
+
+/** Relabel Account View group buttons for Brazil Conta prefixes. */
+function syncAvGroupButtonsForCountry() {
+  const wrap = document.getElementById('avGroupBtns');
+  if (!wrap) return;
+  if (datasetIsoCountry() !== 'BR') {
+    if (wrap.dataset.brMode === '1') {
+      wrap.innerHTML = `
+        <button class="avgrp" onclick="avSelectGroup('1')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">1 — Assets</button>
+        <button class="avgrp" onclick="avSelectGroup('2')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">2 — Liabilities</button>
+        <button class="avgrp" onclick="avSelectGroup('3')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">3 — Equity</button>
+        <button class="avgrp" onclick="avSelectGroup('4')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">4 — Income Statement</button>
+        <button class="avgrp" onclick="avSelectGroup('5')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">5 — IS Summary</button>
+        <button class="avgrp" onclick="avSelectGroup('6')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">6 — Off-balance</button>
+        <button class="avgrp" onclick="avSelectGroup('8')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">8 — Supplementary</button>
+        <button class="avgrp" onclick="avSelectGroup('')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:12px;transition:all 0.15s;">All groups</button>`;
+      delete wrap.dataset.brMode;
+    }
+    return;
+  }
+  wrap.dataset.brMode = '1';
+  wrap.innerHTML = `
+    <button class="avgrp" onclick="avSelectGroup('1')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">1… — Cosif new (≥2025)</button>
+    <button class="avgrp" onclick="avSelectGroup('7')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">7… — Cosif legacy (≤2024)</button>
+    <button class="avgrp" onclick="avSelectGroup('8')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">8… — Other</button>
+    <button class="avgrp" onclick="avSelectGroup('')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:12px;transition:all 0.15s;">All accounts</button>`;
 }
 
 export function avClearAccount() {
