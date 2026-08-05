@@ -1,22 +1,22 @@
 // ============================================================
 // RESUMEN — main dashboard: run(), KPIs, chart, ROE
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon64';
-import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon64';
-import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon64';
-import { UY_KPI, uyB1AccountsForRun, uyR1AccountsForRun, uySum, uySeries } from '../uyCuentas.js?v=bmon64';
-import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from '../peCuentas.js?v=bmon64';
-import { US_KPI, usB1AccountsForRun, usR1AccountsForRun, usSum, usSeries } from '../usCuentas.js?v=bmon64';
-import { AR_KPI, arB1AccountsForRun, arR1AccountsForRun, arSum, arSeries } from '../arCuentas.js?v=bmon64';
-import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from '../mxCuentas.js?v=bmon64';
-import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon64';
-import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon64';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon64';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon64';
-import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon64';
-import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon64';
-import { setStatus, showErr } from '../utils.js?v=bmon64';
-import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon64';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon65';
+import { CO_CUIF, coB1AccountsForRun, coR1AccountsForRun, coMoraNumerator, coDeterioroActivoCuentasFromPlan } from '../coCuentas.js?v=bmon65';
+import { BR_KPI, brB1AccountsForRun, brR1AccountsForRun, brSum, brSeries, brResultReset } from '../brCuentas.js?v=bmon65';
+import { UY_KPI, uyB1AccountsForRun, uyR1AccountsForRun, uySum, uySeries } from '../uyCuentas.js?v=bmon65';
+import { PE_KPI, peB1AccountsForRun, peR1AccountsForRun, peSum, peSeries } from '../peCuentas.js?v=bmon65';
+import { US_KPI, usB1AccountsForRun, usR1AccountsForRun, usSum, usSeries } from '../usCuentas.js?v=bmon65';
+import { AR_KPI, arB1AccountsForRun, arR1AccountsForRun, arSum, arSeries } from '../arCuentas.js?v=bmon65';
+import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from '../mxCuentas.js?v=bmon65';
+import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon65';
+import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon65';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon65';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon65';
+import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon65';
+import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon65';
+import { setStatus, showErr } from '../utils.js?v=bmon65';
+import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon65';
 
 function _setBannerLogo(iso, code) {
   const el = document.getElementById('bankHeaderLogo');
@@ -128,8 +128,12 @@ function refreshKPIsBase() {
     document.getElementById('kpiResultados').innerHTML = `
     <div class="kpi blue"><div class="kpi-label">Net Income (YTD)</div><div class="kpi-val ${m.utilidad < 0 ? 'neg' : ''}">${fmtKPI(m.utilidad)}</div><div class="kpi-sub">ROA ${fmtP(m.utilidad, m.totalAssets)}</div></div>`;
 
+    const taxElig = (Number(m.lci) || 0) + (Number(m.lca) || 0);
     document.getElementById('kpiCalidad').innerHTML = `
-    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Brazil · IF.data (BCB)</div><div class="kpi-val">Summary report only</div><div class="kpi-sub">Los datos de Brasil provienen del Relatorio 1 (Resumo) de IF.data. El desglose de balance, estado de resultados y calidad de cartera se agregará con los Relatorios 2–5. El cambio de plan de cuentas de marzo-2025 queda registrado en la pestaña Config.</div></div>`;
+    <div class="kpi green"><div class="kpi-label">LCA + LCI</div><div class="kpi-val">${fmtKPI(taxElig)}</div><div class="kpi-sub">${fmtP(taxElig, m.captacoes)} of funding · open Funding Analytics</div></div>
+    <div class="kpi blue"><div class="kpi-label">Demand deposits</div><div class="kpi-val">${fmtKPI(m.depVista)}</div></div>
+    <div class="kpi blue"><div class="kpi-label">Time deposits</div><div class="kpi-val">${fmtKPI(m.depPlazo)}</div></div>
+    <div class="kpi" style="grid-column:1/-1;max-width:720px;"><div class="kpi-label">Brazil · IF.data funding</div><div class="kpi-sub">Deposits, LCI, LCA and LF are loaded historically. CRA/CRI are not bank liabilities. Use the Funding Analytics tab for the full ALM mix.</div></div>`;
     syncResChartCustomBtn();
     syncKpiResumenActive(ST._lastResChart || 'patrimonio');
     return;
@@ -423,7 +427,8 @@ export function refreshKPIs() {
 /** Instrumentos del gráfico Historical Evolution que no aplican por país (misma lógica que syncCountryChartButtons). */
 function highlightChartUnavailable(tipo) {
   const iso = datasetIsoCountry();
-  if (iso === 'BR') return ['dep_vista', 'dep_plazo', 'bonos', 'mora'].includes(tipo);
+  // BR: demand/time deposits + LCA/LCI (via Bonds tile) now available; NPL still missing.
+  if (iso === 'BR') return ['mora'].includes(tipo);
   if (iso === 'UY') return ['dep_plazo', 'bonos', 'mora'].includes(tipo);
   if (iso === 'PE') return ['bonos', 'mora'].includes(tipo);
   if (iso === 'US' || iso === 'AR' || iso === 'MX' || iso === 'PA') {
@@ -463,6 +468,7 @@ function renderHighlightExtras() {
   const depVistaTitle = (iso === 'UY' || iso === 'US' || iso === 'AR' || iso === 'MX' || iso === 'PA')
     ? 'Deposits'
     : 'Demand Deposits';
+  const bondsTitle = iso === 'BR' ? 'LCA + LCI' : 'Bonds';
   const hasLiab = Number.isFinite(Number(liab));
   const hasDepV = Number.isFinite(Number(depV)) && !highlightChartUnavailable('dep_vista');
   const hasDepP = Number.isFinite(Number(depP)) && !highlightChartUnavailable('dep_plazo');
@@ -479,8 +485,10 @@ function renderHighlightExtras() {
     + highlightKpiTile('Time Deposits', 'dep_plazo', 'blue',
         fmtKPI(Number(depP) || 0), `${fmtP(Number(depP) || 0, m.totalAssets)} of assets`,
         { available: hasDepP })
-    + highlightKpiTile('Bonds', 'bonos', 'yellow',
-        fmtKPI(Number(bonds) || 0), `${fmtP(Number(bonds) || 0, m.totalAssets)} of assets`,
+    + highlightKpiTile(bondsTitle, 'bonos', 'yellow',
+        fmtKPI(Number(bonds) || 0), iso === 'BR'
+          ? `${fmtP(Number(bonds) || 0, m.captacoes || m.totalAssets)} of funding`
+          : `${fmtP(Number(bonds) || 0, m.totalAssets)} of assets`,
         { available: hasBonds })
     + `<div class="kpi-col"><div class="kpi-col-title">Loans / Equity</div><div class="kpi purple kpi-btn" data-chart="loans_equity" onclick="showResChart('loans_equity')"><div class="kpi-val">${ratio}</div><div class="kpi-sub">times equity</div></div></div>`
     + `<div class="kpi-col"><div class="kpi-col-title">ROE Ranking</div><div class="kpi green kpi-btn" data-chart="roe" onclick="showROEChart()"><div class="kpi-val">All banks</div><div class="kpi-sub">Ranking by annual ROE</div></div></div>`
@@ -614,6 +622,11 @@ export async function run() {
       const totalAssets  = brSum(b1First, BR_KPI.activos, lastP);
       const colocaciones = brSum(b1First, BR_KPI.colocaciones, lastP);
       const captacoes    = brSum(b1First, BR_KPI.captacoes, lastP);
+      const depositos    = brSum(b1First, BR_KPI.depositos, lastP);
+      const depVista     = brSum(b1First, BR_KPI.depVista, lastP);
+      const depPlazo     = brSum(b1First, BR_KPI.depPlazo, lastP);
+      const lci          = brSum(b1First, BR_KPI.lci, lastP);
+      const lca          = brSum(b1First, BR_KPI.lca, lastP);
       const pasivos      = brSum(b1First, BR_KPI.pasivos, lastP);
       const patrimonio   = brSum(b1First, BR_KPI.patrimonio, lastP);
       const tvm          = brSum(b1First, BR_KPI.tvm, lastP);
@@ -627,7 +640,9 @@ export async function run() {
       ST._kpiRaw = {
         totalAssets, colocaciones, captacoes, tvm,
         pasivos, patrimonio, utilidad,
-        depositos: captacoes, depVista: null, depPlazo: null, bonos: null,
+        depositos, depVista, depPlazo,
+        bonos: lci + lca, // Bonds tile → LCA+LCI (tax-advantaged letters)
+        lci, lca,
         mora90: null, customKpi, ingresoNeto: null, totalIng: null,
         lastP, perdCred: null, impuesto: null, resOp: null, totalGas: null,
         resOpA: null, ingComis: null, ingresoReaj: null, resFin: null,
@@ -1263,8 +1278,8 @@ export function toggleDeltaMode() {
 // ---- Resumen chart ----
 export function showResChart(tipo) {
   abortROEFetch();
-  // Brasil (Resumo) no tiene dato confiable para estos cortes: caer a Equity.
-  if (datasetIsoCountry() === 'BR' && ['dep_vista', 'dep_plazo', 'bonos', 'mora'].includes(tipo)) {
+  // Brasil: NPL aún sin cartera detallada; vista/plazo/LCA+LCI ya disponibles.
+  if (datasetIsoCountry() === 'BR' && ['mora'].includes(tipo)) {
     tipo = 'patrimonio';
   }
   // Uruguay: sin NPL / bonos / plazo desglosado; dep_vista = depósitos totales.
@@ -1309,7 +1324,8 @@ export function showResChart(tipo) {
   // (El sub-selector YTD/Period se muestra en el cuadrito de Net Income, no aquí.)
 
   const map = {
-    activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.', bonos:'📄 Bonds',
+    activos:'📊 Assets', coloc:'💳 Loans', dep_vista:'👁 Demand Dep.', dep_plazo:'⏱ Time Dep.',
+    bonos: datasetIsoCountry() === 'BR' ? '📄 LCA+LCI' : '📄 Bonds',
     captacoes:'🏦 Funding', tvm:'📄 Securities',
     pasivos:'📉 Liabilities', patrimonio:'🏛 Equity', utilidad:'💰 Net Income', mora:'⚠️ NPL %', customkpi:'📌 Custom account',
     roe_hist:'📈 Annual ROE', loans_equity:'⚖️ Loans/Equity',
@@ -1333,6 +1349,9 @@ export function showResChart(tipo) {
       pasivos:    { rows: b1, cuentas: BR_KPI.pasivos },
       patrimonio: { rows: b1, cuentas: BR_KPI.patrimonio },
       utilidad:   { rows: r1, cuentas: BR_KPI.utilidad },
+      dep_vista:  { rows: b1, cuentas: BR_KPI.depVista },
+      dep_plazo:  { rows: b1, cuentas: BR_KPI.depPlazo },
+      bonos:      { rows: b1, cuentas: [...BR_KPI.lci, ...BR_KPI.lca] },
     }
     : datasetIsoCountry() === 'CO'
     ? {
@@ -1575,7 +1594,8 @@ export function showResChart(tipo) {
       activos:'Assets', coloc:'Loans', pasivos:'Liabilities', patrimonio:'Equity', utilidad:'Net Income',
       captacoes:'Funding (Captações)', tvm:'Securities (TVM)',
       loans_equity:'Loans / Equity (x)', roe_hist:'Annual ROE (%)',
-      mora:'NPL / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits', bonos:'Bonds', customkpi:'Custom account',
+      mora:'NPL / total loans (%)', dep_vista:'Demand Deposits', dep_plazo:'Time Deposits',
+      bonos: datasetIsoCountry() === 'BR' ? 'LCA + LCI' : 'Bonds', customkpi:'Custom account',
     };
     if (tableTitleEl) {
       if (tipo === 'customkpi') {
