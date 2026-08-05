@@ -13,7 +13,7 @@ import {
   brSeries,
   brSum,
   brResultReset,
-} from '../brCuentas.js?v=bmon68';
+} from '../brCuentas.js?v=bmon70';
 import {
   CL_FUNDING_INSTRUMENTS,
   CL_FUNDING_COLORS,
@@ -25,15 +25,29 @@ import {
   clSeries,
   clSum,
   clExpenseMonth,
-} from '../clCuentas.js?v=bmon68';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon68';
-import { fetchData } from '../api.js?v=bmon68';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon68';
-import { btgBlue, bankColor, RATING_COLORS } from '../config.js?v=bmon68';
-import { getCBRatings } from './ranking.js?v=bmon68';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon68';
+} from '../clCuentas.js?v=bmon70';
+import {
+  UY_FUNDING_INSTRUMENTS,
+  UY_FUNDING_COLORS,
+  UY_KPI,
+  UY_FUNDING_EXPENSES,
+  UY_TERM_INSTRUMENTS,
+  uyFundingAccountsForRun,
+  uyFundingExpenseAccountsForRun,
+  uyFundingSnapshot,
+  uyTermBreakdown,
+  uySeries,
+  uySum,
+  uyExpenseMonth,
+} from '../uyCuentas.js?v=bmon70';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon70';
+import { fetchData } from '../api.js?v=bmon70';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon70';
+import { btgBlue, bankColor, RATING_COLORS } from '../config.js?v=bmon70';
+import { getCBRatings } from './ranking.js?v=bmon70';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon70';
 
-const FUNDING_COUNTRIES = new Set(['BR', 'CL']);
+const FUNDING_COUNTRIES = new Set(['BR', 'CL', 'UY']);
 const MAX_COMPARE_ENTITIES = 6;
 const MAX_FETCH_BANKS = 24;
 const FA_COMPARE_PALETTE = ['#0d3b66', '#16a34a', '#dc2626', '#0d9488', '#db2777', '#ca8a04', '#0284c7', '#a16207'];
@@ -283,6 +297,21 @@ function cfg() {
       fundingSeries: (rows, periodos) => brSeries(rows, BR_KPI.captacoes, periodos),
       taxTreatment: (inst) => (inst.taxEligible === true ? 'Eligible PF'
         : inst.taxEligible === 'partial' ? 'Partial / holder-dependent' : '—'),
+      currencyLens: false,
+      loadingLabel: 'Brazil IF.data',
+      specialCompareLabel: 'Eligible %',
+      specialEmptyMessage: 'No tax-eligible series.',
+      specialKpi: (snap) => ({
+        title: 'Tax-advantaged eligible',
+        val: fmtKPI(snap.taxEligible),
+        sub: `LCA + LCI · ${fmtPct(snap.taxEligiblePct)} of funding`,
+      }),
+      specialCompareRows: [
+        { label: 'LCA+LCI eligible %', fmt: (s) => fmtPct(s?.taxEligiblePct) },
+        { label: 'LCA+LCI stock', fmt: (s) => fmtKPI(s?.taxEligible) },
+      ],
+      instrumentExtraHead: '',
+      instrumentExtraCell: () => '',
     };
   }
   if (iso === 'CL') {
@@ -347,6 +376,100 @@ function cfg() {
       },
       taxTreatment: (inst) => (inst.group === 'capital' ? 'Regulatory capital'
         : inst.group === 'debt' ? 'Market debt' : '—'),
+      currencyLens: true,
+      loadingLabel: 'Chile CMF',
+      specialCompareLabel: 'UF share %',
+      specialEmptyMessage: 'No UF-share series.',
+      specialKpi: (snap) => ({
+        title: 'UF-indexed share',
+        val: fmtPct(snap.ufPct),
+        sub: `FX share ${fmtPct(snap.fxPct)} · of ordinary funding`,
+      }),
+      specialCompareRows: [
+        { label: 'UF share', fmt: (s) => fmtPct(s?.ufPct) },
+        { label: 'FX share', fmt: (s) => fmtPct(s?.fxPct) },
+      ],
+      instrumentExtraHead: '<th class="r">UF</th><th class="r">FX</th>',
+      instrumentExtraCell: (i) => `<td class="r">${fmtKPI(i.uf || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`,
+    };
+  }
+  if (iso === 'UY') {
+    const ordinaryCodes = UY_FUNDING_INSTRUMENTS.filter((i) => i.group !== 'capital').flatMap((i) => i.codes);
+    return {
+      iso: 'UY',
+      title: 'Funding Analytics',
+      eyebrow: 'Uruguay · ALM / Treasury',
+      sub: 'BCU/SSF monthly boletín (Situación + Resultados). Local (UYU) vs FX (≈USD) funding mix. Compare banks, rating baskets, or custom groups.',
+      instruments: UY_FUNDING_INSTRUMENTS,
+      colors: UY_FUNDING_COLORS,
+      fundingLabel: 'Captaciones',
+      specialMetric: 'currency',
+      specialLabel: 'FX (≈USD) mix',
+      notes: [
+        '<strong>Compare:</strong> overlay banks, rating baskets, or custom groups saved in this browser.',
+        '<strong>Chart style:</strong> switch Bars / Lines / Area on the chart panel to see which read is clearest for the active metric.',
+        '<strong>Groups</strong> sum member stocks before computing FX share and cost — basket view for ALM peers.',
+        '<strong>FX ≈ USD, not exactly:</strong> BCU reports Actividad en M/E (all foreign currency, predominantly USD). We label it FX (≈USD).',
+        '<strong>Local vs FX:</strong> <code>monto_clp</code> is Actividad en M/N (UYU); <code>monto_ext</code> is Actividad en M/E. There is no UF/UI column — indexed instruments sit inside M/N.',
+        '<strong>Term structure</strong> (vista / plazo) comes from Anexo 1 contractual maturities — shown when the loader has ingested those synthetic accounts.',
+        '<strong>Cost proxy</strong> uses monthly BCU interest-expense (account 5) deltas / average stock, annualized — accounting cost, not contractual coupon.',
+      ],
+      b1Accounts: uyFundingAccountsForRun,
+      r1Accounts: uyFundingExpenseAccountsForRun,
+      snapshot: uyFundingSnapshot,
+      series: (rows, codes, periodos) => uySeries(rows, codes, periodos),
+      sum: (rows, codes, periodo) => uySum(rows, codes, periodo),
+      specialSeries: (rows, periodos) => ({
+        primary: uySeries(rows, ordinaryCodes, periodos, 'monto_ext'),
+        secondary: uySeries(rows, ordinaryCodes, periodos, 'monto_clp'),
+        total: uySeries(rows, ordinaryCodes, periodos, 'monto_total'),
+        primaryLabel: 'FX (≈USD)',
+        bLabel: 'Local (UYU)',
+        aLabel: 'FX (≈USD)',
+        restLabel: 'residual',
+        primaryColor: UY_FUNDING_COLORS.fxShare,
+        secondaryColor: UY_FUNDING_COLORS.localShare,
+        legend: 'Blue = FX (≈USD) · teal = local (UYU) · grey = residual',
+      }),
+      specialPctSeries: (rows, periodos) => {
+        const ext = uySeries(rows, ordinaryCodes, periodos, 'monto_ext');
+        const total = uySeries(rows, ordinaryCodes, periodos, 'monto_total');
+        return ext.map((v, i) => (total[i] > 0 ? (v / total[i]) * 100 : null));
+      },
+      costSeries: (rows, periodos) => {
+        const despByP = {};
+        periodos.forEach((p) => { despByP[p] = uySum(rows, UY_FUNDING_EXPENSES.total, p); });
+        return periodos.map((p, i) => {
+          const monthExp = uyExpenseMonth(despByP, p);
+          if (monthExp == null || !Number.isFinite(monthExp)) return null;
+          const flow = Math.abs(monthExp);
+          const stock = uySum(rows, UY_KPI.fundingOrdinary, p);
+          const prev = i > 0 ? uySum(rows, UY_KPI.fundingOrdinary, periodos[i - 1]) : stock;
+          const avg = (stock + prev) / 2;
+          if (!(avg > 0)) return null;
+          return (flow * 12 / avg) * 100;
+        });
+      },
+      fundingSeries: (rows, periodos) => uySeries(rows, ordinaryCodes, periodos),
+      taxTreatment: (inst) => (inst.group === 'capital' ? 'Regulatory capital'
+        : inst.group === 'debt' ? 'Market debt' : '—'),
+      currencyLens: true,
+      loadingLabel: 'Uruguay BCU',
+      specialCompareLabel: 'FX share %',
+      specialEmptyMessage: 'No FX-share series.',
+      specialKpi: (snap) => ({
+        title: 'FX (≈USD) share',
+        val: fmtPct(snap.fxPct),
+        sub: `Local UYU ${fmtPct(snap.localPct)} · of ordinary funding`,
+      }),
+      specialCompareRows: [
+        { label: 'FX share', fmt: (s) => fmtPct(s?.fxPct) },
+        { label: 'Local share', fmt: (s) => fmtPct(s?.localPct) },
+      ],
+      instrumentExtraHead: '<th class="r">Local</th><th class="r">FX</th>',
+      instrumentExtraCell: (i) => `<td class="r">${fmtKPI(i.local || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`,
+      termBreakdown: (rows, periodo) => uyTermBreakdown(rows, periodo),
+      termInstruments: UY_TERM_INSTRUMENTS,
     };
   }
   return null;
@@ -394,8 +517,8 @@ async function loadFundingData() {
   state.loading = true;
   state.error = null;
   state.iso = c.iso;
-  if (c.iso === 'CL' && state.metric === 'tax') state.metric = 'currency';
-  if (c.iso === 'BR' && state.metric === 'currency') state.metric = 'tax';
+  if (c.specialMetric === 'currency' && state.metric === 'tax') state.metric = 'currency';
+  if (c.specialMetric === 'tax' && state.metric === 'currency') state.metric = 'tax';
   render();
 
   try {
@@ -434,11 +557,10 @@ function peerEmptyMessage() {
 
 function renderKpis(snap, c) {
   if (!snap) return '';
-  const specialTitle = c.iso === 'CL' ? 'UF-indexed share' : 'Tax-advantaged eligible';
-  const specialVal = c.iso === 'CL' ? fmtPct(snap.ufPct) : fmtKPI(snap.taxEligible);
-  const specialSub = c.iso === 'CL'
-    ? `FX share ${fmtPct(snap.fxPct)} · of ordinary funding`
-    : `LCA + LCI · ${fmtPct(snap.taxEligiblePct)} of funding`;
+  const kpi = c.specialKpi(snap);
+  const specialTitle = kpi.title;
+  const specialVal = kpi.val;
+  const specialSub = kpi.sub;
 
   return `
     <div class="kpi-grid fa-kpi-grid">
@@ -481,8 +603,7 @@ function renderCompareKpis(entities, c) {
         <tbody>
           ${row(c.fundingLabel, (s) => fmtKPI(s?.funding ?? s?.captacoes))}
           ${row('Deposits', (s) => fmtKPI(s?.depositos))}
-          ${row(c.iso === 'CL' ? 'UF share' : 'LCA+LCI eligible %', (s) => (c.iso === 'CL' ? fmtPct(s?.ufPct) : fmtPct(s?.taxEligiblePct)))}
-          ${row(c.iso === 'CL' ? 'FX share' : 'LCA+LCI stock', (s) => (c.iso === 'CL' ? fmtPct(s?.fxPct) : fmtKPI(s?.taxEligible)))}
+          ${c.specialCompareRows.map((r) => row(r.label, r.fmt)).join('')}
           ${row('Loans / Deposits', (s) => fmtRatio(s?.ltd))}
           ${row('Loans / Funding', (s) => fmtRatio(s?.ltf))}
         </tbody>
@@ -500,22 +621,52 @@ function renderInstrumentTable(snap, c) {
   const body = rows.map((i) => {
     const pct = funding > 0 ? (i.value / funding) * 100 : null;
     const treat = c.taxTreatment(i);
-    const ufFx = c.iso === 'CL'
-      ? `<td class="r">${fmtKPI(i.uf || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`
-      : '';
+    const extraCells = c.instrumentExtraCell ? c.instrumentExtraCell(i) : '';
     return `<tr>
       <td><span class="fa-swatch" style="background:${c.colors[i.key] || '#64748b'}"></span>${esc(i.label)}</td>
       <td class="r">${fmtKPI(i.value)}</td>
       <td class="r">${fmtPct(pct)}</td>
-      ${ufFx}
+      ${extraCells}
       <td>${esc(treat)}</td>
     </tr>`;
   }).join('');
-  const extraHead = c.iso === 'CL' ? '<th class="r">UF</th><th class="r">FX</th>' : '';
+  const extraHead = c.instrumentExtraHead || '';
   return `<table class="data fa-table">
     <thead><tr><th>Instrument</th><th class="r">Stock</th><th class="r">% funding</th>${extraHead}<th>Notes</th></tr></thead>
     <tbody>${body || '<tr><td colspan="6">No funding stocks for this period</td></tr>'}</tbody>
   </table>`;
+}
+
+function renderTermPanel(codes, c) {
+  if (!c.termBreakdown) return '';
+  const lastP = state.periodos[state.periodos.length - 1];
+  const tb = c.termBreakdown(rowsForCodes(codes), lastP);
+  if (!tb || !tb.hasData) return '';
+  const total = tb.total || 0;
+  const body = tb.buckets.map((b) => {
+    const pct = total > 0 ? (b.value / total) * 100 : null;
+    const fxPct = b.value > 0 ? (b.ext / b.value) * 100 : null;
+    return `<tr>
+      <td><span class="fa-swatch" style="background:${c.colors[b.key] || '#64748b'}"></span>${esc(b.label)}</td>
+      <td class="r">${fmtKPI(b.value)}</td>
+      <td class="r">${fmtPct(pct)}</td>
+      <td class="r">${fmtPct(fxPct)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="panel fa-panel" style="margin-top:18px;">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Deposit term structure · ${esc(periodLabel(lastP))}</div>
+        <div class="panel-sub">Anexo 1 contractual maturities · FX = ≈USD share of each bucket</div>
+      </div>
+    </div>
+    <div class="panel-body" style="overflow-x:auto;padding:0;">
+      <table class="data fa-table">
+        <thead><tr><th>Bucket</th><th class="r">Stock</th><th class="r">% deposits</th><th class="r">FX %</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </div>`;
 }
 
 function renderCompareInstrumentTable(entities, c) {
@@ -567,7 +718,7 @@ function drawMixChart(codes, c) {
   const bankRows = rowsForCodes(codes);
   const periodos = state.periodos;
   const series = c.instruments
-    .filter((inst) => !(c.iso === 'CL' && inst.group === 'capital'))
+    .filter((inst) => !(c.currencyLens && inst.group === 'capital'))
     .map((inst) => ({
       ...inst,
       values: c.series(bankRows, inst.codes, periodos),
@@ -673,11 +824,12 @@ function drawSpecialChart(codes, c) {
     y -= hRest;
     ctx.fillRect(x, y, barW, Math.max(0, hRest));
     if (secondary) {
-      ctx.fillStyle = c.colors.fxShare || '#2563eb';
+      ctx.fillStyle = sp.secondaryColor || c.colors.fxShare || '#2563eb';
       y -= hFx;
       ctx.fillRect(x, y, barW, Math.max(0, hFx));
     }
-    ctx.fillStyle = c.iso === 'CL' ? (c.colors.ufShare || '#0d9488') : (c.colors.taxEligible || '#16a34a');
+    ctx.fillStyle = sp.primaryColor
+      || (c.iso === 'CL' ? (c.colors.ufShare || '#0d9488') : (c.colors.taxEligible || '#16a34a'));
     y -= hEl;
     ctx.fillRect(x, y, barW, Math.max(0, hEl));
     ctx.fillStyle = '#64748b';
@@ -689,16 +841,18 @@ function drawSpecialChart(codes, c) {
   ctx.fillStyle = '#475569';
   ctx.font = '600 12px Inter, "DM Sans", system-ui, sans-serif';
   ctx.textAlign = 'left';
-  const legend = c.iso === 'CL'
+  const legend = sp.legend || (c.iso === 'CL'
     ? 'Teal = UF-indexed · blue = FX (EXT) · grey = residual'
-    : 'Green = LCA+LCI eligible stock · grey = other captações';
+    : 'Green = LCA+LCI eligible stock · grey = other captações');
   ctx.fillText(legend, pad.l, 16);
 
   const sub = document.getElementById('faTaxSub');
   if (sub) {
     const i = periodos.length - 1;
-    if (c.iso === 'CL') {
-      sub.textContent = `Latest: UF ${fmtKPI(primary[i])} (${fmtPct(totals[i] ? (primary[i] / totals[i]) * 100 : null)}) · FX ${fmtKPI(secondary?.[i] || 0)} (${fmtPct(totals[i] ? ((secondary?.[i] || 0) / totals[i]) * 100 : null)})`;
+    if (c.currencyLens) {
+      const pPct = totals[i] ? (primary[i] / totals[i]) * 100 : null;
+      const sPct = totals[i] ? ((secondary?.[i] || 0) / totals[i]) * 100 : null;
+      sub.textContent = `Latest: ${sp.primaryLabel} ${fmtKPI(primary[i])} (${fmtPct(pPct)}) · ${sp.bLabel} ${fmtKPI(secondary?.[i] || 0)} (${fmtPct(sPct)})`;
     } else {
       sub.textContent = `Latest: ${sp.aLabel} ${fmtKPI(sp.a[i])} · ${sp.bLabel} ${fmtKPI(sp.b[i])} · eligible ${fmtKPI(primary[i])} (${fmtPct(totals[i] ? (primary[i] / totals[i]) * 100 : null)} of funding)`;
     }
@@ -802,7 +956,7 @@ function drawCompareChart(entities, c) {
       color: e.color,
       data: sparseData(c.specialPctSeries(rowsForCodes(e.codes), periodos)),
     }));
-    emptyMessage = c.iso === 'CL' ? 'No UF-share series.' : 'No tax-eligible series.';
+    emptyMessage = c.specialEmptyMessage;
   }
 
   drawLineChart('faCompareChart', periodos, series, {
@@ -1088,14 +1242,14 @@ function render() {
   if (!FUNDING_COUNTRIES.has(iso) || !c) {
     root.innerHTML = `<div class="fa-empty">
       <div class="fa-empty-title">Funding Analytics</div>
-      <div class="fa-empty-sub">Available for <strong>Chile</strong> and <strong>Brazil</strong>. Switch country to explore the ALM funding mix.</div>
+      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong> and <strong>Uruguay</strong>. Switch country to explore the ALM funding mix.</div>
     </div>`;
     return;
   }
 
   if (state.loading) {
     root.innerHTML = `<div class="fa-empty"><div class="ls-bars" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
-      <div class="fa-empty-sub" style="margin-top:16px;">Loading ${c.iso === 'CL' ? 'Chile CMF' : 'Brazil IF.data'} funding stocks…</div></div>`;
+      <div class="fa-empty-sub" style="margin-top:16px;">Loading ${esc(c.loadingLabel)} funding stocks…</div></div>`;
     return;
   }
 
@@ -1154,7 +1308,7 @@ function render() {
 
   const metricBtns = [
     { key: 'mix', label: comparing ? 'Funding stock' : 'Funding mix' },
-    { key: c.specialMetric, label: comparing ? (c.iso === 'CL' ? 'UF share %' : 'Eligible %') : c.specialLabel },
+    { key: c.specialMetric, label: comparing ? c.specialCompareLabel : c.specialLabel },
     { key: 'cost', label: 'Cost proxy' },
   ].map((m) => `<button type="button" class="rcbtn ${state.metric === m.key ? 'active' : ''}" data-fa-metric="${m.key}">${m.label}</button>`).join('');
 
@@ -1232,6 +1386,8 @@ function render() {
           : renderInstrumentTable(latestSnapshotFor(active.codes), c)}
       </div>
     </div>
+
+    ${!comparing ? renderTermPanel(active.codes, c) : ''}
 
     <ul class="fa-notes">${c.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   `;

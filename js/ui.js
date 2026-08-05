@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon69';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon69';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon69';
-import { setStatus, showErr } from './utils.js?v=bmon69';
-import { sumRows } from './api.js?v=bmon69';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon69';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon69';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon70';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon70';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon70';
+import { setStatus, showErr } from './utils.js?v=bmon70';
+import { sumRows } from './api.js?v=bmon70';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon70';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon70';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -271,6 +271,7 @@ export function showTab(tab) {
   const isoTab = datasetIsoCountry();
   const blocked = isoTab === 'BR' ? BR_DISABLED_TABS
     : isoTab === 'CL' ? CL_DISABLED_TABS
+    : isoTab === 'UY' ? UY_DISABLED_TABS
     : isoTab === 'US' ? US_DISABLED_TABS
     : isoTab === 'AR' ? AR_DISABLED_TABS
     : isoTab === 'MX' ? MX_DISABLED_TABS
@@ -449,7 +450,8 @@ const MX_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
 const PA_DISABLED_TABS = ['accountview', 'balance', 'resultados', 'funding'];
 const BR_DISABLED_TABS = [];
 const CL_DISABLED_TABS = [];
-const FUNDING_ENABLED_ISO = ['BR', 'CL'];
+const UY_DISABLED_TABS = [];
+const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -463,6 +465,7 @@ export function syncCountryDisabledTabs() {
   const iso = datasetIsoCountry();
   let disabled = iso === 'BR' ? [...BR_DISABLED_TABS]
     : iso === 'CL' ? [...CL_DISABLED_TABS]
+    : iso === 'UY' ? [...UY_DISABLED_TABS]
     : iso === 'US' ? [...US_DISABLED_TABS]
     : iso === 'AR' ? [...AR_DISABLED_TABS]
     : iso === 'MX' ? [...MX_DISABLED_TABS]
@@ -478,7 +481,7 @@ export function syncCountryDisabledTabs() {
     btn.disabled = off;
     if (off) {
       btn.title = key === 'funding'
-        ? 'Funding Analytics is available for Chile and Brazil'
+        ? 'Funding Analytics is available for Brazil, Chile and Uruguay'
         : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');
