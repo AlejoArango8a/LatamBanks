@@ -2,7 +2,7 @@
 // Colombia CUIF — 6 dígitos (clasificación financiera típica SFC)
 // Derivado de datos reales datos_financieros CO (prioridad cobertura b1/r1).
 // ============================================================
-import { ST } from './state.js?v=bmon70';
+import { ST } from './state.js?v=bmon71';
 
 export const CO_CUIF = {
   activos: '100000',
@@ -33,10 +33,37 @@ export function coIsDeterioroActivoCuenta(cuenta) {
 }
 
 /**
+ * Cuentas padre de deterioro del activo — allowlist explícita.
+ *
+ * El CUIF publica el padre y sus hijos (`…05/10/15/20/25`), así que sumar la
+ * familia 148/149 completa cuenta doble: `148700 = 148705 + 148710` exacto en
+ * Banco de Bogotá 2026-05. Estos siete padres suman el deterioro total publicado
+ * (4.375.346.174.720 en ese corte), sin solapes.
+ */
+export const CO_DETERIORO_PARENT_CODES = [
+  '148700', // componente contracíclico individual
+  '148800', // empleados
+  '148900', // vivienda
+  '149100', // consumo
+  '149300', // microcrédito
+  '149500', // comercial
+  '149800', // general
+];
+
+const CO_DETERIORO_PARENT_SET = new Set(CO_DETERIORO_PARENT_CODES);
+
+/** ¿La cuenta es uno de los padres de deterioro (sin solape con hijos)? */
+export function coIsDeterioroParentCuenta(cuenta) {
+  return CO_DETERIORO_PARENT_SET.has(coCuentaNorm6(cuenta));
+}
+
+/**
  * Cuentas b1 a solicitar: del plan cargado, todas las de familias 148 y 149.
+ * Pedir de más es inocuo (el desglose alimenta Asset Quality); lo que no se debe
+ * hacer es *sumarlas* todas — para eso está `coMoraNumerator`.
  */
 export function coDeterioroActivoCuentasFromPlan(planKeys) {
-  const out = new Set();
+  const out = new Set(CO_DETERIORO_PARENT_CODES);
   for (const cu of planKeys || []) {
     const k = coCuentaNorm6(cu);
     if (k.startsWith('148') || k.startsWith('149')) out.add(k);
@@ -44,10 +71,14 @@ export function coDeterioroActivoCuentasFromPlan(planKeys) {
   return [...out].sort();
 }
 
-/** Numerador Key Data / gráfico deterioro CO: suma |monto| en 148·149 para el periodo. */
+/**
+ * Numerador Key Data / gráfico deterioro CO: suma |monto| solo en las cuentas
+ * padre de deterioro. Antes sumaba toda la familia 148/149 (padres + hijos), lo
+ * que duplicaba el numerador y dejaba el NPL de Colombia ~2× por encima.
+ */
 export function coMoraNumerator(rowsOneBankOneTipo, period) {
   return rowsOneBankOneTipo
-    .filter(r => (!period || r.periodo === period) && coIsDeterioroActivoCuenta(r.cuenta))
+    .filter(r => (!period || r.periodo === period) && coIsDeterioroParentCuenta(r.cuenta))
     .reduce((s, r) => s + Math.abs(Number(r.monto_total) || 0), 0);
 }
 
@@ -206,6 +237,9 @@ export function coB1NormMatchesBalanceRow(norm, sectionCode) {
     '310000': x => x === '310000' || (x.startsWith('310') && !x.startsWith('311')),
     '210500': x => x.startsWith('2105'),
     '210700': x => x.startsWith('2107'),
+    // Deterioro: solo padres, nunca padre + hijo (mismo criterio que coMoraNumerator).
+    '148000': x => x.startsWith('148') && coIsDeterioroParentCuenta(x),
+    '149000': x => x.startsWith('149') && coIsDeterioroParentCuenta(x),
   };
   if (special[c]) return special[c](n);
   if (c.length === 6 && c.endsWith('000')) return n.startsWith(c.slice(0, 3));

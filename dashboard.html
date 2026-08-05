@@ -1022,6 +1022,20 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 .fa-chart-styles { display:flex; flex-wrap:wrap; gap:6px; }
 .tab.tab-disabled { opacity:0.42; cursor:not-allowed; }
 
+/* Asset Quality — reuses the .fa-* shell, plus a credit-risk accent */
+#assetQualityRoot .kpi-col { gap:8px; }
+#assetQualityRoot .kpi { padding:10px 12px; }
+.aq-hero { border-left-color:#7c3aed; }
+.aq-kpi-grid { grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); }
+.aq-honest {
+  margin:12px 0 0; padding:10px 14px 10px 30px; list-style:disc;
+  background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.18); border-radius:6px;
+  color:var(--text2); font-size:11px; line-height:1.6;
+}
+.aq-honest li + li { margin-top:6px; }
+.aq-honest code { font-family:var(--mono); font-size:10px; }
+.fa-table tr.aq-row-foreign td { background:rgba(124,58,237,0.06); }
+
 /* PANEL */
 .panel { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
 .panel-head {
@@ -1152,6 +1166,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
         <button type="button" class="tab primary" data-tab="chileanbanks" onclick="showTab('chileanbanks')">Banking System</button>
         <button type="button" class="tab primary" data-tab="btgbanks" onclick="showTab('btgbanks')">BTG Banks</button>
         <button type="button" class="tab primary" data-tab="funding" onclick="showTab('funding')">Funding Analytics</button>
+        <button type="button" class="tab primary" data-tab="assetquality" onclick="showTab('assetquality')">Asset Quality</button>
         <div style="width:1px;background:var(--border);margin:10px 6px;flex-shrink:0;opacity:0.4;"></div>
         <button type="button" class="tab secondary" data-tab="accountview" onclick="showTab('accountview')">Account View</button>
         <button type="button" class="tab secondary" data-tab="balance" onclick="showTab('balance')">Balance Sheet</button>
@@ -1392,6 +1407,11 @@ body.light .btg-banks-elim-text { color:#0f172a; }
         <!-- FUNDING ANALYTICS (Chile + Brazil · peers / groups) -->
         <div id="tab-funding" style="display:none;">
           <div id="fundingAnalyticsRoot"></div>
+        </div>
+
+        <!-- ASSET QUALITY (Chile · Colombia · Peru · Uruguay · peers / groups) -->
+        <div id="tab-assetquality" style="display:none;">
+          <div id="assetQualityRoot"></div>
         </div>
 
         <!-- BANK PROFILE -->
@@ -1722,7 +1742,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon70"></script>
+<script type="module" src="js/app.js?v=bmon71"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
