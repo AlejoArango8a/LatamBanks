@@ -1,8 +1,8 @@
 // ============================================================
 // CHARTS — canvas bar chart engine with tooltip support
 // ============================================================
-import { ST, CHART_STATE } from './state.js?v=bmon67';
-import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon67';
+import { ST, CHART_STATE } from './state.js?v=bmon68';
+import { fmtAxis, periodLabel, fmtChartPct } from './format.js?v=bmon68';
 
 export function sparseData(rawData) {
   const firstNonZero = rawData.findIndex(v => v !== 0);
@@ -51,7 +51,7 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const dpr = window.devicePixelRatio || 1;
   const W = rawW;
   const isResumen = canvasId === 'chartResumen';
-  const H = isResumen ? 300 : 180;   // coincide con .chart-canvas max-height → sin escalado/pixelado
+  const H = opts.height || (isResumen ? 300 : 180);   // coincide con .chart-canvas max-height → sin escalado/pixelado
   const narrowCanvas = W < 480;
   const veryNarrow   = W < 360;
 

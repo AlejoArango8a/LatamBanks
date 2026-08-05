@@ -961,6 +961,47 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 }
 .fa-empty-title { font-size:18px; font-weight:600; color:var(--white); }
 .fa-empty-sub { font-size:13px; color:var(--text3); max-width:480px; line-height:1.5; }
+.fa-peer-bar {
+  margin:0 0 18px; padding:12px 14px;
+  background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+}
+.fa-peer-row {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:10px 14px; margin-bottom:10px;
+}
+.fa-peer-sources, .fa-compare-toggle, .fa-rating-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.fa-peer-hint { font-size:11px; color:var(--text3); line-height:1.45; margin-top:8px; }
+.fa-chip-n {
+  font-size:10px; font-family:var(--mono); color:var(--text3); margin-left:4px;
+}
+.fa-group-list { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.fa-group-row {
+  display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text);
+  cursor:pointer; padding:4px 0;
+}
+.fa-group-name { flex:1; min-width:0; }
+.fa-group-del {
+  border:none; background:transparent; color:var(--text3); cursor:pointer;
+  font-size:16px; line-height:1; padding:0 4px;
+}
+.fa-group-del:hover { color:var(--red); }
+.fa-group-editor {
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--border);
+  display:flex; flex-direction:column; gap:10px;
+}
+.fa-input {
+  width:100%; max-width:360px; padding:8px 10px; border-radius:4px;
+  border:1px solid var(--border); background:var(--bg3); color:var(--white); font-size:13px;
+}
+.fa-group-bank-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:6px 10px; max-height:220px; overflow:auto; padding:4px 0;
+}
+.fa-bank-check {
+  display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); cursor:pointer;
+}
+.fa-group-editor-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.fa-bank-tabs .rcbtn:disabled { opacity:0.55; cursor:default; }
 .tab.tab-disabled { opacity:0.42; cursor:not-allowed; }
 
 /* PANEL */
@@ -1663,7 +1704,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon67"></script>
+<script type="module" src="js/app.js?v=bmon68"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
