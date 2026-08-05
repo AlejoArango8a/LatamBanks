@@ -1,6 +1,7 @@
 // ============================================================
 // Funding Analytics — ALM / Treasury funding sheet
 // Brazil (IF.data Cosif) + Chile (CMF MB1/MR1)
+// Peers: sidebar banks · rating baskets · custom groups
 // ============================================================
 import {
   BR_FUNDING_INSTRUMENTS,
@@ -12,7 +13,7 @@ import {
   brSeries,
   brSum,
   brResultReset,
-} from '../brCuentas.js?v=bmon67';
+} from '../brCuentas.js?v=bmon68';
 import {
   CL_FUNDING_INSTRUMENTS,
   CL_FUNDING_COLORS,
@@ -24,13 +25,19 @@ import {
   clSeries,
   clSum,
   clExpenseMonth,
-} from '../clCuentas.js?v=bmon67';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon67';
-import { fetchData } from '../api.js?v=bmon67';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon67';
-import { btgBlue } from '../config.js?v=bmon67';
+} from '../clCuentas.js?v=bmon68';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon68';
+import { fetchData } from '../api.js?v=bmon68';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon68';
+import { btgBlue, bankColor, RATING_COLORS } from '../config.js?v=bmon68';
+import { getCBRatings } from './ranking.js?v=bmon68';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon68';
 
 const FUNDING_COUNTRIES = new Set(['BR', 'CL']);
+const MAX_COMPARE_ENTITIES = 6;
+const MAX_FETCH_BANKS = 24;
+const FA_COMPARE_PALETTE = ['#0d3b66', '#16a34a', '#dc2626', '#0d9488', '#db2777', '#ca8a04', '#0284c7', '#a16207'];
+const RATING_ORDER = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-'];
 
 const state = {
   loading: false,
@@ -42,6 +49,15 @@ const state = {
   rows: [],
   lastBank: null,
   iso: null,
+  // Peer / compare
+  peerSource: 'selection', // selection | rating | custom
+  compare: false,
+  selectedRatings: [],
+  selectedGroupIds: [],
+  lastEntityId: null,
+  showGroupEditor: false,
+  draftGroupName: '',
+  draftGroupCodes: [],
 };
 
 function esc(s) {
@@ -72,6 +88,123 @@ function periodRange() {
   return ST.periodos.filter((p) => p >= desde && p <= hasta);
 }
 
+function groupsStorageKey() {
+  return `faBankGroups_${datasetIsoCountry()}`;
+}
+
+function loadCustomGroups() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(groupsStorageKey()) || '[]');
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((g) => g && g.id && g.name && Array.isArray(g.codes))
+      .map((g) => ({
+        id: String(g.id),
+        name: String(g.name).slice(0, 48),
+        codes: [...new Set(g.codes.map(Number).filter((n) => Number.isFinite(n)))],
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomGroups(groups) {
+  try {
+    localStorage.setItem(groupsStorageKey(), JSON.stringify(groups));
+  } catch { /* ignore quota */ }
+}
+
+function knownBankCodes() {
+  return Object.keys(ST.bancos || {})
+    .map(Number)
+    .filter((c) => Number.isFinite(c) && c !== 999);
+}
+
+function banksByRating() {
+  const ratings = getCBRatings() || {};
+  const known = new Set(knownBankCodes());
+  const map = {};
+  Object.entries(ratings).forEach(([code, grade]) => {
+    const n = Number(code);
+    if (!known.has(n) || !grade) return;
+    const g = String(grade).trim();
+    (map[g] ||= []).push(n);
+  });
+  Object.keys(map).forEach((g) => {
+    map[g].sort((a, b) => a - b);
+  });
+  return map;
+}
+
+function sortedRatingGrades(map) {
+  const keys = Object.keys(map);
+  return keys.sort((a, b) => {
+    const ia = RATING_ORDER.indexOf(a);
+    const ib = RATING_ORDER.indexOf(b);
+    if (ia < 0 && ib < 0) return a.localeCompare(b);
+    if (ia < 0) return 1;
+    if (ib < 0) return -1;
+    return ia - ib;
+  });
+}
+
+function entityColor(id, i, grade) {
+  if (grade && RATING_COLORS[grade]) return RATING_COLORS[grade];
+  return FA_COMPARE_PALETTE[i % FA_COMPARE_PALETTE.length];
+}
+
+/** Active peer entities for charts/tables (banks or aggregated groups). */
+function resolveEntities() {
+  if (state.peerSource === 'rating') {
+    const byGrade = banksByRating();
+    const grades = (state.selectedRatings.length
+      ? state.selectedRatings
+      : sortedRatingGrades(byGrade)
+    ).filter((g) => byGrade[g]?.length);
+    return grades.slice(0, MAX_COMPARE_ENTITIES).map((grade, i) => ({
+      id: `r:${grade}`,
+      label: `${grade} · ${byGrade[grade].length} banks`,
+      short: grade,
+      codes: byGrade[grade],
+      color: entityColor(`r:${grade}`, i, grade),
+      kind: 'rating',
+      grade,
+    }));
+  }
+
+  if (state.peerSource === 'custom') {
+    const groups = loadCustomGroups().filter((g) => state.selectedGroupIds.includes(g.id) && g.codes.length);
+    return groups.slice(0, MAX_COMPARE_ENTITIES).map((g, i) => ({
+      id: `g:${g.id}`,
+      label: `${g.name} · ${g.codes.length}`,
+      short: g.name,
+      codes: g.codes,
+      color: entityColor(`g:${g.id}`, i),
+      kind: 'custom',
+    }));
+  }
+
+  // selection — one entity per sidebar bank
+  return selectedBanks().slice(0, MAX_COMPARE_ENTITIES).map((code, i) => {
+    const n = Number(code);
+    const nm = bankName(n);
+    return {
+      id: `b:${n}`,
+      label: nm,
+      short: nm,
+      codes: [n],
+      color: bankColor(n, i, nm) || entityColor(`b:${n}`, i),
+      kind: 'bank',
+    };
+  });
+}
+
+function banksNeededForEntities(entities) {
+  const set = new Set();
+  entities.forEach((e) => e.codes.forEach((c) => set.add(Number(c))));
+  return [...set].slice(0, MAX_FETCH_BANKS);
+}
+
 function cfg() {
   const iso = datasetIsoCountry();
   if (iso === 'BR') {
@@ -79,18 +212,18 @@ function cfg() {
       iso: 'BR',
       title: 'Funding Analytics',
       eyebrow: 'Brazil · ALM / Treasury',
-      sub: 'Instrument stocks from Bacen IF.data (Cosif). Tax-advantaged = LCA + LCI eligible for PF IR relief — not CRA/CRI.',
+      sub: 'Instrument stocks from Bacen IF.data (Cosif). Compare banks, rating peers, or custom groups. Tax-advantaged = LCA + LCI — not CRA/CRI.',
       instruments: BR_FUNDING_INSTRUMENTS,
       colors: BR_FUNDING_COLORS,
       fundingLabel: 'Captações',
       specialMetric: 'tax',
       specialLabel: 'Tax-advantaged eligible',
       notes: [
+        '<strong>Compare:</strong> overlay banks from the sidebar, rating baskets (when ratings exist), or custom groups you save in this tab.',
+        '<strong>Groups</strong> aggregate member stocks (sum) before ratios — peer basket, not a simple average of percentages.',
         '<strong>Eligible ≠ exempt:</strong> Cosif reports the instrument issued (LCA/LCI), not whether the holder is a tax-exempt individual.',
         '<strong>CRA / CRI</strong> are liabilities of securitizadoras, not of the bank — excluded from this funding stack.',
-        '<strong>CDB/RDB</strong> sit inside Depósitos a Prazo; IF.data does not split them publicly.',
         '<strong>Cost proxy</strong> uses quarterly Despesas de Captação / average Captações, annualized — accounting cost, not contractual coupon.',
-        'History uses Cosif legacy codes through Dec-2024 and new codes from Mar-2025.',
       ],
       b1Accounts: brFundingAccountsForRun,
       r1Accounts: () => BR_KPI.despesasCaptacao,
@@ -107,6 +240,11 @@ function cfg() {
         primaryLabel: 'LCA+LCI eligible',
         restLabel: 'other captações',
       }),
+      specialPctSeries: (rows, periodos) => {
+        const primary = brSeries(rows, BR_TAX_ELIGIBLE_CODES, periodos);
+        const total = brSeries(rows, BR_KPI.captacoes, periodos);
+        return primary.map((v, i) => (total[i] > 0 ? (v / total[i]) * 100 : null));
+      },
       costSeries: (rows, periodos) => {
         const despByP = {};
         periodos.forEach((p) => { despByP[p] = brSum(rows, BR_KPI.despesasCaptacao, p); });
@@ -120,6 +258,7 @@ function cfg() {
           return (qExp * 4 / avg) * 100;
         });
       },
+      fundingSeries: (rows, periodos) => brSeries(rows, BR_KPI.captacoes, periodos),
       taxTreatment: (inst) => (inst.taxEligible === true ? 'Eligible PF'
         : inst.taxEligible === 'partial' ? 'Partial / holder-dependent' : '—'),
     };
@@ -129,19 +268,18 @@ function cfg() {
       iso: 'CL',
       title: 'Funding Analytics',
       eyebrow: 'Chile · ALM / Treasury',
-      sub: 'CMF monthly balance (MB1) + interest expense (MR1). No LCI/LCA-style tax-exempt bank letters — focus on instrument mix, UF/FX share and cost of funds.',
+      sub: 'CMF monthly balance (MB1) + interest expense (MR1). Compare banks, Feller/local rating baskets, or custom groups.',
       instruments: CL_FUNDING_INSTRUMENTS,
       colors: CL_FUNDING_COLORS,
       fundingLabel: 'Ordinary funding',
       specialMetric: 'currency',
       specialLabel: 'UF / FX mix',
       notes: [
+        '<strong>Compare:</strong> overlay banks, rating baskets (Feller / local solvency), or custom groups saved in this browser.',
+        '<strong>Groups</strong> sum member stocks before computing UF/FX share and cost — basket view for ALM peers.',
         '<strong>No LCI/LCA equivalent:</strong> Chile has no public bank-issued letter whose coupon is generally tax-exempt for individuals.',
-        '<strong>UF vs FX:</strong> <code>monto_uf</code> is CLP indexed to UF; <code>monto_ext</code> is payable in foreign currency; <code>monto_tc</code> is CLP FX-indexed — not the same as EXT.',
-        '<strong>Core vs wholesale</strong> is a proxy: time deposits mix retail and institutional (AFP) holders — CMF does not split them.',
-        '<strong>Cost proxy</strong> uses monthly MR1 interest expense deltas (YTD reset in January) / average stock, annualized.',
-        'Capital instruments (T2 / AT1) are listed but excluded from “ordinary funding” totals.',
-        'Maturity ladder / fixed-vs-float are not in MB1 — would need C46/R13 or financial-statement notes.',
+        '<strong>UF vs FX:</strong> <code>monto_uf</code> is CLP indexed to UF; <code>monto_ext</code> is payable in foreign currency.',
+        '<strong>Cost proxy</strong> uses monthly MR1 interest expense deltas / average stock, annualized.',
       ],
       b1Accounts: clFundingAccountsForRun,
       r1Accounts: clFundingExpenseAccountsForRun,
@@ -160,13 +298,18 @@ function cfg() {
           restLabel: 'other (CLP+TC+EXT residual view uses EXT separately)',
         };
       },
+      specialPctSeries: (rows, periodos) => {
+        const codes = CL_FUNDING_INSTRUMENTS.filter((i) => i.group !== 'capital').flatMap((i) => i.codes);
+        const uf = clSeries(rows, codes, periodos, 'monto_uf');
+        const total = clSeries(rows, codes, periodos, 'monto_total');
+        return uf.map((v, i) => (total[i] > 0 ? (v / total[i]) * 100 : null));
+      },
       costSeries: (rows, periodos) => {
         const despByP = {};
         periodos.forEach((p) => { despByP[p] = clSum(rows, CL_FUNDING_EXPENSES.total, p); });
         return periodos.map((p, i) => {
           const monthExp = clExpenseMonth(despByP, p);
           if (monthExp == null || !Number.isFinite(monthExp)) return null;
-          // Expense accounts are typically negative in CMF → use absolute cost
           const flow = Math.abs(monthExp);
           const stock = clSum(rows, CL_KPI.fundingOrdinary, p);
           const prev = i > 0 ? clSum(rows, CL_KPI.fundingOrdinary, periodos[i - 1]) : stock;
@@ -175,6 +318,10 @@ function cfg() {
           return (flow * 12 / avg) * 100;
         });
       },
+      fundingSeries: (rows, periodos) => {
+        const codes = CL_FUNDING_INSTRUMENTS.filter((i) => i.group !== 'capital').flatMap((i) => i.codes);
+        return clSeries(rows, codes, periodos);
+      },
       taxTreatment: (inst) => (inst.group === 'capital' ? 'Regulatory capital'
         : inst.group === 'debt' ? 'Market debt' : '—'),
     };
@@ -182,13 +329,34 @@ function cfg() {
   return null;
 }
 
+function rowsForCodes(codes) {
+  const set = new Set(codes.map(Number));
+  return state.rows.filter((r) => set.has(Number(r.ins_cod)));
+}
+
+function latestSnapshotFor(codes) {
+  const c = cfg();
+  if (!c || !codes?.length) return null;
+  const lastP = state.periodos[state.periodos.length - 1];
+  return c.snapshot(rowsForCodes(codes), lastP);
+}
+
 async function loadFundingData() {
   const c = cfg();
   if (!c) return;
-  const banks = selectedBanks();
+
+  const entities = resolveEntities();
+  if (!entities.length) {
+    state.error = peerEmptyMessage();
+    state.loaded = false;
+    render();
+    return;
+  }
+
+  const banks = banksNeededForEntities(entities);
   const periodos = periodRange();
   if (!banks.length) {
-    state.error = 'Select at least one bank in the sidebar, then open Funding Analytics.';
+    state.error = 'No banks available for the selected peers.';
     state.loaded = false;
     render();
     return;
@@ -203,7 +371,6 @@ async function loadFundingData() {
   state.loading = true;
   state.error = null;
   state.iso = c.iso;
-  // Reset metric if switching country to an incompatible special view
   if (c.iso === 'CL' && state.metric === 'tax') state.metric = 'currency';
   if (c.iso === 'BR' && state.metric === 'currency') state.metric = 'tax';
   render();
@@ -217,6 +384,8 @@ async function loadFundingData() {
     state.periodos = periodos;
     state.rows = [...(b1 || []), ...(r1 || [])];
     state.lastBank = banks[0];
+    const ents = resolveEntities();
+    state.lastEntityId = ents[0]?.id || null;
     state.loaded = true;
   } catch (e) {
     console.error('[fundingAnalytics]', e);
@@ -228,15 +397,16 @@ async function loadFundingData() {
   }
 }
 
-function rowsForBank(code) {
-  return state.rows.filter((r) => Number(r.ins_cod) === Number(code));
-}
-
-function latestSnapshot(code) {
-  const c = cfg();
-  if (!c) return null;
-  const lastP = state.periodos[state.periodos.length - 1];
-  return c.snapshot(rowsForBank(code), lastP);
+function peerEmptyMessage() {
+  if (state.peerSource === 'rating') {
+    return datasetIsoCountry() === 'BR'
+      ? 'Brazil has no seeded local ratings. Add ratings in Banking System, or use Custom groups / sidebar banks.'
+      : 'Pick at least one rating grade that has banks (or edit ratings in Banking System).';
+  }
+  if (state.peerSource === 'custom') {
+    return 'Create a custom group and tick it to load, or switch peer source.';
+  }
+  return 'Select at least one bank in the sidebar, then open Funding Analytics.';
 }
 
 function renderKpis(snap, c) {
@@ -272,6 +442,32 @@ function renderKpis(snap, c) {
     </div>`;
 }
 
+function renderCompareKpis(entities, c) {
+  const lastP = state.periodos[state.periodos.length - 1];
+  const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
+  const head = snaps.map(({ e }) => `<th class="r">${esc(e.short)}</th>`).join('');
+  const row = (label, fmt) => `<tr><td>${esc(label)}</td>${snaps.map(({ snap }) => `<td class="r">${fmt(snap)}</td>`).join('')}</tr>`;
+  return `<div class="panel fa-panel" style="margin-bottom:18px;">
+    <div class="panel-head"><div>
+      <div class="panel-title">Peer snapshot · ${esc(periodLabel(lastP))}</div>
+      <div class="panel-sub">Aggregated stocks for groups · local reporting units</div>
+    </div></div>
+    <div class="panel-body" style="overflow-x:auto;padding:0;">
+      <table class="data fa-table">
+        <thead><tr><th>Metric</th>${head}</tr></thead>
+        <tbody>
+          ${row(c.fundingLabel, (s) => fmtKPI(s?.funding ?? s?.captacoes))}
+          ${row('Deposits', (s) => fmtKPI(s?.depositos))}
+          ${row(c.iso === 'CL' ? 'UF share' : 'LCA+LCI eligible %', (s) => (c.iso === 'CL' ? fmtPct(s?.ufPct) : fmtPct(s?.taxEligiblePct)))}
+          ${row(c.iso === 'CL' ? 'FX share' : 'LCA+LCI stock', (s) => (c.iso === 'CL' ? fmtPct(s?.fxPct) : fmtKPI(s?.taxEligible)))}
+          ${row('Loans / Deposits', (s) => fmtRatio(s?.ltd))}
+          ${row('Loans / Funding', (s) => fmtRatio(s?.ltf))}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
 function renderInstrumentTable(snap, c) {
   if (!snap) return '';
   const funding = snap.funding ?? snap.captacoes ?? 0;
@@ -299,7 +495,41 @@ function renderInstrumentTable(snap, c) {
   </table>`;
 }
 
-function drawMixChart(code, c) {
+function renderCompareInstrumentTable(entities, c) {
+  const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
+  const keys = [];
+  const seen = new Set();
+  snaps.forEach(({ snap }) => {
+    (snap?.instruments || []).forEach((inst) => {
+      if (!seen.has(inst.key) && inst.value !== 0) {
+        seen.add(inst.key);
+        keys.push(inst);
+      }
+    });
+  });
+  keys.sort((a, b) => a.label.localeCompare(b.label));
+  const head = snaps.map(({ e }) => `<th class="r" colspan="2">${esc(e.short)}</th>`).join('');
+  const sub = snaps.map(() => '<th class="r">Stock</th><th class="r">%</th>').join('');
+  const body = keys.map((inst) => {
+    const cells = snaps.map(({ snap }) => {
+      const row = snap?.instruments?.find((i) => i.key === inst.key);
+      const funding = snap?.funding ?? snap?.captacoes ?? 0;
+      const v = row?.value || 0;
+      const pct = funding > 0 ? (v / funding) * 100 : null;
+      return `<td class="r">${fmtKPI(v)}</td><td class="r">${fmtPct(pct)}</td>`;
+    }).join('');
+    return `<tr><td><span class="fa-swatch" style="background:${c.colors[inst.key] || '#64748b'}"></span>${esc(inst.label)}</td>${cells}</tr>`;
+  }).join('');
+  return `<table class="data fa-table">
+    <thead>
+      <tr><th rowspan="2">Instrument</th>${head}</tr>
+      <tr>${sub}</tr>
+    </thead>
+    <tbody>${body || '<tr><td>No instruments</td></tr>'}</tbody>
+  </table>`;
+}
+
+function drawMixChart(codes, c) {
   const canvas = document.getElementById('faMixChart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -311,7 +541,7 @@ function drawMixChart(code, c) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const bankRows = rowsForBank(code);
+  const bankRows = rowsForCodes(codes);
   const periodos = state.periodos;
   const series = c.instruments
     .filter((inst) => !(c.iso === 'CL' && inst.group === 'capital'))
@@ -367,7 +597,7 @@ function drawMixChart(code, c) {
   ctx.fillText('Funding mix · stacked stock (local currency)', pad.l, 16);
 }
 
-function drawSpecialChart(code, c) {
+function drawSpecialChart(codes, c) {
   const canvas = document.getElementById('faTaxChart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -379,7 +609,7 @@ function drawSpecialChart(code, c) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const bankRows = rowsForBank(code);
+  const bankRows = rowsForCodes(codes);
   const periodos = state.periodos;
   const sp = c.specialSeries(bankRows, periodos);
   const primary = sp.primary;
@@ -452,7 +682,7 @@ function drawSpecialChart(code, c) {
   }
 }
 
-function drawCostChart(code, c) {
+function drawCostChart(codes, c) {
   const canvas = document.getElementById('faCostChart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -464,7 +694,7 @@ function drawCostChart(code, c) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
 
-  const bankRows = rowsForBank(code);
+  const bankRows = rowsForCodes(codes);
   const periodos = state.periodos;
   const costs = c.costSeries(bankRows, periodos);
   const vals = costs.filter((v) => v != null && Number.isFinite(v));
@@ -522,14 +752,255 @@ function drawCostChart(code, c) {
   ctx.fillText('Implied funding cost proxy (annualized % of avg stock)', pad.l, 16);
 }
 
+function drawCompareChart(entities, c) {
+  const periodos = state.periodos;
+  let series;
+  let valueScale = 'percent';
+  let emptyMessage = 'No comparable series for these peers.';
+
+  if (state.metric === 'cost') {
+    series = entities.map((e) => ({
+      label: e.short,
+      color: e.color,
+      data: sparseData(c.costSeries(rowsForCodes(e.codes), periodos).map((v) => (v == null ? null : v))),
+    }));
+    emptyMessage = 'Insufficient cost data for the selected peers.';
+  } else if (state.metric === 'mix') {
+    valueScale = 'billions';
+    series = entities.map((e) => ({
+      label: e.short,
+      color: e.color,
+      data: sparseData(c.fundingSeries(rowsForCodes(e.codes), periodos)),
+    }));
+    emptyMessage = 'No funding stocks for the selected peers.';
+  } else {
+    series = entities.map((e) => ({
+      label: e.short,
+      color: e.color,
+      data: sparseData(c.specialPctSeries(rowsForCodes(e.codes), periodos)),
+    }));
+    emptyMessage = c.iso === 'CL' ? 'No UF-share series.' : 'No tax-eligible series.';
+  }
+
+  drawLineChart('faCompareChart', periodos, series, { valueScale, emptyMessage, height: 300 });
+}
+
 function setMetric(m) {
   state.metric = m;
   render();
 }
 
-function setBank(code) {
-  state.lastBank = Number(code);
+function setEntity(id) {
+  state.lastEntityId = id;
   render();
+}
+
+function setPeerSource(src) {
+  state.peerSource = src;
+  state.loaded = false;
+  state.error = null;
+  if (src === 'rating') {
+    const byGrade = banksByRating();
+    const grades = sortedRatingGrades(byGrade);
+    if (!state.selectedRatings.length && grades.length) {
+      // Default: first two grades in solvency order (e.g. AAA vs AA+)
+      state.selectedRatings = grades.slice(0, Math.min(2, grades.length));
+    }
+    if (state.selectedRatings.length >= 2) state.compare = true;
+  }
+  if (src === 'custom') {
+    const groups = loadCustomGroups();
+    if (!state.selectedGroupIds.length && groups.length) {
+      state.selectedGroupIds = groups.slice(0, 2).map((g) => g.id);
+    }
+    if (state.selectedGroupIds.length >= 2) state.compare = true;
+  }
+  if (src === 'selection' && selectedBanks().length >= 2) {
+    state.compare = true;
+  }
+  if (resolveEntities().length) loadFundingData();
+  else render();
+}
+
+function toggleRating(grade) {
+  const set = new Set(state.selectedRatings);
+  if (set.has(grade)) set.delete(grade);
+  else if (set.size < MAX_COMPARE_ENTITIES) set.add(grade);
+  // Preserve order from RATING_ORDER
+  state.selectedRatings = RATING_ORDER.filter((g) => set.has(g)).concat(
+    [...set].filter((g) => !RATING_ORDER.includes(g)),
+  );
+  state.loaded = false;
+  if (state.selectedRatings.length >= 2) state.compare = true;
+  if (resolveEntities().length) loadFundingData();
+  else render();
+}
+
+function toggleGroupId(id) {
+  const set = new Set(state.selectedGroupIds);
+  if (set.has(id)) set.delete(id);
+  else if (set.size < MAX_COMPARE_ENTITIES) set.add(id);
+  state.selectedGroupIds = [...set];
+  state.loaded = false;
+  if (state.selectedGroupIds.length >= 2) state.compare = true;
+  if (resolveEntities().length) loadFundingData();
+  else render();
+}
+
+function setCompare(on) {
+  state.compare = !!on;
+  render();
+}
+
+function saveDraftGroup() {
+  const name = (state.draftGroupName || '').trim();
+  const codes = [...new Set(state.draftGroupCodes.map(Number).filter(Number.isFinite))];
+  if (!name || codes.length < 2) {
+    state.error = 'Custom group needs a name and at least 2 banks.';
+    render();
+    return;
+  }
+  const groups = loadCustomGroups();
+  const id = `g${Date.now().toString(36)}`;
+  groups.push({ id, name, codes });
+  saveCustomGroups(groups);
+  state.selectedGroupIds = [...new Set([...state.selectedGroupIds, id])].slice(0, MAX_COMPARE_ENTITIES);
+  state.draftGroupName = '';
+  state.draftGroupCodes = [];
+  state.showGroupEditor = false;
+  state.error = null;
+  state.loaded = false;
+  state.compare = state.selectedGroupIds.length >= 2;
+  reloadAfterGroupSave();
+}
+
+function deleteGroup(id) {
+  const groups = loadCustomGroups().filter((g) => g.id !== id);
+  saveCustomGroups(groups);
+  state.selectedGroupIds = state.selectedGroupIds.filter((x) => x !== id);
+  state.loaded = false;
+  if (resolveEntities().length) loadFundingData();
+  else render();
+}
+
+function reloadAfterGroupSave() {
+  if (resolveEntities().length) loadFundingData();
+  else render();
+}
+
+function renderPeerToolbar(c) {
+  const sources = [
+    { key: 'selection', label: 'Banks' },
+    { key: 'rating', label: 'By rating' },
+    { key: 'custom', label: 'Custom groups' },
+  ].map((s) => `<button type="button" class="rcbtn ${state.peerSource === s.key ? 'active' : ''}" data-fa-peer="${s.key}">${s.label}</button>`).join('');
+
+  const compareBtns = `
+    <div class="fa-compare-toggle" role="group" aria-label="View mode">
+      <button type="button" class="rcbtn ${!state.compare ? 'active' : ''}" data-fa-compare="0">Single</button>
+      <button type="button" class="rcbtn ${state.compare ? 'active' : ''}" data-fa-compare="1">Compare</button>
+    </div>`;
+
+  let peerDetail = '';
+  if (state.peerSource === 'selection') {
+    peerDetail = `<div class="fa-peer-hint">Uses banks selected in the sidebar${ST.compareMode ? '' : ' — turn on <strong>Bank Comparison</strong> to pick several'}.</div>`;
+  } else if (state.peerSource === 'rating') {
+    const byGrade = banksByRating();
+    const grades = sortedRatingGrades(byGrade);
+    if (!grades.length) {
+      peerDetail = `<div class="fa-peer-hint">${c.iso === 'BR'
+        ? 'No local ratings seeded for Brazil yet. Edit ratings in Banking System, or build Custom groups.'
+        : 'No ratings available. Set them in Banking System (Config / rankings).'}</div>`;
+    } else {
+      const chips = grades.map((g) => {
+        const on = state.selectedRatings.includes(g);
+        const n = byGrade[g].length;
+        return `<button type="button" class="rcbtn fa-rating-chip ${on ? 'active' : ''}" data-fa-rating="${esc(g)}" title="${n} banks" style="${on ? `border-color:${RATING_COLORS[g] || '#64748b'}` : ''}">${esc(g)} <span class="fa-chip-n">${n}</span></button>`;
+      }).join('');
+      peerDetail = `<div class="fa-rating-chips">${chips}</div>
+        <div class="fa-peer-hint">Each grade is one peer basket (stocks summed). Select up to ${MAX_COMPARE_ENTITIES} grades.</div>`;
+    }
+  } else {
+    const groups = loadCustomGroups();
+    const list = groups.length
+      ? groups.map((g) => {
+        const on = state.selectedGroupIds.includes(g.id);
+        return `<label class="fa-group-row">
+          <input type="checkbox" data-fa-group-id="${esc(g.id)}" ${on ? 'checked' : ''}>
+          <span class="fa-group-name">${esc(g.name)}</span>
+          <span class="fa-chip-n">${g.codes.length}</span>
+          <button type="button" class="fa-group-del" data-fa-del-group="${esc(g.id)}" title="Delete group">×</button>
+        </label>`;
+      }).join('')
+      : '<div class="fa-peer-hint">No custom groups yet — create one below.</div>';
+
+    const banks = knownBankCodes();
+    const editor = state.showGroupEditor ? `
+      <div class="fa-group-editor">
+        <input type="text" id="faGroupName" class="fa-input" maxlength="48" placeholder="Group name (e.g. Big 4 peers)" value="${esc(state.draftGroupName)}">
+        <div class="fa-group-bank-grid">
+          ${banks.map((code) => {
+            const on = state.draftGroupCodes.includes(code);
+            return `<label class="fa-bank-check"><input type="checkbox" data-fa-draft-bank="${code}" ${on ? 'checked' : ''}> ${esc(bankName(code))}</label>`;
+          }).join('')}
+        </div>
+        <div class="fa-group-editor-actions">
+          <button type="button" class="rcbtn active" id="faSaveGroup">Save group</button>
+          <button type="button" class="rcbtn" id="faCancelGroup">Cancel</button>
+        </div>
+      </div>` : `<button type="button" class="rcbtn" id="faNewGroup">+ New group</button>`;
+
+    peerDetail = `<div class="fa-group-list">${list}</div>${editor}`;
+  }
+
+  return `
+    <div class="fa-peer-bar">
+      <div class="fa-peer-row">
+        <div class="fa-peer-sources">${sources}</div>
+        ${compareBtns}
+      </div>
+      <div class="fa-peer-detail">${peerDetail}</div>
+    </div>`;
+}
+
+function bindPeerToolbar() {
+  document.querySelectorAll('[data-fa-peer]').forEach((btn) => {
+    btn.addEventListener('click', () => setPeerSource(btn.getAttribute('data-fa-peer')));
+  });
+  document.querySelectorAll('[data-fa-compare]').forEach((btn) => {
+    btn.addEventListener('click', () => setCompare(btn.getAttribute('data-fa-compare') === '1'));
+  });
+  document.querySelectorAll('[data-fa-rating]').forEach((btn) => {
+    btn.addEventListener('click', () => toggleRating(btn.getAttribute('data-fa-rating')));
+  });
+  document.querySelectorAll('[data-fa-group-id]').forEach((cb) => {
+    cb.addEventListener('change', () => toggleGroupId(cb.getAttribute('data-fa-group-id')));
+  });
+  document.querySelectorAll('[data-fa-del-group]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      deleteGroup(btn.getAttribute('data-fa-del-group'));
+    });
+  });
+  document.getElementById('faNewGroup')?.addEventListener('click', () => {
+    state.showGroupEditor = true;
+    state.draftGroupCodes = selectedBanks().map(Number);
+    render();
+  });
+  document.getElementById('faCancelGroup')?.addEventListener('click', () => {
+    state.showGroupEditor = false;
+    render();
+  });
+  document.getElementById('faSaveGroup')?.addEventListener('click', () => {
+    state.draftGroupName = document.getElementById('faGroupName')?.value || '';
+    state.draftGroupCodes = [...document.querySelectorAll('[data-fa-draft-bank]:checked')]
+      .map((el) => Number(el.getAttribute('data-fa-draft-bank')));
+    saveDraftGroup();
+  });
+  document.getElementById('faGroupName')?.addEventListener('input', (e) => {
+    state.draftGroupName = e.target.value;
+  });
 }
 
 function render() {
@@ -553,47 +1024,79 @@ function render() {
   }
 
   if (state.error && !state.loaded) {
-    root.innerHTML = `<div class="fa-empty">
-      <div class="fa-empty-title" style="color:var(--red);">${esc(state.error)}</div>
-      <button type="button" class="rcbtn" id="faRetry" style="margin-top:12px;">Retry</button>
-    </div>`;
+    root.innerHTML = `
+      ${renderPeerToolbar(c)}
+      <div class="fa-empty">
+        <div class="fa-empty-title" style="color:var(--red);">${esc(state.error)}</div>
+        <button type="button" class="rcbtn" id="faRetry" style="margin-top:12px;">Retry</button>
+      </div>`;
+    bindPeerToolbar();
     document.getElementById('faRetry')?.addEventListener('click', () => loadFundingData());
     return;
   }
 
-  // Country switched after a prior load — force refresh
   if (state.loaded && state.iso && state.iso !== c.iso) {
     state.loaded = false;
   }
 
   if (!state.loaded) {
-    root.innerHTML = `<div class="fa-empty">
-      <div class="fa-empty-title">${esc(c.title)}</div>
-      <div class="fa-empty-sub">${esc(c.sub)}</div>
-      <button type="button" class="rcbtn active" id="faLoad" style="margin-top:14px;">Load funding data</button>
-    </div>`;
+    root.innerHTML = `
+      ${renderPeerToolbar(c)}
+      <div class="fa-empty">
+        <div class="fa-empty-title">${esc(c.title)}</div>
+        <div class="fa-empty-sub">${esc(c.sub)}</div>
+        <button type="button" class="rcbtn active" id="faLoad" style="margin-top:14px;">Load funding data</button>
+      </div>`;
+    bindPeerToolbar();
     document.getElementById('faLoad')?.addEventListener('click', () => loadFundingData());
     return;
   }
 
-  const code = state.lastBank || state.banks[0];
-  const snap = latestSnapshot(code);
-  const bankTabs = state.banks.map((b) => {
-    const on = Number(b) === Number(code);
-    return `<button type="button" class="rcbtn ${on ? 'active' : ''}" data-fa-bank="${b}">${esc(bankName(b))}</button>`;
+  const entities = resolveEntities().filter((e) => {
+    // Only show entities whose banks were fetched
+    const have = new Set(state.banks.map(Number));
+    return e.codes.some((code) => have.has(Number(code)));
+  });
+
+  if (!entities.length) {
+    state.loaded = false;
+    state.error = peerEmptyMessage();
+    render();
+    return;
+  }
+
+  let active = entities.find((e) => e.id === state.lastEntityId) || entities[0];
+  state.lastEntityId = active.id;
+
+  const comparing = state.compare && entities.length >= 2;
+  const entityTabs = entities.map((e) => {
+    const on = !comparing && e.id === active.id;
+    return `<button type="button" class="rcbtn ${on ? 'active' : ''}" data-fa-entity="${esc(e.id)}" ${comparing ? 'disabled title="Switch to Single to focus one peer"' : ''}>
+      <span class="fa-swatch" style="background:${e.color}"></span>${esc(e.short)}
+    </button>`;
   }).join('');
 
   const metricBtns = [
-    { key: 'mix', label: 'Funding mix' },
-    { key: c.specialMetric, label: c.specialLabel },
+    { key: 'mix', label: comparing ? 'Funding stock' : 'Funding mix' },
+    { key: c.specialMetric, label: comparing ? (c.iso === 'CL' ? 'UF share %' : 'Eligible %') : c.specialLabel },
     { key: 'cost', label: 'Cost proxy' },
   ].map((m) => `<button type="button" class="rcbtn ${state.metric === m.key ? 'active' : ''}" data-fa-metric="${m.key}">${m.label}</button>`).join('');
 
-  const chartId = state.metric === 'mix' ? 'faMixChart'
-    : state.metric === 'cost' ? 'faCostChart' : 'faTaxChart';
-  const panelTitle = state.metric === 'mix' ? 'Funding mix over time'
-    : state.metric === 'cost' ? 'Implied funding cost'
-    : c.specialLabel;
+  const chartId = comparing ? 'faCompareChart'
+    : state.metric === 'mix' ? 'faMixChart'
+      : state.metric === 'cost' ? 'faCostChart' : 'faTaxChart';
+
+  const panelTitle = comparing
+    ? (state.metric === 'mix' ? 'Total funding · peer compare'
+      : state.metric === 'cost' ? 'Implied funding cost · peer compare'
+        : `${c.specialLabel} · peer compare`)
+    : (state.metric === 'mix' ? 'Funding mix over time'
+      : state.metric === 'cost' ? 'Implied funding cost'
+        : c.specialLabel);
+
+  const focusLabel = comparing
+    ? entities.map((e) => e.short).join(' · ')
+    : active.label;
 
   root.innerHTML = `
     <div class="fa-hero">
@@ -605,18 +1108,20 @@ function render() {
       <button type="button" class="rcbtn" id="faReload">Refresh</button>
     </div>
 
+    ${renderPeerToolbar(c)}
+
     <div class="fa-toolbar">
-      <div class="fa-bank-tabs">${bankTabs}</div>
+      <div class="fa-bank-tabs">${entityTabs}</div>
       <div class="fa-metric-tabs">${metricBtns}</div>
     </div>
 
-    ${renderKpis(snap, c)}
+    ${comparing ? renderCompareKpis(entities, c) : renderKpis(latestSnapshotFor(active.codes), c)}
 
     <div class="panel fa-panel" style="margin-top:22px;">
       <div class="panel-head">
         <div>
           <div class="panel-title">${esc(panelTitle)}</div>
-          <div class="panel-sub" id="faTaxSub">${esc(bankName(code))} · ${esc(periodLabel(state.periodos[0]))} — ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
+          <div class="panel-sub" id="faTaxSub">${esc(focusLabel)} · ${esc(periodLabel(state.periodos[0]))} — ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
         </div>
       </div>
       <div class="panel-body">
@@ -629,28 +1134,42 @@ function render() {
     <div class="panel fa-panel" style="margin-top:18px;">
       <div class="panel-head">
         <div>
-          <div class="panel-title">Instrument breakdown · ${esc(periodLabel(snap.periodo))}</div>
-          <div class="panel-sub">Share of ${esc(c.fundingLabel)} · local reporting units</div>
+          <div class="panel-title">Instrument breakdown · ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
+          <div class="panel-sub">${comparing ? 'Share of funding by peer' : `Share of ${esc(c.fundingLabel)} · local reporting units`}</div>
         </div>
       </div>
-      <div class="panel-body" style="overflow-x:auto;padding:0;">${renderInstrumentTable(snap, c)}</div>
+      <div class="panel-body" style="overflow-x:auto;padding:0;">
+        ${comparing
+          ? renderCompareInstrumentTable(entities, c)
+          : renderInstrumentTable(latestSnapshotFor(active.codes), c)}
+      </div>
     </div>
 
     <ul class="fa-notes">${c.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   `;
 
   document.getElementById('faReload')?.addEventListener('click', () => loadFundingData());
-  document.querySelectorAll('[data-fa-bank]').forEach((btn) => {
-    btn.addEventListener('click', () => setBank(btn.getAttribute('data-fa-bank')));
+  bindPeerToolbar();
+  document.querySelectorAll('[data-fa-entity]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      setEntity(btn.getAttribute('data-fa-entity'));
+    });
   });
   document.querySelectorAll('[data-fa-metric]').forEach((btn) => {
     btn.addEventListener('click', () => setMetric(btn.getAttribute('data-fa-metric')));
   });
 
   requestAnimationFrame(() => {
-    if (state.metric === 'mix') drawMixChart(code, c);
-    else if (state.metric === 'cost') drawCostChart(code, c);
-    else drawSpecialChart(code, c);
+    if (comparing) {
+      drawCompareChart(entities, c);
+    } else if (state.metric === 'mix') {
+      drawMixChart(active.codes, c);
+    } else if (state.metric === 'cost') {
+      drawCostChart(active.codes, c);
+    } else {
+      drawSpecialChart(active.codes, c);
+    }
   });
 }
 
@@ -664,8 +1183,12 @@ export function renderFundingAnalytics() {
   }
   if (state.loaded && state.iso && state.iso !== iso) {
     state.loaded = false;
+    state.selectedRatings = [];
+    state.selectedGroupIds = [];
   }
-  if (!state.loaded && !state.loading && selectedBanks().length) {
+  // Auto-load when peers are ready
+  const entities = resolveEntities();
+  if (!state.loaded && !state.loading && entities.length) {
     loadFundingData();
   } else {
     render();
