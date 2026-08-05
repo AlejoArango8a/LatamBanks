@@ -12,7 +12,7 @@ import {
   brSeries,
   brSum,
   brResultReset,
-} from '../brCuentas.js?v=bmon66';
+} from '../brCuentas.js?v=bmon67';
 import {
   CL_FUNDING_INSTRUMENTS,
   CL_FUNDING_COLORS,
@@ -24,11 +24,11 @@ import {
   clSeries,
   clSum,
   clExpenseMonth,
-} from '../clCuentas.js?v=bmon66';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon66';
-import { fetchData } from '../api.js?v=bmon66';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon66';
-import { btgBlue } from '../config.js?v=bmon66';
+} from '../clCuentas.js?v=bmon67';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon67';
+import { fetchData } from '../api.js?v=bmon67';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon67';
+import { btgBlue } from '../config.js?v=bmon67';
 
 const FUNDING_COUNTRIES = new Set(['BR', 'CL']);
 
