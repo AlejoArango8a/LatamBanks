@@ -1,18 +1,18 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon65';
-import { bankColor } from '../config.js?v=bmon65';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon65';
-import { sumRows } from '../api.js?v=bmon65';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon65';
-import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon65';
-import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon65';
-import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon65';
-import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon65';
-import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon65';
-import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon65';
-import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon65';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon66';
+import { bankColor } from '../config.js?v=bmon66';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon66';
+import { sumRows } from '../api.js?v=bmon66';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon66';
+import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon66';
+import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon66';
+import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon66';
+import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon66';
+import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon66';
+import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon66';
+import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon66';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
@@ -56,12 +56,21 @@ export const BAL_SECTIONS = {
     {c:'230000000',l:'Derivados de Cobertura Contable',cls:'i1'},
     {c:'240000000',l:'Pasivos Financieros a Costo Amortizado',cls:'i1'},
     {c:'241000000',l:'Depósitos a la Vista',cls:'i2'},
+    {c:'241000100',l:'Cuentas corrientes',cls:'i3'},
+    {c:'241000201',l:'Cuentas de ahorro a la vista',cls:'i3'},
     {c:'242000000',l:'Depósitos y Captaciones a Plazo',cls:'i2'},
+    {c:'242000100',l:'Depósitos a plazo',cls:'i3'},
+    {c:'242000200',l:'Cuentas de ahorro a plazo',cls:'i3'},
     {c:'243000000',l:'Obligaciones por Retrocompra',cls:'i2'},
     {c:'244000000',l:'Obligaciones con Bancos',cls:'i2'},
     {c:'245000000',l:'Instrumentos de Deuda Emitidos',cls:'i2'},
+    {c:'245000100',l:'Letras de Crédito',cls:'i3'},
+    {c:'245000200',l:'Bonos',cls:'i3'},
+    {c:'246000000',l:'Otras Obligaciones Financieras',cls:'i2'},
     {c:'250000000',l:'Obligaciones por Arrendamiento',cls:'i1'},
     {c:'255000000',l:'Capital Regulatorio Emitido',cls:'i1'},
+    {c:'255000100',l:'Bonos subordinados (T2)',cls:'i2'},
+    {c:'255000200',l:'Bonos AT1 / sin plazo fijo',cls:'i2'},
     {c:'260000000',l:'Provisiones por Contingencias',cls:'i1'},
     {c:'270000000',l:'Provisiones Especiales Riesgo de Crédito',cls:'i1'},
     {c:'290000000',l:'Otros Pasivos',cls:'i1'},
