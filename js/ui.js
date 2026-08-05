@@ -2,13 +2,13 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon71';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon71';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon71';
-import { setStatus, showErr } from './utils.js?v=bmon71';
-import { sumRows } from './api.js?v=bmon71';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon71';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon71';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon72';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon72';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
+import { setStatus, showErr } from './utils.js?v=bmon72';
+import { sumRows } from './api.js?v=bmon72';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon72';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -105,6 +105,26 @@ export function fillBankList() {
   }
 }
 
+/** After sidebar selection changes: refresh the active analytics sheet, else Bank Monitor. */
+function scheduleSelectionRefresh() {
+  clearTimeout(ST._autoRunTimer);
+  ST._autoRunTimer = setTimeout(() => {
+    const active = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
+    if (active === 'funding') {
+      window.refreshFundingAnalytics?.();
+      return;
+    }
+    if (active === 'assetquality') {
+      window.refreshAssetQuality?.();
+      return;
+    }
+    if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
+      window.renderBankDetail?.();
+    }
+    if (ST.selected.size > 0 && ST.periodos.length > 0) window.run();
+  }, 300);
+}
+
 export function toggleBank(c, on) {
   // Individual mode (compare OFF): one bank at a time — selecting replaces the rest.
   if (!ST.compareMode) {
@@ -124,13 +144,7 @@ export function toggleBank(c, on) {
     }
     document.getElementById('bankLimitMsg').style.display = 'none';
     fillBankList();
-    if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
-      window.renderBankDetail?.();
-    }
-    if (ST.selected.size > 0 && ST.periodos.length > 0) {
-      clearTimeout(ST._autoRunTimer);
-      ST._autoRunTimer = setTimeout(() => window.run(), 300);
-    }
+    scheduleSelectionRefresh();
     return;
   }
 
@@ -156,13 +170,7 @@ export function toggleBank(c, on) {
     const cb = el.querySelector('input');
     if (cb) el.classList.toggle('on', cb.checked);
   });
-  if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
-    window.renderBankDetail?.();
-  }
-  if (ST.selected.size > 0 && ST.periodos.length > 0) {
-    clearTimeout(ST._autoRunTimer);
-    ST._autoRunTimer = setTimeout(() => window.run(), 300);
-  }
+  scheduleSelectionRefresh();
 }
 
 export function selAll(on) {
@@ -174,6 +182,7 @@ export function selAll(on) {
     ranked.slice(0, 5).forEach(c => { ST.selected.add(c); ST.selectedOrder.push(c); });
   }
   fillBankList();
+  scheduleSelectionRefresh();
 }
 
 /** Reflect ST.compareMode on the toggle switch UI. */
@@ -193,7 +202,7 @@ export function setCompareMode(on) {
   ST.compareMode = !!on;
   if (!ST.compareMode && ST.selected.size > 1) {
     const iso  = datasetIsoCountry();
-    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 1000080336 : 59;
+    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 1000080336 : iso === 'UY' ? 157 : 59;
     const keep = ST.selected.has(btg) ? btg : ST.selectedOrder[0];
     ST.selected.clear();
     ST.selectedOrder = [];
@@ -201,12 +210,9 @@ export function setCompareMode(on) {
     ST.selectedOrder.push(keep);
     document.getElementById('bankLimitMsg').style.display = 'none';
     fillBankList();
-    if (ST.periodos.length > 0) {
-      clearTimeout(ST._autoRunTimer);
-      ST._autoRunTimer = setTimeout(() => window.run(), 300);
-    }
   }
   syncCompareToggleUI();
+  scheduleSelectionRefresh();
 }
 
 /** onclick handler for the Compare toggle (flips current mode). */

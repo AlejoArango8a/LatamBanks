@@ -1,12 +1,7 @@
 // ============================================================
 // Asset Quality — credit risk sheet
 // Chile (CMF b1+c1) · Colombia (CUIF b1) · Peru (SBS b1) · Uruguay (BCU b1+q1)
-// Peers: sidebar banks · rating baskets · custom groups
-//
-// NOTE: this file is a deliberate fork of js/views/fundingAnalytics.js. The peer
-// picker, group editor, chart-style toggle and compare table are duplicated on
-// purpose to keep this PR reviewable; the shared shell should be extracted into
-// js/views/peerAnalyticsShell.js in a follow-up (blueprint §4.4).
+// Peers: up to 5 banks from the left sidebar Bank Comparison
 // ============================================================
 import {
   aqSeries,
@@ -34,19 +29,17 @@ import {
   UY_AQ_COLORS,
   uyAqAccountsForRun,
   uyAqSnapshot,
-} from '../aqCuentas.js?v=bmon71';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon71';
-import { fetchData } from '../api.js?v=bmon71';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon71';
-import { btgBlue, bankColor, RATING_COLORS } from '../config.js?v=bmon71';
-import { getCBRatings } from './ranking.js?v=bmon71';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon71';
+} from '../aqCuentas.js?v=bmon72';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
+import { fetchData } from '../api.js?v=bmon72';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
+import { btgBlue, bankColor } from '../config.js?v=bmon72';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon72';
 
 const ASSET_QUALITY_COUNTRIES = new Set(['CL', 'CO', 'PE', 'UY']);
-const MAX_COMPARE_ENTITIES = 6;
-const MAX_FETCH_BANKS = 24;
+const MAX_COMPARE_ENTITIES = 5;
+const MAX_FETCH_BANKS = 5;
 const AQ_COMPARE_PALETTE = ['#0d3b66', '#16a34a', '#dc2626', '#0d9488', '#db2777', '#ca8a04', '#0284c7', '#a16207'];
-const RATING_ORDER = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-'];
 
 const state = {
   loading: false,
@@ -57,16 +50,9 @@ const state = {
   periodos: [],
   rowsByTipo: {},
   iso: null,
-  // Peer / compare — same model (and same saved groups) as Funding Analytics
-  peerSource: 'selection', // selection | rating | custom
+  selectionKey: '',
   compare: false,
-  selectedRatings: [],
-  selectedGroupIds: [],
   lastEntityId: null,
-  showGroupEditor: false,
-  draftGroupName: '',
-  draftGroupCodes: [],
-  bankSearch: '',
   chartStyle: 'bars', // bars | lines | area
 };
 
@@ -93,122 +79,26 @@ function periodRange() {
   return ST.periodos.filter((p) => p >= desde && p <= hasta);
 }
 
-/** Same localStorage key as Funding Analytics — one saved peer group, both sheets. */
-function groupsStorageKey() {
-  return `faBankGroups_${datasetIsoCountry()}`;
-}
-
-function loadCustomGroups() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(groupsStorageKey()) || '[]');
-    if (!Array.isArray(raw)) return [];
-    return raw
-      .filter((g) => g && g.id && g.name && Array.isArray(g.codes))
-      .map((g) => ({
-        id: String(g.id),
-        name: String(g.name).slice(0, 48),
-        codes: [...new Set(g.codes.map(Number).filter((n) => Number.isFinite(n)))],
-      }));
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomGroups(groups) {
-  try {
-    localStorage.setItem(groupsStorageKey(), JSON.stringify(groups));
-  } catch { /* ignore quota */ }
-}
-
-function knownBankCodes() {
-  const codes = Object.keys(ST.bancos || {})
-    .map(Number)
-    .filter((c) => Number.isFinite(c) && c !== 999);
-  if (ST._patrimonioRanking?.length) {
-    const rankMap = {};
-    ST._patrimonioRanking.forEach((r, i) => { rankMap[Number(r)] = i; });
-    codes.sort((a, b) => (rankMap[a] ?? 9999) - (rankMap[b] ?? 9999) || a - b);
-  } else {
-    codes.sort((a, b) => a - b);
-  }
-  return codes;
-}
-
 function bankDisplayName(code) {
   return bankName(Number(code)) || `Bank ${code}`;
 }
 
-function groupMemberPreview(codes, max = 3) {
-  const names = (codes || []).map((c) => bankDisplayName(c)).filter(Boolean);
-  if (!names.length) return 'no banks';
-  if (names.length <= max) return names.join(', ');
-  return `${names.slice(0, max).join(', ')} +${names.length - max}`;
+function selectionKey() {
+  return selectedBanks().slice(0, MAX_COMPARE_ENTITIES).map(Number).join(',');
 }
 
-function banksByRating() {
-  const ratings = getCBRatings() || {};
-  const known = new Set(knownBankCodes());
-  const map = {};
-  Object.entries(ratings).forEach(([code, grade]) => {
-    const n = Number(code);
-    if (!known.has(n) || !grade) return;
-    const g = String(grade).trim();
-    (map[g] ||= []).push(n);
-  });
-  Object.keys(map).forEach((g) => {
-    map[g].sort((a, b) => a - b);
-  });
-  return map;
+function syncCompareFromSelection({ preferCompareOnMulti = false } = {}) {
+  const n = selectedBanks().length;
+  if (n <= 1) state.compare = false;
+  else if (preferCompareOnMulti) state.compare = true;
 }
 
-function sortedRatingGrades(map) {
-  const keys = Object.keys(map);
-  return keys.sort((a, b) => {
-    const ia = RATING_ORDER.indexOf(a);
-    const ib = RATING_ORDER.indexOf(b);
-    if (ia < 0 && ib < 0) return a.localeCompare(b);
-    if (ia < 0) return 1;
-    if (ib < 0) return -1;
-    return ia - ib;
-  });
-}
-
-function entityColor(id, i, grade) {
-  if (grade && RATING_COLORS[grade]) return RATING_COLORS[grade];
+function entityColor(i) {
   return AQ_COMPARE_PALETTE[i % AQ_COMPARE_PALETTE.length];
 }
 
-/** Active peer entities for charts/tables (banks or aggregated groups). */
+/** Active peer entities: one per sidebar-selected bank (max 5). */
 function resolveEntities() {
-  if (state.peerSource === 'rating') {
-    const byGrade = banksByRating();
-    const grades = (state.selectedRatings.length
-      ? state.selectedRatings
-      : sortedRatingGrades(byGrade)
-    ).filter((g) => byGrade[g]?.length);
-    return grades.slice(0, MAX_COMPARE_ENTITIES).map((grade, i) => ({
-      id: `r:${grade}`,
-      label: `${grade} · ${byGrade[grade].length} banks`,
-      short: grade,
-      codes: byGrade[grade],
-      color: entityColor(`r:${grade}`, i, grade),
-      kind: 'rating',
-      grade,
-    }));
-  }
-
-  if (state.peerSource === 'custom') {
-    const groups = loadCustomGroups().filter((g) => state.selectedGroupIds.includes(g.id) && g.codes.length);
-    return groups.slice(0, MAX_COMPARE_ENTITIES).map((g, i) => ({
-      id: `g:${g.id}`,
-      label: `${g.name} · ${g.codes.length}`,
-      short: g.name,
-      codes: g.codes,
-      color: entityColor(`g:${g.id}`, i),
-      kind: 'custom',
-    }));
-  }
-
   return selectedBanks().slice(0, MAX_COMPARE_ENTITIES).map((code, i) => {
     const n = Number(code);
     const nm = bankDisplayName(n);
@@ -217,7 +107,7 @@ function resolveEntities() {
       label: nm,
       short: nm,
       codes: [n],
-      color: bankColor(n, i, nm) || entityColor(`b:${n}`, i),
+      color: bankColor(n, i, nm) || entityColor(i),
       kind: 'bank',
     };
   });
@@ -258,7 +148,7 @@ function cfg() {
       iso: 'CL',
       title: 'Asset Quality',
       eyebrow: 'Chile · Credit risk',
-      sub: 'CMF monthly balance (MB1) for the loan book and the complementary credit-quality tree (C1). Compare banks, rating baskets, or custom groups.',
+      sub: 'CMF monthly balance (MB1) for the loan book and the complementary credit-quality tree (C1). Compare up to 5 banks via the sidebar Bank Comparison.',
       loadingLabel: 'Chile CMF',
       tipos: ['b1', 'c1'],
       accounts: clAqAccountsForRun,
@@ -316,8 +206,8 @@ function cfg() {
         return out;
       },
       notes: [
-        '<strong>Compare:</strong> overlay banks, rating baskets (Feller / local solvency), or custom groups — the same groups you saved in Funding Analytics.',
-        '<strong>Groups</strong> sum member stocks before computing NPL, coverage and FX share — a peer basket, never an average of percentages.',
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Compare mode</strong> overlays each selected bank as its own series (up to 5) from the sidebar Bank Comparison.',
         '<strong>Mora 90+ (<code>857000000</code>)</strong> is the CMF 90-day arrears line at amortized cost. <strong>Cartera deteriorada (<code>811000000</code>)</strong> is wider and is the better lead for wholesale banks.',
         '<strong>Coverage</strong> = provisiones por riesgo de crédito (<code>149000000</code>) ÷ mora 90+. Coverage of the impaired book is shown alongside.',
         '<strong>Currency:</strong> <code>monto_uf</code> is CLP indexed to UF; <code>monto_ext</code> is payable in foreign currency. Chile is the only country with a currency split at loan level.',
@@ -337,7 +227,7 @@ function cfg() {
       iso: 'CO',
       title: 'Asset Quality',
       eyebrow: 'Colombia · Credit risk',
-      sub: 'SFC / CUIF monthly balance. Full A→E risk-category grid by segment, with deterioro per segment. Compare banks, rating baskets, or custom groups.',
+      sub: 'SFC / CUIF monthly balance. Full A→E risk-category grid by segment, with deterioro per segment. Compare up to 5 banks via the sidebar Bank Comparison.',
       loadingLabel: 'Colombia SFC',
       tipos: ['b1'],
       accounts: coAqAccountsForRun,
@@ -402,8 +292,8 @@ function cfg() {
         return out;
       },
       notes: [
-        '<strong>Compare:</strong> overlay banks, rating baskets, or custom groups — the same groups you saved in Funding Analytics.',
-        '<strong>Groups</strong> sum member stocks before computing ratios — a peer basket, never an average of percentages.',
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Compare mode</strong> overlays each selected bank as its own series (up to 5) from the sidebar Bank Comparison.',
         '<strong>C+D+E</strong> is SFC\u2019s "cartera de mayor riesgo"; it is wider than a 90-day NPL and is the comparable Colombian metric.',
         '<strong>Coverage</strong> = deterioro (parent accounts) ÷ C+D+E. The contracyclical (<code>148700</code>) and general (<code>149800</code>) components are inside the numerator.',
       ],
@@ -415,7 +305,7 @@ function cfg() {
       iso: 'PE',
       title: 'Asset Quality',
       eyebrow: 'Peru · Credit risk',
-      sub: 'SBS Boletín B-2201. Vigentes / refinanciados / atrasados ladder with the judicial-collection tail. Compare banks, rating baskets, or custom groups.',
+      sub: 'SBS Boletín B-2201. Vigentes / refinanciados / atrasados ladder with the judicial-collection tail. Compare up to 5 banks via the sidebar Bank Comparison.',
       loadingLabel: 'Peru SBS',
       tipos: ['b1'],
       accounts: peAqAccountsForRun,
@@ -467,8 +357,8 @@ function cfg() {
         'No currency split and no residency split: <code>monto_ext</code> is 0 for Peru.',
       ],
       notes: [
-        '<strong>Compare:</strong> overlay banks, rating baskets, or custom groups — the same groups you saved in Funding Analytics.',
-        '<strong>Groups</strong> sum member stocks before computing ratios — a peer basket, never an average of percentages.',
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Compare mode</strong> overlays each selected bank as its own series (up to 5) from the sidebar Bank Comparison.',
         '<strong>Gross loans</strong> = vigentes + refinanciados/reestructurados + atrasados. <strong>NPL</strong> = atrasados (SBS morosidad).',
         '<strong>Cartera de alto riesgo</strong> adds refinanciados to atrasados — the metric Peruvian analysts quote alongside morosidad.',
       ],
@@ -567,13 +457,13 @@ function cfg() {
         out.push('<code>1.2.4 vinculadas</code> / <code>1.2.5 no vinculadas</code> is exposure to <strong>foreign banks</strong>, a different concept from non-resident borrowers in the real economy (<code>1.4</code>). They are never added into one "foreign exposure" number here.');
         out.push('Central-bank placements (<code>1.1 BCU</code>) are excluded: Anexo 2 row 11 excludes them and they are liquidity, not credit.');
         if (snap && snap.hasPublished === false) {
-          out.push('Published Anexo 4 ratios are shown for a <strong>single bank</strong> only — for a peer basket we recompute from summed stocks rather than averaging regulator ratios.');
+          out.push('Published Anexo 4 ratios are shown per bank in Single view; in Compare we show each bank\'s own published ratio (or stock-based recompute) side by side.');
         }
         return out;
       },
       notes: [
-        '<strong>Compare:</strong> overlay banks, rating baskets, or custom groups — the same groups you saved in Funding Analytics.',
-        '<strong>Groups</strong> sum member stocks before computing ratios — a peer basket, never an average of published percentages.',
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Compare mode</strong> overlays each selected bank as its own series (up to 5) from the sidebar Bank Comparison.',
         '<strong>Uruguay publishes true residency of the borrower</strong>, not a currency proxy: residency and currency are different stories (a bank can be 53% dollarised and 2% non-resident).',
         '<strong>No sector-of-industry breakdown:</strong> BCU splits credit by counterparty type and residency, not by commercial / consumer / mortgage — Uruguay cannot join a sector-mix chart.',
         '<strong>FX ≈ USD, not exactly:</strong> BCU reports Actividad en M/E (all foreign currency, predominantly USD).',
@@ -651,6 +541,7 @@ async function loadAssetQualityData() {
     state.rowsByTipo = byTipo;
     const ents = resolveEntities();
     state.lastEntityId = ents[0]?.id || null;
+    state.selectionKey = selectionKey();
     state.loaded = true;
   } catch (e) {
     console.error('[assetQuality]', e);
@@ -663,13 +554,7 @@ async function loadAssetQualityData() {
 }
 
 function peerEmptyMessage() {
-  if (state.peerSource === 'rating') {
-    return 'Pick at least one rating grade that has banks (or edit ratings in Banking System).';
-  }
-  if (state.peerSource === 'custom') {
-    return 'Create a custom group and tick it to load, or switch peer source.';
-  }
-  return 'Select at least one bank in the sidebar, then open Asset Quality.';
+  return 'Select at least one bank in the sidebar (Bank Comparison), then open Asset Quality.';
 }
 
 // ------------------------------------------------------------
@@ -1065,56 +950,6 @@ function setEntity(id) {
   render();
 }
 
-function setPeerSource(src) {
-  state.peerSource = src;
-  state.loaded = false;
-  state.error = null;
-  if (src === 'rating') {
-    const byGrade = banksByRating();
-    const grades = sortedRatingGrades(byGrade);
-    if (!state.selectedRatings.length && grades.length) {
-      state.selectedRatings = grades.slice(0, Math.min(2, grades.length));
-    }
-    if (state.selectedRatings.length >= 2) state.compare = true;
-  }
-  if (src === 'custom') {
-    const groups = loadCustomGroups();
-    if (!state.selectedGroupIds.length && groups.length) {
-      state.selectedGroupIds = groups.slice(0, 2).map((g) => g.id);
-    }
-    if (state.selectedGroupIds.length >= 2) state.compare = true;
-  }
-  if (src === 'selection' && selectedBanks().length >= 2) {
-    state.compare = true;
-  }
-  if (resolveEntities().length) loadAssetQualityData();
-  else render();
-}
-
-function toggleRating(grade) {
-  const set = new Set(state.selectedRatings);
-  if (set.has(grade)) set.delete(grade);
-  else if (set.size < MAX_COMPARE_ENTITIES) set.add(grade);
-  state.selectedRatings = RATING_ORDER.filter((g) => set.has(g)).concat(
-    [...set].filter((g) => !RATING_ORDER.includes(g)),
-  );
-  state.loaded = false;
-  if (state.selectedRatings.length >= 2) state.compare = true;
-  if (resolveEntities().length) loadAssetQualityData();
-  else render();
-}
-
-function toggleGroupId(id) {
-  const set = new Set(state.selectedGroupIds);
-  if (set.has(id)) set.delete(id);
-  else if (set.size < MAX_COMPARE_ENTITIES) set.add(id);
-  state.selectedGroupIds = [...set];
-  state.loaded = false;
-  if (state.selectedGroupIds.length >= 2) state.compare = true;
-  if (resolveEntities().length) loadAssetQualityData();
-  else render();
-}
-
 function setCompare(on) {
   state.compare = !!on;
   render();
@@ -1126,186 +961,30 @@ function setChartStyle(style) {
   render();
 }
 
-function saveDraftGroup() {
-  const name = (state.draftGroupName || '').trim();
-  const codes = [...new Set(state.draftGroupCodes.map(Number).filter(Number.isFinite))];
-  if (!name || codes.length < 2) {
-    state.error = 'Custom group needs a name and at least 2 banks.';
-    render();
-    return;
-  }
-  const groups = loadCustomGroups();
-  const id = `g${Date.now().toString(36)}`;
-  groups.push({ id, name, codes });
-  saveCustomGroups(groups);
-  state.selectedGroupIds = [...new Set([...state.selectedGroupIds, id])].slice(0, MAX_COMPARE_ENTITIES);
-  state.draftGroupName = '';
-  state.draftGroupCodes = [];
-  state.showGroupEditor = false;
-  state.error = null;
-  state.loaded = false;
-  state.compare = state.selectedGroupIds.length >= 2;
-  if (resolveEntities().length) loadAssetQualityData();
-  else render();
-}
-
-function deleteGroup(id) {
-  const groups = loadCustomGroups().filter((g) => g.id !== id);
-  saveCustomGroups(groups);
-  state.selectedGroupIds = state.selectedGroupIds.filter((x) => x !== id);
-  state.loaded = false;
-  if (resolveEntities().length) loadAssetQualityData();
-  else render();
-}
-
-function renderPeerToolbar(c) {
-  const sources = [
-    { key: 'selection', label: 'Banks' },
-    { key: 'rating', label: 'By rating' },
-    { key: 'custom', label: 'Custom groups' },
-  ].map((s) => `<button type="button" class="rcbtn ${state.peerSource === s.key ? 'active' : ''}" data-aq-peer="${s.key}">${s.label}</button>`).join('');
-
+function renderPeerToolbar() {
   const compareBtns = `
     <div class="fa-compare-toggle" role="group" aria-label="View mode">
       <button type="button" class="rcbtn ${!state.compare ? 'active' : ''}" data-aq-compare="0">Single</button>
       <button type="button" class="rcbtn ${state.compare ? 'active' : ''}" data-aq-compare="1">Compare</button>
     </div>`;
-
-  let peerDetail = '';
-  if (state.peerSource === 'selection') {
-    peerDetail = `<div class="fa-peer-hint">Uses banks selected in the sidebar${ST.compareMode ? '' : ' — turn on <strong>Bank Comparison</strong> to pick several'}.</div>`;
-  } else if (state.peerSource === 'rating') {
-    const byGrade = banksByRating();
-    const grades = sortedRatingGrades(byGrade);
-    if (!grades.length) {
-      peerDetail = '<div class="fa-peer-hint">No ratings available. Set them in Banking System (Config / rankings), or build Custom groups.</div>';
-    } else {
-      const chips = grades.map((g) => {
-        const on = state.selectedRatings.includes(g);
-        const n = byGrade[g].length;
-        return `<button type="button" class="rcbtn fa-rating-chip ${on ? 'active' : ''}" data-aq-rating="${esc(g)}" title="${n} banks" style="${on ? `border-color:${RATING_COLORS[g] || '#64748b'}` : ''}">${esc(g)} <span class="fa-chip-n">${n}</span></button>`;
-      }).join('');
-      peerDetail = `<div class="fa-rating-chips">${chips}</div>
-        <div class="fa-peer-hint">Each grade is one peer basket (stocks summed, then ratios). Select up to ${MAX_COMPARE_ENTITIES} grades.</div>`;
-    }
-  } else {
-    const groups = loadCustomGroups();
-    const list = groups.length
-      ? groups.map((g) => {
-        const on = state.selectedGroupIds.includes(g.id);
-        return `<label class="fa-group-row">
-          <input type="checkbox" data-aq-group-id="${esc(g.id)}" ${on ? 'checked' : ''}>
-          <span class="fa-group-name">${esc(g.name)}</span>
-          <span class="fa-chip-n">${g.codes.length}</span>
-          <button type="button" class="fa-group-del" data-aq-del-group="${esc(g.id)}" title="Delete group">×</button>
-          <div class="fa-group-members">${esc(groupMemberPreview(g.codes))}</div>
-        </label>`;
-      }).join('')
-      : '<div class="fa-peer-hint">No custom groups yet — create one below. Groups are shared with Funding Analytics.</div>';
-
-    const q = (state.bankSearch || '').trim().toLowerCase();
-    const banks = knownBankCodes().filter((code) => {
-      if (!q) return true;
-      const nm = bankDisplayName(code).toLowerCase();
-      return nm.includes(q) || String(code).includes(q);
-    });
-    const shown = banks.slice(0, q ? 80 : 40);
-    const more = banks.length - shown.length;
-
-    const editor = state.showGroupEditor ? `
-      <div class="fa-group-editor">
-        <input type="text" id="aqGroupName" class="fa-input" maxlength="48" placeholder="Group name (e.g. Big 4 peers)" value="${esc(state.draftGroupName)}">
-        <input type="search" id="aqBankSearch" class="fa-input" placeholder="Search banks…" value="${esc(state.bankSearch)}" autocomplete="off">
-        <div class="fa-group-bank-grid">
-          ${shown.map((code) => {
-            const on = state.draftGroupCodes.includes(code);
-            return `<label class="fa-bank-check"><input type="checkbox" data-aq-draft-bank="${code}" ${on ? 'checked' : ''}> <span>${esc(bankDisplayName(code))}</span></label>`;
-          }).join('') || '<div class="fa-peer-hint">No banks match that search.</div>'}
-        </div>
-        ${more > 0 ? `<div class="fa-peer-hint">Showing ${shown.length} of ${banks.length} — type to narrow.</div>` : ''}
-        <div class="fa-group-editor-actions">
-          <button type="button" class="rcbtn active" id="aqSaveGroup">Save group</button>
-          <button type="button" class="rcbtn" id="aqCancelGroup">Cancel</button>
-        </div>
-      </div>` : '<button type="button" class="rcbtn" id="aqNewGroup">+ New group</button>';
-
-    peerDetail = `<div class="fa-group-list">${list}</div>${editor}`;
-  }
-
+  const n = Math.min(selectedBanks().length, MAX_COMPARE_ENTITIES);
+  const hint = n
+    ? `<div class="fa-peer-hint">${n} bank${n === 1 ? '' : 's'} from the sidebar${ST.compareMode || n === 1 ? '' : ' — turn on <strong>Bank Comparison</strong> to pick up to 5'}.</div>`
+    : '<div class="fa-peer-hint">Select banks in the left sidebar. Turn on <strong>Bank Comparison</strong> to graph/table up to 5 at once.</div>';
   return `
     <div class="fa-peer-bar">
       <div class="fa-peer-row">
-        <div class="fa-peer-sources">${sources}</div>
+        <div class="fa-peer-hint" style="margin:0;">Sidebar peers · max ${MAX_COMPARE_ENTITIES}</div>
         ${compareBtns}
       </div>
-      <div class="fa-peer-detail">${peerDetail}</div>
+      <div class="fa-peer-detail">${hint}</div>
     </div>`;
 }
 
-function collectDraftCodes() {
-  const visibleChecked = [...document.querySelectorAll('[data-aq-draft-bank]:checked')]
-    .map((el) => Number(el.getAttribute('data-aq-draft-bank')));
-  const visibleCodes = new Set(
-    [...document.querySelectorAll('[data-aq-draft-bank]')].map((el) => Number(el.getAttribute('data-aq-draft-bank'))),
-  );
-  const keptHidden = state.draftGroupCodes.filter((c) => !visibleCodes.has(c));
-  state.draftGroupCodes = [...new Set([...keptHidden, ...visibleChecked])];
-}
-
 function bindPeerToolbar() {
-  document.querySelectorAll('[data-aq-peer]').forEach((btn) => {
-    btn.addEventListener('click', () => setPeerSource(btn.getAttribute('data-aq-peer')));
-  });
   document.querySelectorAll('[data-aq-compare]').forEach((btn) => {
     btn.addEventListener('click', () => setCompare(btn.getAttribute('data-aq-compare') === '1'));
   });
-  document.querySelectorAll('[data-aq-rating]').forEach((btn) => {
-    btn.addEventListener('click', () => toggleRating(btn.getAttribute('data-aq-rating')));
-  });
-  document.querySelectorAll('[data-aq-group-id]').forEach((cb) => {
-    cb.addEventListener('change', () => toggleGroupId(cb.getAttribute('data-aq-group-id')));
-  });
-  document.querySelectorAll('[data-aq-del-group]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      deleteGroup(btn.getAttribute('data-aq-del-group'));
-    });
-  });
-  document.getElementById('aqNewGroup')?.addEventListener('click', () => {
-    state.showGroupEditor = true;
-    state.draftGroupCodes = selectedBanks().map(Number);
-    state.bankSearch = '';
-    render();
-  });
-  document.getElementById('aqCancelGroup')?.addEventListener('click', () => {
-    state.showGroupEditor = false;
-    state.bankSearch = '';
-    render();
-  });
-  document.getElementById('aqSaveGroup')?.addEventListener('click', () => {
-    state.draftGroupName = document.getElementById('aqGroupName')?.value || '';
-    collectDraftCodes();
-    saveDraftGroup();
-  });
-  document.getElementById('aqGroupName')?.addEventListener('input', (e) => {
-    state.draftGroupName = e.target.value;
-  });
-  const searchEl = document.getElementById('aqBankSearch');
-  if (searchEl) {
-    searchEl.addEventListener('input', (e) => {
-      collectDraftCodes();
-      state.draftGroupName = document.getElementById('aqGroupName')?.value || state.draftGroupName;
-      state.bankSearch = e.target.value || '';
-      render();
-      const again = document.getElementById('aqBankSearch');
-      if (again) {
-        again.focus();
-        const len = again.value.length;
-        again.setSelectionRange(len, len);
-      }
-    });
-  }
 }
 
 function render() {
@@ -1330,7 +1009,7 @@ function render() {
 
   if (state.error && !state.loaded) {
     root.innerHTML = `
-      ${renderPeerToolbar(c)}
+      ${renderPeerToolbar()}
       <div class="fa-empty">
         <div class="fa-empty-title" style="color:var(--red);">${esc(state.error)}</div>
         <button type="button" class="rcbtn" id="aqRetry" style="margin-top:12px;">Retry</button>
@@ -1343,10 +1022,13 @@ function render() {
   if (state.loaded && state.iso && state.iso !== c.iso) {
     state.loaded = false;
   }
+  if (state.loaded && state.selectionKey !== selectionKey()) {
+    state.loaded = false;
+  }
 
   if (!state.loaded) {
     root.innerHTML = `
-      ${renderPeerToolbar(c)}
+      ${renderPeerToolbar()}
       <div class="fa-empty">
         <div class="fa-empty-title">${esc(c.title)}</div>
         <div class="fa-empty-sub">${esc(c.sub)}</div>
@@ -1421,7 +1103,7 @@ function render() {
       <button type="button" class="rcbtn" id="aqReload">Refresh</button>
     </div>
 
-    ${renderPeerToolbar(c)}
+    ${renderPeerToolbar()}
 
     <div class="fa-toolbar">
       <div class="fa-bank-tabs">${entityTabs}</div>
@@ -1498,21 +1180,36 @@ function render() {
   });
 }
 
+/** Force reload after sidebar bank selection changes. */
+export function refreshAssetQuality() {
+  const prevKey = state.selectionKey;
+  const nextKey = selectionKey();
+  syncCompareFromSelection({ preferCompareOnMulti: prevKey !== nextKey && selectedBanks().length >= 2 });
+  state.loaded = false;
+  state.error = null;
+  renderAssetQuality();
+}
+
 export function renderAssetQuality() {
   const iso = datasetIsoCountry();
   if (!ASSET_QUALITY_COUNTRIES.has(iso)) {
     state.loaded = false;
     state.iso = null;
+    state.selectionKey = '';
     render();
     return;
   }
   if (state.loaded && state.iso && state.iso !== iso) {
     state.loaded = false;
-    state.selectedRatings = [];
-    state.selectedGroupIds = [];
+    state.selectionKey = '';
   }
+  if (state.loaded && state.selectionKey !== selectionKey()) {
+    state.loaded = false;
+  }
+  syncCompareFromSelection();
   const entities = resolveEntities();
   if (!state.loaded && !state.loading && entities.length) {
+    if (entities.length >= 2) state.compare = true;
     loadAssetQualityData();
   } else {
     render();
