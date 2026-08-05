@@ -7,8 +7,8 @@
 // has; the view renders "—" plus a one-line reason for the rest, never a zero.
 // Evidence for every code below: HANDOFF_AssetQuality_Blueprint.md §1–§2.
 // ============================================================
-import { PE_KPI } from './peCuentas.js?v=bmon70';
-import { CO_CUIF, CO_DETERIORO_PARENT_CODES, coMoraNumerator } from './coCuentas.js?v=bmon70';
+import { PE_KPI } from './peCuentas.js?v=bmon71';
+import { CO_CUIF, CO_DETERIORO_PARENT_CODES, coMoraNumerator } from './coCuentas.js?v=bmon71';
 
 // ------------------------------------------------------------
 // Shared helpers

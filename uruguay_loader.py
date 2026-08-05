@@ -11,6 +11,8 @@ Universo: bancos oficiales (grupo99) + bancos privados (grupo997).
 Valores: miles de pesos → se guardan en pesos enteros (×1000).
   Situación / Resultados: M/N → monto_clp, M/E → monto_ext, Total → monto_total.
   Anexo 1 (plazos contractuales): cuentas sintéticas A1_{SECTION}_{TERM}.
+  Anexo 2 (créditos/deterioro/residencia): A2_* en b1.
+  Anexo 4 (indicadores): A4_* en tipo=q1 (percent×100).
 
 Modos:
   (sin flags)     Incremental: meses del catálogo aún no en carga_log
@@ -316,8 +318,101 @@ def parse_anexo1(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
     return rows, plan
 
 
+# Anexo 2 — apertura de créditos y deterioro (activo). Cuentas sintéticas A2_*.
+# Labels carry BCU numbering (e.g. "1.4. Créditos … no residente"); we emit A2_1_4.
+_A2_SPECIAL = {
+    "créditos": ("A2_GROSS", "Créditos brutos (Anexo 2)"),
+    "creditos": ("A2_GROSS", "Créditos brutos (Anexo 2)"),
+    "(deterioro)": ("A2_D_TOTAL", "Deterioro total (Anexo 2)"),
+}
+
+
+def _a2_cuenta_from_label(lab: str) -> tuple[str, str] | None:
+    """Map Anexo 2 label → (cuenta sintética, descripción)."""
+    raw = re.sub(r"\s+", " ", str(lab or "").strip())
+    if not raw:
+        return None
+    low = raw.lower()
+    if low in _A2_SPECIAL:
+        return _A2_SPECIAL[low]
+
+    # "1.3.d. (Deterioro)" / "2.2.3.d (Deterioro)" / "1.d. (Deterioro)"
+    m_d = re.match(r"^(\d+(?:\.\d+)*)\.?\s*d\.?\s*(?:\(|$)", low)
+    if m_d:
+        code = "A2_" + m_d.group(1).replace(".", "_") + "_D"
+        return code, raw
+
+    # "1. Créditos vigentes" / "1.4. Créditos … no residente" / "2.2.3 Créditos morosos"
+    m = re.match(r"^(\d+(?:\.\d+)*)\.?\s+(.+)$", raw)
+    if m:
+        code = "A2_" + m.group(1).replace(".", "_")
+        return code, raw
+
+    return None
+
+
+def parse_anexo2(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea Anexo 2 (créditos + deterioro) con MN/ME/Total → b1 rows A2_*."""
+    rows = []
+    plan: dict[str, str] = {}
+    for r in range(sh.nrows):
+        parsed = _a2_cuenta_from_label(sh.cell_value(r, 0))
+        if not parsed:
+            continue
+        cuenta, desc = parsed
+        mn, me, tot = _mn_me_total(sh, r)
+        rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, mn, 0, 0, me, tot))
+        plan[cuenta] = desc
+    return rows, plan
+
+
+# Anexo 4 — indicadores (ratios). Stored as tipo='q1'; value in monto_total.
+_A4_KEYS = {
+    "iv.1": "A4_IV_1",       # Morosidad
+    "iv.2": "A4_IV_2",
+    "iv.3": "A4_IV_3",       # Grado de deterioro total
+    "vii.1": "A4_VII_1",     # Dolarización créditos SNF
+    "vii.2": "A4_VII_2",     # Dolarización depósitos SNF
+    "vii.3": "A4_VII_3",
+    "vii.4": "A4_VII_4",
+    "vii.5": "A4_VII_5",     # Créditos a no residentes / créditos brutos SNF
+    "vii.6": "A4_VII_6",     # Depósitos de no residentes
+    "i.2": "A4_I_2",         # Cobertura deterioro vencidos
+}
+
+
+def parse_anexo4(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea Anexo 4 indicadores; emite tipo=q1 con monto_total = valor %.
+
+    Ratios must NEVER be summed across banks — frontend recomputes from stocks for groups.
+    """
+    rows = []
+    plan: dict[str, str] = {}
+    for r in range(sh.nrows):
+        lab = str(sh.cell_value(r, 0) or "").strip()
+        if not lab:
+            continue
+        m = re.match(r"^([IVX]+)\.(\d+)\s*[-–]\s*(.+)$", lab, flags=re.I)
+        if not m:
+            continue
+        key = f"{m.group(1).lower()}.{m.group(2)}"
+        cuenta = _A4_KEYS.get(key)
+        if not cuenta:
+            continue
+        try:
+            raw = sh.cell_value(r, 1 if sh.ncols > 1 else 0)
+            val = float(raw)
+        except (TypeError, ValueError):
+            continue
+        # Store as percent ×100 (2.19% → 219) — matches aqRatioFromQ1 in aqCuentas.js
+        scaled = int(round(val * 100))
+        rows.append((COUNTRY, periodo, "q1", ins_cod, cuenta, 0, 0, 0, 0, scaled))
+        plan[cuenta] = m.group(3).strip()[:120]
+    return rows, plan
+
+
 def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
-    """Parsea Situación (b1) + Resultados (r1) + Anexo 1 (plazos). Retorna (nombre, rows, plan_pairs)."""
+    """Parsea Situación (b1) + Resultados (r1) + Anexo 1/2/4. Retorna (nombre, rows, plan_pairs)."""
     book = xlrd.open_workbook(file_contents=data)
     nombre = ""
     if "Indice" in book.sheet_names():
@@ -357,11 +452,25 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
             plan[cuenta] = desc
 
     # Anexo 1 — apertura por plazos (vista / buckets) con MN/ME
-    anexo_name = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 1")), None)
-    if anexo_name:
-        a_rows, a_plan = parse_anexo1(book.sheet_by_name(anexo_name), ins_cod, periodo)
+    anexo1 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 1")), None)
+    if anexo1:
+        a_rows, a_plan = parse_anexo1(book.sheet_by_name(anexo1), ins_cod, periodo)
         rows.extend(a_rows)
         plan.update(a_plan)
+
+    # Anexo 2 — créditos brutos / residencia / deterioro
+    anexo2 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 2")), None)
+    if anexo2:
+        a2_rows, a2_plan = parse_anexo2(book.sheet_by_name(anexo2), ins_cod, periodo)
+        rows.extend(a2_rows)
+        plan.update(a2_plan)
+
+    # Anexo 4 — indicadores (tipo q1)
+    anexo4 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 4")), None)
+    if anexo4:
+        a4_rows, a4_plan = parse_anexo4(book.sheet_by_name(anexo4), ins_cod, periodo)
+        rows.extend(a4_rows)
+        plan.update(a4_plan)
 
     if not nombre:
         nombre = f"Institución {ins_cod}"
