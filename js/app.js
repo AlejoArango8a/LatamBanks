@@ -18,6 +18,7 @@ import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updat
 import { renderBankDetail } from './views/bankDetail.js?v=bmon70';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon70';
 import { renderFundingAnalytics } from './views/fundingAnalytics.js?v=bmon70';
+import { renderAssetQuality } from './views/assetQuality.js?v=bmon70';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon70';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon70';
 
@@ -341,6 +342,7 @@ window.renderRatingsEditor = renderRatingsEditor;
 window.updateRating       = updateRating;
 window.renderBtgBanks     = renderBtgBanks;
 window.renderFundingAnalytics = renderFundingAnalytics;
+window.renderAssetQuality = renderAssetQuality;
 
 // Config tab
 window.populateConfig   = populateConfig;

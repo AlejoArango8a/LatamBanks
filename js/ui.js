@@ -277,11 +277,13 @@ export function showTab(tab) {
     : isoTab === 'MX' ? MX_DISABLED_TABS
     : isoTab === 'PA' ? PA_DISABLED_TABS
     : NON_FUNDING_COUNTRY_DISABLED;
-  const blockedEff = FUNDING_ENABLED_ISO.includes(isoTab)
-    ? blocked
-    : [...new Set([...blocked, 'funding'])];
+  const blockedEff = [...new Set([
+    ...blocked,
+    ...(FUNDING_ENABLED_ISO.includes(isoTab) ? [] : ['funding']),
+    ...(ASSET_QUALITY_ENABLED_ISO.includes(isoTab) ? [] : ['assetquality']),
+  ])];
   if (blockedEff.includes(tab)) return;
-  ['resumen','bankdetail','chileanbanks','btgbanks','funding','accountview','balance','resultados','comparativo','config'].forEach(t => {
+  ['resumen','bankdetail','chileanbanks','btgbanks','funding','assetquality','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -291,7 +293,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', assetquality:'Asset Quality', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -321,6 +323,7 @@ export function showTab(tab) {
   if (tab === 'chileanbanks') window.renderChileanBanks();
   if (tab === 'btgbanks')     window.renderBtgBanks?.();
   if (tab === 'funding')      window.renderFundingAnalytics?.();
+  if (tab === 'assetquality') window.renderAssetQuality?.();
   if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();
@@ -452,6 +455,9 @@ const BR_DISABLED_TABS = [];
 const CL_DISABLED_TABS = [];
 const UY_DISABLED_TABS = [];
 const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
+// Countries whose regulator publishes a loan-quality tree we can stand behind.
+// Widens as each loader phase lands (blueprint §4.7).
+const ASSET_QUALITY_ENABLED_ISO = ['CL', 'CO', 'PE', 'UY'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -459,6 +465,7 @@ const DETAIL_TAB_TITLES = {
   balance: 'Balance Sheet',
   resultados: 'Income Statement',
   funding: 'Funding Analytics',
+  assetquality: 'Asset Quality',
 };
 
 export function syncCountryDisabledTabs() {
@@ -472,6 +479,7 @@ export function syncCountryDisabledTabs() {
     : iso === 'PA' ? [...PA_DISABLED_TABS]
     : [...NON_FUNDING_COUNTRY_DISABLED];
   if (!FUNDING_ENABLED_ISO.includes(iso) && !disabled.includes('funding')) disabled.push('funding');
+  if (!ASSET_QUALITY_ENABLED_ISO.includes(iso) && !disabled.includes('assetquality')) disabled.push('assetquality');
 
   document.querySelectorAll('.tab[data-tab]').forEach((btn) => {
     const key = btn.getAttribute('data-tab');
@@ -482,7 +490,9 @@ export function syncCountryDisabledTabs() {
     if (off) {
       btn.title = key === 'funding'
         ? 'Funding Analytics is available for Brazil, Chile and Uruguay'
-        : `${DETAIL_TAB_TITLES[key]} not available for this country`;
+        : key === 'assetquality'
+          ? 'Asset Quality is available for Chile, Colombia, Peru and Uruguay'
+          : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');
     }
