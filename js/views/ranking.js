@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon69';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon69';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon70';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon70';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,17 +22,17 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon69';
-import { CO_CUIF } from '../coCuentas.js?v=bmon69';
-import { BR_KPI } from '../brCuentas.js?v=bmon69';
-import { UY_KPI } from '../uyCuentas.js?v=bmon69';
-import { PE_KPI } from '../peCuentas.js?v=bmon69';
-import { US_KPI } from '../usCuentas.js?v=bmon69';
-import { AR_KPI } from '../arCuentas.js?v=bmon69';
-import { MX_KPI } from '../mxCuentas.js?v=bmon69';
-import { PA_KPI } from '../paCuentas.js?v=bmon69';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon69';
-import { apiDatos } from '../api.js?v=bmon69';
+import { FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon70';
+import { CO_CUIF } from '../coCuentas.js?v=bmon70';
+import { BR_KPI } from '../brCuentas.js?v=bmon70';
+import { UY_KPI } from '../uyCuentas.js?v=bmon70';
+import { PE_KPI } from '../peCuentas.js?v=bmon70';
+import { US_KPI } from '../usCuentas.js?v=bmon70';
+import { AR_KPI } from '../arCuentas.js?v=bmon70';
+import { MX_KPI } from '../mxCuentas.js?v=bmon70';
+import { PA_KPI } from '../paCuentas.js?v=bmon70';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon70';
+import { apiDatos } from '../api.js?v=bmon70';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 

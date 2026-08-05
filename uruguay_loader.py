@@ -8,7 +8,9 @@ Fuente: Boletín informativo mensual
   → institucion{ID}.xls (Estado de Situación + Resultados + anexos)
 
 Universo: bancos oficiales (grupo99) + bancos privados (grupo997).
-Valores: miles de pesos → se guardan en pesos enteros (×1000) en monto_total.
+Valores: miles de pesos → se guardan en pesos enteros (×1000).
+  Situación / Resultados: M/N → monto_clp, M/E → monto_ext, Total → monto_total.
+  Anexo 1 (plazos contractuales): cuentas sintéticas A1_{SECTION}_{TERM}.
 
 Modos:
   (sin flags)     Incremental: meses del catálogo aún no en carga_log
@@ -223,8 +225,99 @@ def _cell_num(sh, r: int, c: int) -> int:
         return 0
 
 
+def _mn_me_total(sh, r: int) -> tuple[int, int, int]:
+    """Lee M/N, M/E y Total según layout de la hoja.
+
+    Situación / Resultados: 4 cols → MN=1, ME=2, Total=3
+    Anexo 1: 6 cols → MN=3, ME=4, Total=5
+    """
+    if sh.ncols >= 6:
+        return _cell_num(sh, r, 3), _cell_num(sh, r, 4), _cell_num(sh, r, 5)
+    if sh.ncols >= 4:
+        return _cell_num(sh, r, 1), _cell_num(sh, r, 2), _cell_num(sh, r, 3)
+    total_col = sh.ncols - 1 if sh.ncols else 0
+    tot = _cell_num(sh, r, total_col)
+    return 0, 0, tot
+
+
+# Anexo 1 — plazos contractuales (pasivos). Cuentas sintéticas A1_*.
+_A1_SECTION_KEYS = {
+    "banco central del uruguay": "BCU",
+    "depósitos sector financiero": "DEPSF",
+    "depositos sector financiero": "DEPSF",
+    "depósitos sector no financiero": "DEPSNF",
+    "depositos sector no financiero": "DEPSNF",
+    "débitos representados por valores negociables": "VALORES",
+    "debitos representados por valores negociables": "VALORES",
+    "otros": "OTROS",
+}
+_A1_TERM_KEYS = {
+    "vista": "VISTA",
+    "menor 30 días": "LT30",
+    "menor 30 dias": "LT30",
+    "menor 91 días": "LT91",
+    "menor 91 dias": "LT91",
+    "menor 181 días": "LT181",
+    "menor 181 dias": "LT181",
+    "menor 367 días": "LT367",
+    "menor 367 dias": "LT367",
+    "menor 3 años": "LT3Y",
+    "menor 3 anos": "LT3Y",
+    "igual o mayor 3 años": "GE3Y",
+    "igual o mayor 3 anos": "GE3Y",
+}
+
+
+def parse_anexo1(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea Anexo 1 (plazos contractuales) solo del bloque de PASIVOS.
+
+    Emite cuentas sintéticas A1_{SECTION}_{TERM} con MN→monto_clp, ME→monto_ext.
+    """
+    rows = []
+    plan: dict[str, str] = {}
+    in_pasivos = False
+    section = None
+
+    for r in range(sh.nrows):
+        c0 = str(sh.cell_value(r, 0) or "").strip()
+        c1 = str(sh.cell_value(r, 1) or "").strip() if sh.ncols > 1 else ""
+        c2 = str(sh.cell_value(r, 2) or "").strip() if sh.ncols > 2 else ""
+
+        low0 = c0.lower()
+        if "pasivos financieros" in low0 and "costo amortizado" in low0:
+            in_pasivos = True
+            section = None
+            continue
+        if low0.startswith("créditos") or low0.startswith("creditos"):
+            in_pasivos = False
+            section = None
+            continue
+        if not in_pasivos:
+            continue
+
+        # Nueva subsección de pasivo (col1 con nombre, col2 vacío)
+        if c1 and not c2:
+            key = _A1_SECTION_KEYS.get(c1.lower())
+            section = key
+            continue
+
+        if not section or not c2:
+            continue
+        term = _A1_TERM_KEYS.get(c2.lower())
+        if not term:
+            continue
+
+        mn, me, tot = _mn_me_total(sh, r)
+        cuenta = f"A1_{section}_{term}"
+        desc = f"Anexo1 {section} · {c2}"
+        rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, mn, 0, 0, me, tot))
+        plan[cuenta] = desc
+
+    return rows, plan
+
+
 def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
-    """Parsea Situación (b1) + Resultados (r1). Retorna (nombre, rows, plan_pairs)."""
+    """Parsea Situación (b1) + Resultados (r1) + Anexo 1 (plazos). Retorna (nombre, rows, plan_pairs)."""
     book = xlrd.open_workbook(file_contents=data)
     nombre = ""
     if "Indice" in book.sheet_names():
@@ -242,10 +335,8 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
             if not parsed:
                 continue
             cuenta, desc = parsed
-            # Columna Total = índice 3 (MN=1, ME=2, Total=3)
-            total_col = 3 if sh.ncols > 3 else sh.ncols - 1
-            val = _cell_num(sh, r, total_col)
-            rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, 0, 0, 0, 0, val))
+            mn, me, tot = _mn_me_total(sh, r)
+            rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, mn, 0, 0, me, tot))
             plan[cuenta] = desc
 
     if "Resultados" in book.sheet_names():
@@ -261,10 +352,16 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
             if desc.lower() == "resultado del ejercicio" or cuenta == "S_resultado_del_ejercicio":
                 cuenta = "R_EJERCICIO"
                 desc = "Resultado del ejercicio"
-            total_col = 3 if sh.ncols > 3 else sh.ncols - 1
-            val = _cell_num(sh, r, total_col)
-            rows.append((COUNTRY, periodo, "r1", ins_cod, cuenta, 0, 0, 0, 0, val))
+            mn, me, tot = _mn_me_total(sh, r)
+            rows.append((COUNTRY, periodo, "r1", ins_cod, cuenta, mn, 0, 0, me, tot))
             plan[cuenta] = desc
+
+    # Anexo 1 — apertura por plazos (vista / buckets) con MN/ME
+    anexo_name = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 1")), None)
+    if anexo_name:
+        a_rows, a_plan = parse_anexo1(book.sheet_by_name(anexo_name), ins_cod, periodo)
+        rows.extend(a_rows)
+        plan.update(a_plan)
 
     if not nombre:
         nombre = f"Institución {ins_cod}"
@@ -434,7 +531,7 @@ def load_month(conn, periodo: str) -> None:
             "monto_ext",
             "monto_total",
         ],
-        ["monto_total"],
+        ["monto_clp", "monto_uf", "monto_tc", "monto_ext", "monto_total"],
         ["country", "periodo", "tipo", "ins_cod", "cuenta"],
         all_rows,
     )

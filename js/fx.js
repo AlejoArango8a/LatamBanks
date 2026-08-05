@@ -2,8 +2,8 @@
 // FX — tipo de cambio USD → moneda local (CL/CO/BR/PE/UY/AR/MX; US/PA = 1)
 // Fuentes en cascada; falla cerrada (usdRate = null) si todas fallan.
 // ============================================================
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon69';
-import { paisCurrency, paisLocale } from './paises.js?v=bmon69';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon70';
+import { paisCurrency, paisLocale } from './paises.js?v=bmon70';
 
 const FX_TIMEOUT_MS = 8000;
 
