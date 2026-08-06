@@ -229,7 +229,7 @@ def _find_capital_sheet(wb):
     return None
 
 
-def _collect_col_headers(ws, max_row: int = 9, max_col: int | None = None) -> dict[int, list[str]]:
+def _collect_col_headers(ws, max_row: int = 16, max_col: int | None = None) -> dict[int, list[str]]:
     """col → list of non-empty header strings from top rows (stop before bank names)."""
     mc = max_col or min(ws.max_column or 40, 60)
     out: dict[int, list[str]] = {}
@@ -238,8 +238,14 @@ def _collect_col_headers(ws, max_row: int = 9, max_col: int | None = None) -> di
         re.I,
     )
     for r in range(1, max_row + 1):
-        name_cell = ws.cell(r, 2).value
-        if isinstance(name_cell, str) and bank_re.match(name_cell.strip()):
+        # Bank names may sit in col B or C depending on workbook vintage.
+        stop = False
+        for nc in (2, 3):
+            name_cell = ws.cell(r, nc).value
+            if isinstance(name_cell, str) and bank_re.match(name_cell.strip()):
+                stop = True
+                break
+        if stop:
             break
         for c in range(1, mc + 1):
             v = ws.cell(r, c).value
@@ -397,9 +403,23 @@ _BANK_NAME_RE = re.compile(
 )
 
 
-def _iter_bank_rows(ws, name_col: int = 2):
+def _detect_name_col(ws) -> int:
+    """CMF workbooks put institution names in col B or C depending on vintage."""
+    for nc in (2, 3):
+        hits = 0
+        for r in range(1, min(40, (ws.max_row or 0) + 1)):
+            v = ws.cell(r, nc).value
+            if isinstance(v, str) and _BANK_NAME_RE.match(v.strip()):
+                hits += 1
+                if hits >= 2:
+                    return nc
+    return 2
+
+
+def _iter_bank_rows(ws, name_col: int | None = None):
+    nc = name_col or _detect_name_col(ws)
     for r in range(1, (ws.max_row or 0) + 1):
-        v = ws.cell(r, name_col).value
+        v = ws.cell(r, nc).value
         if not v or not isinstance(v, str):
             continue
         name = v.strip()
