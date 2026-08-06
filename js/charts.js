@@ -10,6 +10,50 @@ export function sparseData(rawData) {
   return rawData.map((v, i) => i < firstNonZero ? null : v);
 }
 
+/**
+ * Color-swatch legend under a chart. Wraps within maxW.
+ * items: [{ label, color }]
+ * Returns the bottom Y of the last drawn row.
+ */
+export function drawChartLegend(ctx, items, opts = {}) {
+  const list = (items || []).filter((it) => it && it.label);
+  if (!list.length) return opts.y || 0;
+
+  const x0 = opts.x ?? 0;
+  const y0 = opts.y ?? 0;
+  const maxW = Math.max(80, opts.maxW ?? 400);
+  const sw = opts.swatch ?? 9;
+  const gapX = opts.gapX ?? 16;
+  const rowH = opts.rowH ?? 16;
+  const font = opts.font || '600 11px Inter, "DM Sans", system-ui, sans-serif';
+  const textColor = opts.textColor || '#64748b';
+
+  ctx.save();
+  ctx.font = font;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  let x = x0;
+  let y = y0;
+  list.forEach((it) => {
+    const label = String(it.label);
+    const tw = ctx.measureText(label).width;
+    const block = sw + 6 + tw;
+    if (x > x0 && x + block > x0 + maxW) {
+      x = x0;
+      y += rowH;
+    }
+    ctx.fillStyle = it.color || '#64748b';
+    const sy = y - sw / 2;
+    ctx.fillRect(x, sy, sw, sw);
+    ctx.fillStyle = textColor;
+    ctx.fillText(label, x + sw + 6, y);
+    x += block + gapX;
+  });
+  ctx.restore();
+  return y + rowH / 2;
+}
+
 export function niceScale(lo, hi, tickTarget = 4, forceZeroFlag = false) {
   const allNeg = hi <= 0 && lo < 0;
   const allPos = lo >= 0 && hi > 0;
@@ -51,7 +95,9 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   const dpr = window.devicePixelRatio || 1;
   const W = rawW;
   const isResumen = canvasId === 'chartResumen';
-  const H = opts.height || (isResumen ? 300 : 180);   // coincide con .chart-canvas max-height → sin escalado/pixelado
+  // Opt-in legend (Funding / AQ / Solvency). Bank Monitor keeps the tight layout.
+  const showLegend = !!opts.showLegend && !isResumen;
+  const H = opts.height || (isResumen ? 300 : showLegend ? 220 : 180);   // coincide con .chart-canvas max-height → sin escalado/pixelado
   const narrowCanvas = W < 480;
   const veryNarrow   = W < 360;
 
@@ -63,8 +109,8 @@ export function drawLineChart(canvasId, periodos, series, opts) {
   ctx.scale(dpr, dpr);
 
   const PAD_tb = veryNarrow
-    ? { t: 12, b: 48 }
-    : narrowCanvas ? { t: 13, b: 44 } : { t: 16, b: 44 };
+    ? { t: 12, b: showLegend ? 68 : 48 }
+    : narrowCanvas ? { t: 13, b: showLegend ? 64 : 44 } : { t: 16, b: showLegend ? 62 : 44 };
   const PAD_r = narrowCanvas ? 10 : 16;
   const cH_prov = H - PAD_tb.t - PAD_tb.b;
   const tickTarget = veryNarrow
@@ -320,9 +366,30 @@ export function drawLineChart(canvasId, periodos, series, opts) {
     ctx.fillStyle = axisColor;
     ctx.font = `${xAxisPx}px DM Mono, monospace`;
     ctx.textAlign = 'center';
-    const xAxisYOff = veryNarrow ? 34 : narrowCanvas ? 34 : 36;
+    // Keep period labels above the series legend when present.
+    const xAxisYOff = showLegend
+      ? (veryNarrow ? 18 : 20)
+      : (veryNarrow ? 34 : narrowCanvas ? 34 : 36);
     ctx.fillText(periodLabel(p), x, PAD.t + cH + xAxisYOff);
   });
+
+  if (showLegend) {
+    const legendItems = series
+      .filter((s) => s?.label && s.data?.some((v) => v !== null && Number.isFinite(v)))
+      .map((s) => ({
+        label: s.label,
+        color: COLORS[s.color] || s.color || '#64748b',
+      }));
+    if (legendItems.length) {
+      drawChartLegend(ctx, legendItems, {
+        x: PAD.l,
+        y: H - (veryNarrow ? 18 : 20),
+        maxW: cW,
+        textColor: axisColor,
+        font: `600 ${veryNarrow ? 10 : 11}px Inter, "DM Sans", system-ui, sans-serif`,
+      });
+    }
+  }
 
   // ---- Herramienta Δ%: marca los puntos seleccionados y dibuja el conector ----
   if (ST._deltaMode && Array.isArray(ST._deltaSel) && ST._deltaSel.length) {
