@@ -44,7 +44,7 @@ import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { btgBlue, bankColor } from '../config.js?v=bmon72';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon72';
+import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon77';
 
 const FUNDING_COUNTRIES = new Set(['BR', 'CL', 'UY']);
 const MAX_COMPARE_ENTITIES = 5;
@@ -261,7 +261,7 @@ function cfg() {
           aLabel: 'UF-indexed',
           bLabel: 'FX (EXT)',
           primaryLabel: 'UF-indexed',
-          restLabel: 'other (CLP+TC+EXT residual view uses EXT separately)',
+          restLabel: 'CLP + other',
         };
       },
       specialPctSeries: (rows, periodos) => {
@@ -621,7 +621,7 @@ function drawMixChart(codes, c) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 720;
-  const cssH = 320;
+  const cssH = 360;
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -634,10 +634,11 @@ function drawMixChart(codes, c) {
     .map((inst) => ({
       ...inst,
       values: c.series(bankRows, inst.codes, periodos),
-    }));
+    }))
+    .filter((g) => g.values.some((v) => v != null && Math.abs(v) > 0));
   const totals = periodos.map((_, i) => series.reduce((s, g) => s + (g.values[i] || 0), 0));
   const maxV = Math.max(1, ...totals);
-  const pad = { t: 28, r: 16, b: 48, l: 64 };
+  const pad = { t: 28, r: 16, b: 92, l: 64 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
   const n = Math.max(1, periodos.length);
@@ -674,7 +675,7 @@ function drawMixChart(codes, c) {
     const label = String(p).length >= 6
       ? `${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`
       : p;
-    ctx.fillText(label, cx, cssH - 28);
+    ctx.fillText(label, cx, pad.t + plotH + 18);
     if (wantValueLabels(1) && totals[i] > 0) {
       ctx.fillStyle = '#334155';
       ctx.font = '600 10px Inter, "DM Sans", system-ui, sans-serif';
@@ -686,6 +687,22 @@ function drawMixChart(codes, c) {
   ctx.font = '600 12px Inter, "DM Sans", system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('Funding mix · stacked stock (local currency)', pad.l, 16);
+
+  drawChartLegend(
+    ctx,
+    series.map((g) => ({
+      label: g.short || g.label,
+      color: c.colors[g.key] || '#64748b',
+    })),
+    {
+      x: pad.l,
+      y: pad.t + plotH + 40,
+      maxW: plotW,
+      textColor: '#64748b',
+      font: '600 11px Inter, "DM Sans", system-ui, sans-serif',
+      rowH: 15,
+    },
+  );
 }
 
 function drawSpecialChart(codes, c) {
@@ -694,7 +711,7 @@ function drawSpecialChart(codes, c) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 720;
-  const cssH = 280;
+  const cssH = 320;
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -712,11 +729,16 @@ function drawSpecialChart(codes, c) {
     ...(secondary || []),
     ...totals.map((t, i) => Math.max(0, (t || 0) - (primary[i] || 0) - (secondary ? (secondary[i] || 0) : 0))),
   );
-  const pad = { t: 28, r: 16, b: 48, l: 64 };
+  const pad = { t: 28, r: 16, b: 88, l: 64 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
   const n = Math.max(1, periodos.length);
   const barW = Math.min(26, (plotW / n) * 0.55);
+
+  const primaryColor = sp.primaryColor
+    || (c.iso === 'CL' ? (c.colors.ufShare || '#0d9488') : (c.colors.taxEligible || '#16a34a'));
+  const secondaryColor = sp.secondaryColor || c.colors.fxShare || '#2563eb';
+  const residualColor = 'rgba(100,116,139,0.55)';
 
   ctx.strokeStyle = 'rgba(148,163,184,0.25)';
   for (let i = 0; i <= 4; i++) {
@@ -737,22 +759,21 @@ function drawSpecialChart(codes, c) {
     const hFx = (fx / maxV) * plotH;
     const hRest = (rest / maxV) * plotH;
     let y = pad.t + plotH;
-    ctx.fillStyle = 'rgba(100,116,139,0.35)';
+    ctx.fillStyle = residualColor;
     y -= hRest;
     ctx.fillRect(x, y, barW, Math.max(0, hRest));
     if (secondary) {
-      ctx.fillStyle = sp.secondaryColor || c.colors.fxShare || '#2563eb';
+      ctx.fillStyle = secondaryColor;
       y -= hFx;
       ctx.fillRect(x, y, barW, Math.max(0, hFx));
     }
-    ctx.fillStyle = sp.primaryColor
-      || (c.iso === 'CL' ? (c.colors.ufShare || '#0d9488') : (c.colors.taxEligible || '#16a34a'));
+    ctx.fillStyle = primaryColor;
     y -= hEl;
     ctx.fillRect(x, y, barW, Math.max(0, hEl));
     ctx.fillStyle = '#64748b';
     ctx.font = '10px Inter, "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`, cx, cssH - 28);
+    ctx.fillText(`${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`, cx, pad.t + plotH + 18);
     if (wantValueLabels(1) && totals[i] > 0) {
       const share = (el / totals[i]) * 100;
       ctx.fillStyle = '#334155';
@@ -764,10 +785,22 @@ function drawSpecialChart(codes, c) {
   ctx.fillStyle = '#475569';
   ctx.font = '600 12px Inter, "DM Sans", system-ui, sans-serif';
   ctx.textAlign = 'left';
-  const legend = sp.legend || (c.iso === 'CL'
-    ? 'Teal = UF-indexed · blue = FX (EXT) · grey = residual'
-    : 'Green = LCA+LCI eligible stock · grey = other captações');
-  ctx.fillText(legend, pad.l, 16);
+  ctx.fillText(c.specialLabel || 'Composition', pad.l, 16);
+
+  const legendItems = [
+    { label: sp.primaryLabel || sp.aLabel || 'Primary', color: primaryColor },
+  ];
+  if (secondary) {
+    legendItems.push({ label: sp.bLabel || 'Secondary', color: secondaryColor });
+  }
+  legendItems.push({ label: sp.restLabel || 'Residual', color: '#64748b' });
+  drawChartLegend(ctx, legendItems, {
+    x: pad.l,
+    y: pad.t + plotH + 40,
+    maxW: plotW,
+    textColor: '#64748b',
+    font: '600 11px Inter, "DM Sans", system-ui, sans-serif',
+  });
 
   const sub = document.getElementById('faTaxSub');
   if (sub) {
@@ -885,8 +918,9 @@ function drawCompareChart(entities, c) {
   drawLineChart('faCompareChart', periodos, series, {
     valueScale,
     emptyMessage,
-    height: 300,
+    height: 320,
     style: state.chartStyle || 'bars',
+    showLegend: true,
   });
 }
 
@@ -1077,8 +1111,8 @@ function render() {
         </div>
       </div>
       <div class="panel-body">
-        <div class="chart-wrap" style="position:relative;min-height:280px;">
-          <canvas id="${chartId}" height="300" style="width:100%;height:300px;"></canvas>
+        <div class="chart-wrap" style="position:relative;min-height:320px;">
+          <canvas id="${chartId}" height="360" style="width:100%;height:360px;"></canvas>
         </div>
       </div>
     </div>
