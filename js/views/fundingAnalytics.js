@@ -497,15 +497,23 @@ function renderKpis(snap, c) {
 function renderCompareKpis(entities, c) {
   const lastP = state.periodos[state.periodos.length - 1];
   const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
-  const head = snaps.map(({ e }) => `<th class="r">${esc(e.short)}</th>`).join('');
-  const row = (label, fmt) => `<tr><td>${esc(label)}</td>${snaps.map(({ snap }) => `<td class="r">${fmt(snap)}</td>`).join('')}</tr>`;
+  const head = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-head ${tone}" style="--fa-bank-line:${esc(e.color)}">
+      <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
+    </th>`;
+  }).join('');
+  const row = (label, fmt) => `<tr><td>${esc(label)}</td>${snaps.map(({ e, snap }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(e.color)}">${fmt(snap)}</td>`;
+  }).join('')}</tr>`;
   return `<div class="panel fa-panel" style="margin-bottom:18px;">
     <div class="panel-head"><div>
       <div class="panel-title">Peer snapshot · ${esc(periodLabel(lastP))}</div>
-      <div class="panel-sub">Aggregated stocks for groups · local reporting units</div>
+      <div class="panel-sub">One column per bank · local reporting units</div>
     </div></div>
     <div class="panel-body" style="overflow-x:auto;padding:0;">
-      <table class="data fa-table">
+      <table class="data fa-table fa-table-peers">
         <thead><tr><th>Metric</th>${head}</tr></thead>
         <tbody>
           ${row(c.fundingLabel, (s) => fmtKPI(s?.funding ?? s?.captacoes))}
@@ -594,19 +602,30 @@ function renderCompareInstrumentTable(entities, c) {
     const vb = Math.abs(firstSnap?.instruments?.find((i) => i.key === b.key)?.value || 0);
     return vb - va || a.label.localeCompare(b.label);
   });
-  const head = snaps.map(({ e }) => `<th class="r" colspan="2">${esc(e.short)}</th>`).join('');
-  const sub = snaps.map(() => '<th class="r">Stock</th><th class="r">%</th>').join('');
+  const head = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-head ${tone}" colspan="2" style="--fa-bank-line:${esc(e.color)}">
+      <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
+    </th>`;
+  }).join('');
+  const sub = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}" style="--fa-bank-line:${esc(e.color)}">Stock</th>
+      <th class="r fa-bank-sub ${tone}">%</th>`;
+  }).join('');
   const body = keys.map((inst) => {
-    const cells = snaps.map(({ snap }) => {
-      const row = snap?.instruments?.find((i) => i.key === inst.key);
+    const cells = snaps.map(({ e, snap }, i) => {
+      const row = snap?.instruments?.find((x) => x.key === inst.key);
       const funding = snap?.funding ?? snap?.captacoes ?? 0;
       const v = row?.value || 0;
       const pct = funding > 0 ? (v / funding) * 100 : null;
-      return `<td class="r">${fmtKPI(v)}</td><td class="r">${fmtPct(pct)}</td>`;
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(e.color)}">${fmtKPI(v)}</td>
+        <td class="r ${tone}">${fmtPct(pct)}</td>`;
     }).join('');
     return `<tr><td><span class="fa-swatch" style="background:${c.colors[inst.key] || '#64748b'}"></span>${esc(inst.label)}</td>${cells}</tr>`;
   }).join('');
-  return `<table class="data fa-table">
+  return `<table class="data fa-table fa-table-peers">
     <thead>
       <tr><th rowspan="2">Instrument</th>${head}</tr>
       <tr>${sub}</tr>
