@@ -263,9 +263,13 @@ def process_zip(zip_bytes: bytes, periodo: str, conn) -> int:
             if fname == "listado_instituciones.txt":
                 text = zf.read(name).decode("utf-8", errors="replace")
                 instituciones = parse_instituciones(text)
-            elif fname in ("plan_de_cuentas.txt", "plan-ctas.txt"):
+            elif fname in ("plan_de_cuentas.txt", "plan-ctas.txt") or (
+                fname.startswith("plan") and fname.endswith(".txt") and "modelo" not in fname
+            ):
                 text = zf.read(name).decode("latin-1", errors="replace")
-                plan_cuentas = parse_plan_cuentas(text)
+                parsed = parse_plan_cuentas(text)
+                if len(parsed) > len(plan_cuentas):
+                    plan_cuentas = parsed
             elif fname == "codifis.txt" and not instituciones:
                 text = zf.read(name).decode("latin-1", errors="replace")
                 instituciones = parse_codifis(text)
