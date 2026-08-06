@@ -99,6 +99,25 @@ function bankDisplayName(code) {
   return bankName(Number(code)) || `Bank ${code}`;
 }
 
+/** Mirror Bank Monitor 123 toggle (ST.showBarLabels: true | false | null=auto). */
+function wantValueLabels(nSeries = 1) {
+  if (ST.showBarLabels === true) return true;
+  if (ST.showBarLabels === false) return false;
+  return nSeries === 1;
+}
+
+function labelsToggleHtml(id) {
+  let cls = 'state-auto';
+  let text = '123';
+  let title = 'Auto · values on bars when one series · click for ON';
+  if (ST.showBarLabels === true) {
+    cls = 'state-on'; text = '123 ✓'; title = 'Values on bars · forced ON · click for OFF';
+  } else if (ST.showBarLabels === false) {
+    cls = 'state-off'; text = '123 ✗'; title = 'Values hidden · forced OFF · click for Auto';
+  }
+  return `<button type="button" id="${id}" class="lbl123-btn ${cls}" onclick="toggleBarLabels()" title="${esc(title)}">${text}</button>`;
+}
+
 function selectionKey() {
   return selectedBanks().slice(0, MAX_COMPARE_ENTITIES).map(Number).join(',');
 }
@@ -569,7 +588,12 @@ function renderCompareInstrumentTable(entities, c) {
       }
     });
   });
-  keys.sort((a, b) => a.label.localeCompare(b.label));
+  const firstSnap = snaps[0]?.snap;
+  keys.sort((a, b) => {
+    const va = Math.abs(firstSnap?.instruments?.find((i) => i.key === a.key)?.value || 0);
+    const vb = Math.abs(firstSnap?.instruments?.find((i) => i.key === b.key)?.value || 0);
+    return vb - va || a.label.localeCompare(b.label);
+  });
   const head = snaps.map(({ e }) => `<th class="r" colspan="2">${esc(e.short)}</th>`).join('');
   const sub = snaps.map(() => '<th class="r">Stock</th><th class="r">%</th>').join('');
   const body = keys.map((inst) => {
@@ -651,6 +675,11 @@ function drawMixChart(codes, c) {
       ? `${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`
       : p;
     ctx.fillText(label, cx, cssH - 28);
+    if (wantValueLabels(1) && totals[i] > 0) {
+      ctx.fillStyle = '#334155';
+      ctx.font = '600 10px Inter, "DM Sans", system-ui, sans-serif';
+      ctx.fillText(fmtKPI(totals[i]), cx, Math.max(12, y - 4));
+    }
   });
 
   ctx.fillStyle = '#475569';
@@ -724,6 +753,12 @@ function drawSpecialChart(codes, c) {
     ctx.font = '10px Inter, "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`, cx, cssH - 28);
+    if (wantValueLabels(1) && totals[i] > 0) {
+      const share = (el / totals[i]) * 100;
+      ctx.fillStyle = '#334155';
+      ctx.font = '600 10px Inter, "DM Sans", system-ui, sans-serif';
+      ctx.fillText(fmtPct(share, 0), cx, Math.max(12, y - 4));
+    }
   });
 
   ctx.fillStyle = '#475569';
@@ -1036,7 +1071,10 @@ function render() {
           <div class="panel-title">${esc(panelTitle)}</div>
           <div class="panel-sub" id="faTaxSub">${esc(focusLabel)} · ${esc(periodLabel(state.periodos[0]))} — ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
         </div>
-        <div class="fa-chart-styles" role="group" aria-label="Chart style">${styleBtns}</div>
+        <div class="fa-chart-styles" role="group" aria-label="Chart style">
+          ${labelsToggleHtml('faBtnLabels')}
+          ${styleBtns}
+        </div>
       </div>
       <div class="panel-body">
         <div class="chart-wrap" style="position:relative;min-height:280px;">
@@ -1049,7 +1087,7 @@ function render() {
       <div class="panel-head">
         <div>
           <div class="panel-title">Instrument breakdown · ${esc(periodLabel(state.periodos[state.periodos.length - 1]))}</div>
-          <div class="panel-sub">${comparing ? 'Share of funding by peer' : `Share of ${esc(c.fundingLabel)} · local reporting units`}</div>
+          <div class="panel-sub">${comparing ? 'Share of funding by peer · rows ranked by first selected bank' : `Share of ${esc(c.fundingLabel)} · local reporting units`}</div>
         </div>
       </div>
       <div class="panel-body" style="overflow-x:auto;padding:0;">

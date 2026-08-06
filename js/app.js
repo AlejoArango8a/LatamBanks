@@ -17,8 +17,8 @@ import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle
 import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon72';
 import { renderBankDetail } from './views/bankDetail.js?v=bmon72';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
-import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon72';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon72';
+import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon73';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon73';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
@@ -34,7 +34,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon72';
+} from './ui.js?v=bmon73';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
@@ -376,6 +376,7 @@ window.toggleSection    = toggleSection;
 window.selectCountry    = selectCountry;
 window.toggleTheme      = toggleTheme;
 window.toggleBarLabels  = toggleBarLabels;
+window.refreshBarLabelsToggleButtons = refreshBarLabelsToggleButtons;
 window.toggleCurrency   = toggleCurrency;
 window.refreshMoneyDenominatedUI = refreshMoneyDenominatedUI;
 window.convertAmt       = convertAmt;

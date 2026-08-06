@@ -608,9 +608,7 @@ export function toggleTheme() {
 // ---- Bar labels toggle (per-chart: Auto = show when single bank only) ----
 // ---- Compact "123" bar-labels toggle · Auto ⇄ forced ON ⇄ forced OFF ----
 export function refreshBarLabelsToggleButtons() {
-  ['btnLabels', 'btnExpLabels'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
+  document.querySelectorAll('.lbl123-btn').forEach((btn) => {
     btn.classList.remove('bar-values-toggle', 'state-on', 'state-off', 'state-auto');
     btn.classList.add('lbl123-btn');
     if (ST.showBarLabels === true) {
@@ -638,6 +636,9 @@ export function toggleBarLabels() {
   refreshBarLabelsToggleButtons();
 
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
+  const active = document.querySelector('.tab.active[data-tab]')?.getAttribute('data-tab');
+  if (active === 'funding') window.renderFundingAnalytics?.();
+  else if (active === 'assetquality') window.renderAssetQuality?.();
 }
 
 // ---- Currency (lógica FX en fx.js: cascada + fail-closed) ----

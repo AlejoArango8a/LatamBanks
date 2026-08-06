@@ -1019,7 +1019,8 @@ body.light .btg-banks-elim-text { color:#0f172a; }
   display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between;
   gap:10px 16px;
 }
-.fa-chart-styles { display:flex; flex-wrap:wrap; gap:6px; }
+.fa-chart-styles { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fa-chart-styles .lbl123-btn { flex-shrink:0; }
 .tab.tab-disabled { opacity:0.42; cursor:not-allowed; }
 
 /* Asset Quality — reuses the .fa-* shell, plus a credit-risk accent */
@@ -1742,7 +1743,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon72"></script>
+<script type="module" src="js/app.js?v=bmon73"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
