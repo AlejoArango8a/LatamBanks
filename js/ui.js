@@ -118,6 +118,10 @@ function scheduleSelectionRefresh() {
       window.refreshAssetQuality?.();
       return;
     }
+    if (active === 'basel') {
+      window.refreshBaselAnalytics?.();
+      return;
+    }
     if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
       window.renderBankDetail?.();
     }
@@ -287,9 +291,10 @@ export function showTab(tab) {
     ...blocked,
     ...(FUNDING_ENABLED_ISO.includes(isoTab) ? [] : ['funding']),
     ...(ASSET_QUALITY_ENABLED_ISO.includes(isoTab) ? [] : ['assetquality']),
+    ...(BASEL_ENABLED_ISO.includes(isoTab) ? [] : ['basel']),
   ])];
   if (blockedEff.includes(tab)) return;
-  ['resumen','bankdetail','chileanbanks','btgbanks','funding','assetquality','accountview','balance','resultados','comparativo','config'].forEach(t => {
+  ['resumen','bankdetail','chileanbanks','btgbanks','funding','assetquality','basel','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -299,7 +304,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', assetquality:'Asset Quality', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', assetquality:'Asset Quality', basel:'Solvency', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -330,6 +335,7 @@ export function showTab(tab) {
   if (tab === 'btgbanks')     window.renderBtgBanks?.();
   if (tab === 'funding')      window.renderFundingAnalytics?.();
   if (tab === 'assetquality') window.renderAssetQuality?.();
+  if (tab === 'basel')        window.renderBaselAnalytics?.();
   if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();
@@ -466,6 +472,7 @@ const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
 // Countries whose regulator publishes a loan-quality tree we can stand behind.
 // Widens as each loader phase lands (blueprint §4.7).
 const ASSET_QUALITY_ENABLED_ISO = ['BR', 'CL', 'CO', 'PE', 'UY', 'US'];
+const BASEL_ENABLED_ISO = ['CL'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -474,6 +481,7 @@ const DETAIL_TAB_TITLES = {
   resultados: 'Income Statement',
   funding: 'Funding Analytics',
   assetquality: 'Asset Quality',
+  basel: 'Solvency',
 };
 
 export function syncCountryDisabledTabs() {
@@ -488,6 +496,7 @@ export function syncCountryDisabledTabs() {
     : [...NON_FUNDING_COUNTRY_DISABLED];
   if (!FUNDING_ENABLED_ISO.includes(iso) && !disabled.includes('funding')) disabled.push('funding');
   if (!ASSET_QUALITY_ENABLED_ISO.includes(iso) && !disabled.includes('assetquality')) disabled.push('assetquality');
+  if (!BASEL_ENABLED_ISO.includes(iso) && !disabled.includes('basel')) disabled.push('basel');
 
   document.querySelectorAll('.tab[data-tab]').forEach((btn) => {
     const key = btn.getAttribute('data-tab');
@@ -500,6 +509,8 @@ export function syncCountryDisabledTabs() {
         ? 'Funding Analytics is available for Brazil, Chile and Uruguay'
         : key === 'assetquality'
           ? 'Asset Quality is available for Brazil, Chile, Colombia, Peru, Uruguay and the United States'
+          : key === 'basel'
+            ? 'Solvency (Basilea III) is available for Chile'
           : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');

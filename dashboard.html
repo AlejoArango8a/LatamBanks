@@ -1026,6 +1026,8 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 /* Asset Quality — reuses the .fa-* shell, plus a credit-risk accent */
 #assetQualityRoot .kpi-col { gap:8px; }
 #assetQualityRoot .kpi { padding:10px 12px; }
+#baselAnalyticsRoot .kpi-col { gap:8px; }
+#baselAnalyticsRoot .kpi { padding:10px 12px; }
 .aq-hero { border-left-color:#7c3aed; }
 .aq-kpi-grid { grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); }
 .aq-honest {
@@ -1167,6 +1169,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
         <button type="button" class="tab primary" data-tab="chileanbanks" onclick="showTab('chileanbanks')">Banking System</button>
         <button type="button" class="tab primary" data-tab="funding" onclick="showTab('funding')">Funding Analytics</button>
         <button type="button" class="tab primary" data-tab="assetquality" onclick="showTab('assetquality')">Asset Quality</button>
+        <button type="button" class="tab primary" data-tab="basel" onclick="showTab('basel')">Solvency</button>
         <button type="button" class="tab primary" data-tab="btgbanks" onclick="showTab('btgbanks')">BTG Banks</button>
         <div style="width:1px;background:var(--border);margin:10px 6px;flex-shrink:0;opacity:0.4;"></div>
         <button type="button" class="tab secondary" data-tab="accountview" onclick="showTab('accountview')">Account View</button>
@@ -1413,6 +1416,11 @@ body.light .btg-banks-elim-text { color:#0f172a; }
         <!-- ASSET QUALITY (Chile · Colombia · Peru · Uruguay · peers / groups) -->
         <div id="tab-assetquality" style="display:none;">
           <div id="assetQualityRoot"></div>
+        </div>
+
+        <!-- SOLVENCY / BASILEA III (Chile CMF) -->
+        <div id="tab-basel" style="display:none;">
+          <div id="baselAnalyticsRoot"></div>
         </div>
 
         <!-- BANK PROFILE -->
@@ -1747,7 +1755,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon75"></script>
+<script type="module" src="js/app.js?v=bmon76"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
