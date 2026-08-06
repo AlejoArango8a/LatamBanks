@@ -2,6 +2,7 @@
 // Asset Quality — credit-quality account maps
 // Chile (CMF b1 + c1) · Colombia (CUIF b1) · Peru (SBS b1) · Uruguay (BCU b1 A2_* + q1 A4_*)
 // Brazil (IF.data Cosif + SCR dados_3)
+// United States (FDIC Call Report financials)
 //
 // Sibling of the per-country *Cuentas.js funding maps, consumed by
 // js/views/assetQuality.js. Every country declares only the metrics it really
@@ -862,6 +863,152 @@ export function brAqSnapshot(rowsB1, periodo) {
       ...cLadder.map((c) => ({ key: c.key, label: c.label, value: c.value, pct: c.pct })),
       { key: 'allowance', label: 'Cosif provision / expected loss', value: allowance, pct: aqPct(allowance, cosifLoans > 0 ? cosifLoans : loans) },
       { key: 'cosifLoans', label: 'Cosif classified loan book', value: cosifLoans, pct: null },
+    ],
+  };
+}
+
+// ============================================================
+// UNITED STATES — FDIC BankFind financials (Call Report aggregates).
+// No non-resident / FX lens. Special lens = past-due ladder.
+// Blueprint §2.7.
+// ============================================================
+
+export const US_AQ_QUALITY = {
+  loans: ['LNLS'],
+  loansNet: ['LNLSNET'],
+  npl: ['NCLNLS'],
+  allowance: ['LNATRES'],
+  pastDue30: ['P3ASSET'],
+  pastDue90Accruing: ['P9ASSET'],
+  chargeOffsQ: ['NTLNLSQ'],
+  provisionExp: ['ELNATR'],
+};
+
+export const US_AQ_RATIOS = {
+  npl: 'NCLNLSR',
+  coverage: 'LNRESNCR',
+  allowancePct: 'LNATRESR',
+};
+
+/** Mutually exclusive-ish sector mix (residual = LNLS − Σ). LNCRCD/LNAUTO nest under consumer. */
+export const US_AQ_INSTRUMENTS = [
+  { key: 're', label: 'Real estate', short: 'RE', codes: ['LNRE'], group: 'sector' },
+  { key: 'ci', label: 'Commercial & industrial', short: 'C&I', codes: ['LNCI'], group: 'sector' },
+  { key: 'con', label: 'Consumer', short: 'Consumer', codes: ['LNCON'], group: 'sector' },
+  { key: 'ag', label: 'Agricultural', short: 'Ag', codes: ['LNAG'], group: 'sector' },
+  { key: 'dep', label: 'Depository institutions', short: 'Banks', codes: ['LNDEP'], group: 'sector' },
+  { key: 'muni', label: 'Municipal', short: 'Muni', codes: ['LNMUNI'], group: 'sector' },
+  { key: 'fg', label: 'Foreign governments', short: 'FG', codes: ['LNFG'], group: 'sector' },
+];
+
+export const US_AQ_PASTDUE = [
+  { key: 'pd30', label: '30–89 days past due (assets)', short: '30–89d', codes: ['P3ASSET'] },
+  { key: 'pd90', label: '90+ days past due still accruing', short: '90+ accruing', codes: ['P9ASSET'] },
+  { key: 'ncl', label: 'Noncurrent loans & leases', short: 'Noncurrent', codes: ['NCLNLS'] },
+];
+
+export const US_AQ_COLORS = {
+  re: '#0d3b66',
+  ci: '#0284c7',
+  con: '#f59e0b',
+  ag: '#16a34a',
+  dep: '#64748b',
+  muni: '#0d9488',
+  fg: '#b45309',
+  residual: '#94a3b8',
+  pd30: '#f59e0b',
+  pd90: '#ea580c',
+  ncl: '#dc2626',
+  npl: '#dc2626',
+  allowance: '#0d9488',
+};
+
+export function usAqAccountsForRun() {
+  return {
+    b1: [...new Set([
+      ...US_AQ_QUALITY.loans,
+      ...US_AQ_QUALITY.loansNet,
+      ...US_AQ_QUALITY.npl,
+      ...US_AQ_QUALITY.allowance,
+      ...US_AQ_QUALITY.pastDue30,
+      ...US_AQ_QUALITY.pastDue90Accruing,
+      ...US_AQ_INSTRUMENTS.flatMap((i) => i.codes),
+      'LNCRCD', 'LNAUTO',
+    ])],
+    r1: [...US_AQ_QUALITY.chargeOffsQ, ...US_AQ_QUALITY.provisionExp],
+    q1: Object.values(US_AQ_RATIOS),
+  };
+}
+
+export function usAqSnapshot(rowsB1, rowsR1, rowsQ1, periodo) {
+  const loans = aqSum(rowsB1, US_AQ_QUALITY.loans, periodo);
+  const loansNet = aqSum(rowsB1, US_AQ_QUALITY.loansNet, periodo);
+  const npl = aqSum(rowsB1, US_AQ_QUALITY.npl, periodo);
+  const allowance = Math.abs(aqSum(rowsB1, US_AQ_QUALITY.allowance, periodo));
+  const pd30 = aqSum(rowsB1, US_AQ_QUALITY.pastDue30, periodo);
+  const pd90 = aqSum(rowsB1, US_AQ_QUALITY.pastDue90Accruing, periodo);
+  const nco = aqSum(rowsR1, US_AQ_QUALITY.chargeOffsQ, periodo);
+  const provExp = aqSum(rowsR1, US_AQ_QUALITY.provisionExp, periodo);
+
+  const segments = segmentRows(rowsB1, US_AQ_INSTRUMENTS, periodo, loans);
+  const segSum = segments.reduce((s, g) => s + g.value, 0);
+  const residual = Math.max(0, loans - segSum);
+  if (residual > loans * 0.001) {
+    segments.push({
+      key: 'residual',
+      label: 'Other / residual',
+      short: 'Other',
+      codes: [],
+      group: 'other',
+      value: residual,
+      pct: aqPct(residual, loans),
+    });
+  }
+
+  const published = {
+    npl: aqPickQ1(rowsQ1, US_AQ_RATIOS.npl, periodo),
+    coverage: aqPickQ1(rowsQ1, US_AQ_RATIOS.coverage, periodo),
+    allowancePct: aqPickQ1(rowsQ1, US_AQ_RATIOS.allowancePct, periodo),
+  };
+
+  const pastDueRows = US_AQ_PASTDUE.map((d) => {
+    const value = aqSum(rowsB1, d.codes, periodo);
+    return { ...d, value, pct: aqPct(value, loans) };
+  });
+
+  return {
+    iso: 'US',
+    periodo,
+    loans,
+    loansNet,
+    net: loansNet > 0 ? loansNet : loans - allowance,
+    segments,
+    fx: 0,
+    fxPct: null,
+    npl,
+    nplPct: aqPct(npl, loans),
+    // Call Report always carries NCLNLS when LNLS is present — including a true zero.
+    nplReported: loans > 0,
+    allowance,
+    allowancePct: aqPct(allowance, loans),
+    coverage: aqPct(allowance, npl > 0 ? npl : null),
+    pd30,
+    pd90,
+    nco,
+    provExp,
+    costOfRisk: aqPct(provExp, loans),
+    published,
+    hasPublished: Object.values(published).some((v) => v != null),
+    specialRows: pastDueRows,
+    quality: [
+      { key: 'npl', label: 'Noncurrent loans & leases', value: npl, pct: aqPct(npl, loans) },
+      { key: 'pd30', label: '30–89 days past due (assets)', value: pd30, pct: aqPct(pd30, loans) },
+      { key: 'pd90', label: '90+ days past due still accruing', value: pd90, pct: aqPct(pd90, loans) },
+      { key: 'allowance', label: 'Allowance for credit losses', value: allowance, pct: aqPct(allowance, loans) },
+      { key: 'nco', label: 'Net charge-offs (quarter)', value: nco, pct: aqPct(nco, loans) },
+      { key: 'prov', label: 'Provision expense', value: provExp, pct: aqPct(provExp, loans) },
+      { key: 'cards', label: 'Credit cards (detail)', value: aqSum(rowsB1, ['LNCRCD'], periodo), pct: aqPct(aqSum(rowsB1, ['LNCRCD'], periodo), loans) },
+      { key: 'auto', label: 'Auto loans (detail)', value: aqSum(rowsB1, ['LNAUTO'], periodo), pct: aqPct(aqSum(rowsB1, ['LNAUTO'], periodo), loans) },
     ],
   };
 }

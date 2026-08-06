@@ -1663,12 +1663,16 @@ body.light .btg-banks-elim-text { color:#0f172a; }
                     <th>Country</th><th>Data source</th><th>Frequency</th><th>Load</th><th>Coverage</th>
                   </tr></thead>
                   <tbody>
-                    <tr><td>🇨🇱 Chile</td><td>CMF — Comisión para el Mercado Financiero</td><td>Monthly</td><td>Manual — download CMF .zip + run loader</td><td>IFRS since Jan 2022 (Circular N° 2.243)</td></tr>
-                    <tr><td>🇨🇴 Colombia</td><td>Superintendencia Financiera — CUIF (Socrata API)</td><td>Monthly</td><td>Automatic — reads Socrata API</td><td>NIIF financial statements</td></tr>
-                    <tr><td>🇧🇷 Brasil</td><td>Banco Central do Brasil — IF.data (Olinda API)</td><td>Quarterly</td><td>Automatic — reads IF.data API</td><td>Cosif; result accrues by semester</td></tr>
+                    <tr><td>🇨🇱 Chile</td><td>CMF — Comisión para el Mercado Financiero</td><td>Monthly</td><td>Automatic — GitHub Actions cron</td><td>IFRS since Jan 2022 (Circular N° 2.243)</td></tr>
+                    <tr><td>🇨🇴 Colombia</td><td>Superintendencia Financiera — CUIF (Socrata API)</td><td>Monthly</td><td>Automatic — GitHub Actions cron</td><td>NIIF financial statements</td></tr>
+                    <tr><td>🇧🇷 Brasil</td><td>Banco Central do Brasil — IF.data (Olinda + SCR)</td><td>Quarterly</td><td>Automatic — GitHub Actions cron</td><td>Cosif + SCR; result accrues by semester</td></tr>
+                    <tr><td>🇵🇪 Perú</td><td>SBS — Boletín estadístico</td><td>Monthly</td><td>Automatic — GitHub Actions cron</td><td>B-2201 balance / credit quality</td></tr>
+                    <tr><td>🇺🇾 Uruguay</td><td>BCU/SSF — Anexos 1–4</td><td>Monthly</td><td>Automatic — GitHub Actions cron</td><td>Credit + residency + published ratios</td></tr>
+                    <tr><td>🇺🇸 Estados Unidos</td><td>FDIC BankFind — Call Report</td><td>Quarterly</td><td>Automatic — GitHub Actions cron</td><td>Top-N by equity; Asset Quality from Call Report</td></tr>
+                    <tr><td>🇦🇷 / 🇲🇽 / 🇵🇦</td><td>BCRA / CNBV / SBP</td><td>Monthly</td><td>Automatic — GitHub Actions cron</td><td>Monitor KPIs; AQ sheets pending</td></tr>
                   </tbody>
                 </table>
-                <div style="font-size:11px;color:var(--text3);margin-top:8px;">Exact loaded range for the active country is shown in “Active dataset” below.</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:8px;">Exact loaded range for the active country is shown in “Active dataset” below. Loader cron failures open a GitHub Issue labeled <span style="font-family:var(--mono);">loader-failure</span> (watch Issues on the repo for email).</div>
               </div>
             </div>
 
@@ -1702,7 +1706,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
               <div class="panel-head"><div class="panel-title">Database alerts</div></div>
               <div class="panel-body">
                 <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5;">
-                  Historical log of periods with relevant accounting-account changes or data/platform issues, per country. Stored in the database (<span style="font-family:var(--mono);">carga_log</span>) and grows as new or older periods are loaded.
+                  Historical log of periods with relevant accounting-account changes or data/platform issues, per country. Stored in the database (<span style="font-family:var(--mono);">carga_log</span>) and grows as new or older periods are loaded. Separate from automated <strong>loader cron</strong> failures, which open a GitHub Issue labeled <span style="font-family:var(--mono);">loader-failure</span>.
                 </div>
                 <div id="schemaAlerts">
                   <div style="font-size:12px;color:var(--text3);">Loading…</div>
@@ -1743,7 +1747,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon74"></script>
+<script type="module" src="js/app.js?v=bmon75"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

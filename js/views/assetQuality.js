@@ -1,7 +1,7 @@
 // ============================================================
 // Asset Quality — credit risk sheet
 // Chile (CMF b1+c1) · Colombia (CUIF b1) · Peru (SBS b1) · Uruguay (BCU b1+q1)
-// · Brazil (IF.data Cosif + SCR dados_3)
+// · Brazil (IF.data Cosif + SCR dados_3) · United States (FDIC Call Report)
 // Peers: up to 5 banks from the left sidebar Bank Comparison
 // ============================================================
 import {
@@ -35,14 +35,20 @@ import {
   BR_AQ_SCR,
   brAqAccountsForRun,
   brAqSnapshot,
-} from '../aqCuentas.js?v=bmon74';
+  US_AQ_INSTRUMENTS,
+  US_AQ_QUALITY,
+  US_AQ_PASTDUE,
+  US_AQ_COLORS,
+  usAqAccountsForRun,
+  usAqSnapshot,
+} from '../aqCuentas.js?v=bmon75';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { btgBlue, bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData } from '../charts.js?v=bmon72';
 
-const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY']);
+const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY', 'US']);
 const MAX_COMPARE_ENTITIES = 5;
 const MAX_FETCH_BANKS = 5;
 const AQ_COMPARE_PALETTE = ['#0d3b66', '#16a34a', '#dc2626', '#0d9488', '#db2777', '#ca8a04', '#0284c7', '#a16207'];
@@ -596,6 +602,86 @@ function cfg() {
     };
   }
 
+  if (iso === 'US') {
+    return {
+      iso: 'US',
+      title: 'Asset Quality',
+      eyebrow: 'United States · FDIC credit risk',
+      sub: 'FDIC BankFind Call Report aggregates — gross loans, noncurrent book, allowance and past-due ladder. Compare up to 5 banks via the sidebar Bank Comparison.',
+      loadingLabel: 'United States FDIC',
+      tipos: ['b1', 'r1', 'q1'],
+      accounts: usAqAccountsForRun,
+      instruments: US_AQ_INSTRUMENTS,
+      colors: US_AQ_COLORS,
+      loansLabel: 'Gross loans',
+      nplLabel: 'Noncurrent loans & leases',
+      snapshot: (r, p) => usAqSnapshot(r.b1 || [], r.r1 || [], r.q1 || [], p),
+      loansSeries: (r, periodos) => aqSeries(r.b1 || [], US_AQ_QUALITY.loans, periodos),
+      mixStack: (r, periodos) => stack(US_AQ_INSTRUMENTS, r.b1 || [], periodos, US_AQ_COLORS),
+      nplPctSeries: (r, periodos) => {
+        const npl = aqSeries(r.b1 || [], US_AQ_QUALITY.npl, periodos);
+        const loans = aqSeries(r.b1 || [], US_AQ_QUALITY.loans, periodos);
+        return npl.map((v, i) => aqPct(v, loans[i]));
+      },
+      specialMetric: 'pastdue',
+      specialLabel: 'Past due',
+      specialCompareLabel: 'Noncurrent %',
+      specialPanelTitle: 'Past-due ladder',
+      specialPanelSub: '30–89 days past due · 90+ still accruing · noncurrent loans & leases (NCLNLS)',
+      specialRowsHead: '',
+      specialRowsCell: () => '',
+      specialStack: (r, periodos) => stack(US_AQ_PASTDUE, r.b1 || [], periodos, US_AQ_COLORS),
+      specialPctSeries: (r, periodos) => {
+        const npl = aqSeries(r.b1 || [], US_AQ_QUALITY.npl, periodos);
+        const loans = aqSeries(r.b1 || [], US_AQ_QUALITY.loans, periodos);
+        return npl.map((v, i) => aqPct(v, loans[i]));
+      },
+      specialKpi: (snap) => ({
+        title: 'Past due (30–89d)',
+        val: fmtPct(aqPct(snap.pd30, snap.loans)),
+        sub: snap.pd90 > 0
+          ? `90+ accruing ${fmtPct(aqPct(snap.pd90, snap.loans))} · noncurrent ${fmtPct(snap.nplPct, 2)}`
+          : `Noncurrent ${fmtPct(snap.nplPct, 2)} of gross loans`,
+      }),
+      specialCompareRows: [
+        { label: 'Noncurrent % of loans', fmt: (s) => fmtPct(s?.nplPct, 2) },
+        { label: '30–89d past due %', fmt: (s) => fmtPct(aqPct(s?.pd30, s?.loans)) },
+        { label: '90+ accruing %', fmt: (s) => fmtPct(aqPct(s?.pd90, s?.loans)) },
+        { label: 'Coverage (ALLL / NCL)', fmt: (s) => fmtPct(s?.coverage, 0) },
+      ],
+      instrumentExtraHead: '',
+      instrumentExtraCell: () => '',
+      fxKpi: () => ({
+        title: 'FX / residency',
+        val: '—',
+        sub: 'Call Report has no borrower-currency or residency split',
+      }),
+      publishedRows: (snap) => ([
+        { label: 'NCLNLSR · Noncurrent / loans', pub: snap.published?.npl, own: snap.nplPct },
+        { label: 'LNRESNCR · Allowance / noncurrent', pub: snap.published?.coverage, own: snap.coverage },
+        { label: 'LNATRESR · Allowance / loans', pub: snap.published?.allowancePct, own: snap.allowancePct },
+      ]),
+      honest: (snap) => {
+        const out = [
+          '<strong>NPL</strong> here is FDIC <strong>noncurrent loans & leases</strong> (90+ past due + nonaccrual) — the US Call Report standard, not a 90-day-only mora.',
+          '<strong>P3ASSET / P9ASSET</strong> are past-due <em>assets</em> (broader than the loan book); share-of-loans % is indicative.',
+          'Sector mix uses Call Report aggregates (RE, C&I, Consumer, Ag, banks, muni, foreign governments). Credit cards and autos nest under Consumer and are shown as detail lines.',
+        ];
+        if (snap && snap.loans <= 0) {
+          out.push('No <code>LNLS</code> for this bank / quarter — reload after the FDIC historical backfill, or pick another CERT.');
+        }
+        return out;
+      },
+      notes: [
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Gross loans</strong> = <code>LNLS</code>; net = <code>LNLSNET</code>; allowance = <code>LNATRES</code>.',
+        '<strong>Past-due ladder</strong> is the US special lens (no non-resident / FX split in BankFind financials).',
+        '<strong>Published ratios</strong> (<code>NCLNLSR</code>, <code>LNRESNCR</code>, <code>LNATRESR</code>) are stored as <code>tipo=\u2019q1\u2019</code> percent×100.',
+        '<strong>Charge-offs / provisions</strong> (<code>NTLNLSQ</code>, <code>ELNATR</code>) are quarterly Call Report flows in <code>r1</code>.',
+      ],
+    };
+  }
+
   return null;
 }
 
@@ -1135,7 +1221,7 @@ function render() {
   if (!ASSET_QUALITY_COUNTRIES.has(iso) || !c) {
     root.innerHTML = `<div class="fa-empty">
       <div class="fa-empty-title">Asset Quality</div>
-      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong> and <strong>Uruguay</strong>. Switch country to explore credit quality, coverage and the country lens.</div>
+      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong>, <strong>Uruguay</strong> and the <strong>United States</strong>. Switch country to explore credit quality, coverage and the country lens.</div>
     </div>`;
     return;
   }
