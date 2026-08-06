@@ -397,6 +397,8 @@ export function syncResumenMoraChartButton() {
 }
 
 // Chart buttons without reliable data by country.
+// Mora chart stays off on Bank Monitor until resumen wires SCR Inadimplência;
+// use the Asset Quality tab for the SCR default series.
 const BR_DISABLED_CHART_BTNS = ['btnResChartMora'];
 const UY_DISABLED_CHART_BTNS = ['btnResChartDepPlazo', 'btnResChartBonos', 'btnResChartMora'];
 const PE_DISABLED_CHART_BTNS = ['btnResChartBonos', 'btnResChartMora'];
@@ -431,7 +433,7 @@ export function syncCountryChartButtons() {
     btn.disabled = disable;
     btn.classList.toggle('rcbtn-disabled', disable);
     if (disable) {
-      btn.title = isBR ? 'NPL requiere cartera detallada (dados_3) — aún no cargada'
+      btn.title = isBR ? 'Use Asset Quality for SCR Inadimplência (Bank Monitor mora chart not wired yet)'
         : isUY ? 'Sin desglose para Uruguay por ahora'
         : isUS ? 'FDIC top-N: sin desglose vista/plazo / NPL en este corte'
         : isAR ? 'BCRA: depósitos totales (sin vista/plazo) · NPL no mapeado'
@@ -463,7 +465,7 @@ const UY_DISABLED_TABS = [];
 const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
 // Countries whose regulator publishes a loan-quality tree we can stand behind.
 // Widens as each loader phase lands (blueprint §4.7).
-const ASSET_QUALITY_ENABLED_ISO = ['CL', 'CO', 'PE', 'UY'];
+const ASSET_QUALITY_ENABLED_ISO = ['BR', 'CL', 'CO', 'PE', 'UY'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -497,7 +499,7 @@ export function syncCountryDisabledTabs() {
       btn.title = key === 'funding'
         ? 'Funding Analytics is available for Brazil, Chile and Uruguay'
         : key === 'assetquality'
-          ? 'Asset Quality is available for Chile, Colombia, Peru and Uruguay'
+          ? 'Asset Quality is available for Brazil, Chile, Colombia, Peru and Uruguay'
           : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');

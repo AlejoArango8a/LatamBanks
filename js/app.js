@@ -18,7 +18,7 @@ import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updat
 import { renderBankDetail } from './views/bankDetail.js?v=bmon72';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon73';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon73';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon74';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
@@ -34,7 +34,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon73';
+} from './ui.js?v=bmon74';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';

@@ -1,6 +1,7 @@
 // ============================================================
 // Asset Quality — credit risk sheet
 // Chile (CMF b1+c1) · Colombia (CUIF b1) · Peru (SBS b1) · Uruguay (BCU b1+q1)
+// · Brazil (IF.data Cosif + SCR dados_3)
 // Peers: up to 5 banks from the left sidebar Bank Comparison
 // ============================================================
 import {
@@ -29,14 +30,19 @@ import {
   UY_AQ_COLORS,
   uyAqAccountsForRun,
   uyAqSnapshot,
-} from '../aqCuentas.js?v=bmon72';
+  BR_AQ_INSTRUMENTS,
+  BR_AQ_COLORS,
+  BR_AQ_SCR,
+  brAqAccountsForRun,
+  brAqSnapshot,
+} from '../aqCuentas.js?v=bmon74';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { btgBlue, bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData } from '../charts.js?v=bmon72';
 
-const ASSET_QUALITY_COUNTRIES = new Set(['CL', 'CO', 'PE', 'UY']);
+const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY']);
 const MAX_COMPARE_ENTITIES = 5;
 const MAX_FETCH_BANKS = 5;
 const AQ_COMPARE_PALETTE = ['#0d3b66', '#16a34a', '#dc2626', '#0d9488', '#db2777', '#ca8a04', '#0284c7', '#a16207'];
@@ -470,7 +476,7 @@ function cfg() {
       honest: (snap) => {
         const out = [];
         if (snap && snap.loans <= 0) {
-          out.push('No <code>A2_*</code> accounts for this bank / period yet — Anexo 2 and Anexo 4 arrive with the <code>uruguay_loader.py</code> re-ingest. Everything below stays empty until then.');
+          out.push('No <code>A2_*</code> accounts for this bank / period — Anexo 2/4 history is loaded for 2020–2026; try another period or bank.');
         }
         out.push('Non-resident share from <strong>Anexo 2</strong> covers <strong>performing</strong> credit only (line <code>1.4</code>); BCU\u2019s published <strong>VII.5</strong> — shown alongside — also includes overdue non-resident credit, which Anexo 2 does not split by residency.');
         out.push('<code>1.2.4 vinculadas</code> / <code>1.2.5 no vinculadas</code> is exposure to <strong>foreign banks</strong>, a different concept from non-resident borrowers in the real economy (<code>1.4</code>). They are never added into one "foreign exposure" number here.');
@@ -487,6 +493,105 @@ function cfg() {
         '<strong>No sector-of-industry breakdown:</strong> BCU splits credit by counterparty type and residency, not by commercial / consumer / mortgage — Uruguay cannot join a sector-mix chart.',
         '<strong>FX ≈ USD, not exactly:</strong> BCU reports Actividad en M/E (all foreign currency, predominantly USD).',
         '<strong>Anexo 4 ratios</strong> are stored as <code>tipo=\u2019q1\u2019</code> percentages (×100) so no balance aggregation can ever sum them.',
+      ],
+    };
+  }
+
+
+  if (iso === 'BR') {
+    return {
+      iso: 'BR',
+      title: 'Asset Quality',
+      eyebrow: 'Brazil · SCR credit risk',
+      sub: 'Bacen IF.data — SCR active loan book (document 3040) plus Cosif provisions. Compare up to 5 banks via the sidebar Bank Comparison.',
+      loadingLabel: 'Brazil IF.data',
+      tipos: ['b1'],
+      accounts: brAqAccountsForRun,
+      instruments: BR_AQ_INSTRUMENTS,
+      colors: BR_AQ_COLORS,
+      loansLabel: 'SCR Total Geral',
+      nplLabel: 'Inadimplência (SCR)',
+      snapshot: (r, p) => brAqSnapshot(r.b1 || [], p),
+      loansSeries: (r, periodos) => {
+        const scr = aqSeries(r.b1 || [], BR_AQ_SCR.totalGeral, periodos);
+        // Cosif fallback only when SCR total is missing for that quarter.
+        const cosif = aqSeries(r.b1 || [], ['78183', '141873'], periodos);
+        return scr.map((v, i) => (v > 0 ? v : cosif[i]));
+      },
+      mixStack: (r, periodos) => stack(BR_AQ_INSTRUMENTS, r.b1 || [], periodos, BR_AQ_COLORS),
+      nplPctSeries: (r, periodos) => {
+        const npl = aqSeries(r.b1 || [], BR_AQ_SCR.inadimplencia, periodos);
+        const loans = aqSeries(r.b1 || [], BR_AQ_SCR.totalGeral, periodos);
+        return npl.map((v, i) => (v > 0 ? aqPct(v, loans[i]) : null));
+      },
+      specialMetric: 'overseas',
+      specialLabel: 'Overseas lens',
+      specialCompareLabel: 'Exterior %',
+      specialPanelTitle: 'Domestic vs overseas SCR book',
+      specialPanelSub: 'Total Exterior ÷ Total Geral — loans booked by Brazilian IFs abroad (not a non-resident borrower share)',
+      specialRowsHead: '',
+      specialRowsCell: () => '',
+      specialStack: (r, periodos) => {
+        const total = aqSeries(r.b1 || [], BR_AQ_SCR.totalGeral, periodos);
+        const ext = aqSeries(r.b1 || [], BR_AQ_SCR.exterior, periodos);
+        return [
+          {
+            key: 'domestic',
+            label: 'Domestic',
+            color: BR_AQ_COLORS.sudeste,
+            values: total.map((t, i) => Math.max(0, (t || 0) - (ext[i] || 0))),
+          },
+          {
+            key: 'exterior',
+            label: 'Overseas',
+            color: BR_AQ_COLORS.exterior,
+            values: ext,
+          },
+        ];
+      },
+      specialPctSeries: (r, periodos) => {
+        const ext = aqSeries(r.b1 || [], BR_AQ_SCR.exterior, periodos);
+        const loans = aqSeries(r.b1 || [], BR_AQ_SCR.totalGeral, periodos);
+        return ext.map((v, i) => aqPct(v, loans[i]));
+      },
+      specialKpi: (snap) => ({
+        title: 'Overseas share',
+        val: fmtPct(snap.fxPct),
+        sub: snap.fx > 0
+          ? `Total Exterior ${fmtKPI(snap.fx)} · of SCR Total Geral`
+          : 'No overseas book reported for this bank / quarter',
+      }),
+      specialCompareRows: [
+        { label: 'Exterior % of SCR Total Geral', fmt: (s) => fmtPct(s?.fxPct) },
+        { label: 'Total Exterior', fmt: (s) => fmtKPI(s?.fx) },
+        { label: 'Inadimplência (SCR) %', fmt: (s) => (s?.nplReported ? fmtPct(s?.nplPct) : '—') },
+      ],
+      instrumentExtraHead: '',
+      instrumentExtraCell: () => '',
+      fxKpi: (snap) => ({
+        title: 'Overseas (SCR)',
+        val: fmtPct(snap.fxPct),
+        sub: 'Total Exterior · not a non-resident borrower share',
+      }),
+      honest: (snap) => {
+        const out = [
+          'SCR figures come from <strong>document 3040</strong> and can diverge from Cosif accounting statements (IF.data disclaimer).',
+          '<strong>Inadimplência (SCR)</strong> is the Res. 4557 default concept — wider than the 90-day NPL banks publish in their own results. Never read it as "NPL 90".',
+        ];
+        if (snap && !snap.nplReported) {
+          out.push('SCR <code>Inadimplência</code> / C1–C5 lids appear from <strong>2024-12</strong>. For earlier quarters this sheet shows geography + overseas share; the default ratio stays "—".');
+        }
+        if (snap && !snap.problematicosReported) {
+          out.push('<strong>Ativos problemáticos</strong> is often blank for large peers (Itaú, Bradesco, Santander, Caixa) even when populated for BTG — shown as "not reported", never as zero.');
+        }
+        out.push('Coverage uses Cosif provision / expected-loss stock over SCR Inadimplência when both exist — mixed bases, treat as indicative.');
+        return out;
+      },
+      notes: [
+        '<strong>Compare:</strong> overlay up to 5 banks selected in the left sidebar (Bank Comparison).',
+        '<strong>Loan mix</strong> is SCR geography (report 126) including Exterior — available for the full prudential history.',
+        '<strong>Inadimplência / C1–C5</strong> (report 130) land from Dec-2024; earlier quarters keep the overseas lens and regional mix.',
+        '<strong>Do not peer-rank Ativos problemáticos</strong> until the column is populated for the banks you care about.',
       ],
     };
   }
@@ -1030,7 +1135,7 @@ function render() {
   if (!ASSET_QUALITY_COUNTRIES.has(iso) || !c) {
     root.innerHTML = `<div class="fa-empty">
       <div class="fa-empty-title">Asset Quality</div>
-      <div class="fa-empty-sub">Available for <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong> and <strong>Uruguay</strong> — the countries whose regulator publishes a loan-quality tree we can stand behind. Switch country to explore NPL, coverage and the country credit lens.</div>
+      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong> and <strong>Uruguay</strong>. Switch country to explore credit quality, coverage and the country lens.</div>
     </div>`;
     return;
   }
