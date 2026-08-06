@@ -10,12 +10,12 @@ import {
   clB3Snapshot,
   clB3RatioSeries,
   clB3StockSeries,
-} from '../clBaselCuentas.js?v=bmon78';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon78';
-import { fetchData } from '../api.js?v=bmon78';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon78';
-import { bankColor } from '../config.js?v=bmon78';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon78';
+} from '../clBaselCuentas.js?v=bmon79';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
+import { fetchData } from '../api.js?v=bmon72';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
+import { bankColor } from '../config.js?v=bmon72';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon77';
 
 const BASEL_COUNTRIES = new Set(['CL']);
 const MAX_COMPARE_ENTITIES = 5;
@@ -37,6 +37,7 @@ const state = {
   lastEntityId: null,
   metric: 'ratios', // ratios | rwa | capital
   chartStyle: 'lines',
+  waitTimer: null,
 };
 
 function esc(s) {
@@ -123,6 +124,24 @@ function rowsForBank(rows, code) {
   return (rows || []).filter((r) => Number(r.ins_cod) === Number(code));
 }
 
+function clearPeriodWait() {
+  if (state.waitTimer) {
+    clearTimeout(state.waitTimer);
+    state.waitTimer = null;
+  }
+}
+
+function schedulePeriodWait() {
+  clearPeriodWait();
+  state.waitTimer = setTimeout(() => {
+    state.waitTimer = null;
+    if (state.loaded || state.loading) return;
+    if (!BASEL_COUNTRIES.has(datasetIsoCountry())) return;
+    if (document.getElementById('tab-basel')?.style.display !== 'block') return;
+    renderBaselAnalytics();
+  }, 600);
+}
+
 function setCompare(on) {
   state.compare = !!on;
   state.loaded = false;
@@ -151,11 +170,14 @@ async function loadBaselData() {
   const banks = banksForRun();
   const periodos = periodRange();
   if (!periodos.length) {
-    state.error = 'No periods loaded yet — wait for Chile bootstrap, then open Solvency again.';
+    // Soft-wait: do not hard-error. Bootstrap may still be applying ST.periodos.
+    state.error = null;
     state.loaded = false;
+    schedulePeriodWait();
     paintShell();
     return;
   }
+  clearPeriodWait();
 
   state.loading = true;
   state.error = null;
@@ -477,15 +499,24 @@ function paintShell() {
   }
 
   if (!state.loaded) {
+    const waitingPeriods = !periodRange().length;
     root.innerHTML = `
       ${renderPeerToolbar()}
       <div class="fa-empty">
         <div class="fa-empty-title">Solvency Analytics</div>
-        <div class="fa-empty-sub">CMF consolidated capital adequacy (Basilea III) — CET1, Tier 1, PE/APR, leverage and RWA by bank.</div>
-        <button type="button" class="rcbtn active" id="b3Load" style="margin-top:14px;">Load solvency</button>
+        <div class="fa-empty-sub">${waitingPeriods
+          ? 'Waiting for Chile periods to finish loading…'
+          : 'CMF consolidated capital adequacy (Basilea III) — CET1, Tier 1, PE/APR, leverage and RWA by bank.'}</div>
+        ${waitingPeriods
+          ? '<div class="ls-bars" aria-hidden="true" style="margin-top:16px;"><div></div><div></div><div></div><div></div><div></div></div>'
+          : '<button type="button" class="rcbtn active" id="b3Load" style="margin-top:14px;">Load solvency</button>'}
       </div>`;
     bindPeerToolbar();
-    document.getElementById('b3Load')?.addEventListener('click', () => loadBaselData());
+    if (!waitingPeriods) {
+      document.getElementById('b3Load')?.addEventListener('click', () => loadBaselData());
+    } else {
+      schedulePeriodWait();
+    }
     return;
   }
 
