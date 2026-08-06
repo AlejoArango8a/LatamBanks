@@ -2,7 +2,8 @@ name: Chile CMF Balance Bancos (monthly)
 
 on:
   schedule:
-    # Día 25 — CMF suele publicar el mes anterior con ~3–4 semanas de rezago
+    # Día 25 — CMF suele publicar el mes anterior con ~3–4 semanas de rezago.
+    # Discovery: scrape listing 32901 (ZIP) + hub 28910 (cluster) + short probe.
     - cron: '0 14 25 * *'
   workflow_dispatch:
     inputs:

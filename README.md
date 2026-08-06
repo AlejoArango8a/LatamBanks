@@ -47,8 +47,18 @@ pip install -r requirements.txt
 
 ## Cargar datos de un nuevo mes
 
+**Automático (recomendado):** el workflow GitHub Actions `chile-cmf-monthly.yml` corre el día 25,
+descubre el ZIP scrapeando el listing vivo de la CMF
+([propertyvalue-32901](https://www.cmfchile.cl/portal/estadisticas/626/w4-propertyvalue-32901.html))
+y el hub de reportes mensuales
+([propertyvalue-28910](https://www.cmfchile.cl/portal/estadisticas/626/w4-propertyvalue-28910.html)),
+y falla con Issue `loader-failure` si el listing está adelantado respecto de la DB.
+
+**Manual (fallback):**
+
 1. Descarga el ZIP del mes desde la CMF:
-   https://www.cmfchile.cl/portal/estadisticas/617/w3-propertyvalue-28917.html
+   https://www.cmfchile.cl/portal/estadisticas/626/w4-propertyvalue-32901.html
+   _(el listing antiguo `…/28917` está desactualizado — no usarlo)_
 
 2. Haz **doble clic** en `Cargar nuevo mes CMF.bat`
 
@@ -56,7 +66,14 @@ pip install -r requirements.txt
 
 4. El script sube todo a CockroachDB automáticamente
 
-**¿Doble clic y “no pasa nada”?** El diálogo para elegir el ZIP a veces abre **detrás** del navegador u otras apps (revisa la barra de tareas). Además, al ejecutar desde el Explorador a veces **`python`** no está en el PATH; el `.bat` probado antes **`py -3`**. Como alternativa, en esta carpeta:
+O bien:
+
+```
+python chile_loader.py --zip-path ./zips/articles-XXXXX_recurso_1.zip
+python chile_loader.py --discover-only   # ver qué ve el scraper sin tocar la DB
+```
+
+**¿Doble clic y “no pasa nada”?** El diálogo para elegir el ZIP a veces abre **detrás** del navegador u otras apps (revisa la barra de tareas). Además, al ejecutar desde el Explorador a veces **`python`** no está en el PATH; el `.bat` prueba antes **`py -3`**. Como alternativa, en esta carpeta:
 
 ```
 py -3 cargar_zip.py "C:\ruta\completa\al_archivo.zip"
