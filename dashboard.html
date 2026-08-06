@@ -949,6 +949,37 @@ body.light .btg-banks-elim-text { color:#0f172a; }
   color:var(--text2); background:var(--bg3);
 }
 .fa-table th.r, .fa-table td.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* Multi-bank peer tables — clear column groups per bank */
+.fa-table-peers { border-separate: separate; border-spacing: 0; }
+.fa-table-peers th.fa-bank-start,
+.fa-table-peers td.fa-bank-start {
+  border-left: 3px solid var(--fa-bank-line, var(--border));
+  padding-left: 14px;
+}
+.fa-table-peers thead th.fa-bank-head {
+  border-top: 3px solid var(--fa-bank-line, var(--accent));
+  background: color-mix(in srgb, var(--fa-bank-line, var(--accent)) 12%, var(--bg3));
+  color: var(--white);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: none;
+  font-size: 11px;
+}
+.fa-table-peers thead th.fa-bank-sub {
+  background: color-mix(in srgb, var(--fa-bank-line, var(--accent)) 7%, var(--bg3));
+}
+.fa-table-peers tbody td.fa-bank-tone-a {
+  background: color-mix(in srgb, var(--fa-bank-line, var(--accent)) 5%, transparent);
+}
+.fa-table-peers tbody tr:hover td.fa-bank-tone-a {
+  background: color-mix(in srgb, var(--fa-bank-line, var(--accent)) 10%, transparent);
+}
+.fa-table-peers .fa-bank-head .fa-swatch {
+  width: 9px; height: 9px; border-radius: 2px; margin-right: 7px;
+}
+body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
+
 .fa-swatch {
   display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:8px; vertical-align:middle;
 }
@@ -1755,7 +1786,7 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon79"></script>
+<script type="module" src="js/app.js?v=bmon80"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
