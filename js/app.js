@@ -19,7 +19,7 @@ import { renderBankDetail } from './views/bankDetail.js?v=bmon72';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon77';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon76';
-import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon76';
+import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon78';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 

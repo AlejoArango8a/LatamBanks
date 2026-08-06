@@ -10,16 +10,17 @@ import {
   clB3Snapshot,
   clB3RatioSeries,
   clB3StockSeries,
-} from '../clBaselCuentas.js?v=bmon76';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon76';
-import { fetchData } from '../api.js?v=bmon76';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon76';
-import { bankColor } from '../config.js?v=bmon76';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon76';
+} from '../clBaselCuentas.js?v=bmon78';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon78';
+import { fetchData } from '../api.js?v=bmon78';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon78';
+import { bankColor } from '../config.js?v=bmon78';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon78';
 
 const BASEL_COUNTRIES = new Set(['CL']);
 const MAX_COMPARE_ENTITIES = 5;
 const SISTEMA = 999;
+const DEFAULT_BANK_CL = 59; // BTG Pactual Chile
 
 const state = {
   loading: false,
@@ -52,13 +53,30 @@ function fmtPct(n, digits = 2) {
 }
 
 function selectedBanks() {
-  return ST.selectedOrder?.length ? [...ST.selectedOrder] : [...ST.selected];
+  const ordered = Array.isArray(ST.selectedOrder) ? ST.selectedOrder : [];
+  if (ordered.length) return ordered.map(Number).filter((c) => Number.isFinite(c) && c > 0);
+  if (ST.selected instanceof Set) {
+    return [...ST.selected].map(Number).filter((c) => Number.isFinite(c) && c > 0);
+  }
+  if (Array.isArray(ST.selected)) {
+    return ST.selected.map(Number).filter((c) => Number.isFinite(c) && c > 0);
+  }
+  return [];
+}
+
+/** Sidebar selection for Solvency (excludes Sistema 999). Falls back to BTG Chile. */
+function banksForRun() {
+  const fromSidebar = selectedBanks().filter((c) => c !== SISTEMA);
+  if (fromSidebar.length) return fromSidebar.slice(0, MAX_COMPARE_ENTITIES);
+  return [DEFAULT_BANK_CL];
 }
 
 function periodRange() {
   const desde = document.getElementById('selDesde')?.value || ST.desde || ST.periodos[0];
   const hasta = document.getElementById('selHasta')?.value || ST.hasta || ST.periodos[ST.periodos.length - 1];
-  return ST.periodos.filter((p) => p >= desde && p <= hasta);
+  const all = Array.isArray(ST.periodos) ? ST.periodos : [];
+  const inUi = all.filter((p) => p >= desde && p <= hasta);
+  return inUi.length ? inUi : all;
 }
 
 function bankDisplayName(code) {
@@ -66,7 +84,7 @@ function bankDisplayName(code) {
 }
 
 function selectionKey() {
-  return `${datasetIsoCountry()}|${selectedBanks().join(',')}|${periodRange().join(',')}|${state.compare ? 1 : 0}`;
+  return `${datasetIsoCountry()}|${banksForRun().join(',')}|${periodRange().join(',')}|${state.compare ? 1 : 0}`;
 }
 
 function wantValueLabels(nSeries = 1) {
@@ -88,13 +106,13 @@ function labelsToggleHtml(id) {
 }
 
 function resolveEntities() {
-  const codes = selectedBanks().map(Number).filter((c) => c && c !== SISTEMA);
+  const codes = banksForRun();
   if (!codes.length) return [];
   if (!state.compare) {
     const c = codes[0];
     return [{ id: String(c), label: bankDisplayName(c), codes: [c] }];
   }
-  return codes.slice(0, MAX_COMPARE_ENTITIES).map((c) => ({
+  return codes.map((c) => ({
     id: String(c),
     label: bankDisplayName(c),
     codes: [c],
@@ -108,6 +126,7 @@ function rowsForBank(rows, code) {
 function setCompare(on) {
   state.compare = !!on;
   state.loaded = false;
+  state.error = null;
   renderBaselAnalytics();
 }
 
@@ -125,45 +144,46 @@ async function loadBaselData() {
   if (!BASEL_COUNTRIES.has(iso)) {
     state.error = 'Solvency Analytics is available for Chile only.';
     state.loaded = false;
-    renderBaselAnalytics();
+    paintShell();
     return;
   }
-  const banks = selectedBanks().map(Number).filter(Boolean);
-  if (!banks.length) {
-    state.error = 'Select at least one bank in the sidebar.';
-    state.loaded = false;
-    renderBaselAnalytics();
-    return;
-  }
+
+  const banks = banksForRun();
   const periodos = periodRange();
   if (!periodos.length) {
-    state.error = 'Select a period range.';
+    state.error = 'No periods loaded yet — wait for Chile bootstrap, then open Solvency again.';
     state.loaded = false;
-    renderBaselAnalytics();
+    paintShell();
     return;
   }
 
   state.loading = true;
   state.error = null;
-  renderBaselAnalytics();
+  paintShell();
 
   try {
-    const fetchBanks = [...new Set([...banks.slice(0, MAX_COMPARE_ENTITIES), SISTEMA])];
+    const fetchBanks = [...new Set([...banks, SISTEMA])];
     const [q1, x1] = await Promise.all([
       fetchData('q1', CL_B3_Q1_ACCOUNTS, periodos, fetchBanks),
       fetchData('x1', CL_B3_X1_ACCOUNTS, periodos, fetchBanks),
     ]);
     const haveQ1 = (q1 || []).some((r) => String(r.cuenta) === CL_B3.cet1Apr);
     if (!haveQ1) {
-      state.error = 'No Basilea III data in this range yet. CMF publishes with ~1 month lag vs the ZIP balance.';
+      state.error = 'No Basilea III data in this range yet. CMF publishes with ~1 month lag vs the ZIP balance — try ending the range at the prior month.';
       state.loaded = false;
       state.q1 = [];
       state.x1 = [];
     } else {
+      // Keep chart periods to months that actually have Basilea rows.
+      const withData = [...new Set(
+        (q1 || [])
+          .filter((r) => String(r.cuenta) === CL_B3.cet1Apr)
+          .map((r) => r.periodo),
+      )].sort();
       state.q1 = q1 || [];
       state.x1 = x1 || [];
       state.banks = fetchBanks;
-      state.periodos = periodos;
+      state.periodos = withData.length ? withData : periodos;
       state.iso = iso;
       state.selectionKey = selectionKey();
       state.lastBank = banks[0];
@@ -176,7 +196,7 @@ async function loadBaselData() {
     state.loaded = false;
   } finally {
     state.loading = false;
-    renderBaselAnalytics();
+    paintShell();
   }
 }
 
@@ -232,7 +252,7 @@ function paintCharts() {
       const rows = rowsForBank(state.q1, code);
       return {
         label: e.label,
-        color: bankColor(code) || Object.values(CL_B3_COLORS)[i % 4],
+        color: bankColor(code, i, e.label) || Object.values(CL_B3_COLORS)[i % 4],
         data: sparseData(clB3RatioSeries(rows, CL_B3.cet1Apr, state.periodos)),
       };
     });
@@ -275,6 +295,7 @@ function paintCharts() {
     valueScale,
     height: 300,
     style: state.chartStyle || 'lines',
+    showLegend: true,
   });
 }
 
@@ -421,7 +442,7 @@ function renderLoaded() {
   `;
 }
 
-export function renderBaselAnalytics() {
+function paintShell() {
   const root = document.getElementById('baselAnalyticsRoot');
   if (!root) return;
   const iso = datasetIsoCountry();
@@ -448,12 +469,12 @@ export function renderBaselAnalytics() {
         <button type="button" class="rcbtn" id="b3Retry" style="margin-top:12px;">Retry</button>
       </div>`;
     bindPeerToolbar();
-    document.getElementById('b3Retry')?.addEventListener('click', () => loadBaselData());
+    document.getElementById('b3Retry')?.addEventListener('click', () => {
+      state.error = null;
+      loadBaselData();
+    });
     return;
   }
-
-  if (state.loaded && state.iso && state.iso !== iso) state.loaded = false;
-  if (state.loaded && state.selectionKey !== selectionKey()) state.loaded = false;
 
   if (!state.loaded) {
     root.innerHTML = `
@@ -473,7 +494,8 @@ export function renderBaselAnalytics() {
   document.querySelectorAll('[data-b3-bank]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.lastEntityId = btn.getAttribute('data-b3-bank');
-      renderBaselAnalytics();
+      paintShell();
+      requestAnimationFrame(() => paintCharts());
     });
   });
   document.querySelectorAll('[data-b3-metric]').forEach((btn) => {
@@ -482,20 +504,56 @@ export function renderBaselAnalytics() {
   document.querySelectorAll('[data-b3-style]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.chartStyle = btn.getAttribute('data-b3-style');
-      renderBaselAnalytics();
+      paintShell();
+      requestAnimationFrame(() => paintCharts());
     });
   });
   document.getElementById('b3Reload')?.addEventListener('click', () => {
     state.loaded = false;
+    state.error = null;
     loadBaselData();
   });
   requestAnimationFrame(() => paintCharts());
+}
+
+/** Entry point — mirrors Funding/AQ: auto-load when Chile + periods are ready. */
+export function renderBaselAnalytics() {
+  const root = document.getElementById('baselAnalyticsRoot');
+  if (!root) return;
+  const iso = datasetIsoCountry();
+
+  if (!BASEL_COUNTRIES.has(iso)) {
+    state.loaded = false;
+    state.iso = null;
+    state.selectionKey = '';
+    state.error = null;
+    paintShell();
+    return;
+  }
+
+  if (state.loaded && state.iso && state.iso !== iso) {
+    state.loaded = false;
+    state.selectionKey = '';
+    state.error = null;
+  }
+  if (state.loaded && state.selectionKey !== selectionKey()) {
+    state.loaded = false;
+  }
+
+  // Auto-load like Funding / Asset Quality (no manual "Load" gate once data is ready).
+  if (!state.loaded && !state.loading && periodRange().length) {
+    loadBaselData();
+    return;
+  }
+
+  paintShell();
 }
 
 export function refreshBaselAnalytics() {
   if (!BASEL_COUNTRIES.has(datasetIsoCountry())) return;
   if (document.getElementById('tab-basel')?.style.display === 'block') {
     state.loaded = false;
+    state.error = null;
     renderBaselAnalytics();
   }
 }
