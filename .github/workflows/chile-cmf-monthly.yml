@@ -2,13 +2,13 @@ name: Chile CMF Balance Bancos (monthly)
 
 on:
   schedule:
-    # Día 25 — CMF suele publicar el mes anterior con ~3–4 semanas de rezago.
-    # Discovery: scrape listing 32901 (ZIP) + hub 28910 (cluster) + short probe.
+    # Day 25 — CMF usually publishes prior month with ~3–4 weeks lag.
+    # Discovery: listing 32901 (ZIP) + hub 28910 (cluster).
     - cron: '0 14 25 * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'incremental | article | zip-url'
+        description: 'incremental | article | zip-url | range'
         required: false
         default: 'incremental'
       article_id:
@@ -17,6 +17,14 @@ on:
         default: ''
       zip_url:
         description: 'URL directa al ZIP (mode=zip-url)'
+        required: false
+        default: ''
+      from:
+        description: 'YYYYMM start (mode=range) e.g. 201801'
+        required: false
+        default: ''
+      to:
+        description: 'YYYYMM end (mode=range) e.g. 202112'
         required: false
         default: ''
       force:
@@ -50,6 +58,8 @@ jobs:
             python chile_loader.py --article-id "${{ github.event.inputs.article_id }}" $FORCE_FLAG
           elif [ "$MODE" = "zip-url" ]; then
             python chile_loader.py --zip-url "${{ github.event.inputs.zip_url }}" $FORCE_FLAG
+          elif [ "$MODE" = "range" ]; then
+            python chile_loader.py --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" $FORCE_FLAG
           else
             python chile_loader.py $FORCE_FLAG
           fi

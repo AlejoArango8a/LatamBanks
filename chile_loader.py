@@ -21,6 +21,7 @@ USO
   python chile_loader.py --force             # reescribe períodos ya cargados
   python chile_loader.py --dry-run
   python chile_loader.py --discover-only     # listing/cluster sin tocar DB
+  python chile_loader.py --from 201801 --to 202112   # backfill CNCB2021 + bridges
 """
 
 from __future__ import annotations
@@ -116,8 +117,10 @@ PROBE_AHEAD_DEFAULT = 1000
 # When listing scrape succeeds, still probe a shorter window as safety net.
 PROBE_AHEAD_AFTER_LISTING = 120
 CLUSTER_RADIUS_DEFAULT = 30
-# Only merge listing cards from this period forward (avoids re-fetching 20y of archive).
+# Overridden by --from during historical backfill.
 LISTING_MERGE_MIN_PERIOD = min(KNOWN_ARTICLE_PERIODS.values())
+# Offline seed of article IDs for CNCB2021 backfill (listing scrape can flake).
+HISTORIC_AIDS_PATH = Path(__file__).parent / "data" / "cl_cmf_aids_201801_202112.json"
 
 
 def _http_get(url: str, timeout: int = 60) -> bytes:
@@ -216,14 +219,25 @@ def parse_listing_hub_aids(html: str) -> list[int]:
     return sorted({int(x) for x in re.findall(r"\baid-(\d+)\b", html)})
 
 
-def scrape_zip_listing(url: str = LISTING_ZIP_URL) -> dict[int, str]:
+def scrape_zip_listing(
+    url: str = LISTING_ZIP_URL,
+    min_period: str | None = None,
+) -> dict[int, str]:
     try:
         html = _http_get(url).decode("utf-8", "ignore")
     except Exception as e:
         log.warning("ZIP listing scrape failed (%s): %s", url, e)
         return {}
     found = parse_listing_zip_articles(html)
-    log.info("ZIP listing %s → %d article→period maps", url.split("/")[-1], len(found))
+    floor = min_period or LISTING_MERGE_MIN_PERIOD
+    if floor:
+        found = {a: p for a, p in found.items() if p >= floor}
+    log.info(
+        "ZIP listing %s → %d article→period maps (≥ %s)",
+        url.split("/")[-1],
+        len(found),
+        floor,
+    )
     if found:
         top = sorted(found.items(), key=lambda kv: kv[1], reverse=True)[:6]
         log.info("ZIP listing newest: %s", ", ".join(f"{a}→{p}" for a, p in top))
@@ -258,8 +272,31 @@ def cluster_candidate_ids(anchors: list[int], radius: int = CLUSTER_RADIUS_DEFAU
     return sorted(out)
 
 
+def load_historic_aid_seeds(min_period: str | None = None, max_period: str | None = None) -> dict[int, str]:
+    """Load checked-in CMF article_id→period map for CNCB2021 backfill."""
+    if not HISTORIC_AIDS_PATH.is_file():
+        return {}
+    import json
+
+    raw = json.loads(HISTORIC_AIDS_PATH.read_text(encoding="utf-8"))
+    aids = raw.get("aids") or {}
+    out: dict[int, str] = {}
+    for aid_s, per in aids.items():
+        try:
+            aid = int(aid_s)
+        except ValueError:
+            continue
+        if min_period and per < min_period:
+            continue
+        if max_period and per > max_period:
+            continue
+        out[aid] = per
+    return out
+
+
 def seed_article_ids_from_zips_dir(zips_dir: Path) -> dict[int, str]:
     out = dict(KNOWN_ARTICLE_PERIODS)
+    out.update(load_historic_aid_seeds())
     if not zips_dir.is_dir():
         return out
     for p in zips_dir.glob("articles-*_recurso_1.zip"):
@@ -345,21 +382,23 @@ def load_zip_bytes(zip_bytes: bytes, periodo: str | None, conn, force: bool) -> 
     return per, n
 
 
-def build_discovery_seeds(zips_dir: Path) -> tuple[dict[int, str], list[int], bool]:
+def build_discovery_seeds(
+    zips_dir: Path,
+    min_period: str | None = None,
+) -> tuple[dict[int, str], list[int], bool]:
     """
     Merge hard-coded seeds, local zips, and live listings.
 
     Returns (aid→period, hub_aids, listing_ok).
-    Listing cards older than LISTING_MERGE_MIN_PERIOD are ignored so incremental
-    runs do not attempt to re-download the full CMF archive.
+    Listing cards older than min_period / LISTING_MERGE_MIN_PERIOD are ignored
+    unless an explicit historical --from lowers the floor.
     """
     seeds = seed_article_ids_from_zips_dir(zips_dir)
-    listing = scrape_zip_listing()
+    floor = min_period or LISTING_MERGE_MIN_PERIOD
+    listing = scrape_zip_listing(min_period=floor)
     listing_ok = bool(listing)
     merged = 0
     for aid, per in listing.items():
-        if per < LISTING_MERGE_MIN_PERIOD:
-            continue
         prev = seeds.get(aid)
         if prev and prev != per:
             log.warning(
@@ -370,17 +409,68 @@ def build_discovery_seeds(zips_dir: Path) -> tuple[dict[int, str], list[int], bo
             )
         seeds[aid] = per
         merged += 1
-    log.info(
-        "Listing merge: %d cards with period ≥ %s",
-        merged,
-        LISTING_MERGE_MIN_PERIOD,
-    )
+    log.info("Listing merge: %d cards with period ≥ %s", merged, floor)
 
     hub_aids = scrape_hub_aids()
-    # Keep only recent hub aids near the ZIP seed range (cluster anchors).
     min_hub = max(0, max(seeds) - 5000) if seeds else 0
     hub_aids = [a for a in hub_aids if a >= min_hub]
     return seeds, hub_aids, listing_ok
+
+
+def run_range_backfill(
+    conn,
+    zips_dir: Path,
+    from_dt: str,
+    to_dt: str,
+    force: bool,
+    dry_run: bool,
+) -> int:
+    """Load every listing ZIP with from_dt ≤ periodo ≤ to_dt."""
+    seeds, _hub, listing_ok = build_discovery_seeds(zips_dir, min_period=from_dt)
+    if not listing_ok and not any(from_dt <= p <= to_dt for p in seeds.values()):
+        log.error("No listing/seeds available for range %s–%s", from_dt, to_dt)
+        return -1
+
+    loaded = get_loaded_periods(conn)
+    targets = [(aid, per) for aid, per in seeds.items() if from_dt <= per <= to_dt]
+    by_period: dict[str, int] = {}
+    for aid, per in targets:
+        by_period[per] = max(by_period.get(per, 0), aid)
+    ordered = sorted(by_period.items())
+    log.info(
+        "Range backfill %s–%s · %d periods · already loaded in range=%d · listing_ok=%s",
+        from_dt,
+        to_dt,
+        len(ordered),
+        sum(1 for p, _ in ordered if p in loaded),
+        listing_ok,
+    )
+
+    loaded_count = 0
+    for per, aid in ordered:
+        if per in loaded and not force:
+            log.info("Skip %s (articles-%s) — already loaded", per, aid)
+            continue
+        data = download_article_zip(aid)
+        if not data:
+            local = zips_dir / f"articles-{aid}_recurso_1.zip"
+            if local.exists():
+                data = local.read_bytes()
+            else:
+                log.warning("Cannot fetch articles-%s for %s", aid, per)
+                continue
+        if dry_run:
+            log.info("[dry-run] would load articles-%s → %s", aid, per)
+            loaded_count += 1
+            continue
+        got_per, n = load_zip_bytes(data, per, conn, force=force)
+        if n:
+            loaded_count += 1
+            loaded.add(got_per)
+            log.info("Loaded %s from articles-%s (%d files)", got_per, aid, n)
+        elif got_per:
+            loaded.add(got_per)
+    return loaded_count
 
 
 def freshness_report(seeds: dict[int, str], loaded: set[str]) -> str | None:
@@ -532,6 +622,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--force", action="store_true", help="Overwrite periods already in carga_log")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--discover-only", action="store_true", help="Scrape listings only (no DB writes)")
+    ap.add_argument("--from", dest="from_dt", default="", help="YYYYMM start (range backfill)")
+    ap.add_argument("--to", dest="to_dt", default="", help="YYYYMM end (range backfill)")
     ap.add_argument("--zips-dir", default=str(Path(__file__).parent / "zips"))
     ap.add_argument("--probe-ahead", type=int, default=PROBE_AHEAD_DEFAULT)
     args = ap.parse_args(argv)
@@ -554,6 +646,28 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
+        if args.from_dt or args.to_dt:
+            from_dt = args.from_dt or "201801"
+            to_dt = args.to_dt or from_dt
+            if not (re.fullmatch(r"\d{6}", from_dt) and re.fullmatch(r"\d{6}", to_dt)):
+                log.error("--from/--to must be YYYYMM")
+                return 2
+            if from_dt > to_dt:
+                log.error("--from must be ≤ --to")
+                return 2
+            n = run_range_backfill(
+                conn,
+                Path(args.zips_dir),
+                from_dt,
+                to_dt,
+                force=args.force,
+                dry_run=args.dry_run,
+            )
+            if n < 0:
+                return 1
+            log.info("Range backfill finished · periods loaded this run: %d", n)
+            return 0
+
         if args.zip_path or args.zip_url or args.article_id:
             if args.zip_path:
                 zip_bytes = Path(args.zip_path).read_bytes()

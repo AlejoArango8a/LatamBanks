@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "title": "CNCB 2021 → CNCB 2022 KPI bridge (Circular 2.243)",
+    "scale_pre_2022": "millions_to_pesos_x1e6",
+    "notes": "Curated from CMF IF 'Indicadores Sistema' CNCB 2021/2022 columns + PLAN-CTAS dic-2021. Used only for periods < 202201."
+  },
+  "bridges": [
+    {"target": "100000000", "tipo": "b1", "sources": ["1000000"], "label": "Total activos"},
+    {"target": "200000000", "tipo": "b1", "sources": ["2000000"], "label": "Total pasivos"},
+    {"target": "300000000", "tipo": "b1", "sources": ["3000000"], "label": "Patrimonio"},
+    {"target": "500000000", "tipo": "b1", "sources": ["5100000"], "label": "Total colocaciones"},
+    {"target": "144000000", "tipo": "b1", "sources": ["1300000"], "label": "Créditos a clientes"},
+    {"target": "145000000", "tipo": "b1", "sources": ["1302000"], "label": "Colocaciones comerciales"},
+    {"target": "146000000", "tipo": "b1", "sources": ["1304000"], "label": "Colocaciones vivienda"},
+    {"target": "148000000", "tipo": "b1", "sources": ["1305000"], "label": "Colocaciones consumo"},
+    {"target": "143000000", "tipo": "b1", "sources": ["1270000"], "label": "Adeudado por bancos"},
+    {"target": "149000000", "tipo": "b1", "sources": ["1309000"], "label": "Provisiones constituidas"},
+    {"target": "241000000", "tipo": "b1", "sources": ["2100000"], "label": "Depósitos a la vista"},
+    {"target": "242000000", "tipo": "b1", "sources": ["2200000"], "label": "Depósitos a plazo"},
+    {"target": "244000000", "tipo": "b1", "sources": ["2300000"], "label": "Obligaciones con bancos"},
+    {"target": "245000000", "tipo": "b1", "sources": ["2400000"], "label": "Instrumentos de deuda emitidos"},
+    {"target": "590000000", "tipo": "r1", "sources": ["5010000"], "label": "Utilidad consolidada del ejercicio"},
+    {"target": "857000000", "tipo": "c1", "sources": ["8910000"], "label": "Mora 90+"},
+    {"target": "811000000", "tipo": "c1", "sources": ["8110000"], "label": "Cartera deteriorada"},
+    {"target": "851000000", "tipo": "c1", "sources": ["8510000"], "label": "Cartera normal individual"},
+    {"target": "852000000", "tipo": "c1", "sources": ["8520000"], "label": "Cartera subestándar individual"},
+    {"target": "853000000", "tipo": "c1", "sources": ["8530000"], "label": "Cartera incumplimiento individual"},
+    {"target": "854000000", "tipo": "c1", "sources": ["8540000"], "label": "Cartera normal grupal"},
+    {"target": "855000000", "tipo": "c1", "sources": ["8560000"], "label": "Incumplimiento grupal (CNCB2021 856→CNCB2022 855)"},
+    {"target": "847100000", "tipo": "c1", "sources": ["8710000"], "label": "Pérdida bruta OR"}
+  ]
+}
