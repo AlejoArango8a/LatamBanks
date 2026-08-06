@@ -8,7 +8,10 @@ Fuente (igual pre y post 2025):
   - Catálogo REST: relatorios (2000–2024) + relatorios2025a2030
   - Universo prudencial: cadastro{dt}_1009.json (desde 202309) o
     cadastro{dt}_1004.json (201403–202306). Mismos códigos 1000… de grupo.
-  - Valores: dados{dt}_1.json
+  - Valores: dados{dt}_1.json (Cosif Resumo/Ativo/Passivo/Resultado/Capital)
+            + dados{dt}_3.json (SCR crédito: reportes 123–131 — Inadimplência,
+              Ativos problemáticos, C1–C5, geografía, Exterior)
+  - Diccionario crédito: info{dt}.json (lid → nombre). Olinda solo cubre rel 1–5.
   - Paths: el catálogo 2025+ ya trae bucket `ifdata_2025_2030//…`;
     el histórico requiere prefijo `ifdata/`.
 
@@ -129,6 +132,8 @@ def list_quarters(min_dt=MIN_PRUDENTIAL_DT):
         cad_key, cad_id = pick_cadastro_key(fmap, dt)
         if not cad_key or f"dados{dt}_1.json" not in fmap:
             continue
+        # dados_3 (SCR credit) is present for every prudential quarter we care about;
+        # keep the quarter even if missing so Cosif-only history still loads.
         # Si el mismo dt aparece en ambos catálogos, conservar el de 2025+
         # (paths con bucket correcto). En la práctica no se solapan.
         by_dt[dt] = {"dt": dt, "files": files, "cad_id": cad_id}
@@ -175,6 +180,8 @@ def pick_reference_codinst(cadastro, keep=("30306294",)):
 def build_dictionary(anomes, cadastro):
     codinsts = pick_reference_codinst(cadastro)
     d = {}
+    olinda_ok = 0
+    olinda_fail = 0
     for rel in DICT_RELATORIOS:
         for cod in codinsts:
             url = (
@@ -182,15 +189,28 @@ def build_dictionary(anomes, cadastro):
                 f"?$filter=CodInst%20eq%20'{cod}'&$format=json"
             )
             try:
-                for row in http_json(url).get("value", []):
+                # 1 retry — Olinda is flaky; Cosif names already live in plan_cuentas
+                # and SCR lids come from info.json.
+                for row in http_json(url, retries=1, backoff=2).get("value", []):
                     c = str(row.get("Conta") or "").strip()
                     if c and c not in d:
-                        # NomeColuna a veces trae saltos de línea / fórmulas
                         nome = str(row.get("NomeColuna") or "").strip()
                         nome = " ".join(nome.split())
                         d[c] = nome
+                olinda_ok += 1
             except Exception as e:
-                log.warning("diccionario rel=%s cod=%s: %s", rel, cod, e)
+                olinda_fail += 1
+                if olinda_fail <= 3:
+                    log.warning("diccionario rel=%s cod=%s: %s", rel, cod, e)
+                elif olinda_fail == 4:
+                    log.warning("diccionario Olinda: más fallos (silenciando)…")
+                # Bail early if Olinda is down — don't burn minutes on retries.
+                if olinda_ok == 0 and olinda_fail >= 6:
+                    log.warning(
+                        "Olinda caído (%d fallos seguidos) — sigo con plan_cuentas + info.json",
+                        olinda_fail,
+                    )
+                    return d
     log.info(
         "Diccionario de cuentas (%s): %d códigos mapeados (refs: %s)",
         anomes, len(d), codinsts,
@@ -230,6 +250,36 @@ def build_merged_dictionary(quarters):
 # ---------------------------------------------------------------------------
 # DB helpers
 # ---------------------------------------------------------------------------
+
+def build_info_dictionary(dt, files):
+    """
+    lid → label from info{dt}.json (portal file). Required for SCR credit
+    columns in dados_3 — Olinda Relatorio 6+ returns empty (blueprint §2.4).
+    """
+    fmap = file_map(files)
+    key = f"info{dt}.json"
+    if key not in fmap:
+        log.warning("dt=%s sin %s — nombres SCR caerán al lid numérico", dt, key)
+        return {}
+    try:
+        info = portal_file(fmap[key])
+    except Exception as e:
+        log.warning("dt=%s info.json: %s", dt, e)
+        return {}
+    d = {}
+    if not isinstance(info, list):
+        return d
+    for row in info:
+        lid = row.get("lid")
+        if lid is None:
+            continue
+        name = str(row.get("n") or row.get("ni") or lid).strip()
+        name = " ".join(name.split())
+        d[str(lid)] = name
+    log.info("dt=%s info.json: %d lids etiquetados", dt, len(d))
+    return d
+
+
 def get_db_url():
     url = os.environ.get("COCKROACH_URL")
     if not url:
@@ -275,6 +325,22 @@ def get_loaded_periods(conn):
     return {row[0] for row in cur.fetchall()}
 
 
+def load_existing_plan_labels(conn):
+    """Reuse Cosif names already in plan_cuentas when Olinda is down."""
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT cuenta, descripcion FROM plan_cuentas WHERE country=%s",
+        (COUNTRY,),
+    )
+    out = {}
+    for cuenta, desc in cur.fetchall():
+        c, d = str(cuenta), str(desc or "").strip()
+        if d and d != c:
+            out[c] = d
+    log.info("plan_cuentas existente: %d etiquetas Cosif/SCR", len(out))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Carga de un trimestre
 # ---------------------------------------------------------------------------
@@ -286,13 +352,22 @@ def load_quarter(conn, dt, files, diccion):
             f"Sin cadastro prudencial (1009/1004) para {dt}. "
             "No cargar consolidación financiera (1005)."
         )
-    dados_key = f"dados{dt}_1.json"
-    if dados_key not in fmap:
-        raise KeyError(f"Falta {dados_key}")
+    dados_keys = [f"dados{dt}_1.json"]
+    dados3_key = f"dados{dt}_3.json"
+    if dados3_key in fmap:
+        dados_keys.append(dados3_key)
+    else:
+        log.warning("dt=%s sin %s — Asset Quality SCR quedará incompleto", dt, dados3_key)
+    for k in dados_keys:
+        if k not in fmap:
+            raise KeyError(f"Falta {k}")
 
-    log.info("dt=%s cadastro=%s path=%s", dt, cad_id, resolve_portal_path(fmap[cad_key]))
+    # Merge Olinda Cosif names with info.json SCR lids (dados_3).
+    labels = dict(diccion or {})
+    labels.update(build_info_dictionary(dt, files))
+
+    log.info("dt=%s cadastro=%s path=%s files=%s", dt, cad_id, resolve_portal_path(fmap[cad_key]), dados_keys)
     cadastro = portal_file(fmap[cad_key])
-    dados = portal_file(fmap[dados_key])
 
     valid = {str(e.get("c0")).strip() for e in cadastro if e.get("c0") is not None}
 
@@ -306,26 +381,54 @@ def load_quarter(conn, dt, files, diccion):
         ["razon_social"], ["country", "codigo"], inst,
     )
 
+    # e -> {conta: val} so Cosif + SCR merge without duplicate rows
+    merged = {}
+    for dkey in dados_keys:
+        dados = portal_file(fmap[dkey])
+        for ent in dados.get("values", []):
+            e = str(ent.get("e")).strip()
+            if e not in valid:
+                continue
+            bucket = merged.setdefault(e, {})
+            for it in ent.get("v", []):
+                conta = str(it.get("i")).strip()
+                if not conta:
+                    continue
+                val = it.get("v") or 0
+                try:
+                    val = int(round(float(val)))
+                except (TypeError, ValueError):
+                    val = 0
+                bucket[conta] = val  # later file wins on rare lid collisions
+
     datos_rows, contas = [], set()
-    for ent in dados.get("values", []):
-        e = str(ent.get("e")).strip()
-        if e not in valid:  # solo universo prudencial + independientes
-            continue
-        for it in ent.get("v", []):
-            conta = str(it.get("i")).strip()
-            val = it.get("v") or 0
-            try:
-                val = int(round(float(val)))  # monto_total suele ser bigint
-            except (TypeError, ValueError):
-                val = 0
+    for e, bucket in merged.items():
+        for conta, val in bucket.items():
             datos_rows.append((COUNTRY, str(dt), "p", e, conta, 0, 0, 0, 0, val))
             contas.add(conta)
 
-    plan = [(COUNTRY, c, diccion.get(c, c)) for c in contas]
-    upsert(
-        conn, "plan_cuentas", ["country", "cuenta", "descripcion"],
-        ["descripcion"], ["country", "cuenta"], plan,
-    )
+    plan = []
+    for c in contas:
+        name = labels.get(c)
+        if name and name != c:
+            plan.append((COUNTRY, c, name))
+        else:
+            # Insert with lid as placeholder; ON CONFLICT keeps prior human label.
+            plan.append((COUNTRY, c, c))
+    # Custom upsert: do not clobber an existing human description with the raw lid.
+    import psycopg2.extras
+    if plan:
+        cur = conn.cursor()
+        sql = (
+            "INSERT INTO plan_cuentas (country, cuenta, descripcion) VALUES %s "
+            "ON CONFLICT (country, cuenta) DO UPDATE SET "
+            "descripcion = CASE "
+            "  WHEN EXCLUDED.descripcion = EXCLUDED.cuenta THEN plan_cuentas.descripcion "
+            "  ELSE EXCLUDED.descripcion END"
+        )
+        for i in range(0, len(plan), BATCH):
+            psycopg2.extras.execute_values(cur, sql, plan[i:i + BATCH])
+        conn.commit()
     upsert(
         conn, "datos_financieros",
         ["country", "periodo", "tipo", "ins_cod", "cuenta",
@@ -339,8 +442,8 @@ def load_quarter(conn, dt, files, diccion):
         [(COUNTRY, str(dt), len(valid), "ok")],
     )
     log.info(
-        "dt=%s cargado: %s entidades, %s filas de datos (cadastro=%s)",
-        dt, len(valid), len(datos_rows), cad_id,
+        "dt=%s cargado: %s entidades, %s filas (cadastro=%s, files=%s)",
+        dt, len(valid), len(datos_rows), cad_id, "+".join(dados_keys),
     )
 
 
@@ -375,6 +478,8 @@ def main():
                     help="Solo trimestres <= AAAAMM")
     ap.add_argument("--dry-run", action="store_true",
                     help="Solo listar trimestres objetivo; no conecta a la BD")
+    ap.add_argument("--skip-olinda", action="store_true",
+                    help="No consultar Olinda; usar plan_cuentas + info.json (más rápido / resiliente)")
     args = ap.parse_args()
 
     min_dt = args.from_dt or MIN_PRUDENTIAL_DT
@@ -406,10 +511,12 @@ def main():
         for q in target:
             fmap = file_map(q["files"])
             cad_key, cad_id = pick_cadastro_key(fmap, q["dt"])
+            d3 = f"dados{q['dt']}_3.json"
+            d3_note = resolve_portal_path(fmap[d3]) if d3 in fmap else "MISSING"
             print(
                 f"  {q['dt']}  cadastro={cad_id}  "
-                f"cad_path={resolve_portal_path(fmap[cad_key])}  "
-                f"dados_path={resolve_portal_path(fmap[f'dados{q['dt']}_1.json'])}"
+                f"dados1={resolve_portal_path(fmap[f'dados{q['dt']}_1.json'])}  "
+                f"dados3={d3_note}"
             )
         return 0
 
@@ -438,7 +545,14 @@ def main():
             "…" if len(target) > 8 else "",
         )
 
-        diccion = build_merged_dictionary(quarters)
+        diccion = load_existing_plan_labels(conn)
+        if args.skip_olinda:
+            log.info("--skip-olinda: no se consulta Olinda")
+        else:
+            try:
+                diccion.update(build_merged_dictionary(quarters))
+            except Exception as e:
+                log.warning("Olinda dictionary skipped (%s) — usando plan_cuentas + info.json", e)
 
         for q in target:
             load_quarter(conn, q["dt"], q["files"], diccion)

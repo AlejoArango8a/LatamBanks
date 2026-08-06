@@ -1,6 +1,7 @@
 // ============================================================
 // Asset Quality — credit-quality account maps
 // Chile (CMF b1 + c1) · Colombia (CUIF b1) · Peru (SBS b1) · Uruguay (BCU b1 A2_* + q1 A4_*)
+// Brazil (IF.data Cosif + SCR dados_3)
 //
 // Sibling of the per-country *Cuentas.js funding maps, consumed by
 // js/views/assetQuality.js. Every country declares only the metrics it really
@@ -716,6 +717,151 @@ export function uyAqSnapshot(rowsB1, rowsQ1, periodo) {
       { key: 'allowance', label: 'Deterioro total (Anexo 2 · row 10)', value: allowance, pct: aqPct(allowance, loans) },
       { key: 'nonResident', label: 'Non-resident credit — performing (1.4)', value: nonResident, pct: nonResidentPct },
       { key: 'foreignFis', label: 'Exposure to foreign FIs (1.2.4 + 1.2.5)', value: foreignFis, pct: aqPct(foreignFis, loans) },
+    ],
+  };
+}
+
+// ============================================================
+// BRAZIL — Bacen IF.data. Cosif stocks in dados_1 + SCR credit in dados_3.
+// Inadimplência / C1–C5 lids appear from 202412 (Res. 4557). Exterior +
+// geography go back to 201403. Blueprint §2.4.
+// ============================================================
+
+/** SCR report-130 / 126 lids (stored as cuenta strings, tipo='p'). */
+export const BR_AQ_SCR = {
+  totalGeral: ['24454'],
+  exterior: ['23383'],
+  totalScr: ['23382'],
+  inadimplencia: ['148834'],
+  problematicos: ['148833'],
+  c1: ['148835'],
+  c2: ['148836'],
+  c3: ['148837'],
+  c4: ['148838'],
+  c5: ['148839'],
+  naoInformada: ['149385'],
+};
+
+/** Cosif accounting book (dados_1) — gross / provision / net. */
+export const BR_AQ_COSIF = {
+  loansClassified: ['78183', '141873'],
+  opsCredito: ['78191'],
+  provision: ['78192', '145832'],
+  net: ['78193'],
+  grossIfrs: ['145831'],
+};
+
+/** Regional mix (report 126) — available for the full prudential history. */
+export const BR_AQ_INSTRUMENTS = [
+  { key: 'sudeste', label: 'Southeast (Sudeste)', short: 'Sudeste', codes: ['23358'], group: 'domestic' },
+  { key: 'sul', label: 'South (Sul)', short: 'Sul', codes: ['23362'], group: 'domestic' },
+  { key: 'nordeste', label: 'Northeast (Nordeste)', short: 'Nordeste', codes: ['23360'], group: 'domestic' },
+  { key: 'centroOeste', label: 'Central-West (Centro-oeste)', short: 'Centro-Oeste', codes: ['23359'], group: 'domestic' },
+  { key: 'norte', label: 'North (Norte)', short: 'Norte', codes: ['23361'], group: 'domestic' },
+  { key: 'naoInformada', label: 'Region not reported', short: 'N/D', codes: ['24449'], group: 'other' },
+  { key: 'exterior', label: 'Overseas (Exterior)', short: 'Exterior', codes: ['23383'], group: 'foreign' },
+];
+
+/** C1–C5 active-portfolio characteristics (report 130 · from 202412). */
+export const BR_AQ_C_LADDER = [
+  { key: 'c1', label: 'C1', short: 'C1', codes: BR_AQ_SCR.c1 },
+  { key: 'c2', label: 'C2', short: 'C2', codes: BR_AQ_SCR.c2 },
+  { key: 'c3', label: 'C3', short: 'C3', codes: BR_AQ_SCR.c3 },
+  { key: 'c4', label: 'C4', short: 'C4', codes: BR_AQ_SCR.c4 },
+  { key: 'c5', label: 'C5', short: 'C5', codes: BR_AQ_SCR.c5 },
+];
+
+export const BR_AQ_COLORS = {
+  sudeste: '#0d3b66',
+  sul: '#0284c7',
+  nordeste: '#0ea5e9',
+  centroOeste: '#0d9488',
+  norte: '#14b8a6',
+  naoInformada: '#94a3b8',
+  exterior: '#b45309',
+  c1: '#16a34a',
+  c2: '#84cc16',
+  c3: '#f59e0b',
+  c4: '#ea580c',
+  c5: '#dc2626',
+  npl: '#dc2626',
+  problematicos: '#9a3412',
+  allowance: '#0d9488',
+};
+
+export function brAqAccountsForRun() {
+  return {
+    // API remaps any tipo → 'p' for BR.
+    b1: [...new Set([
+      ...BR_AQ_SCR.totalGeral,
+      ...BR_AQ_SCR.exterior,
+      ...BR_AQ_SCR.totalScr,
+      ...BR_AQ_SCR.inadimplencia,
+      ...BR_AQ_SCR.problematicos,
+      ...BR_AQ_SCR.naoInformada,
+      ...BR_AQ_C_LADDER.flatMap((c) => c.codes),
+      ...BR_AQ_INSTRUMENTS.flatMap((i) => i.codes),
+      ...BR_AQ_COSIF.loansClassified,
+      ...BR_AQ_COSIF.opsCredito,
+      ...BR_AQ_COSIF.provision,
+      ...BR_AQ_COSIF.net,
+      ...BR_AQ_COSIF.grossIfrs,
+    ])],
+  };
+}
+
+export function brAqSnapshot(rowsB1, periodo) {
+  const scrTotal = aqSum(rowsB1, BR_AQ_SCR.totalGeral, periodo);
+  const cosifLoans = aqSum(rowsB1, BR_AQ_COSIF.loansClassified, periodo);
+  const loans = scrTotal > 0 ? scrTotal : cosifLoans;
+  const exterior = aqSum(rowsB1, BR_AQ_SCR.exterior, periodo);
+  const inad = aqSum(rowsB1, BR_AQ_SCR.inadimplencia, periodo);
+  const problematicos = aqSum(rowsB1, BR_AQ_SCR.problematicos, periodo);
+  const allowance = Math.abs(aqSum(rowsB1, BR_AQ_COSIF.provision, periodo));
+  const hasScrQuality = inad > 0 || problematicos > 0
+    || BR_AQ_C_LADDER.some((c) => aqSum(rowsB1, c.codes, periodo) > 0);
+
+  const segments = segmentRows(rowsB1, BR_AQ_INSTRUMENTS, periodo, loans);
+  const cLadder = BR_AQ_C_LADDER.map((def) => {
+    const value = aqSum(rowsB1, def.codes, periodo);
+    return { ...def, value, pct: aqPct(value, loans) };
+  });
+  const cTotal = cLadder.reduce((s, g) => s + g.value, 0);
+
+  return {
+    iso: 'BR',
+    periodo,
+    loans,
+    scrTotal,
+    cosifLoans,
+    net: loans - allowance,
+    segments,
+    fx: exterior,
+    fxPct: aqPct(exterior, loans),
+    npl: inad,
+    nplPct: aqPct(inad, loans),
+    /** True only when SCR Inadimplência is populated (typically ≥202412). */
+    nplReported: inad > 0 || hasScrQuality,
+    problematicos,
+    problematicosPct: aqPct(problematicos, loans),
+    /** False when big peers leave the column blank — never treat 0 as "clean". */
+    problematicosReported: problematicos > 0,
+    allowance,
+    allowancePct: aqPct(allowance, cosifLoans > 0 ? cosifLoans : loans),
+    coverage: aqPct(allowance, inad > 0 ? inad : null),
+    hasScrQuality,
+    cLadder,
+    cTotal,
+    specialRows: [
+      { key: 'domestic', label: 'Domestic SCR book (Total Geral − Exterior)', value: Math.max(0, loans - exterior), pct: aqPct(Math.max(0, loans - exterior), loans) },
+      { key: 'exterior', label: 'Overseas loans (Total Exterior)', value: exterior, pct: aqPct(exterior, loans), foreign: true },
+    ],
+    quality: [
+      { key: 'inad', label: 'Inadimplência (SCR · Res. 4557)', value: inad, pct: aqPct(inad, loans) },
+      { key: 'problematicos', label: 'Ativos problemáticos (SCR)', value: problematicos, pct: aqPct(problematicos, loans) },
+      ...cLadder.map((c) => ({ key: c.key, label: c.label, value: c.value, pct: c.pct })),
+      { key: 'allowance', label: 'Cosif provision / expected loss', value: allowance, pct: aqPct(allowance, cosifLoans > 0 ? cosifLoans : loans) },
+      { key: 'cosifLoans', label: 'Cosif classified loan book', value: cosifLoans, pct: null },
     ],
   };
 }
