@@ -46,7 +46,7 @@ log = logging.getLogger(__name__)
 # se dispara alerta crítica porque rompe la continuidad de lo que se consulta.
 CRITICAL_ACCOUNTS: dict[str, list[str]] = {
     "CL": [
-        "100000000",  # Total activos
+        "100000000",  # Total activos (CNCB2022 / bridge from 1000000)
         "200000000",  # Total pasivos
         "300000000",  # Patrimonio
         "500000000",  # Colocaciones

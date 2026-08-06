@@ -23,7 +23,8 @@
 **Orden recomendado (Chile-first):**
 
 1. **Endurecer discovery del ZIP** (listing `32901` + hub `28910` + cluster ±30) — **hecho** en `chile_loader.py` (P0).  
-2. **Historia pre-2022 / continuidad Circular 2.243** — ver `HANDOFF_CL_Pre2022_Continuity.md` (DE/PARA KPI + loader dual-era).  
+2. **Historia pre-2022 / continuidad Circular 2.243** — ver `HANDOFF_CL_Pre2022_Continuity.md`.
+   Loader dual-era + DE/PARA + `--from/--to` **implementado**; backfill desde **201801**.  
 3. **Surface Tier-B ya en DB** (contingentes, OR, IFRS-9, `505` vs `500`, `858/859`).  
 4. **Ingestar Basilea III xlsx** (sheet de solvencia + RWA).  
 5. **Ingestar ratios publicados del IF xlsx** como `tipo='q1'` (ROE/ROA/mora/cobertura oficiales CMF).  
