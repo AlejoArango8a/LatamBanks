@@ -22,7 +22,7 @@
 
 **Orden recomendado (Chile-first):**
 
-1. **Endurecer discovery del ZIP** (listing `32901` + hub `28910` + cluster ±30).  
+1. **Endurecer discovery del ZIP** (listing `32901` + hub `28910` + cluster ±30) — **hecho** en `chile_loader.py` (P0).  
 2. **Surface Tier-B ya en DB** (contingentes, OR, IFRS-9, `505` vs `500`, `858/859`).  
 3. **Ingestar Basilea III xlsx** (sheet de solvencia + RWA).  
 4. **Ingestar ratios publicados del IF xlsx** como `tipo='q1'` (ROE/ROA/mora/cobertura oficiales CMF).  
