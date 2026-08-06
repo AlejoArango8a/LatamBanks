@@ -9,6 +9,7 @@ Fuente (API pública, sin API key):
 Universo: top N bancos FDIC-insured por EQTOT (default 300) en cada trimestre,
 más CERT fijados en ALWAYS_INCLUDE_CERTS (franquicias LatAm bajo el piso top-N).
 Valores FDIC en miles de USD → monto_total en dólares enteros (×1000).
+Ratios de calidad (NCLNLSR/LNRESNCR/LNATRESR) → tipo='q1', percent×100.
 
 Modos:
   (sin flags)     Incremental: trimestres recientes aún no en carga_log
@@ -60,6 +61,25 @@ FIELDS = [
     "DEP",
     "TS",
     "LNLS",
+    "LNLSNET",
+    "LNATRES",
+    "NCLNLS",
+    "NCLNLSR",
+    "LNRESNCR",
+    "LNATRESR",
+    "P3ASSET",
+    "P9ASSET",
+    "LNRE",
+    "LNCI",
+    "LNCON",
+    "LNCRCD",
+    "LNAUTO",
+    "LNAG",
+    "LNDEP",
+    "LNMUNI",
+    "LNFG",
+    "NTLNLSQ",
+    "ELNATR",
     "CHBAL",
     "SC",
     "NETINC",
@@ -71,10 +91,16 @@ FIELDS = [
     "ROE",
 ]
 
-# Cuentas que van a r1 (PyG); el resto a b1
-R1_FIELDS = frozenset({"NETINC", "INTINC", "EINTEXP", "NONII", "NONIX"})
-# Ratios (no se escalan ×1000; se guardan ×1e6 para conservar decimales en bigint)
+# Cuentas que van a r1 (PyG / quarterly credit flows)
+R1_FIELDS = frozenset({
+    "NETINC", "INTINC", "EINTEXP", "NONII", "NONIX",
+    "NTLNLSQ",  # net charge-offs, quarter
+    "ELNATR",   # provision expense
+})
+# Profitability ratios (no ×1000; ×10000 for 4dp in bigint) — stay in b1
 RATIO_FIELDS = frozenset({"ROA", "ROE"})
+# Asset-quality published % → tipo='q1', stored as percent×100 (UY A4 convention)
+Q1_RATIO_FIELDS = frozenset({"NCLNLSR", "LNRESNCR", "LNATRESR"})
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("usa_loader")
@@ -219,7 +245,26 @@ def rows_to_db(periodo: str, banks: list[dict]):
         "LIAB": "Total liabilities",
         "DEP": "Total deposits",
         "TS": "Time deposits",
-        "LNLS": "Net loans and leases",
+        "LNLS": "Total loans and leases (gross)",
+        "LNLSNET": "Net loans and leases",
+        "LNATRES": "Allowance for credit losses",
+        "NCLNLS": "Noncurrent loans and leases",
+        "NCLNLSR": "Noncurrent loans / loans (%)",
+        "LNRESNCR": "Allowance / noncurrent loans (%)",
+        "LNATRESR": "Allowance / loans (%)",
+        "P3ASSET": "Assets 30–89 days past due",
+        "P9ASSET": "Assets 90+ days past due still accruing",
+        "LNRE": "Real estate loans",
+        "LNCI": "Commercial and industrial loans",
+        "LNCON": "Consumer loans",
+        "LNCRCD": "Credit card loans",
+        "LNAUTO": "Auto loans",
+        "LNAG": "Agricultural loans",
+        "LNDEP": "Loans to depository institutions",
+        "LNMUNI": "Municipal loans",
+        "LNFG": "Loans to foreign governments",
+        "NTLNLSQ": "Net charge-offs (quarter)",
+        "ELNATR": "Provision expense",
         "CHBAL": "Cash and balances due",
         "SC": "Securities",
         "NETINC": "Net income (YTD)",
@@ -239,14 +284,16 @@ def rows_to_db(periodo: str, banks: list[dict]):
                 continue
             raw = float(b[field])
             if field in RATIO_FIELDS:
-                # conservar 4 decimales en entero: 16.64 → 166400
+                # ROA/ROE: 4 dp in bigint (16.64 → 166400)
                 val = int(round(raw * 10000))
+                tipo = "b1"
+            elif field in Q1_RATIO_FIELDS:
+                # percent×100 for aqRatioFromQ1 (0.8463% → 85; 200.09% → 20009)
+                val = int(round(raw * 100))
+                tipo = "q1"
             else:
                 val = int(round(raw * SCALE))
-            tipo = "r1" if field in R1_FIELDS else "b1"
-            # ROA/ROE como b1 informativo (ratios)
-            if field in RATIO_FIELDS:
-                tipo = "b1"
+                tipo = "r1" if field in R1_FIELDS else "b1"
             datos.append((COUNTRY, periodo, tipo, cert, field, 0, 0, 0, 0, val))
     return inst, datos, plan
 

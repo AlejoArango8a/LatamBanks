@@ -9,6 +9,9 @@ on:
 jobs:
   incremental:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,3 +23,9 @@ jobs:
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
         run: python colombia_loader.py --incremental
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Colombia CUIF

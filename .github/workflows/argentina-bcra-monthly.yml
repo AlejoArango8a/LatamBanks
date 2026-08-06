@@ -26,6 +26,9 @@ on:
 jobs:
   load:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,3 +48,9 @@ jobs:
           else
             python argentina_loader.py
           fi
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Argentina BCRA

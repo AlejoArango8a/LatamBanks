@@ -25,6 +25,9 @@ on:
 jobs:
   update-brasil:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     timeout-minutes: 360   # backfill histórico (~44 trimestres) puede tardar horas
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +44,20 @@ jobs:
           MODE="${{ github.event.inputs.mode || 'auto' }}"
           case "$MODE" in
             all)
-              python brasil_loader.py --all
+              python brasil_loader.py --all --skip-olinda
               ;;
             range)
-              python brasil_loader.py --all \
+              python brasil_loader.py --all --skip-olinda \
                 --from "${{ github.event.inputs.from || '201403' }}" \
                 --to "${{ github.event.inputs.to || '202412' }}"
               ;;
             *)
-              python brasil_loader.py
+              python brasil_loader.py --skip-olinda
               ;;
           esac
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Brazil IF.data

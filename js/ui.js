@@ -465,7 +465,7 @@ const UY_DISABLED_TABS = [];
 const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
 // Countries whose regulator publishes a loan-quality tree we can stand behind.
 // Widens as each loader phase lands (blueprint §4.7).
-const ASSET_QUALITY_ENABLED_ISO = ['BR', 'CL', 'CO', 'PE', 'UY'];
+const ASSET_QUALITY_ENABLED_ISO = ['BR', 'CL', 'CO', 'PE', 'UY', 'US'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -499,7 +499,7 @@ export function syncCountryDisabledTabs() {
       btn.title = key === 'funding'
         ? 'Funding Analytics is available for Brazil, Chile and Uruguay'
         : key === 'assetquality'
-          ? 'Asset Quality is available for Brazil, Chile, Colombia, Peru and Uruguay'
+          ? 'Asset Quality is available for Brazil, Chile, Colombia, Peru, Uruguay and the United States'
           : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');

@@ -1,0 +1,81 @@
+name: Notify loader failure
+description: Open or update a GitHub Issue when a country loader job fails (zero extra secrets)
+
+inputs:
+  country:
+    description: Human label for the issue title (e.g. Chile CMF, Brazil IF.data)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Open or update loader-failure issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const country = ${{ toJSON(inputs.country) }};
+          const title = `[loader] ${country} failed`;
+          const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const body = [
+            `Automated loader **${country}** failed.`,
+            '',
+            `| | |`,
+            `|---|---|`,
+            `| Workflow | \`${context.workflow}\` |`,
+            `| Run | [#${context.runNumber}](${runUrl}) |`,
+            `| Event | \`${context.eventName}\` |`,
+            `| Ref | \`${context.ref}\` |`,
+            `| When | ${new Date().toISOString()} |`,
+            '',
+            '### What to do',
+            '1. Open the run URL above and inspect the failing step.',
+            '2. Re-run via **Actions → workflow_dispatch** after fixing (source URL, schema, secret, etc.).',
+            '3. Close this issue once a subsequent run succeeds.',
+            '',
+            '_Opened automatically by `.github/actions/notify-loader-failure`. Watch **Issues** on this repo to get emailed._',
+          ].join('\n');
+
+          const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:loader-failure in:title "${title.replace(/"/g, '')}"`;
+          const found = await github.rest.search.issuesAndPullRequests({ q, per_page: 5 });
+          const existing = (found.data.items || []).find((i) => i.title === title);
+
+          if (existing) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existing.number,
+              body: `### Failed again\n\nAnother run failed: [run #${context.runNumber}](${runUrl}) · ${new Date().toISOString()}`,
+            });
+            core.info(`Updated existing issue #${existing.number}`);
+            return;
+          }
+
+          // Ensure label exists (ignore if already present / no permission edge cases)
+          try {
+            await github.rest.issues.getLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'loader-failure',
+            });
+          } catch {
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'loader-failure',
+                color: 'B60205',
+                description: 'Automated country loader cron/job failed',
+              });
+            } catch (e) {
+              core.warning(`Could not create label: ${e.message}`);
+            }
+          }
+
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title,
+            body,
+            labels: ['loader-failure'],
+          });
+          core.info(`Opened issue #${issue.data.number}`);
