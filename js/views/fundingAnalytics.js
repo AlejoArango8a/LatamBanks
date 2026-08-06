@@ -261,7 +261,7 @@ function cfg() {
           aLabel: 'UF-indexed',
           bLabel: 'FX (EXT)',
           primaryLabel: 'UF-indexed',
-          restLabel: 'other (CLP+TC+EXT residual view uses EXT separately)',
+          restLabel: 'CLP + other',
         };
       },
       specialPctSeries: (rows, periodos) => {
