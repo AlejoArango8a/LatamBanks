@@ -20,6 +20,8 @@ export const CL_IF_COLORS = {
   other: '#64748b',
 };
 
+const BUCKETS = ['DAP', 'BB', 'BS'];
+
 /** @param {string|number} agfRut */
 export function clIfAgfAccount(agfRut, bucket /* 'DAP'|'BB'|'BS' */) {
   return `CL_IF_AGF_${agfRut}_${bucket}`;
@@ -31,20 +33,43 @@ export function clIfMatrixAccount(agfRut, bankCode, bucket) {
 }
 
 /**
+ * Lightweight account set: industry + per-AGF totals (no bank×AGF matrix).
+ * ~70 cuentas — safe for full period ranges under Vercel 30s / client timeout.
  * @param {Array<{rut:string}>} agfs
- * @param {number[]} bankCodes
  */
-export function clIfAccountsForFetch(agfs, bankCodes) {
-  const buckets = ['DAP', 'BB', 'BS'];
-  const set = new Set([CL_IF_DAP, CL_IF_BB, CL_IF_BS, CL_IF_OTHER_DAP, 'CL_IF_OTHER_BB', 'CL_IF_OTHER_BS', 'CL_IF_OTHER_TANNER_SF_DAP']);
+export function clIfSummaryAccounts(agfs) {
+  const set = new Set([
+    CL_IF_DAP, CL_IF_BB, CL_IF_BS,
+    CL_IF_OTHER_DAP, 'CL_IF_OTHER_BB', 'CL_IF_OTHER_BS',
+    'CL_IF_OTHER_TANNER_SF_DAP',
+  ]);
   for (const a of agfs || []) {
     const rut = a.rut || a;
-    for (const bkt of buckets) {
-      set.add(clIfAgfAccount(rut, bkt));
-      for (const bank of bankCodes || []) {
-        set.add(clIfMatrixAccount(rut, bank, bkt));
-      }
+    for (const bkt of BUCKETS) set.add(clIfAgfAccount(rut, bkt));
+  }
+  return [...set];
+}
+
+/**
+ * Bank×AGF matrix for a single AGF (lazy-loaded when that AGF is selected).
+ * @param {string|number} agfRut
+ * @param {number[]} bankCodes
+ */
+export function clIfMatrixAccountsForAgf(agfRut, bankCodes) {
+  const set = new Set();
+  for (const bkt of BUCKETS) {
+    for (const bank of bankCodes || []) {
+      set.add(clIfMatrixAccount(agfRut, bank, bkt));
     }
+  }
+  return [...set];
+}
+
+/** @deprecated Prefer clIfSummaryAccounts + clIfMatrixAccountsForAgf (avoids 1k+ cuenta payloads). */
+export function clIfAccountsForFetch(agfs, bankCodes) {
+  const set = new Set(clIfSummaryAccounts(agfs));
+  for (const a of agfs || []) {
+    for (const c of clIfMatrixAccountsForAgf(a.rut || a, bankCodes)) set.add(c);
   }
   return [...set];
 }
