@@ -154,7 +154,16 @@ function paintLoading() {
   const root = rootEl();
   if (!root) return;
   root.innerHTML = `<div class="fa-empty">
-    <div class="ls-bars" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+    <div class="ls-bars" aria-hidden="true">
+      <div class="ls-bar" style="--i:0"></div>
+      <div class="ls-bar" style="--i:1"></div>
+      <div class="ls-bar" style="--i:2"></div>
+      <div class="ls-bar" style="--i:3"></div>
+      <div class="ls-bar" style="--i:4"></div>
+      <div class="ls-bar" style="--i:5"></div>
+      <div class="ls-bar" style="--i:6"></div>
+      <div class="ls-bar" style="--i:7"></div>
+    </div>
     <div class="fa-empty-sub" style="margin-top:16px;">Loading Institutional Funding…</div>
     <div class="fa-empty-sub" style="margin-top:8px;font-size:12px;color:var(--text3);">
       CMF cartera nacional — this usually takes a few seconds and can take up to ~30s. Please wait.
