@@ -1,0 +1,121 @@
+{
+  "updated": "2026-08-07",
+  "source": "CMF fm.bpr_menu.php",
+  "agfs": [
+    {
+      "rut": "96639280",
+      "legal_name": "ADMINISTRADORA GENERAL DE FONDOS SECURITY S.A.",
+      "short_name": "Security AGF"
+    },
+    {
+      "rut": "76036521",
+      "legal_name": "ADMINISTRADORA GENERAL DE FONDOS SURA S.A.",
+      "short_name": "Sura AGF"
+    },
+    {
+      "rut": "76503273",
+      "legal_name": "AMERIS CAPITAL ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Ameris"
+    },
+    {
+      "rut": "96767630",
+      "legal_name": "BANCHILE ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Banchile"
+    },
+    {
+      "rut": "76930984",
+      "legal_name": "BANCO INTERNACIONAL ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Banco Internacional AGF"
+    },
+    {
+      "rut": "96836390",
+      "legal_name": "BANCOESTADO S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "BancoEstado"
+    },
+    {
+      "rut": "96530900",
+      "legal_name": "BCI ASSET MANAGEMENT ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "BCI AM"
+    },
+    {
+      "rut": "96514410",
+      "legal_name": "BICE INVERSIONES ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Bice Inversiones"
+    },
+    {
+      "rut": "96966250",
+      "legal_name": "BTG PACTUAL CHILE S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "BTG Pactual AGF"
+    },
+    {
+      "rut": "99549940",
+      "legal_name": "CREDICORP CAPITAL ASSET MANAGEMENT S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "Credicorp Capital"
+    },
+    {
+      "rut": "76810627",
+      "legal_name": "FINTUAL ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Fintual"
+    },
+    {
+      "rut": "96980650",
+      "legal_name": "ITAU ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Itaú AGF"
+    },
+    {
+      "rut": "96955500",
+      "legal_name": "LARRAINVIAL ASSET MANAGEMENT ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "LarrainVial"
+    },
+    {
+      "rut": "99543100",
+      "legal_name": "MBI ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "MBI"
+    },
+    {
+      "rut": "91999000",
+      "legal_name": "PRINCIPAL ASSET MANAGEMENT ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Principal"
+    },
+    {
+      "rut": "77244875",
+      "legal_name": "PRUDENTIAL ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Prudential"
+    },
+    {
+      "rut": "96667040",
+      "legal_name": "SANTANDER ASSET MANAGEMENT S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "Santander AM"
+    },
+    {
+      "rut": "76576607",
+      "legal_name": "SARTOR ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Sartor"
+    },
+    {
+      "rut": "96634320",
+      "legal_name": "SCOTIA ADMINISTRADORA GENERAL DE FONDOS CHILE S.A.",
+      "short_name": "Scotia AGF"
+    },
+    {
+      "rut": "77057272",
+      "legal_name": "SOYFOCUS ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "SoyFocus"
+    },
+    {
+      "rut": "96576660",
+      "legal_name": "TOESCA S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "Toesca"
+    },
+    {
+      "rut": "96804330",
+      "legal_name": "VINCI COMPASS S.A. ADMINISTRADORA GENERAL DE FONDOS",
+      "short_name": "Vinci Compass"
+    },
+    {
+      "rut": "77750920",
+      "legal_name": "ZURICH CHILE ASSET MANAGEMENT ADMINISTRADORA GENERAL DE FONDOS S.A.",
+      "short_name": "Zurich"
+    }
+  ]
+}

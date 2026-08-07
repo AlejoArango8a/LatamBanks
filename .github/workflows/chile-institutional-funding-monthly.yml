@@ -1,0 +1,61 @@
+name: Chile Institutional Funding (FM monthly)
+
+on:
+  schedule:
+    # CMF cartera nacional usually lags ~3–4 weeks; day 28 ≈ prior month.
+    - cron: '0 15 28 * *'
+  workflow_dispatch:
+    inputs:
+      periodo:
+        description: 'YYYYMM single month (optional)'
+        required: false
+        default: ''
+      from:
+        description: 'YYYYMM start (range mode)'
+        required: false
+        default: ''
+      to:
+        description: 'YYYYMM end (range mode)'
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load Institutional Funding (FM DAP / BB)
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          PER="${{ github.event.inputs.periodo }}"
+          FROM="${{ github.event.inputs.from }}"
+          TO="${{ github.event.inputs.to }}"
+          ARGS="--refresh-registry"
+          if [ -n "$PER" ]; then
+            ARGS="$ARGS --periodo $PER"
+          elif [ -n "$FROM" ] && [ -n "$TO" ]; then
+            ARGS="$ARGS --from $FROM --to $TO"
+          fi
+          python chile_institutional_funding_loader.py $ARGS $FORCE_FLAG
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Chile Institutional Funding

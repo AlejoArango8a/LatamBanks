@@ -21,6 +21,7 @@ import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon80';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon80';
 import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon79';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon82';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
@@ -36,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon81';
+} from './ui.js?v=bmon82';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
@@ -104,7 +105,7 @@ function applyTabFromUrl() {
     if (!tab) return null;
     const allowed = new Set([
       'resumen', 'bankdetail', 'chileanbanks', 'btgbanks',
-      'accountview', 'balance', 'resultados', 'config',
+      'accountview', 'balance', 'resultados', 'instfunding', 'config',
     ]);
     return allowed.has(tab) ? tab : null;
   } catch (_) {
@@ -353,6 +354,8 @@ window.renderAssetQuality = renderAssetQuality;
 window.refreshAssetQuality = refreshAssetQuality;
 window.renderBaselAnalytics = renderBaselAnalytics;
 window.refreshBaselAnalytics = refreshBaselAnalytics;
+window.renderInstitutionalFunding = renderInstitutionalFunding;
+window.refreshInstitutionalFunding = refreshInstitutionalFunding;
 
 // Config tab
 window.populateConfig   = populateConfig;
