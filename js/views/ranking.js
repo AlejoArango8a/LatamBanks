@@ -22,7 +22,38 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon72';
+import { API_BASE, FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon72';
+
+/** Live CL ratings from data/cl_bank_ratings.json (Humphreys refresh + curated Feller). */
+let _clRatingsLive = null;
+let _clRatingsMetaLive = null;
+
+export async function ensureClRatingsLoaded() {
+  if (_clRatingsLive) return _clRatingsLive;
+  try {
+    const urls = [`${API_BASE}/api/chile/ratings`, `${API_BASE}/data/cl_bank_ratings.json`];
+    for (const url of urls) {
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) continue;
+        const j = await r.json();
+        const ratings = j.ratings || j;
+        if (ratings && typeof ratings === 'object') {
+          _clRatingsLive = Object.fromEntries(
+            Object.entries(ratings).map(([k, v]) => [Number(k), v]),
+          );
+          _clRatingsMetaLive = j.meta
+            ? Object.fromEntries(Object.entries(j.meta).map(([k, v]) => [Number(k), v]))
+            : null;
+          return _clRatingsLive;
+        }
+      } catch (_) { /* try next */ }
+    }
+  } catch (_) { /* fall through */ }
+  _clRatingsLive = FELLER_RATINGS;
+  _clRatingsMetaLive = BANK_RATINGS_CL_META;
+  return _clRatingsLive;
+}
 import { CO_CUIF } from '../coCuentas.js?v=bmon72';
 import { BR_KPI } from '../brCuentas.js?v=bmon72';
 import { UY_KPI } from '../uyCuentas.js?v=bmon72';
@@ -48,9 +79,13 @@ function cbRatingsStorageKey() {
 function cbRatingsBase() {
   const iso = datasetIsoCountry();
   if (iso === 'CO') return BANK_RATINGS_CO;
-  if (iso === 'CL') return FELLER_RATINGS;
+  if (iso === 'CL') return _clRatingsLive || FELLER_RATINGS;
   // PE / UY / BR: sin mapa sembrado (evitar colisión con códigos Feller CL)
   return {};
+}
+
+function cbRatingsMetaCl(code) {
+  return (_clRatingsMetaLive && _clRatingsMetaLive[code]) || BANK_RATINGS_CL_META[code];
 }
 
 export function getCBRatings() {
@@ -87,6 +122,10 @@ export async function renderChileanBanks() {
   if (!ST.periodos.length) {
     el.innerHTML = '<div class="empty"><p>Load data first by clicking Analyze</p></div>';
     return;
+  }
+
+  if (datasetIsoCountry() === 'CL') {
+    await ensureClRatingsLoaded();
   }
 
   el.innerHTML = `
@@ -248,7 +287,7 @@ export function renderCBTable() {
     const nameStyle = isBTG ? `font-weight:700;color:${btgBlue()};` : 'font-weight:500;color:var(--text);';
     const isoTip = datasetIsoCountry();
     const metaTip = isoTip === 'CO' ? BANK_RATINGS_CO_META[b.code]
-      : isoTip === 'CL' ? BANK_RATINGS_CL_META[b.code]
+      : isoTip === 'CL' ? cbRatingsMetaCl(b.code)
       : null;
     const tip = metaTip
       ? `Perspectiva: ${metaTip.outlook}. ${metaTip.agency}. ${metaTip.analysis}`
@@ -328,7 +367,7 @@ export function renderRatingsEditor() {
     const isDefault = defaultMap[code] !== undefined;
     const rColor    = RATING_COLORS[rating] || 'var(--text3)';
     const meta      = isoR === 'CO' ? BANK_RATINGS_CO_META[code]
-      : isoR === 'CL' ? BANK_RATINGS_CL_META[code]
+      : isoR === 'CL' ? cbRatingsMetaCl(code)
       : null;
     const sourceLbl = !isDefault
       ? '✏️ Manual'

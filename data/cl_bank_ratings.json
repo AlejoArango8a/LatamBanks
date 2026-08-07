@@ -1,0 +1,98 @@
+{
+  "updated": "2026-08-07T00:57:25Z",
+  "source": "curated Feller/ICR/Fitch + Humphreys scrape",
+  "humphreys_url": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
+  "humphreys_active_banks": 2,
+  "ratings": {
+    "1": "AAA",
+    "9": "AA",
+    "12": "AAA",
+    "14": "AAA",
+    "16": "AAA",
+    "28": "AA+",
+    "31": "AAA",
+    "37": "AAA",
+    "39": "AAA",
+    "41": "AAA",
+    "49": "AA+",
+    "51": "AA",
+    "53": "AA-",
+    "55": "AA",
+    "59": "AA",
+    "60": "AAA",
+    "61": "AAA",
+    "62": "AA-"
+  },
+  "meta": {
+    "1": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Máxima categoría de solvencia local (AAA) con perspectivas estables.",
+      "humphreys": {
+        "long_term": "AAA",
+        "short_term": "Nivel 1+",
+        "outlook": "Estable"
+      }
+    },
+    "12": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Banco público soberano; solvencia AAA con perspectivas estables."
+    },
+    "14": {
+      "outlook": "Estable",
+      "agency": "Fitch Chile / ICR",
+      "analysis": "Solvencia local AAA(cl) / AAA. Fitch Chile e ICR; respaldo de The Bank of Nova Scotia."
+    },
+    "16": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Solvencia AAA (Feller); una de las franquicias privadas de mayor escala en Chile."
+    },
+    "28": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Solvencia AA+ (Feller); en proceso de integración con Banco Security."
+    },
+    "37": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Solvencia AAA; filial chilena de Banco Santander S.A."
+    },
+    "39": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Solvencia AAA; franquicia Itaú en Chile."
+    },
+    "49": {
+      "outlook": "Estable",
+      "agency": "ICR",
+      "analysis": "ICR subió la solvencia a AA+ tras el acuerdo de fusión BICECORP / Grupo Security."
+    },
+    "53": {
+      "outlook": "Estable",
+      "agency": "Humphreys / Fitch / ICR",
+      "analysis": "Banco Ripley Chile en AA- (distinto de Ripley Corp / Ripley Chile retail).",
+      "humphreys": {
+        "long_term": "AA-",
+        "short_term": "Nivel 1+",
+        "outlook": "Estable"
+      }
+    },
+    "59": {
+      "outlook": "Estable",
+      "agency": "Feller Rate",
+      "analysis": "Solvencia AA; banco chileno del grupo BTG Pactual."
+    },
+    "62": {
+      "outlook": "En Observación",
+      "agency": "Humphreys / ICR",
+      "analysis": "Tanner Banco Digital clasificado en AA- tras el inicio de operaciones bancarias.",
+      "humphreys": {
+        "long_term": "AA-",
+        "short_term": "Nivel 1+",
+        "outlook": "En Observación"
+      }
+    }
+  }
+}

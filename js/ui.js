@@ -8,7 +8,8 @@ import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
 import { setStatus, showErr } from './utils.js?v=bmon72';
 import { sumRows } from './api.js?v=bmon72';
 import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon72';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon81';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -558,6 +559,7 @@ export function selectCountry(country) {
   if (ST.country === country) {
     syncCurrencyToggleUI();
     syncResumenMoraChartButton();
+    refreshChileMacrosStrip().catch(() => {});
     return;
   }
 
@@ -570,6 +572,7 @@ export function selectCountry(country) {
   syncResumenMoraChartButton();
   syncCountryChartButtons();
   syncCountryDisabledTabs();
+  refreshChileMacrosStrip().catch(() => {});
   queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
 }
 

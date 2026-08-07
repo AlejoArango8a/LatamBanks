@@ -73,6 +73,15 @@ python chile_loader.py --zip-path ./zips/articles-XXXXX_recurso_1.zip
 python chile_loader.py --discover-only   # ver qué ve el scraper sin tocar la DB
 ```
 
+**Chile complementary (automated):**
+
+| Fuente | Loader / cron | Notas |
+|--------|---------------|--------|
+| Basilea III | `chile_basilea_loader.py` (con CMF monthly) | Solvency sheet |
+| Macros UF/USD/IPC/TPM/UTM/(TMC) | `chile_macros_loader.py` · daily | mindicador; optional GitHub secret `CMF_API_KEY` for CMF API + TMC |
+| BCCh Series bancarias | `chile_bcch_loader.py` · day 26 | CSV zip vía Playwright (Imperva); o `--zip-path` |
+| Ratings | `chile_ratings_loader.py` · quarterly | Humphreys scrape + curated Feller → `data/cl_bank_ratings.json` |
+
 **¿Doble clic y “no pasa nada”?** El diálogo para elegir el ZIP a veces abre **detrás** del navegador u otras apps (revisa la barra de tareas). Además, al ejecutar desde el Explorador a veces **`python`** no está en el PATH; el `.bat` prueba antes **`py -3`**. Como alternativa, en esta carpeta:
 
 ```

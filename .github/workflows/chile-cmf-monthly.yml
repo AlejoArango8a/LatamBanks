@@ -77,6 +77,13 @@ jobs:
           fi
           python chile_basilea_loader.py $FORCE_FLAG
 
+      - name: Refresh Chile macros (UF/USD/IPC)
+        if: ${{ github.event.inputs.mode == 'incremental' || github.event.inputs.mode == '' || github.event_name == 'schedule' }}
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+          CMF_API_KEY: ${{ secrets.CMF_API_KEY }}
+        run: python chile_macros_loader.py
+
       - name: Notify on failure
         if: failure()
         uses: ./.github/actions/notify-loader-failure
