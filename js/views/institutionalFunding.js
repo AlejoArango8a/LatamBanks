@@ -15,7 +15,7 @@ import {
   clIfSummaryAccounts,
   clIfMatrixAccountsForAgf,
   clIfLiabilityAccounts,
-} from '../clInstFundingCuentas.js?v=bmon84';
+} from '../clInstFundingCuentas.js?v=bmon85';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon84';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
@@ -88,7 +88,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon84`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon85`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);
