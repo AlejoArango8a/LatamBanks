@@ -21,7 +21,7 @@ import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon80';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon80';
 import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon79';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon82';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon83';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
@@ -37,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon82';
+} from './ui.js?v=bmon83';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';

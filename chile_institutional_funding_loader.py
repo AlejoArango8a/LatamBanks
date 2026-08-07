@@ -20,9 +20,9 @@ Instrument filter (default):
   (BS subordinated excluded from core KPIs)
 
 Units:
-  $$  → miles de pesos → ×1_000
-  UF  → miles de UF   → ×1_000 × UF (pesos) when provided
-  PROM/USD → miles USD → ×1_000 × USD when provided
+  $$ / UF / PROM → miles de pesos → ×1_000
+    (UF/PROM tags = denomination / FX method; MV already in CLP miles)
+  USD / US$ → miles USD → ×1_000 × USD when provided
 
 Storage (tipo='x1', monto_total in pesos CLP):
   Bank ins_cod:
@@ -78,8 +78,10 @@ INSTRUMENT_BUCKET = {
     "DPC": "DAP",
     "DPL": "DAP",
     "BB": "BB",
+    "BS": "BS",  # bonos subordinados
 }
 
+BUCKETS = ("DAP", "BB", "BS")
 MILES_SCALE = 1_000
 
 UA = "LatamBanks/1.0 (institutional-funding; research)"
@@ -127,12 +129,62 @@ def _http_bytes(url: str, data: bytes | None = None, timeout: int = 120) -> byte
         return resp.read()
 
 
-def load_bank_rut_map(path: Path = BANK_RUT_PATH) -> dict[str, int]:
+def load_bank_rut_map(path: Path = BANK_RUT_PATH) -> tuple[dict[str, int], dict[str, dict]]:
+    """Return (rut→codigo, rut→other_meta)."""
     raw = json.loads(path.read_text(encoding="utf-8"))
     out: dict[str, int] = {}
     for rut, meta in (raw.get("map") or {}).items():
         out[str(rut).strip()] = int(meta["codigo"])
-    return out
+    other = {str(k).strip(): v for k, v in (raw.get("other_issuers") or {}).items()}
+    return out, other
+
+
+def resolve_fx(periodo: str, *, uf: float | None, usd: float | None, conn=None) -> tuple[float | None, float | None]:
+    """Fill UF/USD from DB macros, else mindicador.cl month-end."""
+    if uf is not None and usd is not None:
+        return uf, usd
+    if conn is not None:
+        try:
+            m_uf, m_usd = fetch_macro_fx(conn, periodo)
+            uf = uf if uf is not None else m_uf
+            usd = usd if usd is not None else m_usd
+        except Exception as e:
+            log.warning("macro FX %s: %s", periodo, e)
+    if uf is not None and usd is not None:
+        return uf, usd
+    try:
+        from chile_macros_loader import fetch_mindicador_series
+
+        y, m = int(periodo[:4]), int(periodo[4:6])
+        # last day of month
+        if m == 12:
+            end = date(y + 1, 1, 1)
+        else:
+            end = date(y, m + 1, 1)
+        start = date(y, m, 1)
+
+        def month_end(code: str) -> float | None:
+            series = fetch_mindicador_series(code, y)
+            # also try prior year fetch if empty
+            if not series:
+                series = fetch_mindicador_series(code)
+            in_month = [(d, v) for d, v in series if start <= d < end]
+            if not in_month:
+                # nearest on/before month end
+                before = [(d, v) for d, v in series if d < end]
+                if not before:
+                    return None
+                return before[0][1]  # newest-first
+            in_month.sort(key=lambda x: x[0])
+            return in_month[-1][1]
+
+        if uf is None:
+            uf = month_end("uf")
+        if usd is None:
+            usd = month_end("dolar")
+    except Exception as e:
+        log.warning("mindicador FX %s: %s", periodo, e)
+    return uf, usd
 
 
 def agf_short_name(legal: str) -> str:
@@ -241,15 +293,17 @@ def _parse_float(v) -> float | None:
 
 
 def mv_to_clp(mv: float, currency: str, *, uf: float | None, usd: float | None) -> int | None:
-    """Convert market value to pesos CLP. Returns None if FX missing for non-CLP."""
+    """Convert market value to pesos CLP.
+
+    NACI export convention (verified vs face value FFM_6010900):
+      $$ / UF / PROM → miles de pesos (×1_000).
+        UF/PROM tags describe denomination / FX method; MV is already CLP miles.
+      USD / US$ / DOL → miles de USD (×1_000 × USDCLP) when rate provided.
+    """
     cur = (currency or "").strip().upper()
-    if cur in ("$$", "CLP", "PESOS", "$"):
+    if cur in ("$$", "CLP", "PESOS", "$", "UF", "PROM"):
         return int(round(mv * MILES_SCALE))
-    if cur in ("UF",):
-        if uf is None or uf <= 0:
-            return None
-        return int(round(mv * MILES_SCALE * uf))
-    if cur in ("PROM", "USD", "US$", "DOL", "DOLAR", "DÓLAR"):
+    if cur in ("USD", "US$", "DOL", "DOLAR", "DÓLAR"):
         if usd is None or usd <= 0:
             return None
         return int(round(mv * MILES_SCALE * usd))
@@ -262,6 +316,7 @@ def parse_naci_text(
     *,
     run_to_agf: dict[str, str],
     bank_rut_map: dict[str, int],
+    other_issuers: dict[str, dict] | None = None,
     uf: float | None = None,
     usd: float | None = None,
 ) -> tuple[list[tuple], dict]:
@@ -271,13 +326,15 @@ def parse_naci_text(
     Returns (rows, stats) where rows are
       (periodo, tipo, ins_cod, cuenta, monto_total)
     """
-    # grain: (agf, bank, bucket) → pesos
-    grain: dict[tuple[str, int, str], int] = defaultdict(int)
+    other_issuers = other_issuers or {}
+    # grain: (agf, bank|None, bucket, other_tag|None) → pesos
+    grain: dict[tuple[str, int | None, str, str | None], int] = defaultdict(int)
     stats = {
         "rows_in": 0,
         "rows_used": 0,
         "rows_unmapped_fund": 0,
         "rows_unmapped_bank": 0,
+        "rows_other_issuer": 0,
         "rows_fx_skip": 0,
         "rows_other_instr": 0,
         "funds": set(),
@@ -306,7 +363,9 @@ def parse_naci_text(
 
         issuer_rut = (row.get("FFM_6010211") or "").strip()
         bank = bank_rut_map.get(issuer_rut)
-        if bank is None:
+        other_meta = other_issuers.get(issuer_rut) if bank is None else None
+        other_tag = (other_meta or {}).get("tag") if other_meta else None
+        if bank is None and not other_tag:
             stats["rows_unmapped_bank"] += 1
             continue
 
@@ -319,29 +378,38 @@ def parse_naci_text(
             stats["rows_fx_skip"] += 1
             continue
 
-        grain[(agf, bank, bucket)] += clp
+        grain[(agf, bank, bucket, other_tag)] += clp
         stats["rows_used"] += 1
+        if other_tag:
+            stats["rows_other_issuer"] += 1
         stats["funds"].add(run)
         stats["agfs"].add(agf)
-        stats["banks"].add(bank)
+        if bank is not None:
+            stats["banks"].add(bank)
 
-    # Build DB rows
     out: list[tuple] = []
-    # bank totals / AGF on bank
     bank_tot: dict[tuple[int, str], int] = defaultdict(int)
     agf_tot: dict[tuple[str, str], int] = defaultdict(int)
     sys_tot: dict[str, int] = defaultdict(int)
+    other_tot: dict[tuple[str, str], int] = defaultdict(int)  # (tag, bucket)
+    other_sys: dict[str, int] = defaultdict(int)
 
-    for (agf, bank, bucket), monto in grain.items():
-        bank_tot[(bank, bucket)] += monto
-        agf_tot[(agf, bucket)] += monto
-        sys_tot[bucket] += monto
-        # bank × AGF
-        out.append((periodo, "x1", bank, f"CL_IF_AGF_{agf}_{bucket}", monto))
-        # sistema matrix
-        out.append(
-            (periodo, "x1", SISTEMA_COD, f"CL_IF_AGF_{agf}_BANK_{bank}_{bucket}", monto)
-        )
+    for (agf, bank, bucket, other_tag), monto in grain.items():
+        if bank is not None:
+            bank_tot[(bank, bucket)] += monto
+            agf_tot[(agf, bucket)] += monto
+            sys_tot[bucket] += monto
+            out.append((periodo, "x1", bank, f"CL_IF_AGF_{agf}_{bucket}", monto))
+            out.append(
+                (periodo, "x1", SISTEMA_COD, f"CL_IF_AGF_{agf}_BANK_{bank}_{bucket}", monto)
+            )
+        elif other_tag:
+            other_tot[(other_tag, bucket)] += monto
+            other_sys[bucket] += monto
+            # AGF × other issuer on sistema
+            out.append(
+                (periodo, "x1", SISTEMA_COD, f"CL_IF_AGF_{agf}_OTHER_{other_tag}_{bucket}", monto)
+            )
 
     for (bank, bucket), monto in bank_tot.items():
         out.append((periodo, "x1", bank, f"CL_IF_{bucket}", monto))
@@ -351,6 +419,11 @@ def parse_naci_text(
 
     for bucket, monto in sys_tot.items():
         out.append((periodo, "x1", SISTEMA_COD, f"CL_IF_{bucket}", monto))
+
+    for (tag, bucket), monto in other_tot.items():
+        out.append((periodo, "x1", SISTEMA_COD, f"CL_IF_OTHER_{tag}_{bucket}", monto))
+    for bucket, monto in other_sys.items():
+        out.append((periodo, "x1", SISTEMA_COD, f"CL_IF_OTHER_{bucket}", monto))
 
     stats["funds"] = len(stats["funds"])
     stats["agfs"] = len(stats["agfs"])
@@ -364,17 +437,29 @@ def plan_labels_for_rows(rows: list[tuple]) -> dict[str, str]:
     labels = {
         "CL_IF_DAP": "Institutional Funding · FM DAP (depósitos a plazo)",
         "CL_IF_BB": "Institutional Funding · FM Bonos bancarios",
+        "CL_IF_BS": "Institutional Funding · FM Bonos subordinados",
+        "CL_IF_OTHER_DAP": "IF · Other non-bank issuers · DAP",
+        "CL_IF_OTHER_BB": "IF · Other non-bank issuers · BB",
+        "CL_IF_OTHER_BS": "IF · Other non-bank issuers · BS",
     }
     for _, _, _, cuenta, _ in rows:
         if cuenta in labels:
             continue
-        m = re.fullmatch(r"CL_IF_AGF_(\d+)_(DAP|BB)", cuenta)
+        m = re.fullmatch(r"CL_IF_AGF_(\d+)_(DAP|BB|BS)", cuenta)
         if m:
             labels[cuenta] = f"IF · AGF {m.group(1)} · {m.group(2)}"
             continue
-        m = re.fullmatch(r"CL_IF_AGF_(\d+)_BANK_(\d+)_(DAP|BB)", cuenta)
+        m = re.fullmatch(r"CL_IF_AGF_(\d+)_BANK_(\d+)_(DAP|BB|BS)", cuenta)
         if m:
             labels[cuenta] = f"IF · AGF {m.group(1)} · bank {m.group(2)} · {m.group(3)}"
+            continue
+        m = re.fullmatch(r"CL_IF_OTHER_([A-Z0-9_]+)_(DAP|BB|BS)", cuenta)
+        if m:
+            labels[cuenta] = f"IF · Other {m.group(1)} · {m.group(2)}"
+            continue
+        m = re.fullmatch(r"CL_IF_AGF_(\d+)_OTHER_([A-Z0-9_]+)_(DAP|BB|BS)", cuenta)
+        if m:
+            labels[cuenta] = f"IF · AGF {m.group(1)} · other {m.group(2)} · {m.group(3)}"
     return labels
 
 
@@ -476,6 +561,7 @@ def process_periodo(
     file_path: Path | None,
     run_to_agf: dict[str, str],
     bank_rut_map: dict[str, int],
+    other_issuers: dict[str, dict] | None = None,
     uf: float | None,
     usd: float | None,
 ) -> tuple[list[tuple], dict]:
@@ -491,13 +577,14 @@ def process_periodo(
         periodo,
         run_to_agf=run_to_agf,
         bank_rut_map=bank_rut_map,
+        other_issuers=other_issuers,
         uf=uf,
         usd=usd,
     )
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Chile Institutional Funding (FM DAP/BB) loader")
+    ap = argparse.ArgumentParser(description="Chile Institutional Funding (FM DAP/BB/BS) loader")
     ap.add_argument("--periodo", default="", help="YYYYMM single month")
     ap.add_argument("--from", dest="from_p", default="")
     ap.add_argument("--to", dest="to_p", default="")
@@ -510,7 +597,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args(argv)
 
-    bank_rut_map = load_bank_rut_map()
+    bank_rut_map, other_issuers = load_bank_rut_map()
 
     run_to_agf: dict[str, str] = {}
     agfs: list[dict] = []
@@ -549,27 +636,20 @@ def main(argv: list[str] | None = None) -> int:
     else:
         periods = [default_periodo()]
 
-    all_rows: list[tuple] = []
     conn = None if args.dry_run else get_connection()
+    total_upserted = 0
     try:
         for per in periods:
-            uf = args.uf
-            usd = args.usd
-            if conn is not None and (uf is None or usd is None):
-                try:
-                    m_uf, m_usd = fetch_macro_fx(conn, per)
-                    uf = uf if uf is not None else m_uf
-                    usd = usd if usd is not None else m_usd
-                    if m_uf or m_usd:
-                        log.info("%s macros: UF=%s USD=%s", per, uf, usd)
-                except Exception as e:
-                    log.warning("Could not read macro FX for %s: %s", per, e)
+            uf, usd = resolve_fx(per, uf=args.uf, usd=args.usd, conn=conn)
+            if uf or usd:
+                log.info("%s FX: UF=%s USD=%s", per, uf, usd)
             try:
                 rows, stats = process_periodo(
                     per,
                     file_path=args.file if (args.file and per == args.periodo) else None,
                     run_to_agf=run_to_agf,
                     bank_rut_map=bank_rut_map,
+                    other_issuers=other_issuers,
                     uf=uf,
                     usd=usd,
                 )
@@ -580,7 +660,7 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             log.info(
                 "%s: used=%s/%s funds=%s agfs=%s banks=%s grain=%s db_rows=%s "
-                "unmapped_fund=%s unmapped_bank=%s fx_skip=%s",
+                "other_issuer=%s unmapped_fund=%s unmapped_bank=%s fx_skip=%s",
                 per,
                 stats["rows_used"],
                 stats["rows_in"],
@@ -589,34 +669,37 @@ def main(argv: list[str] | None = None) -> int:
                 stats["banks"],
                 stats["grain"],
                 stats["db_rows"],
+                stats.get("rows_other_issuer", 0),
                 stats["rows_unmapped_fund"],
                 stats["rows_unmapped_bank"],
                 stats["rows_fx_skip"],
             )
-            all_rows.extend(rows)
+            if args.dry_run:
+                sample = [
+                    r
+                    for r in rows
+                    if r[2] == SISTEMA_COD and re.fullmatch(r"CL_IF_AGF_\d+_DAP", r[3])
+                ]
+                sample.sort(key=lambda r: -r[4])
+                for r in sample[:5]:
+                    log.info("  %s %s = %s", r[0], r[3], r[4])
+                continue
 
-        labels = plan_labels_for_rows(all_rows)
-        if args.dry_run:
-            log.info("Dry-run: %s rows, %s plan labels — no DB write", len(all_rows), len(labels))
-            sample = [
-                r
-                for r in all_rows
-                if r[2] == SISTEMA_COD and re.fullmatch(r"CL_IF_AGF_\d+_DAP", r[3])
-            ]
-            sample.sort(key=lambda r: -r[4])
-            for r in sample[:8]:
-                log.info("  %s %s = %s", r[0], r[3], r[4])
-            return 0
-
-        assert conn is not None
-        upsert_plan(conn, labels)
-        wiped = wipe_if_periods(conn, periods)
-        log.info("Wiped %s prior CL_IF_ rows for %s", wiped, periods)
-        n = insert_rows(conn, all_rows)
-        log.info("Upserted %s rows", n)
+            assert conn is not None
+            labels = plan_labels_for_rows(rows)
+            upsert_plan(conn, labels)
+            wiped = wipe_if_periods(conn, [per])
+            n = insert_rows(conn, rows)
+            total_upserted += n
+            log.info("%s: wiped=%s upserted=%s", per, wiped, n)
     finally:
         if conn is not None:
             conn.close()
+
+    if args.dry_run:
+        log.info("Dry-run complete for %s period(s) — no DB write", len(periods))
+    else:
+        log.info("Done: upserted %s rows across %s period(s)", total_upserted, len(periods))
     return 0
 
 

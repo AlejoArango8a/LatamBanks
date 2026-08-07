@@ -1,67 +1,29 @@
 {
   "updated": "2026-08-07",
   "source": "Curated issuer RUT → CMF bank codigo (FFM_6010211)",
-  "notes": "82878900 = Tanner Servicios Financieros (non-bank issuer) — intentionally unmapped. Market values in $$ are miles de pesos (×1000).",
+  "notes": "Market values in $$ are miles de pesos (×1000). other_issuers are non-bank financial issuers tracked as CL_IF_OTHER_* on sistema 999.",
   "map": {
-    "97004000": {
-      "codigo": 1,
-      "name": "Banco de Chile"
-    },
-    "97011000": {
-      "codigo": 9,
-      "name": "Banco Internacional"
-    },
-    "97030000": {
-      "codigo": 12,
-      "name": "BancoEstado"
-    },
-    "97018000": {
-      "codigo": 14,
-      "name": "Scotiabank Chile"
-    },
-    "97006000": {
-      "codigo": 16,
-      "name": "BCI"
-    },
-    "97080000": {
-      "codigo": 28,
-      "name": "BICE"
-    },
-    "97951000": {
-      "codigo": 31,
-      "name": "HSBC Chile"
-    },
-    "97036000": {
-      "codigo": 37,
-      "name": "Santander Chile"
-    },
-    "97023000": {
-      "codigo": 39,
-      "name": "Itaú Chile"
-    },
-    "97053000": {
-      "codigo": 49,
-      "name": "Banco Security"
-    },
-    "96509660": {
-      "codigo": 51,
-      "name": "Banco Falabella"
-    },
-    "97947000": {
-      "codigo": 53,
-      "name": "Banco Ripley"
-    },
-    "99500410": {
-      "codigo": 55,
-      "name": "Banco Consorcio"
-    },
-    "76362099": {
-      "codigo": 59,
-      "name": "BTG Pactual Chile"
-    },
-    "77844703": {
-      "codigo": 62,
-      "name": "Tanner Banco Digital"
+    "97004000": { "codigo": 1, "name": "Banco de Chile" },
+    "97011000": { "codigo": 9, "name": "Banco Internacional" },
+    "97030000": { "codigo": 12, "name": "BancoEstado" },
+    "97018000": { "codigo": 14, "name": "Scotiabank Chile" },
+    "97006000": { "codigo": 16, "name": "BCI" },
+    "97080000": { "codigo": 28, "name": "BICE" },
+    "97951000": { "codigo": 31, "name": "HSBC Chile" },
+    "97036000": { "codigo": 37, "name": "Santander Chile" },
+    "97023000": { "codigo": 39, "name": "Itaú Chile" },
+    "97043000": { "codigo": 41, "name": "J.P. Morgan Chile" },
+    "97053000": { "codigo": 49, "name": "Banco Security" },
+    "96509660": { "codigo": 51, "name": "Banco Falabella" },
+    "97947000": { "codigo": 53, "name": "Banco Ripley" },
+    "99500410": { "codigo": 55, "name": "Banco Consorcio" },
+    "76362099": { "codigo": 59, "name": "BTG Pactual Chile" },
+    "77844703": { "codigo": 62, "name": "Tanner Banco Digital" }
+  },
+  "other_issuers": {
+    "82878900": {
+      "tag": "TANNER_SF",
+      "name": "Tanner Servicios Financieros"
     }
   }
 }

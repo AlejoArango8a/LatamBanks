@@ -5,11 +5,16 @@
 import {
   CL_IF_DAP,
   CL_IF_BB,
+  CL_IF_BS,
+  CL_IF_OTHER_DAP,
   CL_IF_COLORS,
+  CL_BANK_DAP_LIAB,
+  CL_BANK_BB_LIAB,
   clIfAgfAccount,
   clIfMatrixAccount,
   clIfAccountsForFetch,
-} from '../clInstFundingCuentas.js?v=bmon82';
+  clIfLiabilityAccounts,
+} from '../clInstFundingCuentas.js?v=bmon83';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
@@ -25,15 +30,15 @@ const state = {
   loaded: false,
   error: null,
   mode: 'agf', // agf | bank
-  instrument: 'all', // all | DAP | BB
+  instrument: 'all', // all | DAP | BB | BS
   selectedAgf: null,
   rows: [],
+  liabRows: [],
   periodos: [],
   banks: [],
   agfs: [],
   iso: null,
   selectionKey: '',
-  chartStyle: 'bars',
 };
 
 let agfRegistryPromise = null;
@@ -75,7 +80,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon82`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon83`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);
@@ -87,8 +92,8 @@ function agfLabel(rut) {
   return hit?.short_name || hit?.legal_name || `AGF ${rut}`;
 }
 
-function sumAt(cuenta, periodo, insCod = SISTEMA) {
-  return state.rows
+function sumAt(cuenta, periodo, insCod = SISTEMA, rowset = state.rows) {
+  return rowset
     .filter((r) => r.cuenta === cuenta && r.periodo === periodo && Number(r.ins_cod) === Number(insCod))
     .reduce((s, r) => s + (Number(r.monto_total) || 0), 0);
 }
@@ -132,28 +137,33 @@ function kpiCard(label, value, sub) {
     ${sub ? `<div class="kpi-sub">${esc(sub)}</div>` : ''}</div>`;
 }
 
-function instrumentValue(dap, bb) {
+function instrumentValue(dap, bb, bs = 0) {
   if (state.instrument === 'DAP') return dap;
   if (state.instrument === 'BB') return bb;
-  return dap + bb;
+  if (state.instrument === 'BS') return bs;
+  return dap + bb + bs;
+}
+
+function fmtShare(num, den) {
+  if (!den || !Number.isFinite(den) || den <= 0) return '—';
+  return `${((100 * num) / den).toFixed(1)}%`;
 }
 
 function buildShell(bodyHtml) {
   const per = latestPeriod();
   const dap = per ? sumAt(CL_IF_DAP, per) : 0;
   const bb = per ? sumAt(CL_IF_BB, per) : 0;
-  const tot = dap + bb;
+  const bs = per ? sumAt(CL_IF_BS, per) : 0;
+  const other = per ? sumAt(CL_IF_OTHER_DAP, per) : 0;
+  const tot = dap + bb + bs;
   const dapPct = tot ? (100 * dap) / tot : null;
 
   return `
     <div class="kpi-grid" style="margin-bottom:14px;">
       ${kpiCard('FM bank paper', fmtKPI(tot), per ? periodLabel(per) : '—')}
-      ${kpiCard('DAP (depósitos)', fmtKPI(dap), dapPct != null ? `${dapPct.toFixed(1)}% of total` : '—')}
-      ${kpiCard('Bonos bancarios', fmtKPI(bb), tot ? `${(100 * bb / tot).toFixed(1)}% of total` : '—')}
-      ${kpiCard('AGFs with holdings', String(state.agfs.filter((a) => {
-        if (!per) return false;
-        return sumAt(clIfAgfAccount(a.rut, 'DAP'), per) + sumAt(clIfAgfAccount(a.rut, 'BB'), per) > 0;
-      }).length), 'Cartera nacional CMF')}
+      ${kpiCard('DAP', fmtKPI(dap), dapPct != null ? `${dapPct.toFixed(1)}% of total` : '—')}
+      ${kpiCard('Bonos bancarios', fmtKPI(bb), tot ? `${(100 * bb / tot).toFixed(1)}%` : '—')}
+      ${kpiCard('Subordinados + other', fmtKPI(bs + other), other ? `incl. Tanner SF DAP ${fmtKPI(other)}` : (bs ? `BS ${fmtKPI(bs)}` : '—'))}
     </div>
     <div class="panel" style="margin-bottom:12px;">
       <div class="panel-head">
@@ -170,7 +180,10 @@ function buildShell(bodyHtml) {
             <button type="button" class="itab ${state.instrument === 'all' ? 'active' : ''}" onclick="ifSetInstrument('all')">All</button>
             <button type="button" class="itab ${state.instrument === 'DAP' ? 'active' : ''}" onclick="ifSetInstrument('DAP')">DAP</button>
             <button type="button" class="itab ${state.instrument === 'BB' ? 'active' : ''}" onclick="ifSetInstrument('BB')">Bonds</button>
+            <button type="button" class="itab ${state.instrument === 'BS' ? 'active' : ''}" onclick="ifSetInstrument('BS')">Subord.</button>
           </div>
+          <button type="button" onclick="exportTableById('ifExportTable','Institutional_Funding')" title="Export to Excel"
+            style="padding:4px 8px;border:1px solid var(--border);background:var(--bg3);color:var(--green);border-radius:4px;cursor:pointer;font-size:11px;">⬇ xlsx</button>
         </div>
       </div>
       <div class="panel-body">${bodyHtml}</div>
@@ -184,8 +197,9 @@ function paintAgfMode() {
   const rows = state.agfs.map((a) => {
     const dap = sumAt(clIfAgfAccount(a.rut, 'DAP'), per);
     const bb = sumAt(clIfAgfAccount(a.rut, 'BB'), per);
-    const tot = instrumentValue(dap, bb);
-    return { ...a, dap, bb, tot };
+    const bs = sumAt(clIfAgfAccount(a.rut, 'BS'), per);
+    const tot = instrumentValue(dap, bb, bs);
+    return { ...a, dap, bb, bs, tot };
   }).filter((r) => r.tot > 0)
     .sort((a, b) => b.tot - a.tot);
 
@@ -203,20 +217,30 @@ function paintAgfMode() {
   const bankRows = bankCodes.map((code) => {
     const dap = sumAt(clIfMatrixAccount(agf, code, 'DAP'), per);
     const bb = sumAt(clIfMatrixAccount(agf, code, 'BB'), per);
-    return { code, dap, bb, tot: instrumentValue(dap, bb) };
+    const bs = sumAt(clIfMatrixAccount(agf, code, 'BS'), per);
+    const bankDapLiab = sumAt(CL_BANK_DAP_LIAB, per, code, state.liabRows);
+    const bankBbLiab = sumAt(CL_BANK_BB_LIAB, per, code, state.liabRows);
+    return {
+      code, dap, bb, bs,
+      tot: instrumentValue(dap, bb, bs),
+      dapShare: fmtShare(dap, bankDapLiab),
+      bbShare: fmtShare(bb, bankBbLiab),
+    };
   }).filter((r) => r.tot > 0)
     .sort((a, b) => b.tot - a.tot);
 
   const seriesDap = seriesFor(clIfAgfAccount(agf, 'DAP'));
   const seriesBb = seriesFor(clIfAgfAccount(agf, 'BB'));
+  const seriesBs = seriesFor(clIfAgfAccount(agf, 'BS'));
 
   const tableAgf = `
-    <div style="overflow-x:auto;margin-bottom:16px;">
+    <div id="ifExportTable" style="overflow-x:auto;margin-bottom:16px;">
       <table class="data-table" style="width:100%;font-size:12px;">
         <thead><tr>
           <th style="text-align:left;">AGF</th>
           <th style="text-align:right;">DAP</th>
           <th style="text-align:right;">Bonos</th>
+          <th style="text-align:right;">Subord.</th>
           <th style="text-align:right;">Total</th>
         </tr></thead>
         <tbody>
@@ -226,6 +250,7 @@ function paintAgfMode() {
               <td style="text-align:left;font-weight:${String(r.rut) === String(agf) ? '600' : '400'};">${esc(r.short_name || r.legal_name)}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.dap)}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.bb)}</td>
+              <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.bs)}</td>
               <td style="text-align:right;font-family:var(--mono);font-weight:600;">${fmtKPI(r.tot)}</td>
             </tr>`).join('')}
         </tbody>
@@ -235,13 +260,16 @@ function paintAgfMode() {
   const bankTable = `
     <div style="margin-bottom:8px;font-size:12px;color:var(--text2);">
       Holdings of <strong>${esc(agfLabel(agf))}</strong> by bank · ${esc(periodLabel(per))}
+      <span style="opacity:0.75;"> · DAP%/BB% = share of bank CoA plazo / senior bonds</span>
     </div>
     <div style="overflow-x:auto;margin-bottom:16px;">
       <table class="data-table" style="width:100%;font-size:12px;">
         <thead><tr>
           <th style="text-align:left;">Bank</th>
           <th style="text-align:right;">DAP</th>
+          <th style="text-align:right;">of bank DAP</th>
           <th style="text-align:right;">Bonos</th>
+          <th style="text-align:right;">of bank BB</th>
           <th style="text-align:right;">Total</th>
         </tr></thead>
         <tbody>
@@ -249,9 +277,11 @@ function paintAgfMode() {
             <tr>
               <td style="text-align:left;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${bankColor(r.code)};margin-right:6px;"></span>${esc(bankName(r.code))}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.dap)}</td>
+              <td style="text-align:right;font-family:var(--mono);color:var(--text2);">${r.dapShare}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.bb)}</td>
+              <td style="text-align:right;font-family:var(--mono);color:var(--text2);">${r.bbShare}</td>
               <td style="text-align:right;font-family:var(--mono);font-weight:600;">${fmtKPI(r.tot)}</td>
-            </tr>`).join('') : '<tr><td colspan="4" style="color:var(--text3);">No bank breakdown for selected banks / period.</td></tr>'}
+            </tr>`).join('') : '<tr><td colspan="6" style="color:var(--text3);">No bank breakdown for selected banks / period.</td></tr>'}
         </tbody>
       </table>
     </div>`;
@@ -262,26 +292,31 @@ function paintAgfMode() {
       <canvas id="ifChart" class="chart-canvas" height="160"></canvas>
     </div>`;
 
-  queueMicrotask(() => {
-    let series;
-    if (state.instrument === 'all') {
-      series = [
-        { label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) },
-        { label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) },
-      ];
-    } else if (state.instrument === 'BB') {
-      series = [{ label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) }];
-    } else {
-      series = [{ label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) }];
-    }
-    drawLineChart('ifChart', state.periodos, series, {
-      height: 200,
-      style: 'area',
-      showLegend: true,
-    });
-  });
+  queueMicrotask(() => drawIfChart(seriesDap, seriesBb, seriesBs));
 
   return `<div class="g2">${tableAgf}${bankTable}</div>${chartBlock}`;
+}
+
+function drawIfChart(seriesDap, seriesBb, seriesBs) {
+  let series;
+  if (state.instrument === 'all') {
+    series = [
+      { label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) },
+      { label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) },
+      { label: 'Subord.', color: CL_IF_COLORS.bs, data: sparseData(seriesBs) },
+    ];
+  } else if (state.instrument === 'BB') {
+    series = [{ label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) }];
+  } else if (state.instrument === 'BS') {
+    series = [{ label: 'Subord.', color: CL_IF_COLORS.bs, data: sparseData(seriesBs) }];
+  } else {
+    series = [{ label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) }];
+  }
+  drawLineChart('ifChart', state.periodos, series, {
+    height: 200,
+    style: 'area',
+    showLegend: true,
+  });
 }
 
 function paintBankMode() {
@@ -294,48 +329,39 @@ function paintBankMode() {
 
   const dap = sumAt(CL_IF_DAP, per, focus);
   const bb = sumAt(CL_IF_BB, per, focus);
-  const tot = instrumentValue(dap, bb);
+  const bs = sumAt(CL_IF_BS, per, focus);
+  const tot = instrumentValue(dap, bb, bs);
+  const bankDapLiab = sumAt(CL_BANK_DAP_LIAB, per, focus, state.liabRows);
+  const bankBbLiab = sumAt(CL_BANK_BB_LIAB, per, focus, state.liabRows);
 
   const agfRows = state.agfs.map((a) => {
     const aDap = sumAt(clIfAgfAccount(a.rut, 'DAP'), per, focus);
     const aBb = sumAt(clIfAgfAccount(a.rut, 'BB'), per, focus);
-    return { ...a, dap: aDap, bb: aBb, tot: instrumentValue(aDap, aBb) };
+    const aBs = sumAt(clIfAgfAccount(a.rut, 'BS'), per, focus);
+    return { ...a, dap: aDap, bb: aBb, bs: aBs, tot: instrumentValue(aDap, aBb, aBs) };
   }).filter((r) => r.tot > 0)
     .sort((a, b) => b.tot - a.tot);
 
   const seriesDap = seriesFor(CL_IF_DAP, focus);
   const seriesBb = seriesFor(CL_IF_BB, focus);
+  const seriesBs = seriesFor(CL_IF_BS, focus);
 
-  queueMicrotask(() => {
-    let series;
-    if (state.instrument === 'all') {
-      series = [
-        { label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) },
-        { label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) },
-      ];
-    } else if (state.instrument === 'BB') {
-      series = [{ label: 'Bonos', color: CL_IF_COLORS.bb, data: sparseData(seriesBb) }];
-    } else {
-      series = [{ label: 'DAP', color: CL_IF_COLORS.dap, data: sparseData(seriesDap) }];
-    }
-    drawLineChart('ifChart', state.periodos, series, {
-      height: 200,
-      style: 'area',
-      showLegend: true,
-    });
-  });
+  queueMicrotask(() => drawIfChart(seriesDap, seriesBb, seriesBs));
 
   return `
     <div style="margin-bottom:12px;font-size:13px;">
-      <strong>${esc(bankName(focus))}</strong> — FM funding stock ${fmtKPI(tot)}
-      <span style="color:var(--text3);"> · DAP ${fmtKPI(dap)} · Bonds ${fmtKPI(bb)} · ${esc(periodLabel(per))}</span>
+      <strong>${esc(bankName(focus))}</strong> — FM funding ${fmtKPI(tot)}
+      <span style="color:var(--text3);"> · DAP ${fmtKPI(dap)} (${fmtShare(dap, bankDapLiab)} of bank plazo)
+        · Bonds ${fmtKPI(bb)} (${fmtShare(bb, bankBbLiab)} of senior bonds)
+        · ${esc(periodLabel(per))}</span>
     </div>
-    <div style="overflow-x:auto;margin-bottom:16px;">
+    <div id="ifExportTable" style="overflow-x:auto;margin-bottom:16px;">
       <table class="data-table" style="width:100%;font-size:12px;">
         <thead><tr>
           <th style="text-align:left;">AGF</th>
           <th style="text-align:right;">DAP</th>
           <th style="text-align:right;">Bonos</th>
+          <th style="text-align:right;">Subord.</th>
           <th style="text-align:right;">Total</th>
           <th style="text-align:right;">Share</th>
         </tr></thead>
@@ -345,9 +371,10 @@ function paintBankMode() {
               <td style="text-align:left;">${esc(r.short_name || r.legal_name)}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.dap)}</td>
               <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.bb)}</td>
+              <td style="text-align:right;font-family:var(--mono);">${fmtKPI(r.bs)}</td>
               <td style="text-align:right;font-family:var(--mono);font-weight:600;">${fmtKPI(r.tot)}</td>
               <td style="text-align:right;font-family:var(--mono);">${tot ? ((100 * r.tot) / tot).toFixed(1) + '%' : '—'}</td>
-            </tr>`).join('') : '<tr><td colspan="5" style="color:var(--text3);">No AGF holdings for this bank / period.</td></tr>'}
+            </tr>`).join('') : '<tr><td colspan="6" style="color:var(--text3);">No AGF holdings for this bank / period.</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -402,8 +429,12 @@ async function loadData() {
     state.agfs = agfs;
     const accounts = clIfAccountsForFetch(agfs, banks);
     const fetchBanks = [...new Set([...banks, SISTEMA])];
-    const rows = await fetchData('x1', accounts, periodos, fetchBanks);
+    const [rows, liabRows] = await Promise.all([
+      fetchData('x1', accounts, periodos, fetchBanks),
+      fetchData('b1', clIfLiabilityAccounts(), periodos, banks),
+    ]);
     state.rows = rows || [];
+    state.liabRows = liabRows || [];
     state.periodos = periodos;
     state.banks = banks;
     state.iso = iso;
