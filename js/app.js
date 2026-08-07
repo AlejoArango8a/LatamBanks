@@ -3,12 +3,12 @@
 // ============================================================
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon72';
-import { fetchWithTimeout } from './api.js?v=bmon88';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon89';
+import { fetchWithTimeout } from './api.js?v=bmon89';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon88';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon89';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
@@ -218,7 +218,7 @@ async function switchCountryDataset() {
     fillPeriodSelectors();
     fillBankList();
     setStatus('error', 'Country update');
-    showErr(e.message || String(e));
+    showDataErrorDialog(e, { onRetry: () => { if (typeof window.switchCountryDataset === 'function') window.switchCountryDataset(); } });
     console.error('[switchCountryDataset]', e);
   } finally {
     if (gen === _switchGen) {
@@ -300,11 +300,10 @@ async function init() {
   } catch (e) {
     clearTimeout(wakeTimer);
     setStatus('error', 'Connection error');
-    const msg = e.name === 'AbortError'
-      ? 'Timeout: the server took too long. Try again in a few seconds.'
-      : `Error: ${e.message}`;
     setLsMsg('Could not connect to the server.');
-    showErr(msg);
+    showDataErrorDialog(e.name === 'AbortError'
+      ? { kind: 'timeout', message: 'Timeout: the server took too long. Try again in a few seconds.', name: 'AbortError' }
+      : e, { onRetry: () => location.reload() });
     const retryBtn = document.getElementById('lsRetryBtn');
     if (retryBtn) retryBtn.style.display = 'block';
     console.error('[init] Error:', e.name, e.message, e);

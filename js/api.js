@@ -31,25 +31,47 @@ function sleep(ms, signal) {
 
 function datosHttpError(status, apiError) {
   if (status === 401 || status === 403) {
-    return (
-      `Access blocked (${status}) — the host rejected the data request (VPN, corporate proxy, `
-      + `bot filter, or a protected preview link). Open https://www.latambanks.co, hard-refresh, `
-      + `and try again without VPN.`
+    return new DatosApiError(
+      'blocked',
+      `Access blocked (${status}) — host rejected the request (VPN, proxy, bot filter, or protected preview).`,
+      { status, raw: apiError || `HTTP ${status}` },
     );
   }
   if (status === 504 || status === 502) {
-    return (
-      `API gateway timeout (${status}) — the query is too heavy for one request. `
-      + `Narrow From/To or reduce bank selection.`
+    return new DatosApiError(
+      'gateway',
+      `API gateway timeout (${status}) — narrow From/To or reduce banks.`,
+      { status, raw: apiError || `HTTP ${status}` },
     );
   }
   if (apiError && /not allowed by cors/i.test(String(apiError))) {
-    return (
-      'This page origin is not allowed to call the API. Use https://www.latambanks.co '
-      + '(or localhost in development).'
+    return new DatosApiError(
+      'cors',
+      'This page origin is not allowed to call the API. Use https://www.latambanks.co',
+      { status, raw: apiError },
     );
   }
-  return apiError || `API /datos error ${status}`;
+  return new DatosApiError(
+    'http',
+    apiError || `API /datos error ${status}`,
+    { status, raw: apiError || `HTTP ${status}` },
+  );
+}
+
+/** Structured API failure — UI maps `.kind` to a clear Spanish popup. */
+export class DatosApiError extends Error {
+  /**
+   * @param {'blocked'|'timeout'|'gateway'|'cors'|'http'|'network'} kind
+   * @param {string} message
+   * @param {{ status?: number|null, raw?: string }} [meta]
+   */
+  constructor(kind, message, meta = {}) {
+    super(message);
+    this.name = 'DatosApiError';
+    this.kind = kind;
+    this.status = meta.status ?? null;
+    this.raw = meta.raw ?? message;
+  }
 }
 
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
@@ -101,8 +123,10 @@ export async function apiDatos(params, signal) {
     }
   } catch (e) {
     if (e?.name === 'AbortError') {
-      throw new Error(
-        `Data request timed out after ${Math.round(DATOS_TIMEOUT_MS / 1000)}s — try a shorter period range or fewer banks.`
+      throw new DatosApiError(
+        'timeout',
+        `Data request timed out after ${Math.round(DATOS_TIMEOUT_MS / 1000)}s — try a shorter period range or fewer banks.`,
+        { status: null, raw: e.message },
       );
     }
     throw e;
@@ -117,7 +141,7 @@ export async function apiDatos(params, signal) {
   if (r.ok && j?.ok && Array.isArray(j.rows)) {
     return mergeGrupoAvalApiRows(j.rows, requestedBanks != null ? requestedBanks : params.bancos);
   }
-  throw new Error(datosHttpError(r.status, j?.error));
+  throw datosHttpError(r.status, j?.error);
 }
 
 function dataCacheKey(tipo, periodos, bancos, cuentas) {
