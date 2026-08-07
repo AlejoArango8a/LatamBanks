@@ -12,11 +12,12 @@ import {
   CL_BANK_BB_LIAB,
   clIfAgfAccount,
   clIfMatrixAccount,
-  clIfAccountsForFetch,
+  clIfSummaryAccounts,
+  clIfMatrixAccountsForAgf,
   clIfLiabilityAccounts,
-} from '../clInstFundingCuentas.js?v=bmon83';
+} from '../clInstFundingCuentas.js?v=bmon84';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
-import { fetchData } from '../api.js?v=bmon72';
+import { fetchData } from '../api.js?v=bmon84';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData } from '../charts.js?v=bmon77';
@@ -24,6 +25,8 @@ import { drawLineChart, sparseData } from '../charts.js?v=bmon77';
 const IF_COUNTRIES = new Set(['CL']);
 const SISTEMA = 999;
 const MAX_BANKS_FETCH = 20;
+/** Cap IF history fetch — full 100+ CoA periods × matrix previously 504'd on Vercel. */
+const IF_MAX_PERIODS = 48;
 
 const state = {
   loading: false,
@@ -60,7 +63,9 @@ function periodRange() {
   const hasta = document.getElementById('selHasta')?.value || ST.hasta || ST.periodos?.[ST.periodos.length - 1];
   const all = Array.isArray(ST.periodos) ? ST.periodos : [];
   const inUi = all.filter((p) => p >= desde && p <= hasta);
-  return inUi.length ? inUi : all;
+  const base = inUi.length ? inUi : all;
+  // Prefer recent window — FM cartera lags CoA and huge ranges blow the API budget.
+  return base.length > IF_MAX_PERIODS ? base.slice(-IF_MAX_PERIODS) : base;
 }
 
 function selectedBanks() {
@@ -80,7 +85,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon83`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon84`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);
@@ -130,11 +135,30 @@ function setInstrument(inst) {
 function setSelectedAgf(rut) {
   state.selectedAgf = rut ? String(rut) : null;
   paint();
+  if (state.selectedAgf) loadMatrixForAgf(state.selectedAgf);
 }
 
 window.ifSetMode = setMode;
 window.ifSetInstrument = setInstrument;
 window.ifSelectAgf = setSelectedAgf;
+
+/** Merge matrix rows for one AGF without re-fetching the full summary. */
+async function loadMatrixForAgf(agfRut) {
+  if (!agfRut || !state.periodos.length) return;
+  const banks = state.banks.length ? state.banks : selectedBanks();
+  const accounts = clIfMatrixAccountsForAgf(agfRut, banks);
+  try {
+    const extra = await fetchData('x1', accounts, state.periodos, [SISTEMA]);
+    const keep = new Set(accounts);
+    state.rows = [
+      ...(state.rows || []).filter((r) => !keep.has(r.cuenta)),
+      ...(extra || []),
+    ];
+    paint();
+  } catch (e) {
+    console.warn('[institutionalFunding] matrix fetch', e);
+  }
+}
 
 function kpiCard(label, value, sub) {
   return `<div class="kpi"><div class="kpi-label">${esc(label)}</div>
@@ -417,11 +441,12 @@ async function loadData() {
     return;
   }
 
-  const periodos = periodRange();
+  const periodosRaw = periodRange();
   const banks = selectedBanks();
-  const key = `${iso}|${periodos.join(',')}|${banks.join(',')}|${state.mode}`;
+  const key = `${iso}|${periodosRaw.join(',')}|${banks.join(',')}|${state.mode}`;
   if (state.loaded && state.selectionKey === key && state.rows.length) {
     paint();
+    if (state.mode === 'agf' && state.selectedAgf) loadMatrixForAgf(state.selectedAgf);
     return;
   }
 
@@ -432,15 +457,28 @@ async function loadData() {
   try {
     const agfs = await loadAgfRegistry();
     state.agfs = agfs;
-    const accounts = clIfAccountsForFetch(agfs, banks);
+
+    // 1) Probe which periods actually have IF stocks (avoids trailing CoA-only zeros).
+    const probe = await fetchData('x1', [CL_IF_DAP], periodosRaw, [SISTEMA]);
+    const withData = new Set(
+      (probe || [])
+        .filter((r) => Number(r.ins_cod) === SISTEMA && Number(r.monto_total) > 0)
+        .map((r) => r.periodo)
+    );
+    const periodos = withData.size
+      ? periodosRaw.filter((p) => withData.has(p))
+      : periodosRaw;
+
+    // 2) Summary only (~70 cuentas) — never the full AGF×bank matrix in one shot.
+    const accounts = clIfSummaryAccounts(agfs);
     const fetchBanks = [...new Set([...banks, SISTEMA])];
     const [rows, liabRows] = await Promise.all([
-      fetchData('x1', accounts, periodos, fetchBanks),
-      fetchData('b1', clIfLiabilityAccounts(), periodos, banks),
+      fetchData('x1', accounts, periodos.length ? periodos : periodosRaw, fetchBanks),
+      fetchData('b1', clIfLiabilityAccounts(), periodos.length ? periodos : periodosRaw, banks),
     ]);
     state.rows = rows || [];
     state.liabRows = liabRows || [];
-    state.periodos = periodos;
+    state.periodos = periodos.length ? periodos : periodosRaw;
     state.banks = banks;
     state.iso = iso;
     state.selectionKey = key;
@@ -451,6 +489,22 @@ async function loadData() {
   } finally {
     state.loading = false;
     paint();
+    if (state.loaded && state.mode === 'agf') {
+      const per = latestPeriod();
+      if (!state.selectedAgf && per) {
+        const ranked = state.agfs
+          .map((a) => ({
+            rut: a.rut,
+            tot: sumAt(clIfAgfAccount(a.rut, 'DAP'), per)
+              + sumAt(clIfAgfAccount(a.rut, 'BB'), per)
+              + sumAt(clIfAgfAccount(a.rut, 'BS'), per),
+          }))
+          .filter((r) => r.tot > 0)
+          .sort((a, b) => b.tot - a.tot);
+        if (ranked[0]) state.selectedAgf = String(ranked[0].rut);
+      }
+      if (state.selectedAgf) loadMatrixForAgf(state.selectedAgf);
+    }
   }
 }
 

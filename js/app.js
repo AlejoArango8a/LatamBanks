@@ -4,25 +4,25 @@
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
 import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon72';
-import { fetchWithTimeout } from './api.js?v=bmon72';
+import { fetchWithTimeout } from './api.js?v=bmon84';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon72';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon84';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon72';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon72';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon81';
+} from './views/balance.js?v=bmon84';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon84';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon84';
 import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon72';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon84';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
-import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon80';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon80';
-import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon79';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon83';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon72';
+import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon84';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon84';
+import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon84';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon84';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon84';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
 // UI
@@ -37,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon83';
+} from './ui.js?v=bmon84';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
