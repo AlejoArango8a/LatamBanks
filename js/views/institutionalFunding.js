@@ -15,7 +15,7 @@ import {
   clIfSummaryAccounts,
   clIfMatrixAccountsForAgf,
   clIfLiabilityAccounts,
-} from '../clInstFundingCuentas.js?v=bmon84';
+} from '../clInstFundingCuentas.js?v=bmon85';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { fetchData } from '../api.js?v=bmon84';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
@@ -27,6 +27,8 @@ const SISTEMA = 999;
 const MAX_BANKS_FETCH = 20;
 /** Cap IF history fetch — full 100+ CoA periods × matrix previously 504'd on Vercel. */
 const IF_MAX_PERIODS = 48;
+/** When sidebar From/To sits entirely past FM availability, widen the probe. */
+const IF_FALLBACK_LOOKBACK = 60;
 
 const state = {
   loading: false,
@@ -42,6 +44,7 @@ const state = {
   agfs: [],
   iso: null,
   selectionKey: '',
+  rangeNote: null, // shown when we auto-shift off CoA-only months
 };
 
 let agfRegistryPromise = null;
@@ -85,7 +88,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon84`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon85`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);
@@ -186,8 +189,12 @@ function buildShell(bodyHtml) {
   const other = per ? sumAt(CL_IF_OTHER_DAP, per) : 0;
   const tot = dap + bb + bs;
   const dapPct = tot ? (100 * dap) / tot : null;
+  const lagBanner = state.rangeNote
+    ? `<div style="margin:0 0 12px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);font-size:12px;color:var(--text2);">${esc(state.rangeNote)}</div>`
+    : '';
 
   return `
+    ${lagBanner}
     <div class="kpi-grid" style="margin-bottom:14px;">
       ${kpiCard('FM bank paper', fmtKPI(tot), per ? periodLabel(per) : '—')}
       ${kpiCard('DAP', fmtKPI(dap), dapPct != null ? `${dapPct.toFixed(1)}% of total` : '—')}
@@ -233,7 +240,10 @@ function paintAgfMode() {
     .sort((a, b) => b.tot - a.tot);
 
   if (!rows.length) {
-    return `<div class="empty"><p>No Institutional Funding data for ${esc(periodLabel(per))}. Run the CMF FM loader for this month.</p></div>`;
+    return `<div class="empty"><p>No mutual-fund DAP/bond holdings in the loaded range
+      (last period tried: ${esc(periodLabel(per))}).
+      CMF cartera nacional usually lags the bank balance ZIP by ~1–2 months —
+      set <strong>Hasta</strong> to an earlier month (e.g. May 2025) or wait for the next FM file.</p></div>`;
   }
 
   if (!state.selectedAgf || !rows.some((r) => String(r.rut) === String(state.selectedAgf))) {
@@ -452,33 +462,66 @@ async function loadData() {
 
   state.loading = true;
   state.error = null;
+  state.rangeNote = null;
   paint();
 
   try {
     const agfs = await loadAgfRegistry();
     state.agfs = agfs;
 
-    // 1) Probe which periods actually have IF stocks (avoids trailing CoA-only zeros).
-    const probe = await fetchData('x1', [CL_IF_DAP], periodosRaw, [SISTEMA]);
-    const withData = new Set(
+    // 1) Probe IF stocks in the sidebar window.
+    let probe = await fetchData('x1', [CL_IF_DAP], periodosRaw, [SISTEMA]);
+    let withData = new Set(
       (probe || [])
         .filter((r) => Number(r.ins_cod) === SISTEMA && Number(r.monto_total) > 0)
         .map((r) => r.periodo)
     );
-    const periodos = withData.size
-      ? periodosRaw.filter((p) => withData.has(p))
-      : periodosRaw;
+
+    // Sidebar often ends on the latest CoA month (e.g. Jun 2026) while FM cartera
+    // still lags (~May 2025). If the window has no IF months, widen the probe.
+    let periodos = periodosRaw.filter((p) => withData.has(p));
+    if (!periodos.length) {
+      const all = Array.isArray(ST.periodos) ? ST.periodos : [];
+      const wider = all.slice(-IF_FALLBACK_LOOKBACK);
+      probe = await fetchData('x1', [CL_IF_DAP], wider, [SISTEMA]);
+      withData = new Set(
+        (probe || [])
+          .filter((r) => Number(r.ins_cod) === SISTEMA && Number(r.monto_total) > 0)
+          .map((r) => r.periodo)
+      );
+      periodos = wider.filter((p) => withData.has(p));
+      if (periodos.length > IF_MAX_PERIODS) periodos = periodos.slice(-IF_MAX_PERIODS);
+      if (periodos.length) {
+        const last = periodos[periodos.length - 1];
+        state.rangeNote =
+          `Showing mutual-fund data through ${periodLabel(last)} — CMF cartera nacional lags the bank balance file. `
+          + `Your From/To range had no FM months yet (e.g. Jun 2026).`;
+      }
+    }
+
+    if (!periodos.length) {
+      state.rows = [];
+      state.liabRows = [];
+      state.periodos = periodosRaw;
+      state.banks = banks;
+      state.iso = iso;
+      state.selectionKey = key;
+      state.loaded = true;
+      state.rangeNote =
+        'No Institutional Funding months in the database yet. The monthly CMF FM loader has not loaded a cartera nacional file.';
+      return;
+    }
 
     // 2) Summary only (~70 cuentas) — never the full AGF×bank matrix in one shot.
     const accounts = clIfSummaryAccounts(agfs);
     const fetchBanks = [...new Set([...banks, SISTEMA])];
     const [rows, liabRows] = await Promise.all([
-      fetchData('x1', accounts, periodos.length ? periodos : periodosRaw, fetchBanks),
-      fetchData('b1', clIfLiabilityAccounts(), periodos.length ? periodos : periodosRaw, banks),
+      fetchData('x1', accounts, periodos, fetchBanks),
+      fetchData('b1', clIfLiabilityAccounts(), periodos, banks),
     ]);
     state.rows = rows || [];
     state.liabRows = liabRows || [];
-    state.periodos = periodos.length ? periodos : periodosRaw;
+    state.periodos = periodos;
     state.banks = banks;
     state.iso = iso;
     state.selectionKey = key;
