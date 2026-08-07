@@ -15,9 +15,9 @@ import {
   clIfSummaryAccounts,
   clIfMatrixAccountsForAgf,
   clIfLiabilityAccounts,
-} from '../clInstFundingCuentas.js?v=bmon85';
+} from '../clInstFundingCuentas.js?v=bmon86';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
-import { fetchData } from '../api.js?v=bmon84';
+import { fetchData } from '../api.js?v=bmon86';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData } from '../charts.js?v=bmon77';
@@ -33,6 +33,8 @@ const IF_FALLBACK_LOOKBACK = 60;
 const state = {
   loading: false,
   loaded: false,
+  /** User clicked Load — do not auto-fetch on tab open (avoids competing with Bank Monitor). */
+  armed: false,
   error: null,
   mode: 'agf', // agf | bank
   instrument: 'all', // all | DAP | BB | BS
@@ -88,7 +90,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon85`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon86`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);
@@ -122,7 +124,42 @@ function latestPeriod() {
 function emptyState(msg) {
   const root = rootEl();
   if (!root) return;
-  root.innerHTML = `<div class="empty"><div class="empty-icon">🏛</div><p>${esc(msg)}</p></div>`;
+  root.innerHTML = `<div class="fa-empty"><div class="fa-empty-title">Institutional Funding</div>
+    <div class="fa-empty-sub">${esc(msg)}</div></div>`;
+}
+
+function paintGate() {
+  const root = rootEl();
+  if (!root) return;
+  root.innerHTML = `
+    <div class="fa-empty">
+      <div class="fa-empty-title">Institutional Funding</div>
+      <div class="fa-empty-sub">
+        Mutual-fund holdings of bank DAPs &amp; bank bonds from CMF
+        <em>Cartera de Inversiones Nacionales</em>.
+        This pull is heavier than Bank Monitor and can take up to ~30 seconds.
+      </div>
+      <button type="button" class="rcbtn active" id="ifLoadBtn" style="margin-top:14px;">Load Institutional Funding</button>
+    </div>`;
+  document.getElementById('ifLoadBtn')?.addEventListener('click', () => {
+    state.armed = true;
+    state.loaded = false;
+    state.selectionKey = '';
+    state.error = null;
+    loadData();
+  });
+}
+
+function paintLoading() {
+  const root = rootEl();
+  if (!root) return;
+  root.innerHTML = `<div class="fa-empty">
+    <div class="ls-bars" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+    <div class="fa-empty-sub" style="margin-top:16px;">Loading Institutional Funding…</div>
+    <div class="fa-empty-sub" style="margin-top:8px;font-size:12px;color:var(--text3);">
+      CMF cartera nacional — this usually takes a few seconds and can take up to ~30s. Please wait.
+    </div>
+  </div>`;
 }
 
 function setMode(mode) {
@@ -426,16 +463,42 @@ function paintBankMode() {
 function paint() {
   const root = rootEl();
   if (!root) return;
-  if (!IF_COUNTRIES.has(datasetIsoCountry())) {
+  const isoNow = datasetIsoCountry();
+  if (state.iso && state.iso !== isoNow) {
+    state.armed = false;
+    state.loaded = false;
+    state.loading = false;
+    state.error = null;
+    state.rows = [];
+    state.liabRows = [];
+    state.selectionKey = '';
+    state.iso = isoNow;
+  }
+  if (!IF_COUNTRIES.has(isoNow)) {
     emptyState('Institutional Funding is available for Chile only (CMF mutual-fund portfolio).');
     return;
   }
   if (state.loading) {
-    emptyState('Loading Institutional Funding…');
+    paintLoading();
     return;
   }
-  if (state.error) {
-    emptyState(state.error);
+  if (state.error && !state.loaded) {
+    root.innerHTML = `<div class="fa-empty">
+      <div class="fa-empty-title" style="color:var(--red);">${esc(state.error)}</div>
+      <div class="fa-empty-sub" style="margin-top:8px;">Try again, or narrow From/To in the sidebar.</div>
+      <button type="button" class="rcbtn" id="ifRetryBtn" style="margin-top:12px;">Retry</button>
+    </div>`;
+    document.getElementById('ifRetryBtn')?.addEventListener('click', () => {
+      state.armed = true;
+      state.error = null;
+      state.loaded = false;
+      state.selectionKey = '';
+      loadData();
+    });
+    return;
+  }
+  if (!state.armed || !state.loaded) {
+    paintGate();
     return;
   }
   const body = state.mode === 'bank' ? paintBankMode() : paintAgfMode();
@@ -446,8 +509,13 @@ async function loadData() {
   const iso = datasetIsoCountry();
   if (!IF_COUNTRIES.has(iso)) {
     state.loaded = true;
+    state.armed = true;
     state.rows = [];
     paint();
+    return;
+  }
+  if (!state.armed) {
+    paintGate();
     return;
   }
 
@@ -477,8 +545,8 @@ async function loadData() {
         .map((r) => r.periodo)
     );
 
-    // Sidebar often ends on the latest CoA month (e.g. Jun 2026) while FM cartera
-    // still lags (~May 2025). If the window has no IF months, widen the probe.
+    // Sidebar often ends on the latest CoA month while FM cartera lags.
+    // If the window has no IF months, widen the probe.
     let periodos = periodosRaw.filter((p) => withData.has(p));
     if (!periodos.length) {
       const all = Array.isArray(ST.periodos) ? ST.periodos : [];
@@ -495,7 +563,7 @@ async function loadData() {
         const last = periodos[periodos.length - 1];
         state.rangeNote =
           `Showing mutual-fund data through ${periodLabel(last)} — CMF cartera nacional lags the bank balance file. `
-          + `Your From/To range had no FM months yet (e.g. Jun 2026).`;
+          + `Your From/To range had no FM months yet.`;
       }
     }
 
@@ -515,10 +583,9 @@ async function loadData() {
     // 2) Summary only (~70 cuentas) — never the full AGF×bank matrix in one shot.
     const accounts = clIfSummaryAccounts(agfs);
     const fetchBanks = [...new Set([...banks, SISTEMA])];
-    const [rows, liabRows] = await Promise.all([
-      fetchData('x1', accounts, periodos, fetchBanks),
-      fetchData('b1', clIfLiabilityAccounts(), periodos, banks),
-    ]);
+    // Sequential: shared API pool max=2; avoid starving Bank Monitor if user switches tabs.
+    const rows = await fetchData('x1', accounts, periodos, fetchBanks);
+    const liabRows = await fetchData('b1', clIfLiabilityAccounts(), periodos, banks);
     state.rows = rows || [];
     state.liabRows = liabRows || [];
     state.periodos = periodos;
@@ -552,10 +619,17 @@ async function loadData() {
 }
 
 export function renderInstitutionalFunding() {
-  loadData();
+  // Never auto-fetch — wait for Load (keeps Bank Monitor free of IF traffic).
+  paint();
 }
 
 export function refreshInstitutionalFunding() {
+  if (!state.armed) {
+    state.loaded = false;
+    state.selectionKey = '';
+    paint();
+    return;
+  }
   state.loaded = false;
   state.selectionKey = '';
   loadData();

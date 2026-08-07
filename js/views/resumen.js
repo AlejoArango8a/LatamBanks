@@ -12,7 +12,7 @@ import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from 
 import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon72';
 import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon72';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon72';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon84';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon86';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon72';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon72';
 import { setStatus, showErr } from '../utils.js?v=bmon72';
@@ -1136,11 +1136,19 @@ export async function run() {
     runAbortController = new AbortController();
     const signal = runAbortController.signal;
 
-    const [b1, r1, c1] = await Promise.all([
-      fetchData('b1', B1_CUENTAS, periodos, banks, signal),
-      fetchData('r1', R1_CUENTAS, periodos, banks, signal),
-      fetchData('c1', C1_CUENTAS, periodos, banks, signal),
-    ]);
+    // Sequential on purpose: shared API DB pool is max=2. Parallel b1+r1+c1
+    // queued behind each other and could hit the 28s client timeout under load.
+    const b1 = await fetchData('b1', B1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) {
+      setRunLoadingBar(false);
+      return;
+    }
+    const r1 = await fetchData('r1', R1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) {
+      setRunLoadingBar(false);
+      return;
+    }
+    const c1 = await fetchData('c1', C1_CUENTAS, periodos, banks, signal);
     if (signal.aborted) {
       setRunLoadingBar(false);
       return;

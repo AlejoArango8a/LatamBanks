@@ -125,7 +125,11 @@ app.get('/api/bootstrap', async (req, res) => {
         [country],
       ),
       query(
-        'SELECT cuenta, descripcion FROM plan_cuentas WHERE country = $1 ORDER BY cuenta ASC',
+        // CL_IF_* (Institutional Funding) is a large synthetic CoA (~500+ accounts)
+        // loaded only by that tab — keep it out of bootstrap / Account View.
+        `SELECT cuenta, descripcion FROM plan_cuentas
+         WHERE country = $1 AND cuenta NOT LIKE 'CL_IF_%'
+         ORDER BY cuenta ASC`,
         [country],
       ),
     ]);

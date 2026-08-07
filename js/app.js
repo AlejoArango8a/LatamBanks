@@ -4,11 +4,11 @@
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
 import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon72';
-import { fetchWithTimeout } from './api.js?v=bmon84';
+import { fetchWithTimeout } from './api.js?v=bmon86';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon84';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon86';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
@@ -21,7 +21,7 @@ import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon84';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon84';
 import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon84';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon85';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon86';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon84';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
@@ -191,6 +191,8 @@ async function switchCountryDataset() {
     }
     toggleBank(defaultBank, true);
     fillBankList();
+    // toggleBank schedules a delayed run(); cancel it — we await run() below.
+    clearTimeout(ST._autoRunTimer);
     ST.desde = selDesde?.value ?? null;
     ST.hasta = selHasta?.value ?? null;
 
@@ -285,6 +287,8 @@ async function init() {
       toggleBank(def, true);
     }
     fillBankList();
+    // toggleBank schedules a delayed run(); cancel it — we await run() below.
+    clearTimeout(ST._autoRunTimer);
     syncResumenMoraChartButton();
     await run();
     syncFinStatementPanelLabels();
