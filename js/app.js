@@ -4,11 +4,11 @@
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
 import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon72';
-import { fetchWithTimeout } from './api.js?v=bmon84';
+import { fetchWithTimeout } from './api.js?v=bmon88';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon84';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon88';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,

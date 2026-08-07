@@ -12,6 +12,46 @@ const DATOS_PERIOD_CHUNK = 36;
 /** Very wide cuenta lists (e.g. unoptimized matrix) also get period chunking. */
 const DATOS_CUENTA_CHUNK_TRIGGER = 250;
 
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const t = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(t);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    if (signal) {
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+  });
+}
+
+function datosHttpError(status, apiError) {
+  if (status === 401 || status === 403) {
+    return (
+      `Access blocked (${status}) — the host rejected the data request (VPN, corporate proxy, `
+      + `bot filter, or a protected preview link). Open https://www.latambanks.co, hard-refresh, `
+      + `and try again without VPN.`
+    );
+  }
+  if (status === 504 || status === 502) {
+    return (
+      `API gateway timeout (${status}) — the query is too heavy for one request. `
+      + `Narrow From/To or reduce bank selection.`
+    );
+  }
+  if (apiError && /not allowed by cors/i.test(String(apiError))) {
+    return (
+      'This page origin is not allowed to call the API. Use https://www.latambanks.co '
+      + '(or localhost in development).'
+    );
+  }
+  return apiError || `API /datos error ${status}`;
+}
+
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), ms);
@@ -40,18 +80,25 @@ export async function apiDatos(params, signal) {
   const payload = { ...params, country: datasetIsoCountry() };
   if (fetchBanks != null) payload.bancos = fetchBanks;
 
+  const doFetch = () => fetchWithTimeout(
+    `${API_BASE}/api/datos`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    DATOS_TIMEOUT_MS,
+    signal
+  );
+
   let r;
   try {
-    r = await fetchWithTimeout(
-      `${API_BASE}/api/datos`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      },
-      DATOS_TIMEOUT_MS,
-      signal
-    );
+    r = await doFetch();
+    // Soft WAF / edge challenges sometimes 403 once; one quiet retry usually clears it.
+    if (r.status === 403) {
+      await sleep(700, signal);
+      r = await doFetch();
+    }
   } catch (e) {
     if (e?.name === 'AbortError') {
       throw new Error(
@@ -70,12 +117,7 @@ export async function apiDatos(params, signal) {
   if (r.ok && j?.ok && Array.isArray(j.rows)) {
     return mergeGrupoAvalApiRows(j.rows, requestedBanks != null ? requestedBanks : params.bancos);
   }
-  if (r.status === 504 || r.status === 502) {
-    throw new Error(
-      `API gateway timeout (${r.status}) — the query is too heavy for one request. Narrow From/To or reduce bank selection.`
-    );
-  }
-  throw new Error(j?.error || `API /datos error ${r.status}`);
+  throw new Error(datosHttpError(r.status, j?.error));
 }
 
 function dataCacheKey(tipo, periodos, bancos, cuentas) {

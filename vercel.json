@@ -19,6 +19,14 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }
   ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "latambanks.co" }],
+      "destination": "https://www.latambanks.co/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/health",     "destination": "/api/index" },

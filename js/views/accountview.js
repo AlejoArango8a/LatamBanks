@@ -4,7 +4,7 @@
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { accountViewLevel } from '../coCuentas.js?v=bmon72';
 import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon72';
-import { apiDatos } from '../api.js?v=bmon84';
+import { apiDatos } from '../api.js?v=bmon88';
 import { btgBlue, btgRgba } from '../config.js?v=bmon72';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');

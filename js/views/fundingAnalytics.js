@@ -41,7 +41,7 @@ import {
   uyExpenseMonth,
 } from '../uyCuentas.js?v=bmon72';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
-import { fetchData } from '../api.js?v=bmon84';
+import { fetchData } from '../api.js?v=bmon88';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { btgBlue, bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon77';

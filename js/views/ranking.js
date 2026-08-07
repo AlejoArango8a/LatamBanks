@@ -63,7 +63,7 @@ import { AR_KPI } from '../arCuentas.js?v=bmon72';
 import { MX_KPI } from '../mxCuentas.js?v=bmon72';
 import { PA_KPI } from '../paCuentas.js?v=bmon72';
 import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon72';
-import { apiDatos } from '../api.js?v=bmon84';
+import { apiDatos } from '../api.js?v=bmon88';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 

@@ -48,7 +48,24 @@ if (useOpenCors) {
       const allowed = origins.some(entry => {
         try { return origin === new URL(entry).origin; } catch { return origin === entry; }
       });
-      allowed ? cb(null, origin) : cb(new Error('Not allowed by CORS'));
+      if (allowed) return cb(null, origin);
+      // Same-app Vercel preview / alias hosts (latambanks-*.vercel.app).
+      try {
+        const host = new URL(origin).hostname.toLowerCase();
+        if (
+          host === 'latambanks.vercel.app'
+          || host === 'latam-banks.vercel.app'
+          || /^latambanks[a-z0-9-]*\.vercel\.app$/.test(host)
+          || /^latam-banks[a-z0-9-]*\.vercel\.app$/.test(host)
+        ) {
+          return cb(null, origin);
+        }
+      } catch (_) { /* fall through */ }
+      const err = new Error(
+        'Not allowed by CORS — open https://www.latambanks.co (production) or a LatamBanks Vercel host.'
+      );
+      err.status = 403;
+      cb(err);
     },
   }));
 }

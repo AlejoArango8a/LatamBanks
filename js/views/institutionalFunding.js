@@ -17,7 +17,7 @@ import {
   clIfLiabilityAccounts,
 } from '../clInstFundingCuentas.js?v=bmon85';
 import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
-import { fetchData } from '../api.js?v=bmon84';
+import { fetchData } from '../api.js?v=bmon88';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon72';
 import { bankColor } from '../config.js?v=bmon72';
 import { drawLineChart, sparseData } from '../charts.js?v=bmon77';

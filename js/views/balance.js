@@ -4,7 +4,7 @@
 import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon72';
 import { bankColor } from '../config.js?v=bmon72';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon72';
-import { sumRows } from '../api.js?v=bmon84';
+import { sumRows } from '../api.js?v=bmon88';
 import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon72';
 import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon72';
 import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon72';
