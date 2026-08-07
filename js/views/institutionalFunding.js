@@ -103,6 +103,11 @@ function seriesFor(cuenta, insCod = SISTEMA) {
 }
 
 function latestPeriod() {
+  // Prefer last period that actually has IF stocks (balance CoA may run ahead of FM file).
+  for (let i = state.periodos.length - 1; i >= 0; i--) {
+    const p = state.periodos[i];
+    if (sumAt(CL_IF_DAP, p) + sumAt(CL_IF_BB, p) + sumAt(CL_IF_BS, p) > 0) return p;
+  }
   return state.periodos[state.periodos.length - 1] || null;
 }
 
