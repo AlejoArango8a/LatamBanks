@@ -14,7 +14,8 @@ import {
   syncFinStatementPanelLabels,
 } from './views/balance.js?v=bmon72';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon72';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating } from './views/ranking.js?v=bmon72';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon81';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
 import { renderBankDetail } from './views/bankDetail.js?v=bmon72';
 import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon80';
@@ -35,7 +36,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon76';
+} from './ui.js?v=bmon81';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
@@ -154,6 +155,8 @@ async function switchCountryDataset() {
 
     fillPeriodSelectors();
     await fetchUSDRate().catch(() => false);
+    await refreshChileMacrosStrip().catch(() => {});
+    if (datasetIsoCountry() === 'CL') await ensureClRatingsLoaded().catch(() => {});
     if (gen !== _switchGen || ST.country !== targetCountry) return;
     syncCurrencyToggleUI();
     fillBankList();
@@ -249,6 +252,8 @@ async function init() {
 
     fillPeriodSelectors();
     await fetchUSDRate().catch(() => false);
+    await refreshChileMacrosStrip().catch(() => {});
+    if (datasetIsoCountry() === 'CL') await ensureClRatingsLoaded().catch(() => {});
     syncCurrencyToggleUI();
     fillBankList();
 

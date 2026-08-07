@@ -1256,6 +1256,65 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/chile/macros — latest UF / USD / IPC / TPM / UTM / TMC
+// Stored by chile_macros_loader.py as CL_MACRO_* (ins_cod=999, tipo=q1).
+// ============================================================
+app.get('/api/chile/macros', async (req, res) => {
+  try {
+    const accounts = [
+      'CL_MACRO_UF', 'CL_MACRO_USD', 'CL_MACRO_UTM',
+      'CL_MACRO_IPC', 'CL_MACRO_TPM', 'CL_MACRO_TMC',
+    ];
+    const rows = await query(
+      `SELECT periodo, cuenta, monto_total::bigint AS monto_total
+       FROM datos_financieros
+       WHERE country = 'CL' AND ins_cod = 999 AND cuenta = ANY($1::text[])
+       ORDER BY periodo DESC, cuenta ASC`,
+      [accounts],
+    );
+    if (!rows.length) {
+      return res.json({ ok: true, period: null, macros: {}, source: 'empty' });
+    }
+    const period = rows[0].periodo;
+    const macros = {};
+    for (const r of rows) {
+      if (r.periodo !== period) continue;
+      const v = Number(r.monto_total);
+      if (r.cuenta === 'CL_MACRO_UF' || r.cuenta === 'CL_MACRO_USD') {
+        macros[r.cuenta.replace('CL_MACRO_', '').toLowerCase()] = v / 100;
+      } else if (r.cuenta === 'CL_MACRO_IPC' || r.cuenta === 'CL_MACRO_TPM' || r.cuenta === 'CL_MACRO_TMC') {
+        macros[r.cuenta.replace('CL_MACRO_', '').toLowerCase()] = v / 100;
+      } else if (r.cuenta === 'CL_MACRO_UTM') {
+        macros.utm = v;
+      }
+    }
+    res.json({ ok: true, period, macros, source: 'db' });
+  } catch (e) {
+    console.error('/api/chile/macros error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
+// GET /api/chile/ratings — Banking System ratings (JSON seed)
+// ============================================================
+app.get('/api/chile/ratings', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const p = path.join(__dirname, '..', 'data', 'cl_bank_ratings.json');
+    if (!fs.existsSync(p)) {
+      return res.status(404).json({ ok: false, error: 'ratings file missing' });
+    }
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    res.json({ ok: true, ...raw });
+  } catch (e) {
+    console.error('/api/chile/ratings error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // GET /api/schema-alerts — alertas de cambio de esquema por país
 // Query: ?country=CL|CO. Lee carga_log.detalle (JSON) donde el loader
 // (schema_guard) registró una anomalía. Orden: más reciente primero.

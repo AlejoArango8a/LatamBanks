@@ -16,9 +16,9 @@
 | **ZIP `b2`/`c2`** | ❌ Skip en `cmf_loader.py` | Baja prioridad: son resúmenes delgados; casi todo está en `b1`/`c1` |
 | **UI sobre datos ya cargados** | Parcial (Monitor / Balance / P&L / Funding / AQ) | **Mayor ROI:** contingent `831*`, OR `847*`, grades contingentes `856*`, IFRS-9 fases, provisiones prudenciales `279*` |
 | **Pack xlsx mensual CMF** | Parcial — **Basilea III ingerido** (`chile_basilea_loader.py`, sheet Solvency) | IF/mora/prov xlsx = P2 QA; BCCh / API macros |
-| **API CMF Bancos v3** | ❌ | UF/USD/IPC/TMC + series delgadas; no reemplaza el CoA |
-| **BCCh Series bancarias** | ❌ | Cortes producto (colocaciones/depósitos/inversiones) por banco, lag ~2m+23d |
-| **Ratings** | Semi-estático (`FELLER_RATINGS` en `config.js`) | Scrape Humphrey/Feller opcional; baja frecuencia |
+| **API CMF Bancos v3** | ✅ macros via `chile_macros_loader.py` (mindicador + optional `CMF_API_KEY`) | TMC needs CMF key |
+| **BCCh Series bancarias** | ✅ `chile_bcch_loader.py` (CSV zip; Playwright vs Imperva) | Product cuts `CL_BCCH_*` |
+| **Ratings** | ✅ `chile_ratings_loader.py` → `data/cl_bank_ratings.json` | Feller still curated (login wall) |
 
 **Orden recomendado (Chile-first):**
 

@@ -1,0 +1,61 @@
+name: Chile BCCh Series bancarias (monthly)
+
+on:
+  schedule:
+    # BCCh publishes ~day 23 with ~2m+23d lag — run day 26.
+    - cron: '0 16 26 * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'download | zip-path'
+        required: false
+        default: 'download'
+      zip_path:
+        description: 'Repo-relative zip path (mode=zip-path)'
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite periods (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install playwright
+          playwright install --with-deps chromium
+      - name: Refresh macros first (USD for DEP_ME)
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+          CMF_API_KEY: ${{ secrets.CMF_API_KEY }}
+        run: python chile_macros_loader.py
+      - name: Load BCCh Series
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          MODE="${{ github.event.inputs.mode || 'download' }}"
+          if [ "$MODE" = "zip-path" ]; then
+            python chile_bcch_loader.py --zip-path "${{ github.event.inputs.zip_path }}" $FORCE_FLAG
+          else
+            python chile_bcch_loader.py --download-latest $FORCE_FLAG
+          fi
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Chile BCCh

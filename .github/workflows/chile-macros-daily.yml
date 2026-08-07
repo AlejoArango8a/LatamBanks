@@ -1,0 +1,53 @@
+name: Chile macros UF/USD/IPC (daily)
+
+on:
+  schedule:
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'YYYYMM start (optional)'
+        required: false
+        default: ''
+      to:
+        description: 'YYYYMM end (optional)'
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load Chile macros
+        env:
+          COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
+          CMF_API_KEY: ${{ secrets.CMF_API_KEY }}
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          FROM="${{ github.event.inputs.from }}"
+          TO="${{ github.event.inputs.to }}"
+          ARGS=""
+          if [ -n "$FROM" ]; then ARGS="$ARGS --from $FROM"; fi
+          if [ -n "$TO" ]; then ARGS="$ARGS --to $TO"; fi
+          python chile_macros_loader.py $ARGS $FORCE_FLAG
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-loader-failure
+        with:
+          country: Chile macros

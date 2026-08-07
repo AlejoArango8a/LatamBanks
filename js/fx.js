@@ -76,6 +76,19 @@ async function fromMindicador() {
   return validQuote(row.valor, String(row.fecha || '').slice(0, 10), 'mindicador.cl');
 }
 
+/** Chile macros from LatamBanks DB (chile_macros_loader → /api/chile/macros). */
+async function fromChileMacrosApi() {
+  const { API_BASE } = await import('./config.js?v=bmon72');
+  const data = await fetchJson(`${API_BASE}/api/chile/macros`);
+  const usd = Number(data?.macros?.usd);
+  if (!(usd > 0)) throw new Error('chile/macros: sin USD');
+  const period = data.period || todayISO();
+  const date = period.length === 6
+    ? `${period.slice(0, 4)}-${period.slice(4, 6)}-01`
+    : todayISO();
+  return validQuote(usd, date, 'CMF/mindicador·DB');
+}
+
 function formatFxSidebar(ccy, rate, date, source) {
   const loc = paisLocale(ST.country) || 'es-CL';
   const d = date || '—';
@@ -134,7 +147,10 @@ export async function fetchUSDRate() {
 
   /** @type {Array<() => Promise<FxQuote|null>>} */
   const chain = [];
-  if (ccy === 'CLP') chain.push(fromMindicador);
+  if (ccy === 'CLP') {
+    chain.push(fromChileMacrosApi);
+    chain.push(fromMindicador);
+  }
   chain.push(() => fromErApi(ccy));
   chain.push(() => fromCurrencyApi(ccy));
 
