@@ -109,11 +109,45 @@ async function query(sql, params = []) {
 }
 
 // ============================================================
+// CACHE — supervisory figures only change when an ETL runs, so read endpoints
+// can be answered from the Vercel edge instead of re-querying CockroachDB on
+// every visit. `max-age=0` keeps browsers revalidating (a shortened TTL still
+// propagates immediately), while `s-maxage` lets the shared CDN serve without
+// invoking the function at all.
+//
+// Only set these on successful responses — a cached error would outlive the
+// incident that caused it.
+// ============================================================
+/** Counters and diagnostics: cheap, but no reason to hit the DB per refresh. */
+const CACHE_SHORT = 15 * 60;
+/** Supervisory data. Loaders run monthly; the Chile macro loader runs daily. */
+const CACHE_ETL = 60 * 60;
+/** JSON seeds committed to the repo — only change on deploy. */
+const CACHE_STATIC = 6 * 60 * 60;
+/** Serve stale instantly and refresh in the background for a full day. */
+const CACHE_SWR = 24 * 60 * 60;
+
+function cacheable(res, sMaxAge, swr = CACHE_SWR) {
+  res.set(
+    'Cache-Control',
+    `public, max-age=0, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`,
+  );
+  // CORS echoes the caller's origin back, so the CDN must key on it.
+  res.vary('Origin');
+}
+
+/** Per-visitor or write-backed responses must never be shared. */
+function noStore(res) {
+  res.set('Cache-Control', 'private, no-store');
+}
+
+// ============================================================
 // HEALTH
 // ============================================================
 app.get('/health', async (req, res) => {
   try {
     await query('SELECT 1');
+    noStore(res);
     res.json({ ok: true, service: 'latambanks-api', db: 'cockroachdb' });
   } catch (e) {
     res.status(503).json({ ok: false, error: String(e.message) });
@@ -296,6 +330,7 @@ app.get('/api/bootstrap', async (req, res) => {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
     }
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       country,
@@ -590,6 +625,7 @@ app.get('/api/americas/snapshot', async (req, res) => {
       }
     }
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       top: topN,
@@ -921,6 +957,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
       if (ageMs > BTG_SNAPSHOT_TTL_MS / 2) {
         scheduleBtgSnapshotRebuild().catch(() => {});
       }
+      cacheable(res, CACHE_ETL);
       return res.json({
         ...cached.payload,
         ok: true,
@@ -933,6 +970,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
 
     if (cached?.payload?.banks && !forceRebuild) {
       scheduleBtgSnapshotRebuild().catch(() => {});
+      noStore(res);
       return res.json({
         ...cached.payload,
         ok: true,
@@ -945,6 +983,9 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
     }
 
     const payload = await scheduleBtgSnapshotRebuild();
+    // A freshly rebuilt payload is correct, but `?rebuild=1` is an explicit
+    // "give me the current truth" request — don't pin it at the edge.
+    noStore(res);
     res.json({
       ...payload,
       ok: true,
@@ -1115,6 +1156,7 @@ app.get('/api/bank-profile', async (req, res) => {
 
     const metrics = await liveBankMetrics(country, codigo);
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       country,
@@ -1289,6 +1331,7 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
     const planByFirstDigit = {};
     for (const row of planByDigit) planByFirstDigit[row.d] = row.n;
 
+    cacheable(res, CACHE_SHORT);
     res.json({
       ok: true,
       country,
@@ -1372,6 +1415,7 @@ app.get('/api/chile/macros', async (req, res) => {
         macros.utm = v;
       }
     }
+    cacheable(res, CACHE_ETL);
     res.json({ ok: true, period, macros, source: 'db' });
   } catch (e) {
     console.error('/api/chile/macros error:', e);
@@ -1391,6 +1435,7 @@ app.get('/api/chile/ratings', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'ratings file missing' });
     }
     const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    cacheable(res, CACHE_STATIC);
     res.json({ ok: true, ...raw });
   } catch (e) {
     console.error('/api/chile/ratings error:', e);
@@ -1413,6 +1458,7 @@ app.get('/api/schema-alerts', async (req, res) => {
        ORDER BY periodo DESC`,
       [country],
     );
+    cacheable(res, CACHE_ETL);
     res.json({ ok: true, country, alerts: rows });
   } catch (e) {
     console.error('/api/schema-alerts error:', e);
@@ -1429,6 +1475,8 @@ app.get('/api/geo', async (req, res) => {
     const raw = typeof xf === 'string' ? xf.split(',')[0].trim() : '';
     const ip = raw || req.socket?.remoteAddress || '';
     const local = !ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.');
+    // Resolved per visitor IP — sharing this at the edge would mislabel visits.
+    noStore(res);
     if (local) {
       return res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
     }
@@ -1491,6 +1539,7 @@ app.post('/api/visits', async (req, res) => {
          country_name = EXCLUDED.country_name`,
       [country_code.slice(0, 4), country_name.slice(0, 80)]
     );
+    noStore(res);
     res.json({ ok: true });
   } catch (e) {
     console.error('/api/visits POST error:', e);
@@ -1505,6 +1554,8 @@ app.get('/api/visits', async (req, res) => {
       'SELECT country_code, country_name, visit_count::int FROM visit_counter ORDER BY visit_count DESC'
     );
     const total = rows.reduce((s, r) => s + Number(r.visit_count), 0);
+    // A live counter: caching it would hide the visit the caller just recorded.
+    noStore(res);
     res.json({ ok: true, total, byCountry: rows });
   } catch (e) {
     console.error('/api/visits GET error:', e);
