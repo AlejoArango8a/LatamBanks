@@ -12,10 +12,10 @@ import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from 
 import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon72';
 import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon72';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon72';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon89';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon91';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon72';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon72';
-import { setStatus, showErr, showDataErrorDialog } from '../utils.js?v=bmon89';
+import { setStatus, showErr, showDataErrorDialog } from '../utils.js?v=bmon91';
 import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon72';
 
 function _setBannerLogo(iso, code) {

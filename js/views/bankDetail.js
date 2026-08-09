@@ -10,7 +10,7 @@ import { pais } from '../paises.js?v=bmon72';
 import { resolveBankProfile } from '../bankProfiles.js?v=bmon72';
 import { getCBRatings } from './ranking.js?v=bmon72';
 import { API_BASE, bankLogoUrl } from '../config.js?v=bmon72';
-import { fetchWithTimeout } from '../api.js?v=bmon88';
+import { fetchWithTimeout } from '../api.js?v=bmon91';
 
 let _bdReq = 0;
 

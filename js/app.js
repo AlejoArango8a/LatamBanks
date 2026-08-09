@@ -3,12 +3,12 @@
 // ============================================================
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
-import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon90';
-import { fetchWithTimeout } from './api.js?v=bmon90';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon91';
+import { fetchWithTimeout } from './api.js?v=bmon91';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon90';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon91';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
@@ -37,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon90';
+} from './ui.js?v=bmon91';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
@@ -116,10 +116,18 @@ function applyTabFromUrl() {
 async function fetchAndApplyBootstrap() {
   const cc = encodeURIComponent(datasetIsoCountry());
   const r = await fetchWithTimeout(`${API_BASE}/api/bootstrap?country=${cc}`, {}, 60000);
-  const j = await r.json();
-  if (!r.ok || !j.ok) throw new Error(j.error || `Bootstrap error ${r.status}`);
+  let j = null;
+  try { j = await r.json(); } catch (_) { j = null; }
+  if (!r.ok || !j?.ok) {
+    const err = new Error(j?.error || `Bootstrap error ${r.status}`);
+    err.status = r.status;
+    err.raw = `${err.message} [/api/bootstrap?country=${cc}]`;
+    throw err;
+  }
   if (!Array.isArray(j.periodos) || !j.periodos.length) {
-    throw new Error(j.error || 'No data found in database');
+    const err = new Error(j.error || 'No data found in database');
+    err.raw = `${err.message} [/api/bootstrap?country=${cc}]`;
+    throw err;
   }
   applyBootstrapPayload(j);
 }
@@ -160,8 +168,6 @@ async function switchCountryDataset() {
     if (datasetIsoCountry() === 'CL') await ensureClRatingsLoaded().catch(() => {});
     if (gen !== _switchGen || ST.country !== targetCountry) return;
     syncCurrencyToggleUI();
-    fillBankList();
-
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
 
     const n = ST.periodos.length;
@@ -170,6 +176,8 @@ async function switchCountryDataset() {
     const selHasta = document.getElementById('selHasta');
     if (selDesde) selDesde.selectedIndex = desdeIdx;
     if (selHasta) selHasta.selectedIndex = n - 1;
+    ST.desde = selDesde?.value ?? null;
+    ST.hasta = selHasta?.value ?? null;
     ST.selected.clear();
     ST.selectedOrder = [];
     ST.compareMode = false;
@@ -189,10 +197,11 @@ async function switchCountryDataset() {
           : isoSwitch === 'MX' ? 12
           : 1);
     }
+    // Select before fillBankList so the empty-list auto-select path never
+    // schedules a competing run() during country switch.
     toggleBank(defaultBank, true, { silent: true });
     fillBankList();
-    ST.desde = selDesde?.value ?? null;
-    ST.hasta = selHasta?.value ?? null;
+    clearTimeout(ST._autoRunTimer);
 
     await run();
     if (gen !== _switchGen || ST.country !== targetCountry) return;
@@ -256,7 +265,6 @@ async function init() {
     await refreshChileMacrosStrip().catch(() => {});
     if (datasetIsoCountry() === 'CL') await ensureClRatingsLoaded().catch(() => {});
     syncCurrencyToggleUI();
-    fillBankList();
 
     ST.lastPeriodo = ST.periodos[ST.periodos.length - 1];
     setLsMsg('Ready');
@@ -265,8 +273,12 @@ async function init() {
 
     const n = ST.periodos.length;
     const desdeIdx = Math.max(0, n - 13);
-    document.getElementById('selDesde').selectedIndex = desdeIdx;
-    document.getElementById('selHasta').selectedIndex = n - 1;
+    const selDesdeInit = document.getElementById('selDesde');
+    const selHastaInit = document.getElementById('selHasta');
+    if (selDesdeInit) selDesdeInit.selectedIndex = desdeIdx;
+    if (selHastaInit) selHastaInit.selectedIndex = n - 1;
+    ST.desde = selDesdeInit?.value ?? null;
+    ST.hasta = selHastaInit?.value ?? null;
     const isoInit = datasetIsoCountry();
     {
       let def = 59;
@@ -282,9 +294,12 @@ async function init() {
             : isoInit === 'MX' ? 12
             : 1);
       }
+      // Select before first fillBankList — avoids the empty-list auto-select
+      // scheduling a second run() that aborts this one.
       toggleBank(def, true, { silent: true });
     }
     fillBankList();
+    clearTimeout(ST._autoRunTimer);
     syncResumenMoraChartButton();
     await run();
     syncFinStatementPanelLabels();
