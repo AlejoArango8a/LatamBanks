@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — constants, colour maps, static lookup tables
 // ============================================================
-import { ST, datasetIsoCountry } from './state.js?v=bmon72';
+import { ST, datasetIsoCountry } from './state.js?v=bmon93';
 
 // API_BASE: vacío ('') = mismo origen (Vercel / dominio propio).
 const _h = window.location.hostname;
@@ -37,16 +37,22 @@ export const BTG_BLUE_DARK  = '#2563eb';
 export const btgBlue = () => (_isLightTheme() ? BTG_BLUE_LIGHT : BTG_BLUE_DARK);
 export const btgRgba = (a = 0.08) => (_isLightTheme() ? `rgba(6,38,80,${a})` : `rgba(37,99,235,${a})`);
 /** BTG franchise codes are country-specific (CL 59 ≠ PA 59). */
+const BTG_CODE_BY_ISO = {
+  CL: 59,
+  CO: 66,
+  BR: 1000080336,
+  US: 35154,
+  UY: 157,
+  LU: 79983,
+};
+
+/** BTG's code in the active supervisor's registry, or null where it has no bank. */
+export const btgCodeForCountry = (iso = datasetIsoCountry()) =>
+  BTG_CODE_BY_ISO[iso] ?? null;
+
 export const isBtgCode = (code) => {
-  const n = Number(code);
-  const iso = datasetIsoCountry();
-  if (iso === 'CL') return n === 59;
-  if (iso === 'CO') return n === 66;
-  if (iso === 'BR') return n === 1000080336;
-  if (iso === 'US') return n === 35154;
-  if (iso === 'UY') return n === 157;
-  if (iso === 'LU') return n === 79983;
-  return false;
+  const btg = btgCodeForCountry();
+  return btg != null && Number(code) === btg;
 };
 
 // Colores de marca compartidos entre países, indexados por fragmento de nombre en minúsculas.

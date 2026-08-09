@@ -1,33 +1,33 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon72';
-import { ST, datasetIsoCountry } from './state.js?v=bmon72';
-import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon91';
-import { fetchWithTimeout } from './api.js?v=bmon91';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
+import { API_BASE } from './config.js?v=bmon93';
+import { ST, datasetIsoCountry } from './state.js?v=bmon93';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon93';
+import { fetchWithTimeout } from './api.js?v=bmon93';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon93';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon91';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon93';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon84';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon84';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon92';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon92';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon92';
-import { renderBtgBanks } from './views/btgBanks.js?v=bmon92';
-import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon84';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon84';
-import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon84';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon85';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon84';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
+} from './views/balance.js?v=bmon93';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon93';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon93';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon93';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon93';
+import { renderBtgBanks } from './views/btgBanks.js?v=bmon93';
+import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon93';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon93';
+import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon93';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon93';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon93';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon93';
 
 // UI
 import {
-  fillPeriodSelectors, fillBankList, toggleBank, selAll,
+  fillPeriodSelectors, fillBankList, toggleBank, selAll, defaultBankForCountry,
   setCompareMode, toggleCompareMode, syncCompareToggleUI,
   showTab, loadBankFromTable, goHome, toggleSidebar, toggleSection, selectCountry,
   syncCountryFlagsVisual,
@@ -37,11 +37,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon92';
+} from './ui.js?v=bmon93';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon72';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon72';
+import { exportTableById, exportChartTable } from './export.js?v=bmon93';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon93';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -182,24 +182,10 @@ async function switchCountryDataset() {
     ST.selectedOrder = [];
     ST.compareMode = false;
     syncCompareToggleUI();
-    const isoSwitch = datasetIsoCountry();
-    let defaultBank = 59;
-    if (isoSwitch === 'CO') defaultBank = 66;
-    else if (isoSwitch === 'BR') defaultBank = 1000080336;
-    else if (isoSwitch === 'UY') defaultBank = 157;      // BTG Pactual Uruguay
-    else if (isoSwitch === 'US') defaultBank = 35154;    // BTG Pactual Bank, N.A.
-    else if (isoSwitch === 'PE' || isoSwitch === 'AR'
-          || isoSwitch === 'MX' || isoSwitch === 'PA') {
-      // PE BCP=3 · AR Nación=11 · MX BBVA=12 · PA top equity
-      defaultBank = ST._patrimonioRanking?.[0]
-        ?? (isoSwitch === 'PE' ? 3
-          : isoSwitch === 'AR' ? 11
-          : isoSwitch === 'MX' ? 12
-          : 1);
-    }
     // Select before fillBankList so the empty-list auto-select path never
     // schedules a competing run() during country switch.
-    toggleBank(defaultBank, true, { silent: true });
+    const defaultBank = defaultBankForCountry();
+    if (defaultBank != null) toggleBank(defaultBank, true, { silent: true });
     fillBankList();
     clearTimeout(ST._autoRunTimer);
 
@@ -279,25 +265,10 @@ async function init() {
     if (selHastaInit) selHastaInit.selectedIndex = n - 1;
     ST.desde = selDesdeInit?.value ?? null;
     ST.hasta = selHastaInit?.value ?? null;
-    const isoInit = datasetIsoCountry();
-    {
-      let def = 59;
-      if (isoInit === 'CO') def = 66;
-      else if (isoInit === 'BR') def = 1000080336;
-      else if (isoInit === 'UY') def = 157;       // BTG Pactual Uruguay
-      else if (isoInit === 'US') def = 35154;     // BTG Pactual Bank, N.A.
-      else if (isoInit === 'PE' || isoInit === 'AR'
-            || isoInit === 'MX' || isoInit === 'PA') {
-        def = ST._patrimonioRanking?.[0]
-          ?? (isoInit === 'PE' ? 3
-            : isoInit === 'AR' ? 11
-            : isoInit === 'MX' ? 12
-            : 1);
-      }
-      // Select before first fillBankList — avoids the empty-list auto-select
-      // scheduling a second run() that aborts this one.
-      toggleBank(def, true, { silent: true });
-    }
+    // Select before first fillBankList — avoids the empty-list auto-select
+    // scheduling a second run() that aborts this one.
+    const def = defaultBankForCountry();
+    if (def != null) toggleBank(def, true, { silent: true });
     fillBankList();
     clearTimeout(ST._autoRunTimer);
     syncResumenMoraChartButton();

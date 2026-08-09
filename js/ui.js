@@ -2,14 +2,14 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon72';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon72';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
-import { setStatus, showErr } from './utils.js?v=bmon72';
-import { sumRows } from './api.js?v=bmon91';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon92';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon92';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon93';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor, btgCodeForCountry } from './config.js?v=bmon93';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon93';
+import { setStatus, showErr } from './utils.js?v=bmon93';
+import { sumRows } from './api.js?v=bmon93';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon93';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon93';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon93';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -50,6 +50,24 @@ export function filterBankList() {
   });
 }
 
+/**
+ * The bank a country should open on: BTG's local franchise when the supervisor
+ * lists one, otherwise the country's largest bank by equity.
+ *
+ * Returns null only when no institutions are loaded yet, so callers must guard
+ * before selecting.
+ */
+export function defaultBankForCountry() {
+  const codes = Object.keys(ST.bancos).map(Number).filter((c) => c !== 999);
+  if (!codes.length) return null;
+  const btg = btgCodeForCountry();
+  if (btg != null && codes.includes(btg)) return btg;
+  // _patrimonioRanking is sorted by equity desc; fall back to the lowest code
+  // (the sidebar's own fallback order) when bootstrap could not build it.
+  const largest = (ST._patrimonioRanking || []).find((c) => codes.includes(c));
+  return largest ?? Math.min(...codes);
+}
+
 export function fillBankList() {
   const list  = document.getElementById('bankList');
   list.innerHTML = '';
@@ -88,19 +106,15 @@ export function fillBankList() {
   });
 
   if (ST.selected.size === 0) {
-    const iso = datasetIsoCountry();
-    const prefer = iso === 'BR' ? 1000080336
-      : iso === 'CO' ? 66
-      : iso === 'UY' ? 157
-      : iso === 'US' ? 35154
-      : 59;
-    const def = codes.includes(prefer) ? prefer : codes[0];
-    // silent: caller (init / country switch) owns the first run().
-    // A non-silent auto-select was scheduling a second run() ~300ms later that
-    // aborted the in-flight /api/datos and surfaced a false load error.
-    toggleBank(def, true, { silent: true });
-    fillBankList();
-    return;
+    const def = defaultBankForCountry();
+    if (def != null) {
+      // silent: caller (init / country switch) owns the first run().
+      // A non-silent auto-select was scheduling a second run() ~300ms later that
+      // aborted the in-flight /api/datos and surfaced a false load error.
+      toggleBank(def, true, { silent: true });
+      fillBankList();
+      return;
+    }
   }
   syncCompareToggleUI();
   filterBankList();
@@ -216,9 +230,8 @@ export function syncCompareToggleUI() {
 export function setCompareMode(on) {
   ST.compareMode = !!on;
   if (!ST.compareMode && ST.selected.size > 1) {
-    const iso  = datasetIsoCountry();
-    const btg  = iso === 'CO' ? 66 : iso === 'BR' ? 1000080336 : iso === 'UY' ? 157 : 59;
-    const keep = ST.selected.has(btg) ? btg : ST.selectedOrder[0];
+    const btg  = btgCodeForCountry();
+    const keep = btg != null && ST.selected.has(btg) ? btg : ST.selectedOrder[0];
     ST.selected.clear();
     ST.selectedOrder = [];
     ST.selected.add(keep);
@@ -363,14 +376,15 @@ export function loadBankFromTable(bankCode) {
   window.run();
 }
 
-// ---- Home shortcut: BTG Pactual Chile, last 12 months ----
+// ---- Home shortcut: the country's default bank, last 12 months ----
 export function goHome() {
   if (!ST.periodos.length) return; // data not loaded yet
-  const BTG_CODE = datasetIsoCountry() === 'CO' ? 66 : 59;
+  const def = defaultBankForCountry();
+  if (def == null) return;
   ST.selected.clear();
   ST.selectedOrder = [];
-  ST.selected.add(BTG_CODE);
-  ST.selectedOrder.push(BTG_CODE);
+  ST.selected.add(def);
+  ST.selectedOrder.push(def);
   fillBankList();
 
   const desde = document.getElementById('selDesde');
@@ -589,6 +603,10 @@ export function selectCountry(country) {
   syncResumenMoraChartButton();
   syncCountryChartButtons();
   syncCountryDisabledTabs();
+  // Picking a country is a request to look at that country. Land on Bank
+  // Monitor rather than leaving the user on whatever tab they came from —
+  // BTG Banks in particular is a cross-country view that ignores the choice.
+  showTab('resumen');
   refreshChileMacrosStrip().catch(() => {});
   queueMicrotask(() => window.switchCountryDataset?.()?.catch(console.error));
 }
