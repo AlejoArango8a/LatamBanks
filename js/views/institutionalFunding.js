@@ -566,17 +566,40 @@ function bindShell() {
 function paint() {
   const root = rootEl();
   if (!root) return;
-  if (!IF_COUNTRIES.has(datasetIsoCountry())) {
+  const isoNow = datasetIsoCountry();
+  // Rows are keyed by CMF account codes, so anything cached for another country
+  // would paint stale Chilean numbers under the new flag.
+  if (state.iso && state.iso !== isoNow) {
+    state.loaded = false;
+    state.loading = false;
+    state.error = null;
+    state.rows = [];
+    state.liabRows = [];
+    state.selectedAgf = null;
+    state.selectionKey = '';
+    state.iso = isoNow;
+  }
+  if (!IF_COUNTRIES.has(isoNow)) {
     emptyState('Chile only',
       'Institutional Funding is built from the CMF mutual-fund portfolio file, which has no equivalent in the other markets yet.');
     return;
   }
   if (state.loading) {
-    emptyState('Loading Institutional Funding…');
+    emptyState('Loading Institutional Funding…',
+      'The CMF portfolio file is heavier than the balance sheet — this usually takes a few seconds.');
     return;
   }
   if (state.error) {
-    emptyState('Could not load Institutional Funding', esc(state.error));
+    root.innerHTML = `
+      ${heroHtml()}
+      <div class="fa-empty">
+        <div class="fa-empty-title" style="color:var(--red);">Could not load Institutional Funding</div>
+        <div class="fa-empty-sub">${esc(state.error)}</div>
+        <div class="fa-empty-sub">Try again, or narrow the From/To range in the sidebar.</div>
+        <button type="button" class="rcbtn active" id="ifRetry" style="margin-top:6px;">Retry</button>
+      </div>`;
+    bindShell();
+    document.getElementById('ifRetry')?.addEventListener('click', () => refreshInstitutionalFunding());
     return;
   }
   const body = state.mode === 'bank' ? paintBankMode() : paintAgfMode();
@@ -657,10 +680,10 @@ async function loadData() {
     // 2) Summary only (~70 cuentas) — never the full AGF×bank matrix in one shot.
     const accounts = clIfSummaryAccounts(agfs);
     const fetchBanks = [...new Set([...banks, SISTEMA])];
-    const [rows, liabRows] = await Promise.all([
-      fetchData('x1', accounts, periodos, fetchBanks),
-      fetchData('b1', clIfLiabilityAccounts(), periodos, banks),
-    ]);
+    // Sequential on purpose: the API pool is max=2, and firing both at once
+    // queues one behind the other while its client timeout is already running.
+    const rows = await fetchData('x1', accounts, periodos, fetchBanks);
+    const liabRows = await fetchData('b1', clIfLiabilityAccounts(), periodos, banks);
     state.rows = rows || [];
     state.liabRows = liabRows || [];
     state.periodos = periodos;
