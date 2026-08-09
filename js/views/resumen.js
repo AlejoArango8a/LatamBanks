@@ -1133,10 +1133,10 @@ export async function run() {
     const signal = runAbortController.signal;
 
     const b1 = await fetchData('b1', B1_CUENTAS, periodos, banks, signal);
-      if (signal.aborted) { setRunLoadingBar(false); return; }
-      const r1 = await fetchData('r1', R1_CUENTAS, periodos, banks, signal);
-      if (signal.aborted) { setRunLoadingBar(false); return; }
-      const c1 = await fetchData('c1', C1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) { setRunLoadingBar(false); return; }
+    const r1 = await fetchData('r1', R1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) { setRunLoadingBar(false); return; }
+    const c1 = await fetchData('c1', C1_CUENTAS, periodos, banks, signal);
     if (signal.aborted) {
       setRunLoadingBar(false);
       return;
