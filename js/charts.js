@@ -232,13 +232,16 @@ export function drawLineChart(canvasId, periodos, series, opts) {
 
   CHART_STATE[canvasId] = { bars: [], periodos, series, PAD, W, H, dpr, valueScale, chartStyle };
 
-  /** On narrow canvas, do not auto-show bar top labels (readable axes first; user uses 123 toggle). */
+  /** On narrow canvas, do not auto-show bar top labels (readable axes first; user uses 123 toggle).
+   *  A caller may pass its own boolean when the view owns the toggle instead of the global one. */
   const showLabels =
-    ST.showBarLabels === true
-      ? true
-      : ST.showBarLabels === false
-        ? false
-        : narrowCanvas ? false : nSeries === 1;
+    typeof opts.showLabels === 'boolean'
+      ? opts.showLabels
+      : ST.showBarLabels === true
+        ? true
+        : ST.showBarLabels === false
+          ? false
+          : narrowCanvas ? false : nSeries === 1;
   const labelsToDraw = [];
 
   if (chartStyle === 'lines' || chartStyle === 'area') {
