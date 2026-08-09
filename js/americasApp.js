@@ -92,7 +92,7 @@ async function fetchFxRates(currencies) {
 async function loadSnapshot() {
   const status = document.getElementById('amStatus');
   status.textContent = 'Loading supervisory snapshots…';
-  const r = await fetch(`${API_BASE}/api/americas/snapshot?top=20`, { cache: 'no-store' });
+  const r = await fetch(`${API_BASE}/api/americas/snapshot?top=20`);
   const j = await r.json();
   if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
 

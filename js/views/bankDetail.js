@@ -8,7 +8,7 @@ import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=
 import { bankName, fmtKPI } from '../format.js?v=bmon72';
 import { pais } from '../paises.js?v=bmon72';
 import { resolveBankProfile } from '../bankProfiles.js?v=bmon72';
-import { getCBRatings } from './ranking.js?v=bmon72';
+import { getCBRatings } from './ranking.js?v=bmon92';
 import { API_BASE, bankLogoUrl } from '../config.js?v=bmon72';
 import { fetchWithTimeout } from '../api.js?v=bmon91';
 

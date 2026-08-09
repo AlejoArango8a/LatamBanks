@@ -34,7 +34,7 @@ export async function ensureClRatingsLoaded() {
     const urls = [`${API_BASE}/api/chile/ratings`, `${API_BASE}/data/cl_bank_ratings.json`];
     for (const url of urls) {
       try {
-        const r = await fetch(url, { cache: 'no-store' });
+        const r = await fetch(url);
         if (!r.ok) continue;
         const j = await r.json();
         const ratings = j.ratings || j;
