@@ -8,8 +8,8 @@ import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
 import { setStatus, showErr } from './utils.js?v=bmon72';
 import { sumRows } from './api.js?v=bmon91';
 import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon81';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon92';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon92';
 export { fetchUSDRate };
 
 // ---- Run & period ----

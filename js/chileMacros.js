@@ -12,6 +12,27 @@ function fmtNum(n, digs = 2) {
   });
 }
 
+let macrosPromise = null;
+
+/**
+ * Shared read of /api/chile/macros. The sidebar strip and the FX cascade both
+ * need it on the same page load, and it used to be fetched twice — each call
+ * costing a full scan of the Chile partition. A failed attempt is not memoized
+ * so a later country switch can retry.
+ */
+export function fetchChileMacros() {
+  if (!macrosPromise) {
+    macrosPromise = fetch(`${API_BASE}/api/chile/macros`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((j) => {
+        if (!j?.ok) macrosPromise = null;
+        return j;
+      });
+  }
+  return macrosPromise;
+}
+
 /**
  * Populate #clMacrosStrip when country === chile.
  * Safe no-op if the element is missing.
@@ -27,9 +48,8 @@ export async function refreshChileMacrosStrip() {
   el.style.display = 'block';
   el.innerHTML = '<span style="color:var(--text3)">Macros…</span>';
   try {
-    const r = await fetch(`${API_BASE}/api/chile/macros`, { cache: 'no-store' });
-    const j = await r.json();
-    if (!r.ok || !j.ok || !j.macros || !Object.keys(j.macros).length) {
+    const j = await fetchChileMacros();
+    if (!j?.ok || !j.macros || !Object.keys(j.macros).length) {
       el.innerHTML = '<span style="color:var(--text3)">Macros pending load</span>';
       return;
     }

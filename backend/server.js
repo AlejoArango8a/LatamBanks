@@ -109,11 +109,45 @@ async function query(sql, params = []) {
 }
 
 // ============================================================
+// CACHE — supervisory figures only change when an ETL runs, so read endpoints
+// can be answered from the Vercel edge instead of re-querying CockroachDB on
+// every visit. `max-age=0` keeps browsers revalidating (a shortened TTL still
+// propagates immediately), while `s-maxage` lets the shared CDN serve without
+// invoking the function at all.
+//
+// Only set these on successful responses — a cached error would outlive the
+// incident that caused it.
+// ============================================================
+/** Counters and diagnostics: cheap, but no reason to hit the DB per refresh. */
+const CACHE_SHORT = 15 * 60;
+/** Supervisory data. Loaders run monthly; the Chile macro loader runs daily. */
+const CACHE_ETL = 60 * 60;
+/** JSON seeds committed to the repo — only change on deploy. */
+const CACHE_STATIC = 6 * 60 * 60;
+/** Serve stale instantly and refresh in the background for a full day. */
+const CACHE_SWR = 24 * 60 * 60;
+
+function cacheable(res, sMaxAge, swr = CACHE_SWR) {
+  res.set(
+    'Cache-Control',
+    `public, max-age=0, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`,
+  );
+  // CORS echoes the caller's origin back, so the CDN must key on it.
+  res.vary('Origin');
+}
+
+/** Per-visitor or write-backed responses must never be shared. */
+function noStore(res) {
+  res.set('Cache-Control', 'private, no-store');
+}
+
+// ============================================================
 // HEALTH
 // ============================================================
 app.get('/health', async (req, res) => {
   try {
     await query('SELECT 1');
+    noStore(res);
     res.json({ ok: true, service: 'latambanks-api', db: 'cockroachdb' });
   } catch (e) {
     res.status(503).json({ ok: false, error: String(e.message) });
@@ -296,6 +330,7 @@ app.get('/api/bootstrap', async (req, res) => {
       console.warn('patrimonio ranking fetch failed (non-fatal):', e.message);
     }
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       country,
@@ -319,6 +354,28 @@ app.get('/api/bootstrap', async (req, res) => {
 const BR_AMERICAS_EXCLUDE = new Set([
   1000081847, 1000081665, 1000086581, 1000084686, 1000081184, 1000086158, 1000084710,
 ]);
+
+/**
+ * Latest period that actually carries rows of `tipo` for a country.
+ *
+ * Anchoring on `tipo` matters twice. The PK is
+ * (country, periodo, tipo, ins_cod, cuenta), so an unfiltered `DISTINCT periodo`
+ * scans the country's whole partition (19.8M rows for BR) just to read one value.
+ * And a plain MAX over the partition returns satellite periods loaded by the
+ * macro/institutional-funding loaders (e.g. CL 202608 holds only tipo='q1'
+ * macros), which have no bank balances and yield an empty snapshot.
+ */
+async function latestPeriodForTipo(iso, tipo, insCod = null) {
+  const params = [iso, tipo];
+  let sql = `SELECT MAX(periodo) AS periodo FROM datos_financieros
+             WHERE country = $1 AND tipo = $2`;
+  if (insCod != null) {
+    params.push(insCod);
+    sql += ` AND ins_cod = $${params.length}`;
+  }
+  const rows = await query(sql, params);
+  return rows[0]?.periodo || null;
+}
 
 /** Canonical balance metrics available for every live LatamBanks country. */
 const AMERICAS_SPECS = {
@@ -437,11 +494,8 @@ async function americasSnapshotForCountry(iso, topN) {
   const spec = AMERICAS_SPECS[iso];
   if (!meta || !spec || meta.status !== 'live') return null;
 
-  const periodRows = await query(
-    `SELECT DISTINCT periodo FROM datos_financieros WHERE country = $1 ORDER BY periodo ASC`,
-    [iso],
-  );
-  if (!periodRows.length) {
+  const period = await latestPeriodForTipo(iso, spec.equityTipo);
+  if (!period) {
     return {
       iso,
       key: meta.key,
@@ -452,7 +506,6 @@ async function americasSnapshotForCountry(iso, topN) {
       error: 'No periods loaded',
     };
   }
-  const period = periodRows[periodRows.length - 1].periodo;
 
   let equityRows = await query(
     `SELECT ins_cod::int AS ins_cod, SUM(monto_total::bigint) AS equity
@@ -572,6 +625,7 @@ app.get('/api/americas/snapshot', async (req, res) => {
       }
     }
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       top: topN,
@@ -709,12 +763,8 @@ async function btgBankSnapshot(entry) {
     };
   }
 
-  // MAX(periodo) avoids scanning DISTINCT over full country history.
-  const periodRows = await query(
-    `SELECT MAX(periodo) AS periodo FROM datos_financieros WHERE country = $1`,
-    [entry.iso],
-  );
-  const period = periodRows[0]?.periodo || null;
+  const balanceTipo = spec.metrics.equity?.tipo || spec.metrics.assets?.tipo;
+  const period = await latestPeriodForTipo(entry.iso, balanceTipo, entry.code);
   if (!period) {
     return {
       iso: entry.iso,
@@ -907,6 +957,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
       if (ageMs > BTG_SNAPSHOT_TTL_MS / 2) {
         scheduleBtgSnapshotRebuild().catch(() => {});
       }
+      cacheable(res, CACHE_ETL);
       return res.json({
         ...cached.payload,
         ok: true,
@@ -919,6 +970,7 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
 
     if (cached?.payload?.banks && !forceRebuild) {
       scheduleBtgSnapshotRebuild().catch(() => {});
+      noStore(res);
       return res.json({
         ...cached.payload,
         ok: true,
@@ -931,6 +983,9 @@ app.get('/api/btg-banks/snapshot', async (req, res) => {
     }
 
     const payload = await scheduleBtgSnapshotRebuild();
+    // A freshly rebuilt payload is correct, but `?rebuild=1` is an explicit
+    // "give me the current truth" request — don't pin it at the edge.
+    noStore(res);
     res.json({
       ...payload,
       ok: true,
@@ -981,18 +1036,46 @@ async function sumMetricForPeriod(iso, codigo, period, metricSpec) {
   return Number(rows[0]?.monto) || 0;
 }
 
+/**
+ * Year-end periods a country has loaded, newest first, capped at `upTo`.
+ * Read from carga_log (one row per loaded period) instead of scanning
+ * datos_financieros. Callers probe each candidate with a PK point lookup and
+ * skip the ones where the bank has no figures, so a country-level list is safe.
+ */
+async function loadedYearEndPeriods(iso, upTo) {
+  let rows = [];
+  try {
+    rows = await query(
+      `SELECT periodo FROM carga_log
+       WHERE country = $1 AND estado IN ('ok', 'alerta_esquema')
+       ORDER BY periodo DESC`,
+      [iso],
+    );
+  } catch (e) {
+    console.warn('[loadedYearEndPeriods] carga_log read failed:', e.message);
+  }
+  const fromLog = rows
+    .map((r) => r.periodo)
+    .filter((p) => isYearEndPeriod(p) && (!upTo || p <= upTo));
+  if (fromLog.length) return fromLog;
+
+  // carga_log empty for this country — walk December back from the latest period.
+  const startYear = parseInt(yearFromPeriod(upTo), 10);
+  if (!Number.isFinite(startYear)) return [];
+  const out = [];
+  for (let y = startYear; y > startYear - 5; y -= 1) {
+    const p = `${y}12`;
+    if (!upTo || p <= upTo) out.push(p);
+  }
+  return out;
+}
+
 async function liveBankMetrics(iso, codigo) {
   const spec = AMERICAS_SPECS[iso];
   if (!spec) return null;
 
-  const periodRows = await query(
-    `SELECT DISTINCT periodo FROM datos_financieros
-     WHERE country = $1 AND ins_cod = $2
-     ORDER BY periodo ASC`,
-    [iso, codigo],
-  );
-  const periods = periodRows.map((r) => r.periodo);
-  if (!periods.length) {
+  const latest = await latestPeriodForTipo(iso, spec.equityTipo, codigo);
+  if (!latest) {
     return {
       period: null,
       assets: null,
@@ -1004,12 +1087,11 @@ async function liveBankMetrics(iso, codigo) {
     };
   }
 
-  const latest = periods[periods.length - 1];
   const assets = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.assets);
   const equity = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.equity);
   const netIncome = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.net_income);
 
-  const yearEnds = periods.filter(isYearEndPeriod).reverse(); // newest first
+  const yearEnds = await loadedYearEndPeriods(iso, latest); // newest first
   const roeYears = [];
   for (const ye of yearEnds) {
     if (roeYears.length >= 3) break;
@@ -1074,6 +1156,7 @@ app.get('/api/bank-profile', async (req, res) => {
 
     const metrics = await liveBankMetrics(country, codigo);
 
+    cacheable(res, CACHE_ETL);
     res.json({
       ok: true,
       country,
@@ -1248,6 +1331,7 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
     const planByFirstDigit = {};
     for (const row of planByDigit) planByFirstDigit[row.d] = row.n;
 
+    cacheable(res, CACHE_SHORT);
     res.json({
       ok: true,
       country,
@@ -1276,26 +1360,52 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
 // GET /api/chile/macros — latest UF / USD / IPC / TPM / UTM / TMC
 // Stored by chile_macros_loader.py as CL_MACRO_* (ins_cod=999, tipo=q1).
 // ============================================================
+const CL_MACRO_ACCOUNTS = [
+  'CL_MACRO_UF', 'CL_MACRO_USD', 'CL_MACRO_UTM',
+  'CL_MACRO_IPC', 'CL_MACRO_TPM', 'CL_MACRO_TMC',
+];
+
+function previousMonthPeriod(periodo) {
+  const y = Number(String(periodo || '').slice(0, 4));
+  const m = Number(String(periodo || '').slice(4, 6));
+  if (!y || !m) return null;
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  return `${py}${String(pm).padStart(2, '0')}`;
+}
+
+/**
+ * Macro values for one period. `periodo` is the second PK column, so pinning it
+ * makes this a point lookup (4 rows, 243 B). Leaving it open — as this endpoint
+ * used to — scans the whole CL partition (2.9M rows, 206 MiB) to return six
+ * numbers, and the dashboard called it on every page load.
+ */
+async function chileMacroRows(period) {
+  return query(
+    `SELECT periodo, cuenta, monto_total::bigint AS monto_total
+     FROM datos_financieros
+     WHERE country = 'CL' AND periodo = $1 AND tipo = 'q1' AND ins_cod = 999
+       AND cuenta = ANY($2::text[])`,
+    [period, CL_MACRO_ACCOUNTS],
+  );
+}
+
 app.get('/api/chile/macros', async (req, res) => {
   try {
-    const accounts = [
-      'CL_MACRO_UF', 'CL_MACRO_USD', 'CL_MACRO_UTM',
-      'CL_MACRO_IPC', 'CL_MACRO_TPM', 'CL_MACRO_TMC',
-    ];
-    const rows = await query(
-      `SELECT periodo, cuenta, monto_total::bigint AS monto_total
-       FROM datos_financieros
-       WHERE country = 'CL' AND ins_cod = 999 AND cuenta = ANY($1::text[])
-       ORDER BY periodo DESC, cuenta ASC`,
-      [accounts],
-    );
+    // ins_cod 999 / tipo q1 also carries the Basel III ratios, so the newest
+    // period there does not always include macros — walk back a few months.
+    let probe = await latestPeriodForTipo('CL', 'q1', 999);
+    let rows = [];
+    for (let i = 0; probe && i < 6 && !rows.length; i += 1) {
+      rows = await chileMacroRows(probe);
+      if (!rows.length) probe = previousMonthPeriod(probe);
+    }
     if (!rows.length) {
       return res.json({ ok: true, period: null, macros: {}, source: 'empty' });
     }
     const period = rows[0].periodo;
     const macros = {};
     for (const r of rows) {
-      if (r.periodo !== period) continue;
       const v = Number(r.monto_total);
       if (r.cuenta === 'CL_MACRO_UF' || r.cuenta === 'CL_MACRO_USD') {
         macros[r.cuenta.replace('CL_MACRO_', '').toLowerCase()] = v / 100;
@@ -1305,6 +1415,7 @@ app.get('/api/chile/macros', async (req, res) => {
         macros.utm = v;
       }
     }
+    cacheable(res, CACHE_ETL);
     res.json({ ok: true, period, macros, source: 'db' });
   } catch (e) {
     console.error('/api/chile/macros error:', e);
@@ -1324,6 +1435,7 @@ app.get('/api/chile/ratings', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'ratings file missing' });
     }
     const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    cacheable(res, CACHE_STATIC);
     res.json({ ok: true, ...raw });
   } catch (e) {
     console.error('/api/chile/ratings error:', e);
@@ -1346,6 +1458,7 @@ app.get('/api/schema-alerts', async (req, res) => {
        ORDER BY periodo DESC`,
       [country],
     );
+    cacheable(res, CACHE_ETL);
     res.json({ ok: true, country, alerts: rows });
   } catch (e) {
     console.error('/api/schema-alerts error:', e);
@@ -1362,6 +1475,8 @@ app.get('/api/geo', async (req, res) => {
     const raw = typeof xf === 'string' ? xf.split(',')[0].trim() : '';
     const ip = raw || req.socket?.remoteAddress || '';
     const local = !ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127.');
+    // Resolved per visitor IP — sharing this at the edge would mislabel visits.
+    noStore(res);
     if (local) {
       return res.json({ ok: true, country_name: 'Unknown', country_code: '??' });
     }
@@ -1424,6 +1539,7 @@ app.post('/api/visits', async (req, res) => {
          country_name = EXCLUDED.country_name`,
       [country_code.slice(0, 4), country_name.slice(0, 80)]
     );
+    noStore(res);
     res.json({ ok: true });
   } catch (e) {
     console.error('/api/visits POST error:', e);
@@ -1438,6 +1554,8 @@ app.get('/api/visits', async (req, res) => {
       'SELECT country_code, country_name, visit_count::int FROM visit_counter ORDER BY visit_count DESC'
     );
     const total = rows.reduce((s, r) => s + Number(r.visit_count), 0);
+    // A live counter: caching it would hide the visit the caller just recorded.
+    noStore(res);
     res.json({ ok: true, total, byCountry: rows });
   } catch (e) {
     console.error('/api/visits GET error:', e);

@@ -78,8 +78,8 @@ async function fromMindicador() {
 
 /** Chile macros from LatamBanks DB (chile_macros_loader → /api/chile/macros). */
 async function fromChileMacrosApi() {
-  const { API_BASE } = await import('./config.js?v=bmon72');
-  const data = await fetchJson(`${API_BASE}/api/chile/macros`);
+  const { fetchChileMacros } = await import('./chileMacros.js?v=bmon92');
+  const data = await fetchChileMacros();
   const usd = Number(data?.macros?.usd);
   if (!(usd > 0)) throw new Error('chile/macros: sin USD');
   const period = data.period || todayISO();

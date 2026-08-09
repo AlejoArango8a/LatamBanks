@@ -14,10 +14,10 @@ import {
   syncFinStatementPanelLabels,
 } from './views/balance.js?v=bmon84';
 import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon84';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon84';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon84';
-import { renderBtgBanks } from './views/btgBanks.js?v=bmon72';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon92';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon92';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon92';
+import { renderBtgBanks } from './views/btgBanks.js?v=bmon92';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon84';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon84';
 import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon84';
@@ -37,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon91';
+} from './ui.js?v=bmon92';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';

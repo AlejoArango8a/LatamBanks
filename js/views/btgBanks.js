@@ -374,7 +374,8 @@ async function loadSnapshot(force = false) {
     const url = force
       ? `${API_BASE}/api/btg-banks/snapshot?rebuild=1`
       : `${API_BASE}/api/btg-banks/snapshot`;
-    const r = await fetch(url, { cache: 'no-store' });
+    // Only a forced rebuild bypasses caches; the normal read is edge-cacheable.
+    const r = await fetch(url, force ? { cache: 'no-store' } : undefined);
     const j = await r.json();
     if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
     const currencies = (j.banks || []).map((b) => b.currency).filter(Boolean);
