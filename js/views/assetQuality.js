@@ -46,7 +46,7 @@ import { ST, datasetIsoCountry } from '../state.js?v=bmon93';
 import { fetchData } from '../api.js?v=bmon93';
 import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon93';
 import { btgBlue, bankColor } from '../config.js?v=bmon93';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon93';
+import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon93';
 
 const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY', 'US']);
 const MAX_COMPARE_ENTITIES = 5;
@@ -1017,7 +1017,8 @@ function drawStackedChart(canvasId, series, title) {
   const periodos = state.periodos;
   const totals = periodos.map((_, i) => series.reduce((s, g) => s + Math.max(0, g.values[i] || 0), 0));
   const maxV = Math.max(1, ...totals);
-  const pad = { t: 28, r: 16, b: 48, l: 64 };
+  // Extra bottom pad for period labels + color legend (same pattern as Funding).
+  const pad = { t: 28, r: 16, b: 92, l: 64 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
   const n = Math.max(1, periodos.length);
@@ -1054,7 +1055,7 @@ function drawStackedChart(canvasId, series, title) {
     const label = String(p).length >= 6
       ? `${String(p).slice(4, 6)}/${String(p).slice(2, 4)}`
       : p;
-    ctx.fillText(label, cx, cssH - 28);
+    ctx.fillText(label, cx, pad.t + plotH + 18);
     if (wantValueLabels(1) && totals[i] > 0) {
       ctx.fillStyle = '#334155';
       ctx.font = '600 10px Inter, "DM Sans", system-ui, sans-serif';
@@ -1066,6 +1067,22 @@ function drawStackedChart(canvasId, series, title) {
   ctx.font = '600 12px Inter, "DM Sans", system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(title, pad.l, 16);
+
+  drawChartLegend(
+    ctx,
+    series.map((g) => ({
+      label: g.short || g.label,
+      color: g.color || '#64748b',
+    })),
+    {
+      x: pad.l,
+      y: pad.t + plotH + 40,
+      maxW: plotW,
+      textColor: '#64748b',
+      font: '600 11px Inter, "DM Sans", system-ui, sans-serif',
+      rowH: 15,
+    },
+  );
 }
 
 function drawCompareChart(entities, c) {
@@ -1103,6 +1120,7 @@ function drawCompareChart(entities, c) {
     emptyMessage,
     height: 300,
     style: state.chartStyle || 'bars',
+    showLegend: true,
   });
 }
 
