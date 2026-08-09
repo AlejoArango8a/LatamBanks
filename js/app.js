@@ -21,7 +21,7 @@ import { renderBtgBanks } from './views/btgBanks.js?v=bmon92';
 import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon84';
 import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon84';
 import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon84';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon85';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon94';
 import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon84';
 import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon72';
 
