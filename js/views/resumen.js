@@ -609,10 +609,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run BR] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_BR, periodos, banks, signal),
-        fetchData('r1', R1_BR, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_BR, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_BR, periodos, banks, signal);
       if (signal.aborted) { setRunLoadingBar(false); return; }
 
       const firstBank = ST.selectedOrder[0] || banks[0];
@@ -689,13 +688,13 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run CO] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1, c1] = await Promise.all([
-        fetchData('b1', B1_CO, periodos, banks, signal),
-        fetchData('r1', R1_CO, periodos, banks, signal),
-        C1_CUENTAS_CO.length
-          ? fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
-          : Promise.resolve([]),
-      ]);
+      const b1 = await fetchData('b1', B1_CO, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const r1 = await fetchData('r1', R1_CO, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const c1 = C1_CUENTAS_CO.length
+        ? await fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
+        : [];
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -783,10 +782,10 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run UY] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_UY, periodos, banks, signal),
-        fetchData('r1', R1_UY, periodos, banks, signal),
-      ]);
+      // Sequential: avoids abort/timeout races and pool contention on first country load.
+      const b1 = await fetchData('b1', B1_UY, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const r1 = await fetchData('r1', R1_UY, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -875,10 +874,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run PE] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_PE, periodos, banks, signal),
-        fetchData('r1', R1_PE, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_PE, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_PE, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -967,10 +965,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run US] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_US, periodos, banks, signal),
-        fetchData('r1', R1_US, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_US, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_US, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -1045,10 +1042,9 @@ export async function run() {
       runAbortController = new AbortController();
       const signal = runAbortController.signal;
 
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_AM, periodos, banks, signal),
-        fetchData('r1', R1_AM, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_AM, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_AM, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -1136,11 +1132,11 @@ export async function run() {
     runAbortController = new AbortController();
     const signal = runAbortController.signal;
 
-    const [b1, r1, c1] = await Promise.all([
-      fetchData('b1', B1_CUENTAS, periodos, banks, signal),
-      fetchData('r1', R1_CUENTAS, periodos, banks, signal),
-      fetchData('c1', C1_CUENTAS, periodos, banks, signal),
-    ]);
+    const b1 = await fetchData('b1', B1_CUENTAS, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const r1 = await fetchData('r1', R1_CUENTAS, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const c1 = await fetchData('c1', C1_CUENTAS, periodos, banks, signal);
     if (signal.aborted) {
       setRunLoadingBar(false);
       return;

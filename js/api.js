@@ -8,7 +8,7 @@ import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.
 /** Client budget must stay under Vercel `maxDuration` (30s in vercel.json). */
 export const DATOS_TIMEOUT_MS = 28000;
 /** Split wide period ranges so each SQL stays under the serverless budget. */
-const DATOS_PERIOD_CHUNK = 36;
+const DATOS_PERIOD_CHUNK = 24;
 /** Very wide cuenta lists (e.g. unoptimized matrix) also get period chunking. */
 const DATOS_CUENTA_CHUNK_TRIGGER = 250;
 
@@ -27,6 +27,22 @@ function sleep(ms, signal) {
       signal.addEventListener('abort', onAbort, { once: true });
     }
   });
+}
+
+/** Structured API failure — UI maps `.kind` to a clear Spanish popup. */
+export class DatosApiError extends Error {
+  /**
+   * @param {'blocked'|'timeout'|'gateway'|'cors'|'http'|'network'} kind
+   * @param {string} message
+   * @param {{ status?: number|null, raw?: string }} [meta]
+   */
+  constructor(kind, message, meta = {}) {
+    super(message);
+    this.name = 'DatosApiError';
+    this.kind = kind;
+    this.status = meta.status ?? null;
+    this.raw = meta.raw ?? message;
+  }
 }
 
 function datosHttpError(status, apiError) {
@@ -58,43 +74,52 @@ function datosHttpError(status, apiError) {
   );
 }
 
-/** Structured API failure — UI maps `.kind` to a clear Spanish popup. */
-export class DatosApiError extends Error {
-  /**
-   * @param {'blocked'|'timeout'|'gateway'|'cors'|'http'|'network'} kind
-   * @param {string} message
-   * @param {{ status?: number|null, raw?: string }} [meta]
-   */
-  constructor(kind, message, meta = {}) {
-    super(message);
-    this.name = 'DatosApiError';
-    this.kind = kind;
-    this.status = meta.status ?? null;
-    this.raw = meta.raw ?? message;
-  }
-}
-
+/**
+ * fetch with a client timeout. If `externalSignal` aborts, rejects with AbortError
+ * (cancelled). If only the timer fires, rejects with DatosApiError kind=timeout.
+ * CRITICAL: cancelled runs must NOT be reported as "timed out after 28s".
+ */
 export function fetchWithTimeout(url, options = {}, ms, externalSignal) {
   const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort(), ms);
+  let timedOut = false;
+  const id = setTimeout(() => {
+    timedOut = true;
+    ctrl.abort();
+  }, ms);
 
   const cleanup = () => clearTimeout(id);
+
+  const onParentAbort = () => ctrl.abort();
 
   if (externalSignal) {
     if (externalSignal.aborted) {
       cleanup();
       return Promise.reject(new DOMException('Aborted', 'AbortError'));
     }
-    const onParentAbort = () => ctrl.abort();
     externalSignal.addEventListener('abort', onParentAbort);
-    return fetch(url, { ...options, signal: ctrl.signal })
-      .finally(() => {
-        cleanup();
-        externalSignal.removeEventListener('abort', onParentAbort);
-      });
   }
 
-  return fetch(url, { ...options, signal: ctrl.signal }).finally(cleanup);
+  return fetch(url, { ...options, signal: ctrl.signal })
+    .catch((e) => {
+      if (e?.name === 'AbortError') {
+        // Caller cancelled (bank/country change, newer run) — not a timeout.
+        if (externalSignal?.aborted && !timedOut) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+        throw new DatosApiError(
+          'timeout',
+          `Data request timed out after ${Math.round(ms / 1000)}s — try a shorter period range or fewer banks.`,
+          { status: null, raw: e.message },
+        );
+      }
+      throw e;
+    })
+    .finally(() => {
+      cleanup();
+      if (externalSignal) {
+        externalSignal.removeEventListener('abort', onParentAbort);
+      }
+    });
 }
 
 export async function apiDatos(params, signal) {
@@ -122,13 +147,9 @@ export async function apiDatos(params, signal) {
       r = await doFetch();
     }
   } catch (e) {
-    if (e?.name === 'AbortError') {
-      throw new DatosApiError(
-        'timeout',
-        `Data request timed out after ${Math.round(DATOS_TIMEOUT_MS / 1000)}s — try a shorter period range or fewer banks.`,
-        { status: null, raw: e.message },
-      );
-    }
+    // Propagate cancellation so run() can ignore it silently.
+    if (e?.name === 'AbortError') throw e;
+    if (e instanceof DatosApiError) throw e;
     throw e;
   }
 
