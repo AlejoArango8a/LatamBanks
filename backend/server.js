@@ -1317,26 +1317,52 @@ app.get('/api/diagnostics/account-coverage', async (req, res) => {
 // GET /api/chile/macros — latest UF / USD / IPC / TPM / UTM / TMC
 // Stored by chile_macros_loader.py as CL_MACRO_* (ins_cod=999, tipo=q1).
 // ============================================================
+const CL_MACRO_ACCOUNTS = [
+  'CL_MACRO_UF', 'CL_MACRO_USD', 'CL_MACRO_UTM',
+  'CL_MACRO_IPC', 'CL_MACRO_TPM', 'CL_MACRO_TMC',
+];
+
+function previousMonthPeriod(periodo) {
+  const y = Number(String(periodo || '').slice(0, 4));
+  const m = Number(String(periodo || '').slice(4, 6));
+  if (!y || !m) return null;
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  return `${py}${String(pm).padStart(2, '0')}`;
+}
+
+/**
+ * Macro values for one period. `periodo` is the second PK column, so pinning it
+ * makes this a point lookup (4 rows, 243 B). Leaving it open — as this endpoint
+ * used to — scans the whole CL partition (2.9M rows, 206 MiB) to return six
+ * numbers, and the dashboard called it on every page load.
+ */
+async function chileMacroRows(period) {
+  return query(
+    `SELECT periodo, cuenta, monto_total::bigint AS monto_total
+     FROM datos_financieros
+     WHERE country = 'CL' AND periodo = $1 AND tipo = 'q1' AND ins_cod = 999
+       AND cuenta = ANY($2::text[])`,
+    [period, CL_MACRO_ACCOUNTS],
+  );
+}
+
 app.get('/api/chile/macros', async (req, res) => {
   try {
-    const accounts = [
-      'CL_MACRO_UF', 'CL_MACRO_USD', 'CL_MACRO_UTM',
-      'CL_MACRO_IPC', 'CL_MACRO_TPM', 'CL_MACRO_TMC',
-    ];
-    const rows = await query(
-      `SELECT periodo, cuenta, monto_total::bigint AS monto_total
-       FROM datos_financieros
-       WHERE country = 'CL' AND ins_cod = 999 AND cuenta = ANY($1::text[])
-       ORDER BY periodo DESC, cuenta ASC`,
-      [accounts],
-    );
+    // ins_cod 999 / tipo q1 also carries the Basel III ratios, so the newest
+    // period there does not always include macros — walk back a few months.
+    let probe = await latestPeriodForTipo('CL', 'q1', 999);
+    let rows = [];
+    for (let i = 0; probe && i < 6 && !rows.length; i += 1) {
+      rows = await chileMacroRows(probe);
+      if (!rows.length) probe = previousMonthPeriod(probe);
+    }
     if (!rows.length) {
       return res.json({ ok: true, period: null, macros: {}, source: 'empty' });
     }
     const period = rows[0].periodo;
     const macros = {};
     for (const r of rows) {
-      if (r.periodo !== period) continue;
       const v = Number(r.monto_total);
       if (r.cuenta === 'CL_MACRO_UF' || r.cuenta === 'CL_MACRO_USD') {
         macros[r.cuenta.replace('CL_MACRO_', '').toLowerCase()] = v / 100;
