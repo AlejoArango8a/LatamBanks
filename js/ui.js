@@ -6,7 +6,7 @@ import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=b
 import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
 import { setStatus, showErr } from './utils.js?v=bmon72';
-import { sumRows } from './api.js?v=bmon90';
+import { sumRows } from './api.js?v=bmon91';
 import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
 import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon81';
 import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
@@ -30,7 +30,8 @@ export function fillPeriodSelectors() {
     hasta.innerHTML  += `<option value="${p}">${periodLabel(p)}</option>`;
   });
   const n = ST.periodos.length;
-  desde.selectedIndex = Math.max(0, n - 18);
+  // Keep in sync with init / country switch (last ~12 months → 13 month-ends).
+  desde.selectedIndex = Math.max(0, n - 13);
   hasta.selectedIndex  = n - 1;
   ST.desde = ST.periodos[desde.selectedIndex];
   ST.hasta  = ST.periodos[hasta.selectedIndex];
@@ -94,7 +95,11 @@ export function fillBankList() {
       : iso === 'US' ? 35154
       : 59;
     const def = codes.includes(prefer) ? prefer : codes[0];
-    toggleBank(def, true); fillBankList();
+    // silent: caller (init / country switch) owns the first run().
+    // A non-silent auto-select was scheduling a second run() ~300ms later that
+    // aborted the in-flight /api/datos and surfaced a false load error.
+    toggleBank(def, true, { silent: true });
+    fillBankList();
     return;
   }
   syncCompareToggleUI();

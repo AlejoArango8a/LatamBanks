@@ -45,19 +45,20 @@ export class DatosApiError extends Error {
   }
 }
 
-function datosHttpError(status, apiError) {
+function datosHttpError(status, apiError, ctx = '') {
+  const where = ctx ? ` ${ctx}` : '';
   if (status === 401 || status === 403) {
     return new DatosApiError(
       'blocked',
-      `Access blocked (${status}) — host rejected the request (VPN, proxy, bot filter, or protected preview).`,
-      { status, raw: apiError || `HTTP ${status}` },
+      `Access blocked (${status})${where} — host rejected the request (VPN, proxy, bot filter, or protected preview).`,
+      { status, raw: apiError || `HTTP ${status}${where}` },
     );
   }
   if (status === 504 || status === 502) {
     return new DatosApiError(
       'gateway',
-      `API gateway timeout (${status}) — narrow From/To or reduce banks.`,
-      { status, raw: apiError || `HTTP ${status}` },
+      `API gateway timeout (${status})${where} — narrow From/To or reduce banks.`,
+      { status, raw: apiError || `HTTP ${status}${where}` },
     );
   }
   if (apiError && /not allowed by cors/i.test(String(apiError))) {
@@ -69,8 +70,8 @@ function datosHttpError(status, apiError) {
   }
   return new DatosApiError(
     'http',
-    apiError || `API /datos error ${status}`,
-    { status, raw: apiError || `HTTP ${status}` },
+    apiError || `API /datos error ${status}${where}`,
+    { status, raw: apiError || `HTTP ${status}${where}` },
   );
 }
 
@@ -126,6 +127,8 @@ export async function apiDatos(params, signal) {
   const { fetchBanks, requestedBanks } = expandGrupoAvalFetchBanks(params.bancos);
   const payload = { ...params, country: datasetIsoCountry() };
   if (fetchBanks != null) payload.bancos = fetchBanks;
+  const tipoLabel = params.tipo || (Array.isArray(params.tipos) ? params.tipos.join('+') : '?');
+  const ctx = `[/api/datos tipo=${tipoLabel} country=${payload.country}]`;
 
   const doFetch = () => fetchWithTimeout(
     `${API_BASE}/api/datos`,
@@ -149,7 +152,10 @@ export async function apiDatos(params, signal) {
   } catch (e) {
     // Propagate cancellation so run() can ignore it silently.
     if (e?.name === 'AbortError') throw e;
-    if (e instanceof DatosApiError) throw e;
+    if (e instanceof DatosApiError) {
+      if (!e.raw || e.raw === e.message) e.raw = `${e.message} ${ctx}`;
+      throw e;
+    }
     throw e;
   }
 
@@ -162,7 +168,7 @@ export async function apiDatos(params, signal) {
   if (r.ok && j?.ok && Array.isArray(j.rows)) {
     return mergeGrupoAvalApiRows(j.rows, requestedBanks != null ? requestedBanks : params.bancos);
   }
-  throw datosHttpError(r.status, j?.error);
+  throw datosHttpError(r.status, j?.error, ctx);
 }
 
 function dataCacheKey(tipo, periodos, bancos, cuentas) {

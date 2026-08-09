@@ -111,16 +111,58 @@ export function classifyDataError(err) {
     };
   }
 
+  if (
+    kind === 'network'
+    || /Failed to fetch|NetworkError|Load failed|network request failed/i.test(msg)
+  ) {
+    return {
+      kind: 'network',
+      title: 'Sin conexión con el servidor',
+      cause: 'El navegador no pudo completar la petición (red, DNS o bloqueo). No es que falten datos del banco en la base.',
+      steps: [
+        'Confirmá que estás en https://www.latambanks.co (con www).',
+        'Revisá Wi‑Fi / datos móviles y reintentá.',
+        'Si usás VPN o proxy corporativo, probá sin él.',
+      ],
+      technical,
+      canRetry: true,
+    };
+  }
+
+  // Client-side bugs must not look like "the server failed".
+  if (
+    err?.name === 'TypeError'
+    || err?.name === 'ReferenceError'
+    || err?.name === 'RangeError'
+    || /Cannot read propert|is not a function|is not defined/i.test(msg)
+  ) {
+    return {
+      kind: 'client',
+      title: 'Error al procesar los datos en pantalla',
+      cause:
+        'La petición pudo haber llegado, pero falló el render en el navegador. '
+        + 'Hard-refresh suele bastar; si se repite, compartí el detalle técnico.',
+      steps: [
+        'Hard-refresh (Ctrl+Shift+R / Cmd+Shift+R).',
+        'Confirmá que estás en https://www.latambanks.co',
+        'Compartí el detalle técnico con el equipo.',
+      ],
+      technical,
+      canRetry: true,
+    };
+  }
+
+  const statusBit = status != null ? ` (HTTP ${status})` : '';
   return {
     kind: 'http',
     title: 'No se pudieron cargar los datos',
-    cause: 'Falló la petición al servidor. Revisá la conexión e intentá de nuevo.',
+    cause: `Falló la petición al servidor${statusBit}. Revisá el detalle técnico para ver qué endpoint falló (bootstrap o /api/datos b1/r1/c1).`,
     steps: [
       'Hard-refresh (Ctrl+Shift+R / Cmd+Shift+R).',
       'Confirmá que estás en https://www.latambanks.co',
-      'Si se repite, abrí la consola (F12) y compartí el detalle técnico de abajo.',
+      'Si se repite, compartí el detalle técnico de abajo.',
     ],
-    technical,
+    technical: technical || msg || '(sin detalle)',
     canRetry: true,
   };
 }
@@ -148,8 +190,8 @@ function ensureErrorDialog() {
         <p id="appErrorCause" class="app-error-cause"></p>
         <div class="app-error-label">Cómo resolverlo</div>
         <ol id="appErrorSteps" class="app-error-steps"></ol>
-        <details class="app-error-tech">
-          <summary>Detalle técnico</summary>
+        <details class="app-error-tech" open>
+          <summary>Detalle técnico (qué petición falló)</summary>
           <pre id="appErrorTech"></pre>
         </details>
       </div>
