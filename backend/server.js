@@ -320,6 +320,28 @@ const BR_AMERICAS_EXCLUDE = new Set([
   1000081847, 1000081665, 1000086581, 1000084686, 1000081184, 1000086158, 1000084710,
 ]);
 
+/**
+ * Latest period that actually carries rows of `tipo` for a country.
+ *
+ * Anchoring on `tipo` matters twice. The PK is
+ * (country, periodo, tipo, ins_cod, cuenta), so an unfiltered `DISTINCT periodo`
+ * scans the country's whole partition (19.8M rows for BR) just to read one value.
+ * And a plain MAX over the partition returns satellite periods loaded by the
+ * macro/institutional-funding loaders (e.g. CL 202608 holds only tipo='q1'
+ * macros), which have no bank balances and yield an empty snapshot.
+ */
+async function latestPeriodForTipo(iso, tipo, insCod = null) {
+  const params = [iso, tipo];
+  let sql = `SELECT MAX(periodo) AS periodo FROM datos_financieros
+             WHERE country = $1 AND tipo = $2`;
+  if (insCod != null) {
+    params.push(insCod);
+    sql += ` AND ins_cod = $${params.length}`;
+  }
+  const rows = await query(sql, params);
+  return rows[0]?.periodo || null;
+}
+
 /** Canonical balance metrics available for every live LatamBanks country. */
 const AMERICAS_SPECS = {
   CL: {
@@ -437,11 +459,8 @@ async function americasSnapshotForCountry(iso, topN) {
   const spec = AMERICAS_SPECS[iso];
   if (!meta || !spec || meta.status !== 'live') return null;
 
-  const periodRows = await query(
-    `SELECT DISTINCT periodo FROM datos_financieros WHERE country = $1 ORDER BY periodo ASC`,
-    [iso],
-  );
-  if (!periodRows.length) {
+  const period = await latestPeriodForTipo(iso, spec.equityTipo);
+  if (!period) {
     return {
       iso,
       key: meta.key,
@@ -452,7 +471,6 @@ async function americasSnapshotForCountry(iso, topN) {
       error: 'No periods loaded',
     };
   }
-  const period = periodRows[periodRows.length - 1].periodo;
 
   let equityRows = await query(
     `SELECT ins_cod::int AS ins_cod, SUM(monto_total::bigint) AS equity
@@ -709,12 +727,8 @@ async function btgBankSnapshot(entry) {
     };
   }
 
-  // MAX(periodo) avoids scanning DISTINCT over full country history.
-  const periodRows = await query(
-    `SELECT MAX(periodo) AS periodo FROM datos_financieros WHERE country = $1`,
-    [entry.iso],
-  );
-  const period = periodRows[0]?.periodo || null;
+  const balanceTipo = spec.metrics.equity?.tipo || spec.metrics.assets?.tipo;
+  const period = await latestPeriodForTipo(entry.iso, balanceTipo, entry.code);
   if (!period) {
     return {
       iso: entry.iso,
@@ -981,18 +995,46 @@ async function sumMetricForPeriod(iso, codigo, period, metricSpec) {
   return Number(rows[0]?.monto) || 0;
 }
 
+/**
+ * Year-end periods a country has loaded, newest first, capped at `upTo`.
+ * Read from carga_log (one row per loaded period) instead of scanning
+ * datos_financieros. Callers probe each candidate with a PK point lookup and
+ * skip the ones where the bank has no figures, so a country-level list is safe.
+ */
+async function loadedYearEndPeriods(iso, upTo) {
+  let rows = [];
+  try {
+    rows = await query(
+      `SELECT periodo FROM carga_log
+       WHERE country = $1 AND estado IN ('ok', 'alerta_esquema')
+       ORDER BY periodo DESC`,
+      [iso],
+    );
+  } catch (e) {
+    console.warn('[loadedYearEndPeriods] carga_log read failed:', e.message);
+  }
+  const fromLog = rows
+    .map((r) => r.periodo)
+    .filter((p) => isYearEndPeriod(p) && (!upTo || p <= upTo));
+  if (fromLog.length) return fromLog;
+
+  // carga_log empty for this country — walk December back from the latest period.
+  const startYear = parseInt(yearFromPeriod(upTo), 10);
+  if (!Number.isFinite(startYear)) return [];
+  const out = [];
+  for (let y = startYear; y > startYear - 5; y -= 1) {
+    const p = `${y}12`;
+    if (!upTo || p <= upTo) out.push(p);
+  }
+  return out;
+}
+
 async function liveBankMetrics(iso, codigo) {
   const spec = AMERICAS_SPECS[iso];
   if (!spec) return null;
 
-  const periodRows = await query(
-    `SELECT DISTINCT periodo FROM datos_financieros
-     WHERE country = $1 AND ins_cod = $2
-     ORDER BY periodo ASC`,
-    [iso, codigo],
-  );
-  const periods = periodRows.map((r) => r.periodo);
-  if (!periods.length) {
+  const latest = await latestPeriodForTipo(iso, spec.equityTipo, codigo);
+  if (!latest) {
     return {
       period: null,
       assets: null,
@@ -1004,12 +1046,11 @@ async function liveBankMetrics(iso, codigo) {
     };
   }
 
-  const latest = periods[periods.length - 1];
   const assets = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.assets);
   const equity = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.equity);
   const netIncome = await sumMetricForPeriod(iso, codigo, latest, spec.metrics.net_income);
 
-  const yearEnds = periods.filter(isYearEndPeriod).reverse(); // newest first
+  const yearEnds = await loadedYearEndPeriods(iso, latest); // newest first
   const roeYears = [];
   for (const ye of yearEnds) {
     if (roeYears.length >= 3) break;
