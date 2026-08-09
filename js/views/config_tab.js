@@ -5,7 +5,7 @@ import { ST, datasetIsoCountry } from '../state.js?v=bmon72';
 import { API_BASE } from '../config.js?v=bmon72';
 import { MESES } from '../config.js?v=bmon72';
 import { bankName, periodLabel } from '../format.js?v=bmon72';
-import { fetchWithTimeout } from '../api.js?v=bmon84';
+import { fetchWithTimeout } from '../api.js?v=bmon88';
 
 export function populateConfig() {
   const statusEl = document.getElementById('configStatus');

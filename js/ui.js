@@ -6,7 +6,7 @@ import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=b
 import { API_BASE, BTG_LOGO_DARK_SRC, bankColor } from './config.js?v=bmon72';
 import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon72';
 import { setStatus, showErr } from './utils.js?v=bmon72';
-import { sumRows } from './api.js?v=bmon84';
+import { sumRows } from './api.js?v=bmon90';
 import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon72';
 import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon81';
 import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon81';
@@ -134,7 +134,8 @@ function scheduleSelectionRefresh() {
   }, 300);
 }
 
-export function toggleBank(c, on) {
+/** @param {boolean} on @param {{ silent?: boolean }} [opts] silent = skip auto-run (init / country switch). */
+export function toggleBank(c, on, opts = {}) {
   // Individual mode (compare OFF): one bank at a time — selecting replaces the rest.
   if (!ST.compareMode) {
     if (on) {
@@ -153,7 +154,7 @@ export function toggleBank(c, on) {
     }
     document.getElementById('bankLimitMsg').style.display = 'none';
     fillBankList();
-    scheduleSelectionRefresh();
+    if (!opts.silent) scheduleSelectionRefresh();
     return;
   }
 
@@ -179,7 +180,7 @@ export function toggleBank(c, on) {
     const cb = el.querySelector('input');
     if (cb) el.classList.toggle('on', cb.checked);
   });
-  scheduleSelectionRefresh();
+  if (!opts.silent) scheduleSelectionRefresh();
 }
 
 export function selAll(on) {

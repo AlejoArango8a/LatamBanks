@@ -12,10 +12,10 @@ import { MX_KPI, mxB1AccountsForRun, mxR1AccountsForRun, mxSum, mxSeries } from 
 import { PA_KPI, paB1AccountsForRun, paR1AccountsForRun, paSum, paSeries } from '../paCuentas.js?v=bmon72';
 import { bankColor, btgBlue, bankLogoUrl, LOGO_SIZES, bankBrandTextColor } from '../config.js?v=bmon72';
 import { bankName, fmtKPI, fmtKPIDecimal, fmtAxis, fmtChartPct, fmtP, fmtB, periodLabel, nplPctFromRaw, getTipo } from '../format.js?v=bmon72';
-import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon84';
+import { fetchData, apiDatos, sumRows, getSeriesForCuenta } from '../api.js?v=bmon89';
 import { drawLineChart, setupChartTooltip, sparseData } from '../charts.js?v=bmon72';
 import { showBalTab, renderResTable, renderCalidad, renderComparativo } from './balance.js?v=bmon72';
-import { setStatus, showErr } from '../utils.js?v=bmon72';
+import { setStatus, showErr, showDataErrorDialog } from '../utils.js?v=bmon89';
 import { resolveCustomKpiForRun } from './customKpiPicker.js?v=bmon72';
 
 function _setBannerLogo(iso, code) {
@@ -609,10 +609,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run BR] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_BR, periodos, banks, signal),
-        fetchData('r1', R1_BR, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_BR, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_BR, periodos, banks, signal);
       if (signal.aborted) { setRunLoadingBar(false); return; }
 
       const firstBank = ST.selectedOrder[0] || banks[0];
@@ -689,13 +688,13 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run CO] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1, c1] = await Promise.all([
-        fetchData('b1', B1_CO, periodos, banks, signal),
-        fetchData('r1', R1_CO, periodos, banks, signal),
-        C1_CUENTAS_CO.length
-          ? fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
-          : Promise.resolve([]),
-      ]);
+      const b1 = await fetchData('b1', B1_CO, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const r1 = await fetchData('r1', R1_CO, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const c1 = C1_CUENTAS_CO.length
+        ? await fetchData('c1', C1_CUENTAS_CO, periodos, banks, signal)
+        : [];
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -783,10 +782,10 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run UY] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_UY, periodos, banks, signal),
-        fetchData('r1', R1_UY, periodos, banks, signal),
-      ]);
+      // Sequential: avoids abort/timeout races and pool contention on first country load.
+      const b1 = await fetchData('b1', B1_UY, periodos, banks, signal);
+      if (signal.aborted) { setRunLoadingBar(false); return; }
+      const r1 = await fetchData('r1', R1_UY, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -875,10 +874,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run PE] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_PE, periodos, banks, signal),
-        fetchData('r1', R1_PE, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_PE, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_PE, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -967,10 +965,9 @@ export async function run() {
       const signal = runAbortController.signal;
 
       console.log('[run US] fetching — periodos:', periodos.length, 'banks:', banks);
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_US, periodos, banks, signal),
-        fetchData('r1', R1_US, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_US, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_US, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -1045,10 +1042,9 @@ export async function run() {
       runAbortController = new AbortController();
       const signal = runAbortController.signal;
 
-      const [b1, r1] = await Promise.all([
-        fetchData('b1', B1_AM, periodos, banks, signal),
-        fetchData('r1', R1_AM, periodos, banks, signal),
-      ]);
+      const b1 = await fetchData('b1', B1_AM, periodos, banks, signal);
+        if (signal.aborted) { setRunLoadingBar(false); return; }
+        const r1 = await fetchData('r1', R1_AM, periodos, banks, signal);
       if (signal.aborted) {
         setRunLoadingBar(false);
         return;
@@ -1136,11 +1132,11 @@ export async function run() {
     runAbortController = new AbortController();
     const signal = runAbortController.signal;
 
-    const [b1, r1, c1] = await Promise.all([
-      fetchData('b1', B1_CUENTAS, periodos, banks, signal),
-      fetchData('r1', R1_CUENTAS, periodos, banks, signal),
-      fetchData('c1', C1_CUENTAS, periodos, banks, signal),
-    ]);
+    const b1 = await fetchData('b1', B1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) { setRunLoadingBar(false); return; }
+    const r1 = await fetchData('r1', R1_CUENTAS, periodos, banks, signal);
+    if (signal.aborted) { setRunLoadingBar(false); return; }
+    const c1 = await fetchData('c1', C1_CUENTAS, periodos, banks, signal);
     if (signal.aborted) {
       setRunLoadingBar(false);
       return;
@@ -1235,7 +1231,7 @@ export async function run() {
     }
     setRunLoadingBar(false);
     setStatus('error', 'Error al consultar datos');
-    showErr('Error al cargar datos: ' + e.message + ' — Abre la consola del navegador (F12) para más detalles.');
+    showDataErrorDialog(e, { onRetry: () => { if (typeof window.run === 'function') window.run(); } });
     console.error('[run] Error:', e.name, e.message, e);
     document.getElementById('dashContent').style.display = 'flex';
   }

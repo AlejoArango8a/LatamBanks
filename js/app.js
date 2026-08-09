@@ -3,12 +3,12 @@
 // ============================================================
 import { API_BASE } from './config.js?v=bmon72';
 import { ST, datasetIsoCountry } from './state.js?v=bmon72';
-import { setStatus, showErr, setLsMsg } from './utils.js?v=bmon72';
-import { fetchWithTimeout } from './api.js?v=bmon84';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon90';
+import { fetchWithTimeout } from './api.js?v=bmon90';
 import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon72';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon84';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon90';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
@@ -37,7 +37,7 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon85';
+} from './ui.js?v=bmon90';
 
 // Export helpers
 import { exportTableById, exportChartTable } from './export.js?v=bmon72';
@@ -189,7 +189,7 @@ async function switchCountryDataset() {
           : isoSwitch === 'MX' ? 12
           : 1);
     }
-    toggleBank(defaultBank, true);
+    toggleBank(defaultBank, true, { silent: true });
     fillBankList();
     ST.desde = selDesde?.value ?? null;
     ST.hasta = selHasta?.value ?? null;
@@ -218,7 +218,7 @@ async function switchCountryDataset() {
     fillPeriodSelectors();
     fillBankList();
     setStatus('error', 'Country update');
-    showErr(e.message || String(e));
+    showDataErrorDialog(e, { onRetry: () => { if (typeof window.switchCountryDataset === 'function') window.switchCountryDataset(); } });
     console.error('[switchCountryDataset]', e);
   } finally {
     if (gen === _switchGen) {
@@ -282,7 +282,7 @@ async function init() {
             : isoInit === 'MX' ? 12
             : 1);
       }
-      toggleBank(def, true);
+      toggleBank(def, true, { silent: true });
     }
     fillBankList();
     syncResumenMoraChartButton();
@@ -300,11 +300,10 @@ async function init() {
   } catch (e) {
     clearTimeout(wakeTimer);
     setStatus('error', 'Connection error');
-    const msg = e.name === 'AbortError'
-      ? 'Timeout: the server took too long. Try again in a few seconds.'
-      : `Error: ${e.message}`;
     setLsMsg('Could not connect to the server.');
-    showErr(msg);
+    showDataErrorDialog(e.name === 'AbortError'
+      ? { kind: 'timeout', message: 'Timeout: the server took too long. Try again in a few seconds.', name: 'AbortError' }
+      : e, { onRetry: () => location.reload() });
     const retryBtn = document.getElementById('lsRetryBtn');
     if (retryBtn) retryBtn.style.display = 'block';
     console.error('[init] Error:', e.name, e.message, e);
