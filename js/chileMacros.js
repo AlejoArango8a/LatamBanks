@@ -1,8 +1,8 @@
 // ============================================================
 // Chile macros strip — UF / USD / IPC / TPM / UTM / TMC
 // ============================================================
-import { API_BASE } from './config.js?v=bmon94';
-import { ST } from './state.js?v=bmon94';
+import { API_BASE } from './config.js?v=bmon95';
+import { ST } from './state.js?v=bmon95';
 
 function fmtNum(n, digs = 2) {
   if (n == null || !Number.isFinite(Number(n))) return '—';

@@ -15,12 +15,12 @@ import {
   clIfSummaryAccounts,
   clIfMatrixAccountsForAgf,
   clIfLiabilityAccounts,
-} from '../clInstFundingCuentas.js?v=bmon94';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon94';
-import { fetchData } from '../api.js?v=bmon94';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon94';
-import { bankColor } from '../config.js?v=bmon94';
-import { drawLineChart, sparseData, setupChartTooltip } from '../charts.js?v=bmon94';
+} from '../clInstFundingCuentas.js?v=bmon95';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon95';
+import { fetchData } from '../api.js?v=bmon95';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon95';
+import { bankColor } from '../config.js?v=bmon95';
+import { drawLineChart, sparseData, setupChartTooltip } from '../charts.js?v=bmon95';
 
 const IF_COUNTRIES = new Set(['CL']);
 const SISTEMA = 999;
@@ -105,7 +105,7 @@ function selectedBanks() {
 
 async function loadAgfRegistry() {
   if (agfRegistryPromise) return agfRegistryPromise;
-  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon94`)
+  agfRegistryPromise = fetch(`data/cl_agf_registry.json?v=bmon95`)
     .then((r) => (r.ok ? r.json() : { agfs: [] }))
     .then((j) => (Array.isArray(j.agfs) ? j.agfs : []))
     .catch(() => []);

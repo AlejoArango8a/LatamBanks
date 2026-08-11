@@ -10,17 +10,17 @@
 // data/bank_ratings.json — el mismo circuito curado y revisable en git que ya
 // usa el resto de los datos de referencia de la plataforma.
 // ============================================================
-import { datasetIsoCountry } from '../state.js?v=bmon94';
-import { API_BASE } from '../config.js?v=bmon94';
-import { liveCountries } from '../paises.js?v=bmon94';
-import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon94';
-import { fetchWithTimeout } from '../api.js?v=bmon94';
+import { datasetIsoCountry } from '../state.js?v=bmon95';
+import { API_BASE } from '../config.js?v=bmon95';
+import { liveCountries } from '../paises.js?v=bmon95';
+import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon95';
+import { fetchWithTimeout } from '../api.js?v=bmon95';
 import {
   agenciesFor, SCOPE_LABEL, RATING_SCALES, OUTLOOKS, RATING_STATUS,
   loadPublishedRatings, mergedBanks, setDraftCell, setDraftBankNote,
   clearDraft, replaceDraft, draftCount, isDraftCell, exportPayload,
   cellStatus, ratingTone, isStale, coverage,
-} from '../ratings.js?v=bmon94';
+} from '../ratings.js?v=bmon95';
 
 const FLAG = {
   CL: '🇨🇱', CO: '🇨🇴', BR: '🇧🇷', PE: '🇵🇪', UY: '🇺🇾',
@@ -41,13 +41,22 @@ const FILTERS = [
   { key: 'pending',    label: 'Sin revisar' },
 ];
 
+/**
+ * Brasil publica más de 1.300 entidades y Estados Unidos 300: pintarlas todas
+ * de entrada vuelve la tabla inmanejable, así que se muestran las mayores por
+ * patrimonio y el resto se alcanza buscando o con «ver todos».
+ */
+const VISIBLE_CAP = 50;
+
 const state = {
   iso: null,
   seed: null,
   loading: false,
   error: null,
   filter: 'all',
-  banksByIso: {},   // ISO → [{ code, name }]
+  search: '',
+  showAll: false,
+  banksByIso: {},   // ISO → [{ code, name, equity }]
   editing: null,
 };
 
@@ -60,40 +69,43 @@ function countryList() {
   return liveCountries().map((p) => ({ iso: p.iso, key: p.key, name: p.name }));
 }
 
-/** Partículas que no se capitalizan dentro de una razón social. */
-const NAME_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'do', 'da', 'dos', 'das', 'en', 'el']);
-
-/** Siglas que deben quedar en mayúscula al normalizar una razón social. */
-const NAME_ACRONYMS = new Set([
-  'bbva', 'bcp', 'bci', 'bice', 'btg', 'hsbc', 'jp', 'jpm', 'icbc', 'bnp', 'ing',
-  'ubs', 'rbc', 'bmo', 'td', 'brou', 'bhu', 'bna', 'bndes', 'abn', 'dbs', 'mufg',
-  'smbc', 'gnb', 'av', 'bac', 'bhd', 'bod', 'nv', 'ag', 'plc', 'usa', 'eeuu',
-]);
-
-/**
- * Convierte una razón social en mayúsculas a algo legible. Solo se usa para
- * países distintos al activo del dashboard, donde `bankName()` no aplica.
- */
-function cleanName(raw) {
-  const s = String(raw || '').trim();
-  if (!s || s !== s.toUpperCase()) return s;
-  return s.toLowerCase()
-    .split(/\s+/)
-    .map((tok, i) => {
-      if (i > 0 && NAME_PARTICLES.has(tok)) return tok;
-      const bare = tok.replace(/[.,]/g, '');
-      if (NAME_ACRONYMS.has(bare)) return tok.toUpperCase();
-      if (/^s\.?a\.?[a-z]*\.?$/.test(tok)) return tok.toUpperCase();
-      return tok.charAt(0).toUpperCase() + tok.slice(1);
-    })
-    .join(' ');
+function countryKeyForIso(iso) {
+  return (countryList().find((c) => c.iso === iso) || {}).key || null;
 }
 
 /**
- * Instituciones del país, ordenadas por patrimonio. `bankName()` normaliza
- * según el país activo del dashboard, así que solo se usa cuando coincide:
- * un mismo código es otro banco en otra jurisdicción.
+ * Nombres con la misma normalización que el resto de la plataforma.
+ *
+ * `bankName()` decide según `ST.country` y `ST.bancos`: de ahí sale que Brasil
+ * pierda el sufijo «- PRUDENCIAL», que Estados Unidos pierda «NATIONAL
+ * ASSOCIATION» y que las siglas queden bien escritas. Para un país distinto al
+ * activo se intercambian ambos durante el mapeo y se restauran al salir. Es
+ * seguro porque el bloque es síncrono: nada más puede leer el estado mientras
+ * dura, y un mismo código es otro banco en otra jurisdicción, así que llamar a
+ * `bankName()` con el país equivocado daría el nombre equivocado.
  */
+function resolveNames(iso, instituciones) {
+  const key = countryKeyForIso(iso);
+  const prevCountry = ST.country;
+  const prevBancos = ST.bancos;
+  try {
+    if (key) {
+      ST.country = key;
+      ST.bancos = Object.fromEntries(
+        instituciones.map((r) => [Number(r.codigo), r.razon_social]),
+      );
+    }
+    return new Map(instituciones.map((r) => {
+      const code = Number(r.codigo);
+      return [code, bankName(code) || `Bank ${code}`];
+    }));
+  } finally {
+    ST.country = prevCountry;
+    ST.bancos = prevBancos;
+  }
+}
+
+/** Instituciones del país, ordenadas por patrimonio de mayor a menor. */
 async function loadBanks(iso) {
   if (state.banksByIso[iso]) return state.banksByIso[iso];
 
@@ -108,17 +120,10 @@ async function loadBanks(iso) {
     equity[c] = (equity[c] || 0) + Number(row.monto_total || 0);
   });
 
-  const isActive = iso === datasetIsoCountry();
-  const banks = (j.instituciones || [])
-    .map((row) => {
-      const code = Number(row.codigo);
-      return {
-        code,
-        name: isActive ? bankName(code) : (cleanName(row.razon_social) || `Bank ${code}`),
-        equity: equity[code] || 0,
-      };
-    })
-    .filter((b) => b.code !== 999)
+  const names = resolveNames(iso, j.instituciones || []);
+  const banks = [...names.keys()]
+    .filter((code) => code !== 999)
+    .map((code) => ({ code, name: names.get(code), equity: equity[code] || 0 }))
     .sort((a, b) => (b.equity - a.equity) || (a.code - b.code));
 
   state.banksByIso[iso] = banks;
@@ -161,17 +166,28 @@ function render() {
 
   const iso = state.iso;
   const drafts = draftCount(iso);
+  // Repintar reemplaza el buscador entero, así que hay que devolverle el foco
+  // para poder seguir escribiendo.
+  const searchHadFocus = document.activeElement?.id === 'raSearch';
 
   root.innerHTML = `
     ${heroHtml(drafts)}
     ${countryBarHtml()}
     ${bodyHtml()}
     <ul class="fa-notes">
-      <li><strong>Cobertura mínima</strong>: cada banco debería tener al menos una calificación local y una internacional.</li>
+      <li><strong>Cobertura mínima</strong>: cada banco debería tener al menos una calificación local y una internacional. El porcentaje se calcula sobre todas las instituciones del país, no solo sobre las visibles.</li>
       <li><strong>Verificada</strong> significa contrastada contra la publicación de la propia calificadora; <strong>sin verificar</strong> es un dato heredado que todavía no se confirma. <strong>No calificado</strong> deja constancia de que la calificadora no cubre a ese banco, que es distinto de no haberlo revisado.</li>
       <li>Las ediciones quedan en un borrador de este navegador. Se publican exportando el JSON a <span style="font-family:var(--mono);">data/bank_ratings.json</span>, de modo que cada cambio quede revisable en el repositorio.</li>
     </ul>
   `;
+
+  if (searchHadFocus) {
+    const el = document.getElementById('raSearch');
+    if (el) {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }
 }
 
 function heroHtml(drafts) {
@@ -233,15 +249,30 @@ function bodyHtml() {
       </div></div></div>`;
   }
 
+  const q = state.search.trim().toLowerCase();
+  const matched = q
+    ? banks.filter((b) => b.name.toLowerCase().includes(q) || String(b.code).includes(q))
+    : banks;
+  const capped = !state.showAll && !q && matched.length > VISIBLE_CAP;
+  const shown = capped ? matched.slice(0, VISIBLE_CAP) : matched;
+
+  const scope = q
+    ? `${matched.length} de ${banks.length} bancos coinciden con «${escapeHtml(state.search.trim())}»`
+    : capped
+      ? `Mostrando los ${VISIBLE_CAP} mayores por patrimonio de ${banks.length} bancos`
+      : `${banks.length} bancos ordenados por patrimonio`;
+
   return `
     ${kpisHtml(cov)}
     <div class="panel">
       <div class="panel-head">
         <div>
           <div class="panel-title">${escapeHtml(paisNameFor(iso))} · ${agencies.length} calificadoras</div>
-          <div class="panel-sub">${banks.length} bancos ordenados por patrimonio · clic en una celda para editarla</div>
+          <div class="panel-sub">${scope} · clic en una celda para editarla</div>
         </div>
         <div class="ra-actions">
+          <input id="raSearch" class="ra-search" type="search" placeholder="Buscar banco…"
+            value="${escapeAttr(state.search)}" oninput="ratingsAdmin.setSearch(this.value)">
           <div class="ra-filter-group" role="group" aria-label="Filtrar bancos">
             ${FILTERS.map((f) => `<button type="button" class="ra-filter ${state.filter === f.key ? 'active' : ''}"
               onclick="ratingsAdmin.setFilter('${f.key}')">${f.label}</button>`).join('')}
@@ -251,7 +282,10 @@ function bodyHtml() {
           ${draftCount(iso) ? `<button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.discard()">Descartar borrador</button>` : ''}
         </div>
       </div>
-      <div class="panel-body ra-table-wrap">${tableHtml(iso, agencies, banks, data)}</div>
+      <div class="panel-body ra-table-wrap">${tableHtml(iso, agencies, shown, data)}</div>
+      ${capped ? `<div class="ra-more">
+        <button type="button" class="rcbtn" onclick="ratingsAdmin.showAll()">Ver los ${banks.length} bancos</button>
+      </div>` : ''}
     </div>`;
 }
 
@@ -613,9 +647,13 @@ export const ratingsAdmin = {
     if (iso === state.iso) return;
     state.iso = iso;
     state.filter = 'all';
+    state.search = '';
+    state.showAll = false;
     if (state.banksByIso[iso]) render(); else ensureLoaded(iso);
   },
   setFilter(key) { state.filter = key; render(); },
+  setSearch(value) { state.search = value; render(); },
+  showAll() { state.showAll = true; render(); },
   reload() { state.banksByIso = {}; ensureLoaded(state.iso); },
   openCell,
   pickStatus,
