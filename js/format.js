@@ -1,9 +1,9 @@
 // ============================================================
 // FORMAT — pure formatters and name/type resolvers
 // ============================================================
-import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon99';
-import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon99';
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon99';
+import { BANK_NAMES, MESES, CUENTAS_PRINCIPALES } from './config.js?v=bmon100';
+import { CO_CUENTAS_PRINCIPALES } from './coCuentas.js?v=bmon100';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon100';
 
 // ---- KPI monetary formatters ----
 function _fmtKPIBase(clpRaw, decimals) {

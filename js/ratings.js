@@ -14,7 +14,7 @@
 //   not_rated  → confirmado que la calificadora no cubre al banco
 //   (ausente)  → pendiente de revisar
 // ============================================================
-import { API_BASE } from './config.js?v=bmon99';
+import { API_BASE } from './config.js?v=bmon100';
 
 /**
  * Columnas por país. Chile trabaja con calificadoras nombradas (tres locales y
@@ -152,6 +152,55 @@ export function cellStatus(cell) {
   if (cell.status === 'not_rated') return 'not_rated';
   if (!String(cell.rating ?? '').trim()) return 'pending';
   return cell.status === 'verified' ? 'verified' : 'unverified';
+}
+
+/**
+ * Nombre de quién firma la nota. En las columnas genéricas (`local` e
+ * `international`, los países sin catálogo propio) la calificadora cambia según
+ * el banco, así que la celda lo declara y ahí manda ella.
+ */
+export function agencyNameOf(agency, cell) {
+  return (agency.open && cell?.agency) ? cell.agency : agency.label;
+}
+
+/**
+ * Resume lo que un banco tiene calificado en un ámbito ('local' o 'global').
+ *
+ * `worst` es la peor nota vigente del ámbito, que es el criterio conservador
+ * habitual cuando hay varias calificadoras: la más baja es la que condiciona.
+ * Se compara con ratingNotch, que lleva la notación de Moody's a la misma
+ * escala que Fitch y S&P; sin eso, 'Baa1' y 'BBB+' no serían comparables.
+ *
+ * `entries` trae todo lo conocido del ámbito, incluidas las calificadoras que
+ * confirmaron no cubrir al banco, porque para juzgar una nota hace falta saber
+ * cuántas la acompañan. Lo que nunca se revisó no aparece: no es información.
+ */
+export function scopeSummary(bank, iso, scope) {
+  const entries = [];
+  for (const agency of agenciesFor(iso)) {
+    if (agency.scope !== scope) continue;
+    const cell = bank?.cells?.[agency.key];
+    const status = cellStatus(cell);
+    if (status === 'pending') continue;
+    entries.push({
+      agency,
+      cell,
+      status,
+      name: agencyNameOf(agency, cell),
+      rating: cell?.rating ?? null,
+      notch: ratingNotch(cell?.rating),
+    });
+  }
+
+  const rated = entries.filter((e) => e.rating);
+  const rankable = rated.filter((e) => e.notch !== null);
+  // Si ninguna nota es reconocible en la escala no se puede elegir la peor, pero
+  // esconderlas sería peor: se muestra la primera y el detalle queda en entries.
+  const worst = rankable.length
+    ? rankable.reduce((a, b) => (b.notch > a.notch ? b : a))
+    : (rated[0] || null);
+
+  return { worst, entries };
 }
 
 // ---- Dataset publicado -------------------------------------------------

@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon99';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon99';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon100';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon100';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,7 +22,7 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { API_BASE, FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon99';
+import { API_BASE, FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon100';
 
 /** Live CL ratings from data/cl_bank_ratings.json (Humphreys refresh + curated Feller). */
 let _clRatingsLive = null;
@@ -54,16 +54,20 @@ export async function ensureClRatingsLoaded() {
   _clRatingsMetaLive = BANK_RATINGS_CL_META;
   return _clRatingsLive;
 }
-import { CO_CUIF } from '../coCuentas.js?v=bmon99';
-import { BR_KPI } from '../brCuentas.js?v=bmon99';
-import { UY_KPI } from '../uyCuentas.js?v=bmon99';
-import { PE_KPI } from '../peCuentas.js?v=bmon99';
-import { US_KPI } from '../usCuentas.js?v=bmon99';
-import { AR_KPI } from '../arCuentas.js?v=bmon99';
-import { MX_KPI } from '../mxCuentas.js?v=bmon99';
-import { PA_KPI } from '../paCuentas.js?v=bmon99';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon99';
-import { apiDatos } from '../api.js?v=bmon99';
+import {
+  loadPublishedRatings, scopeSummary, ratingTone, normalizeOutlook,
+  RATING_STATUS, SCOPE_LABEL,
+} from '../ratings.js?v=bmon100';
+import { CO_CUIF } from '../coCuentas.js?v=bmon100';
+import { BR_KPI } from '../brCuentas.js?v=bmon100';
+import { UY_KPI } from '../uyCuentas.js?v=bmon100';
+import { PE_KPI } from '../peCuentas.js?v=bmon100';
+import { US_KPI } from '../usCuentas.js?v=bmon100';
+import { AR_KPI } from '../arCuentas.js?v=bmon100';
+import { MX_KPI } from '../mxCuentas.js?v=bmon100';
+import { PA_KPI } from '../paCuentas.js?v=bmon100';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon100';
+import { apiDatos } from '../api.js?v=bmon100';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 
@@ -105,6 +109,71 @@ export function getCBRatings() {
   } catch { return { ...base }; }
 }
 
+// ---- Calificaciones del mantenedor (Config › Credit ratings) -------------
+//
+// Las dos columnas de rating de esta tabla leen lo publicado en el mantenedor,
+// no el mapa plano de config.js que usan el detalle de banco y el editor viejo.
+// Se guarda el bloque del país activo porque renderCBTable es síncrona: la
+// vuelve a llamar cada clic de ordenamiento y no puede esperar una descarga.
+
+let _maintainerBanks = {};
+
+async function loadMaintainerRatings() {
+  const iso = datasetIsoCountry();
+  const seed = await loadPublishedRatings();   // nunca lanza: ante fallo, vacío
+  _maintainerBanks = seed?.countries?.[iso]?.banks || {};
+}
+
+/** Peor nota del ámbito más el detalle por calificadora, para una fila. */
+function cbScope(code, scope) {
+  return scopeSummary(_maintainerBanks[code], datasetIsoCountry(), scope);
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** `2026-08` → `Aug 2026`. Devuelve el original si no tiene esa forma. */
+function asOfLabel(asOf) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(asOf ?? '').trim());
+  if (!m) return String(asOf ?? '').trim();
+  const month = MONTHS[Number(m[2]) - 1];
+  return month ? `${month} ${m[1]}` : m[0];
+}
+
+/**
+ * Cuadrito al pasar el mouse: qué calificadoras cubren al banco en ese ámbito y
+ * con qué nota. Va en el atributo `title`, que es la convención de la
+ * plataforma para las tablas.
+ */
+function cbScopeTooltip(summary, scopeLabel) {
+  if (!summary.entries.length) return '';
+  const lines = summary.entries.map((e) => {
+    if (e.status === 'not_rated') return `${e.name}: does not cover this bank`;
+    const bits = [e.rating];
+    if (e.cell?.outlook) bits.push(normalizeOutlook(e.cell.outlook));
+    if (e.cell?.as_of) bits.push(asOfLabel(e.cell.as_of));
+    bits.push(RATING_STATUS[e.status]?.label || e.status);
+    return `${e.name}: ${bits.join(' · ')}`;
+  });
+  const rated = summary.entries.filter((e) => e.rating).length;
+  if (rated > 1) lines.push(`Shown: the lowest of the ${rated}.`);
+  return [scopeLabel, ...lines].join('\n');
+}
+
+/** Celda de rating: la peor nota del ámbito, coloreada por banda de riesgo. */
+function cbRatingCell(cls, code, scope, scopeLabel) {
+  const summary = cbScope(code, scope);
+  const tip = cbScopeTooltip(summary, scopeLabel);
+  // Sin nota pero con calificadoras que declararon no cubrirlo, el guion sigue
+  // mereciendo tooltip: explica por qué está vacío.
+  const value = summary.worst?.rating || '—';
+  const color = summary.worst ? ratingTone(summary.worst.rating) : 'var(--text3)';
+  return `<td class="${cls}" style="text-align:center;">
+    <span${tip ? ` title="${escapeAttr(tip)}"` : ''}
+      style="font-family:var(--mono);font-size:11px;font-weight:700;color:${color};${tip ? 'cursor:help;' : ''}">${value}</span>
+  </td>`;
+}
+
 export function saveCBRating(code, val) {
   try {
     const stored = JSON.parse(localStorage.getItem(cbRatingsStorageKey()) || '{}');
@@ -127,6 +196,7 @@ export async function renderChileanBanks() {
   if (datasetIsoCountry() === 'CL') {
     await ensureClRatingsLoaded();
   }
+  await loadMaintainerRatings();
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:60px 0;">
@@ -234,13 +304,20 @@ export function renderCBTable() {
 
   if (ST._cbSort?.col === 'liabilities') ST._cbSort = { col: 'equity', dir: -1 };
 
-  const ratings  = getCBRatings();
   const { col, dir } = ST._cbSort;
   const bankData = [...ST._cbData].sort((a, b) => {
     if (col === 'name') return dir * a.name.localeCompare(b.name);
-    if (col === 'rating') {
-      const order = ['AAA','AA+','AA','AA-','A+','A','A-','BBB+','BBB','—'];
-      return dir * (order.indexOf(ratings[a.code] || '—') - order.indexOf(ratings[b.code] || '—'));
+    if (col === 'ratingLocal' || col === 'ratingIntl') {
+      const scope = col === 'ratingLocal' ? 'local' : 'global';
+      // Sin calificación no hay dónde ubicarlo en la escala, así que queda al
+      // final en los dos sentidos: intercalarlo entre notas reales confundiría.
+      const rank = (x) => cbScope(x.code, scope).worst?.notch ?? null;
+      const an = rank(a);
+      const bn = rank(b);
+      if (an === bn) return 0;
+      if (an === null) return 1;
+      if (bn === null) return -1;
+      return dir * (an - bn);
     }
     const av = a[col];
     const bv = b[col];
@@ -258,22 +335,25 @@ export function renderCBTable() {
   let html = `<div style="overflow-x:auto"><table class="tbl tbl-banking-system" style="table-layout:fixed;width:100%;">
     <thead><tr style="background:var(--bg4);">
       <th class="cb-col-rank" style="${thStyle}width:4%;text-align:center;">#</th>
-      <th class="cb-col-bank" style="${thStyleL}width:20%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
-      <th class="cb-col-rating" style="${thStyle}width:6%;text-align:center;" onclick="sortCBBy('rating')">Rating${arrow('rating')}</th>
-      <th class="cb-col-assets r" style="${thStyle}width:12%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
-      <th class="cb-col-equity r" style="${thStyle}width:11%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
-      <th class="cb-col-loans r" style="${thStyle}width:11%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
-      <th class="cb-col-ni r" style="${thStyle}width:12%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
-      <th class="cb-col-roe r" style="${thStyle}width:10%;" onclick="sortCBBy('roe12')">ROE % 12M${arrow('roe12')}</th>
-      <th class="cb-col-loanseq r" style="${thStyle}width:12%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
+      <th class="cb-col-bank" style="${thStyleL}width:17%;" onclick="sortCBBy('name')">Bank${arrow('name')}</th>
+      <th class="cb-col-rating cb-col-rating-local" style="${thStyle}width:8%;text-align:center;"
+        title="Lowest local-scale rating published in Config › Credit ratings"
+        onclick="sortCBBy('ratingLocal')">Local Rating${arrow('ratingLocal')}</th>
+      <th class="cb-col-rating cb-col-rating-intl" style="${thStyle}width:8%;text-align:center;"
+        title="Lowest international-scale rating published in Config › Credit ratings"
+        onclick="sortCBBy('ratingIntl')">Intl Rating${arrow('ratingIntl')}</th>
+      <th class="cb-col-assets r" style="${thStyle}width:11%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
+      <th class="cb-col-equity r" style="${thStyle}width:10%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>
+      <th class="cb-col-loans r" style="${thStyle}width:10%;" onclick="sortCBBy('loans')">Total Loans${arrow('loans')}</th>
+      <th class="cb-col-ni r" style="${thStyle}width:11%;" onclick="sortCBBy('netIncome12')">Net Income 12M${arrow('netIncome12')}</th>
+      <th class="cb-col-roe r" style="${thStyle}width:9%;" onclick="sortCBBy('roe12')">ROE % 12M${arrow('roe12')}</th>
+      <th class="cb-col-loanseq r" style="${thStyle}width:11%;" onclick="sortCBBy('loansEq')">Loans / Equity${arrow('loansEq')}</th>
     </tr></thead>
     <tbody>`;
 
   bankData.forEach((b, rowIdx) => {
     const btgCode  = datasetIsoCountry() === 'CO' ? 66 : datasetIsoCountry() === 'BR' ? 1000080336 : 59;
     const isBTG    = b.code === btgCode;
-    const rating   = ratings[b.code] || '—';
-    const rColor   = RATING_COLORS[rating] || 'var(--text3)';
     const loansEq  = b.equity ? (b.loans / b.equity).toFixed(1) + 'x' : '—';
     b.loansEq      = b.equity ? b.loans / b.equity : 0;
     const roe12    = b.roe12;
@@ -285,14 +365,6 @@ export function renderCBTable() {
       ? `background:${btgRgba(0.08)};border-left:3px solid ${btgBlue()};`
       : 'border-left:3px solid transparent;';
     const nameStyle = isBTG ? `font-weight:700;color:${btgBlue()};` : 'font-weight:500;color:var(--text);';
-    const isoTip = datasetIsoCountry();
-    const metaTip = isoTip === 'CO' ? BANK_RATINGS_CO_META[b.code]
-      : isoTip === 'CL' ? cbRatingsMetaCl(b.code)
-      : null;
-    const tip = metaTip
-      ? `Perspectiva: ${metaTip.outlook}. ${metaTip.agency}. ${metaTip.analysis}`
-      : '';
-    const tipAttr = tip ? ` title="${escapeAttr(tip)}"` : '';
     html += `<tr style="${rowStyle}transition:background 0.1s;cursor:pointer;"
       onclick="loadBankFromTable(${b.code})"
       onmouseover="this.style.background='${isBTG ? btgRgba(0.14) : 'rgba(56,189,248,0.06)'}'"
@@ -301,9 +373,8 @@ export function renderCBTable() {
       <td class="cb-col-bank" style="${nameStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${isBTG ? '★ ' : ''}${b.name}
       </td>
-      <td class="cb-col-rating" style="text-align:center;">
-        <span${tipAttr} style="font-family:var(--mono);font-size:11px;font-weight:700;color:${rColor};${metaTip ? 'cursor:help;' : ''}">${rating}</span>
-      </td>
+      ${cbRatingCell('cb-col-rating cb-col-rating-local', b.code, 'local', SCOPE_LABEL.local)}
+      ${cbRatingCell('cb-col-rating cb-col-rating-intl', b.code, 'global', SCOPE_LABEL.global)}
       <td class="cb-col-assets r">${fmtKPIDecimal(b.assets)}</td>
       <td class="cb-col-equity r" style="font-weight:600;${isBTG ? `color:${btgBlue()};` : ''}">${fmtKPIDecimal(b.equity)}</td>
       <td class="cb-col-loans r">${fmtKPIDecimal(b.loans)}</td>
@@ -328,7 +399,8 @@ export function renderCBTable() {
   html += `<tr style="background:var(--bg4);border-top:2px solid var(--border2);border-left:3px solid transparent;">
     <td class="cb-col-rank"></td>
     <td class="cb-col-bank" style="font-weight:700;color:var(--white);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;">System Total</td>
-    <td class="cb-col-rating"></td>
+    <td class="cb-col-rating cb-col-rating-local"></td>
+    <td class="cb-col-rating cb-col-rating-intl"></td>
     <td class="cb-col-assets r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.assets)}</td>
     <td class="cb-col-equity r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.equity)}</td>
     <td class="cb-col-loans r" style="font-weight:700;color:var(--white);">${fmtKPIDecimal(tot.loans)}</td>
