@@ -11,8 +11,9 @@
 <!-- Las familias sans se piden hasta 800: el CSS usa font-weight 700 en más de
      cincuenta reglas (títulos, KPI, encabezados de tabla) y sin ese peso el
      navegador lo sintetiza engrosando el 600, que se ve borroso y sucio.
-     DM Mono no tiene negrita en Google Fonts: su máximo real es 500. -->
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+     DM Mono no tiene negrita en Google Fonts: su máximo real es 500, así que
+     para las cifras que van en negrita se usa IBM Plex Mono, que sí la tiene. -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=IBM+Plex+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:      #060a0e;
@@ -33,6 +34,10 @@
   --text3:   #5a7a96;
   --white:   #f8fafc;
   --mono:    'DM Mono', monospace;
+  /* Solo para el monoespaciado que va en negrita: DM Mono no pasa de 500, así
+     que ahí el navegador fingía el trazo grueso. El resto de las cifras sigue
+     en DM Mono, que es la identidad del dashboard. */
+  --mono-bold: 'IBM Plex Mono', 'DM Mono', monospace;
   --sans:    'Inter', sans-serif;
 }
 body.light {
@@ -279,7 +284,7 @@ body.light .tabs-scroll-chevron {
   border:1px solid var(--border2);
   border-radius:20px;
   padding:2px;
-  font-family:var(--mono);
+  font-family:var(--mono-bold);
   font-weight:600;
   letter-spacing:0.06em;
   user-select:none;
@@ -552,7 +557,7 @@ body:not(.light) .bd-logo { filter:brightness(0) invert(1); }
 .bd-lead { margin:0 0 28px; max-width:68ch; }
 .bd-lead h2, .bd-panel h2 {
   margin:0 0 12px; font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
-  color:var(--text3); font-family:var(--mono); font-weight:700;
+  color:var(--text3); font-family:var(--mono-bold); font-weight:700;
 }
 .bd-lead p, .bd-panel p { margin:0; font-size:15px; line-height:1.7; color:var(--text); }
 .bd-split { display:grid; grid-template-columns:1.35fr 1fr; gap:36px; }
@@ -620,7 +625,7 @@ body:not(.light) .bd-logo { filter:brightness(0) invert(1); }
   flex:1; font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:#2563eb;
 }
 .bank-list-header .bank-hdr-equity {
-  font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:#2563eb;
+  font-family:var(--mono-bold); font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:#2563eb;
   text-align:right; min-width:52px;
 }
 /* Encabezados "Bank"/"Equity" en azul BTG (navy en tema claro, azul BTG en oscuro). */
@@ -717,7 +722,7 @@ body.light .custom-kpi-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.12); }
   margin:10px; padding:9px;
   background:#2563eb; color:#ffffff;
   border:none; border-radius:4px;
-  font-family:var(--mono); font-size:11px;
+  font-family:var(--mono-bold); font-size:11px;
   font-weight:700; letter-spacing:1px;
   cursor:pointer; text-transform:uppercase;
   transition:opacity 0.15s;
@@ -1211,7 +1216,7 @@ body.light .ra-filter.active { box-shadow:0 1px 3px rgba(15,23,42,0.12); }
 }
 .ra-st-pending .ra-dot { opacity:0.35; }
 .ra-rating {
-  font-family:var(--mono); font-size:12px; font-weight:700;
+  font-family:var(--mono-bold); font-size:12px; font-weight:700;
   vertical-align:middle; letter-spacing:0.3px;
 }
 .ra-cell-sub { display:block; font-size:9px; color:var(--text3); margin-top:2px; padding-left:11px; }
@@ -1269,7 +1274,7 @@ body.light .ra-filter.active { box-shadow:0 1px 3px rgba(15,23,42,0.12); }
   background:var(--bg3); border:1px solid var(--border2); border-radius:6px;
 }
 .ra-input:focus { outline:none; border-color:var(--accent); }
-.ra-input-mono { font-family:var(--mono); font-weight:700; letter-spacing:0.5px; }
+.ra-input-mono { font-family:var(--mono-bold); font-weight:700; letter-spacing:0.5px; }
 .ra-textarea { resize:vertical; line-height:1.5; }
 .ra-status-seg { display:flex; gap:6px; flex-wrap:wrap; }
 .ra-status-opt {
