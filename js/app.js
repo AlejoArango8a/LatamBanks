@@ -1,30 +1,30 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon97';
-import { ST, datasetIsoCountry } from './state.js?v=bmon97';
-import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon97';
-import { fetchWithTimeout } from './api.js?v=bmon97';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon97';
+import { API_BASE } from './config.js?v=bmon98';
+import { ST, datasetIsoCountry } from './state.js?v=bmon98';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon98';
+import { fetchWithTimeout } from './api.js?v=bmon98';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon98';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon97';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon98';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon97';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon97';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon97';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon97';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon97';
-import { renderBtgBanks } from './views/btgBanks.js?v=bmon97';
-import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon97';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon97';
-import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon97';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon97';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon97';
-import { paintRatingsAdmin, ratingsAdmin } from './views/ratingsAdmin.js?v=bmon97';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon97';
+} from './views/balance.js?v=bmon98';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon98';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon98';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon98';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon98';
+import { renderBtgBanks } from './views/btgBanks.js?v=bmon98';
+import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon98';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon98';
+import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon98';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon98';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon98';
+import { paintRatingsAdmin, ratingsAdmin } from './views/ratingsAdmin.js?v=bmon98';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon98';
 
 // UI
 import {
@@ -38,11 +38,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon97';
+} from './ui.js?v=bmon98';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon97';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon97';
+import { exportTableById, exportChartTable } from './export.js?v=bmon98';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon98';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
