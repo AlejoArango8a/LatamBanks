@@ -1470,22 +1470,234 @@ function loadRatingsSeed() {
   return _ratingsSeed;
 }
 
-app.get('/api/ratings', (req, res) => {
-  try {
-    const seed = loadRatingsSeed();
-    const raw = String(req.query.country ?? '').toUpperCase().trim();
-    cacheable(res, CACHE_STATIC);
+/** Postgres/Cockroach: la relación no existe. La migración 010 aún no corrió. */
+const PG_UNDEFINED_TABLE = '42P01';
 
-    if (!raw) {
-      return res.json({ ok: true, ...seed });
+const RATING_STATUSES = new Set(['verified', 'unverified', 'not_rated']);
+
+/** Payload mal formado: culpa del cliente, así que va 400 y no 500. */
+class BadPayload extends Error {}
+
+/**
+ * Arma el bloque `banks` con la forma que espera el mantenedor a partir de las
+ * filas de la BD: { [ins_cod]: { cells: { [agency]: {...} }, note } }.
+ */
+function shapeRatingRows(cellRows, noteRows) {
+  const banks = {};
+  const bankOf = (code) => (banks[code] ??= {});
+
+  for (const r of cellRows) {
+    // Los campos vacíos se omiten, no se envían en null: así la respuesta sale
+    // igual a la del JSON del repositorio y el front no distingue el origen.
+    const cell = { status: r.status };
+    if (r.rating != null) cell.rating = r.rating;
+    if (r.agency_name) cell.agency = r.agency_name;
+    if (r.outlook) cell.outlook = r.outlook;
+    if (r.as_of) cell.as_of = r.as_of;
+    if (r.source) cell.source = r.source;
+    if (r.note) cell.note = r.note;
+    const bank = bankOf(r.ins_cod);
+    (bank.cells ??= {})[r.agency] = cell;
+  }
+  for (const r of noteRows) {
+    if (r.note) bankOf(r.ins_cod).note = r.note;
+  }
+  return banks;
+}
+
+const CREATE_RATINGS_TABLES = `
+  CREATE TABLE IF NOT EXISTS bank_ratings (
+    country     TEXT        NOT NULL,
+    ins_cod     INT         NOT NULL,
+    agency      TEXT        NOT NULL,
+    agency_name TEXT,
+    rating      TEXT,
+    outlook     TEXT,
+    as_of       TEXT,
+    status      TEXT        NOT NULL DEFAULT 'unverified',
+    source      TEXT,
+    note        TEXT,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (country, ins_cod, agency),
+    CONSTRAINT bank_ratings_status_check
+      CHECK (status IN ('verified', 'unverified', 'not_rated'))
+  )`;
+
+const CREATE_RATING_NOTES_TABLE = `
+  CREATE TABLE IF NOT EXISTS bank_rating_notes (
+    country     TEXT        NOT NULL,
+    ins_cod     INT         NOT NULL,
+    note        TEXT        NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (country, ins_cod)
+  )`;
+
+const UPSERT_RATING = `
+  INSERT INTO bank_ratings
+    (country, ins_cod, agency, agency_name, rating, outlook, as_of,
+     status, source, note, updated_at)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
+  ON CONFLICT (country, ins_cod, agency) DO UPDATE SET
+    agency_name=excluded.agency_name, rating=excluded.rating,
+    outlook=excluded.outlook, as_of=excluded.as_of,
+    status=excluded.status, source=excluded.source, note=excluded.note,
+    updated_at=now()`;
+
+/** Aplana el JSON del repositorio a los argumentos del upsert. */
+function seedRowsFromJson() {
+  const seed = loadRatingsSeed();
+  const cells = [];
+  const notes = [];
+  for (const [iso, block] of Object.entries(seed.countries ?? {})) {
+    for (const [rawCode, bank] of Object.entries(block.banks ?? {})) {
+      const code = Number(rawCode);
+      for (const [agency, cell] of Object.entries(bank.cells ?? {})) {
+        if (!cell) continue;
+        const status = cell.status ?? 'unverified';
+        if (!RATING_STATUSES.has(status)) continue;
+        // Una celda sin calificación y sin la marca de «no calificado» no aporta:
+        // equivale a no haberla revisado.
+        if (!cell.rating && status !== 'not_rated') continue;
+        cells.push([
+          iso, code, agency, cell.agency ?? null,
+          status === 'not_rated' ? null : String(cell.rating),
+          cell.outlook ?? null, cell.as_of ?? null, status,
+          cell.source ?? null, cell.note ?? null,
+        ]);
+      }
+      const note = String(bank.note ?? '').trim();
+      if (note) notes.push([iso, code, note]);
     }
+  }
+  return { cells, notes };
+}
+
+/**
+ * Prepara las tablas de calificaciones antes de usarlas: las crea si faltan y,
+ * si están vacías, las llena con data/bank_ratings.json.
+ *
+ * Se hace acá y no solo en migrations/010 por el mismo motivo que visit_counter
+ * y la caché de BTG: que desplegar alcance, sin pasos manuales en la consola de
+ * la base. Y sobre todo porque sembrar es necesario para la corrección, no una
+ * comodidad: en cuanto exista una fila la respuesta deja de caer al archivo del
+ * repositorio, así que si se publicara una celda sobre una tabla vacía el resto
+ * de las calificaciones desaparecería de la pantalla.
+ *
+ * Solo siembra cuando la tabla está completamente vacía, y el upsert la hace
+ * idempotente frente a dos arranques en paralelo.
+ */
+let _ratingsReady = null;
+
+function ensureRatingsTables() {
+  if (!_ratingsReady) {
+    _ratingsReady = (async () => {
+      await pool.query(CREATE_RATINGS_TABLES);
+      await pool.query(CREATE_RATING_NOTES_TABLE);
+
+      const any = await pool.query('SELECT 1 FROM bank_ratings LIMIT 1');
+      if (any.rowCount) return;
+
+      const { cells, notes } = seedRowsFromJson();
+      if (!cells.length && !notes.length) return;
+      for (const args of cells) await pool.query(UPSERT_RATING, args);
+      for (const args of notes) {
+        await pool.query(
+          `INSERT INTO bank_rating_notes (country, ins_cod, note, updated_at)
+           VALUES ($1,$2,$3, now())
+           ON CONFLICT (country, ins_cod) DO UPDATE SET note=excluded.note, updated_at=now()`,
+          args,
+        );
+      }
+      console.log(`bank_ratings: sembrado inicial desde el JSON (${cells.length} calificaciones, ${notes.length} notas)`);
+    })().catch((e) => {
+      // Sin esto una caída puntual de la base quedaría cacheada en la promesa y
+      // el proceso no volvería a intentarlo nunca.
+      _ratingsReady = null;
+      throw e;
+    });
+  }
+  return _ratingsReady;
+}
+
+/**
+ * Lee las calificaciones de la BD, o null para indicar «usá el JSON del repo».
+ *
+ * Devuelve null en tres casos, y en todos el archivo del repositorio es la
+ * mejor respuesta disponible:
+ *   - la migración 010 todavía no corrió (la tabla no existe);
+ *   - la tabla existe pero está vacía en su totalidad, o sea que falta correr
+ *     el seed inicial. Se mira la tabla completa y no solo el país pedido, para
+ *     que vaciar un país a propósito no resucite sus datos viejos del archivo;
+ *   - la base no responde. Servir la copia del repositorio es preferible a
+ *     devolver un error por un dato de referencia que cambia poco.
+ */
+async function readRatingsFromDb(iso) {
+  const where = iso ? 'WHERE country = $1' : '';
+  const args = iso ? [iso] : [];
+  try {
+    await ensureRatingsTables();
+    const [cells, notes, any] = await Promise.all([
+      pool.query(
+        `SELECT country, ins_cod, agency, agency_name, rating, outlook, as_of, status, source, note
+           FROM bank_ratings ${where}`,
+        args,
+      ),
+      pool.query(`SELECT country, ins_cod, note FROM bank_rating_notes ${where}`, args),
+      pool.query('SELECT 1 FROM bank_ratings LIMIT 1'),
+    ]);
+    if (!any.rowCount) return null;
+    return { cells: cells.rows, notes: notes.rows };
+  } catch (e) {
+    if (e.code === PG_UNDEFINED_TABLE) return null;
+    console.error('/api/ratings: la BD falló, se sirve el JSON del repo:', e.message);
+    return null;
+  }
+}
+
+app.get('/api/ratings', async (req, res) => {
+  try {
+    const raw = String(req.query.country ?? '').toUpperCase().trim();
     // Un ISO desconocido devolvería las notas de otro país sobre bancos que no
     // son suyos, así que se rechaza en vez de caer al país por defecto.
-    if (!ALL_ISOS.has(raw)) {
+    if (raw && !ALL_ISOS.has(raw)) {
       return res.status(400).json({ ok: false, error: `unknown country '${raw}'` });
     }
+
+    const db = await readRatingsFromDb(raw || null);
+
+    // Un minuto, y con la ventana de revalidación igual de corta: las
+    // calificaciones cambian poco, pero cuando el mantenedor publica algo hay
+    // que verlo pronto y no tras horas de caché de CDN. El dataset es chico, así
+    // que revalidar seguido no cuesta nada.
+    cacheable(res, 60, 60);
+
+    if (db) {
+      if (raw) {
+        return res.json({
+          ok: true,
+          source: 'db',
+          country: raw,
+          banks: shapeRatingRows(db.cells, db.notes),
+        });
+      }
+      const countries = {};
+      for (const iso of new Set([...db.cells, ...db.notes].map((r) => r.country))) {
+        countries[iso] = {
+          banks: shapeRatingRows(
+            db.cells.filter((r) => r.country === iso),
+            db.notes.filter((r) => r.country === iso),
+          ),
+        };
+      }
+      return res.json({ ok: true, source: 'db', countries });
+    }
+
+    // Sin la migración 010 aplicada, el archivo del repositorio sigue mandando.
+    const seed = loadRatingsSeed();
+    if (!raw) return res.json({ ok: true, source: 'seed', ...seed });
     res.json({
       ok: true,
+      source: 'seed',
       version: seed.version ?? 1,
       updated: seed.updated ?? null,
       country: raw,
@@ -1493,6 +1705,133 @@ app.get('/api/ratings', (req, res) => {
     });
   } catch (e) {
     console.error('/api/ratings error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+/**
+ * Escritura del usuario master. Se protege con una clave que vive en las
+ * variables de entorno del despliegue, no en el repositorio: sin ella el
+ * endpoint no acepta nada.
+ */
+function ratingsKeyOk(req) {
+  const expected = process.env.RATINGS_WRITE_KEY || '';
+  if (!expected) return { ok: false, status: 503, error: 'RATINGS_WRITE_KEY no está configurada en el servidor' };
+
+  const given = String(req.get('x-ratings-key') || '');
+  // Longitudes distintas ya delatan el fallo; timingSafeEqual exige igual largo.
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  const same = a.length === b.length && require('crypto').timingSafeEqual(a, b);
+  if (!same) return { ok: false, status: 401, error: 'clave de escritura inválida' };
+  return { ok: true };
+}
+
+app.put('/api/ratings', async (req, res) => {
+  noStore(res);
+  try {
+    const auth = ratingsKeyOk(req);
+    if (!auth.ok) return res.status(auth.status).json({ ok: false, error: auth.error });
+
+    const iso = String(req.body?.country ?? '').toUpperCase().trim();
+    if (!ALL_ISOS.has(iso)) {
+      return res.status(400).json({ ok: false, error: `unknown country '${iso}'` });
+    }
+    const banks = req.body?.banks;
+    if (!banks || typeof banks !== 'object') {
+      return res.status(400).json({ ok: false, error: 'falta el bloque "banks"' });
+    }
+
+    // Antes de escribir: sin el sembrado inicial, la primera celda publicada
+    // apagaría el respaldo al JSON y esconderría todo lo demás.
+    await ensureRatingsTables();
+
+    // Se aplica solo lo que viene: una celda con valor se inserta o actualiza y
+    // una celda en null se borra. Nunca se toca lo que el payload no menciona,
+    // para que un envío parcial no pueda vaciar el país entero.
+    const client = await pool.connect();
+    let cellsWritten = 0;
+    let cellsCleared = 0;
+    let notesWritten = 0;
+    try {
+      await client.query('BEGIN');
+      for (const [rawCode, block] of Object.entries(banks)) {
+        const code = Number(rawCode);
+        if (!Number.isFinite(code)) {
+          throw new BadPayload(`código de banco inválido: '${rawCode}'`);
+        }
+
+        for (const [agency, cell] of Object.entries(block?.cells ?? {})) {
+          if (cell == null) {
+            const r = await client.query(
+              'DELETE FROM bank_ratings WHERE country=$1 AND ins_cod=$2 AND agency=$3',
+              [iso, code, agency],
+            );
+            cellsCleared += r.rowCount;
+            continue;
+          }
+          const status = String(cell.status ?? 'unverified');
+          if (!RATING_STATUSES.has(status)) {
+            throw new BadPayload(`estado inválido '${status}' en ${code}/${agency}`);
+          }
+          if (!cell.rating && status !== 'not_rated') {
+            throw new BadPayload(`falta la calificación en ${code}/${agency}`);
+          }
+          await client.query(
+            UPSERT_RATING,
+            [
+              iso, code, agency,
+              cell.agency ?? null,
+              status === 'not_rated' ? null : String(cell.rating),
+              cell.outlook ?? null,
+              cell.as_of ?? null,
+              status,
+              cell.source ?? null,
+              cell.note ?? null,
+            ],
+          );
+          cellsWritten++;
+        }
+
+        if ('note' in (block ?? {})) {
+          const note = String(block.note ?? '').trim();
+          if (note) {
+            await client.query(
+              `INSERT INTO bank_rating_notes (country, ins_cod, note, updated_at)
+               VALUES ($1,$2,$3, now())
+               ON CONFLICT (country, ins_cod) DO UPDATE SET note=excluded.note, updated_at=now()`,
+              [iso, code, note],
+            );
+            notesWritten++;
+          } else {
+            await client.query(
+              'DELETE FROM bank_rating_notes WHERE country=$1 AND ins_cod=$2',
+              [iso, code],
+            );
+          }
+        }
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    res.json({ ok: true, country: iso, cellsWritten, cellsCleared, notesWritten });
+  } catch (e) {
+    if (e instanceof BadPayload) {
+      return res.status(400).json({ ok: false, error: e.message });
+    }
+    console.error('PUT /api/ratings error:', e);
+    if (e.code === PG_UNDEFINED_TABLE) {
+      return res.status(503).json({
+        ok: false,
+        error: 'las tablas de calificaciones no existen y no se pudieron crear; '
+          + 'aplicá migrations/010_bank_ratings.sql en la consola de la base',
+      });
+    }
     res.status(500).json({ ok: false, error: String(e.message) });
   }
 });
