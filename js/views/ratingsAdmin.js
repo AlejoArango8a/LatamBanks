@@ -10,17 +10,17 @@
 // data/bank_ratings.json — el mismo circuito curado y revisable en git que ya
 // usa el resto de los datos de referencia de la plataforma.
 // ============================================================
-import { datasetIsoCountry } from '../state.js?v=bmon96';
-import { API_BASE } from '../config.js?v=bmon96';
-import { liveCountries } from '../paises.js?v=bmon96';
-import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon96';
-import { fetchWithTimeout } from '../api.js?v=bmon96';
+import { datasetIsoCountry } from '../state.js?v=bmon97';
+import { API_BASE, btgCodeForCountry } from '../config.js?v=bmon97';
+import { liveCountries } from '../paises.js?v=bmon97';
+import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon97';
+import { fetchWithTimeout } from '../api.js?v=bmon97';
 import {
   agenciesFor, SCOPE_LABEL, RATING_SCALES, OUTLOOKS, RATING_STATUS, normalizeOutlook,
   loadPublishedRatings, mergedBanks, setDraftCell, setDraftBankNote,
   clearDraft, replaceDraft, draftCount, isDraftCell, exportPayload,
   cellStatus, ratingTone, isStale, coverage,
-} from '../ratings.js?v=bmon96';
+} from '../ratings.js?v=bmon97';
 
 const FLAG = {
   CL: '🇨🇱', CO: '🇨🇴', BR: '🇧🇷', PE: '🇵🇪', UY: '🇺🇾',
@@ -44,7 +44,8 @@ const FILTERS = [
 /**
  * Brasil publica más de 1.300 entidades y Estados Unidos 300: pintarlas todas
  * de entrada vuelve la tabla inmanejable, así que se muestran las mayores por
- * patrimonio y el resto se alcanza buscando o con «ver todos».
+ * patrimonio y el resto se alcanza buscando o con «ver todos». La franquicia
+ * BTG se fija aparte, porque su tamaño no siempre la mete en el corte.
  */
 const VISIBLE_CAP = 50;
 
@@ -254,12 +255,27 @@ function bodyHtml() {
     ? banks.filter((b) => b.name.toLowerCase().includes(q) || String(b.code).includes(q))
     : banks;
   const capped = !state.showAll && !q && matched.length > VISIBLE_CAP;
-  const shown = capped ? matched.slice(0, VISIBLE_CAP) : matched;
+  let shown = capped ? matched.slice(0, VISIBLE_CAP) : matched;
+
+  // La franquicia BTG es la razón de ser del mantenedor, así que entra siempre,
+  // aunque su patrimonio la deje fuera del corte. En Estados Unidos queda de
+  // última entre 301 instituciones: sin esto no aparecería nunca.
+  const btgCode = btgCodeForCountry(iso);
+  let pinnedCode = null;
+  if (capped && btgCode != null && !shown.some((b) => b.code === btgCode)) {
+    const btg = matched.find((b) => b.code === btgCode);
+    if (btg) {
+      // Va al final y el orden por patrimonio se mantiene: si quedó fuera del
+      // corte es porque tiene menos que cualquiera de los que sí entraron.
+      shown = [...shown, btg];
+      pinnedCode = btg.code;
+    }
+  }
 
   const scope = q
     ? `${matched.length} of ${banks.length} banks match “${escapeHtml(state.search.trim())}”`
     : capped
-      ? `Showing the ${VISIBLE_CAP} largest by equity of ${banks.length} banks`
+      ? `Showing the ${VISIBLE_CAP} largest by equity of ${banks.length} banks${pinnedCode ? ', plus BTG' : ''}`
       : `${banks.length} banks sorted by equity`;
 
   return `
@@ -282,7 +298,7 @@ function bodyHtml() {
           ${draftCount(iso) ? `<button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.discard()">Discard draft</button>` : ''}
         </div>
       </div>
-      <div class="panel-body ra-table-wrap">${tableHtml(iso, agencies, shown, data)}</div>
+      <div class="panel-body ra-table-wrap">${tableHtml(iso, agencies, shown, data, pinnedCode)}</div>
       ${capped ? `<div class="ra-more">
         <button type="button" class="rcbtn" onclick="ratingsAdmin.showAll()">Show all ${banks.length} banks</button>
       </div>` : ''}
@@ -323,7 +339,7 @@ function rowPassesFilter(cells, agencies) {
   return !(has('local') && has('global'));
 }
 
-function tableHtml(iso, agencies, banks, data) {
+function tableHtml(iso, agencies, banks, data, pinnedCode = null) {
   const locals = agencies.filter((a) => a.scope === 'local');
   const globals = agencies.filter((a) => a.scope === 'global');
   const firstGlobal = globals[0]?.key;
@@ -367,6 +383,8 @@ function tableHtml(iso, agencies, banks, data) {
         <button type="button" class="ra-bank-btn" onclick="ratingsAdmin.editNote(${b.code})"
           title="Edit this bank’s note">${escapeHtml(b.name)}</button>
         <span class="ra-bank-code">${b.code}</span>
+        ${b.code === pinnedCode ? `<span class="ra-pin"
+          title="Always shown: BTG franchise, outside the top ${VISIBLE_CAP} by equity">BTG</span>` : ''}
         ${note}
       </td>
       ${agencies.map((a) => cellHtml(iso, b.code, a, cells[a.key], a.key === firstGlobal)).join('')}

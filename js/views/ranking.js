@@ -1,8 +1,8 @@
 // ============================================================
 // RANKING — Chilean Banking System tab
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon96';
-import { paisSystemName, paisLocale } from '../paises.js?v=bmon96';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon97';
+import { paisSystemName, paisLocale } from '../paises.js?v=bmon97';
 
 function bankingSystemPanelTitle() {
   return paisSystemName(ST.country);
@@ -22,7 +22,7 @@ function wireCbExportButton() {
     : 'Chilean_Banking_System';
   btn.onclick = () => window.exportTableById('cbTable', slug);
 }
-import { API_BASE, FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon96';
+import { API_BASE, FELLER_RATINGS, BANK_RATINGS_CL_META, BANK_RATINGS_CO, BANK_RATINGS_CO_META, RATING_COLORS, btgBlue, btgRgba } from '../config.js?v=bmon97';
 
 /** Live CL ratings from data/cl_bank_ratings.json (Humphreys refresh + curated Feller). */
 let _clRatingsLive = null;
@@ -54,16 +54,16 @@ export async function ensureClRatingsLoaded() {
   _clRatingsMetaLive = BANK_RATINGS_CL_META;
   return _clRatingsLive;
 }
-import { CO_CUIF } from '../coCuentas.js?v=bmon96';
-import { BR_KPI } from '../brCuentas.js?v=bmon96';
-import { UY_KPI } from '../uyCuentas.js?v=bmon96';
-import { PE_KPI } from '../peCuentas.js?v=bmon96';
-import { US_KPI } from '../usCuentas.js?v=bmon96';
-import { AR_KPI } from '../arCuentas.js?v=bmon96';
-import { MX_KPI } from '../mxCuentas.js?v=bmon96';
-import { PA_KPI } from '../paCuentas.js?v=bmon96';
-import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon96';
-import { apiDatos } from '../api.js?v=bmon96';
+import { CO_CUIF } from '../coCuentas.js?v=bmon97';
+import { BR_KPI } from '../brCuentas.js?v=bmon97';
+import { UY_KPI } from '../uyCuentas.js?v=bmon97';
+import { PE_KPI } from '../peCuentas.js?v=bmon97';
+import { US_KPI } from '../usCuentas.js?v=bmon97';
+import { AR_KPI } from '../arCuentas.js?v=bmon97';
+import { MX_KPI } from '../mxCuentas.js?v=bmon97';
+import { PA_KPI } from '../paCuentas.js?v=bmon97';
+import { bankName, fmtKPIDecimal, periodLabel } from '../format.js?v=bmon97';
+import { apiDatos } from '../api.js?v=bmon97';
 
 const asCodes = (c) => (Array.isArray(c) ? c : [c]);
 
