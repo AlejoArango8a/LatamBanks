@@ -14,7 +14,7 @@
 //   not_rated  → confirmado que la calificadora no cubre al banco
 //   (ausente)  → pendiente de revisar
 // ============================================================
-import { API_BASE } from './config.js?v=bmon98';
+import { API_BASE } from './config.js?v=bmon99';
 
 /**
  * Columnas por país. Chile trabaja con calificadoras nombradas (tres locales y
@@ -158,11 +158,21 @@ export function cellStatus(cell) {
 
 let _published = null;
 
-/** Descarga (una vez) el dataset completo. Nunca lanza: ante fallo, vacío. */
-export function loadPublishedRatings() {
-  if (_published) return _published;
+/** Fuerza que la próxima lectura vuelva a pedirle el dataset al servidor. */
+export function invalidatePublished() {
+  _published = null;
+}
+
+/**
+ * Descarga (una vez) el dataset completo. Nunca lanza: ante fallo, vacío.
+ * Con `fresh` se saltea la caché del CDN, que es lo que hace falta justo
+ * después de publicar para no releer la versión anterior.
+ */
+export function loadPublishedRatings(fresh = false) {
+  if (_published && !fresh) return _published;
+  const bust = fresh ? `?t=${Date.now()}` : '';
   _published = (async () => {
-    for (const url of [`${API_BASE}/api/ratings`, `${API_BASE}/data/bank_ratings.json`]) {
+    for (const url of [`${API_BASE}/api/ratings${bust}`, `${API_BASE}/data/bank_ratings.json${bust}`]) {
       try {
         const r = await fetch(url);
         if (!r.ok) continue;
@@ -223,6 +233,56 @@ export function clearDraft(iso) {
 
 export function replaceDraft(draft) {
   writeDraft(draft && typeof draft === 'object' ? draft : {});
+}
+
+// ---- Publicación del usuario master ------------------------------------
+
+/**
+ * La clave de escritura vive en sessionStorage y no en localStorage: se pide
+ * una vez por pestaña y se va al cerrarla, en vez de quedar guardada para
+ * siempre en el equipo.
+ */
+const WRITE_KEY_SESSION = 'latambanks.ratingsWriteKey';
+
+export function getWriteKey() {
+  try { return sessionStorage.getItem(WRITE_KEY_SESSION) || ''; }
+  catch { return ''; }
+}
+
+export function setWriteKey(key) {
+  try {
+    if (key) sessionStorage.setItem(WRITE_KEY_SESSION, key);
+    else sessionStorage.removeItem(WRITE_KEY_SESSION);
+  } catch { /* storage bloqueado */ }
+}
+
+/**
+ * Sube el borrador de un país para que lo vea todo el mundo. Solo viaja lo que
+ * se editó: el servidor no toca las celdas que el payload no menciona.
+ * Lanza con un mensaje legible para poder mostrarlo tal cual al usuario.
+ */
+export async function publishDraft(iso, key) {
+  const banks = getDraft()[iso];
+  if (!banks || !Object.keys(banks).length) {
+    throw new Error('no hay cambios sin publicar en este país');
+  }
+
+  const r = await fetch(`${API_BASE}/api/ratings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-ratings-key': key },
+    body: JSON.stringify({ country: iso, banks }),
+  });
+
+  let body = null;
+  try { body = await r.json(); } catch { /* el servidor no devolvió JSON */ }
+  if (!r.ok || !body?.ok) {
+    throw new Error(body?.error || `el servidor respondió ${r.status}`);
+  }
+
+  // Publicado: el borrador ya no aporta nada y el dataset en memoria quedó viejo.
+  clearDraft(iso);
+  invalidatePublished();
+  return body;
 }
 
 /** Cuántas celdas tocó el borrador (todo el mundo, o un país). */
