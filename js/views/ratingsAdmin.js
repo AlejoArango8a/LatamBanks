@@ -63,7 +63,17 @@ function countryList() {
 /** Partículas que no se capitalizan dentro de una razón social. */
 const NAME_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'do', 'da', 'dos', 'das', 'en', 'el']);
 
-/** Convierte una razón social en mayúsculas a algo legible. */
+/** Siglas que deben quedar en mayúscula al normalizar una razón social. */
+const NAME_ACRONYMS = new Set([
+  'bbva', 'bcp', 'bci', 'bice', 'btg', 'hsbc', 'jp', 'jpm', 'icbc', 'bnp', 'ing',
+  'ubs', 'rbc', 'bmo', 'td', 'brou', 'bhu', 'bna', 'bndes', 'abn', 'dbs', 'mufg',
+  'smbc', 'gnb', 'av', 'bac', 'bhd', 'bod', 'nv', 'ag', 'plc', 'usa', 'eeuu',
+]);
+
+/**
+ * Convierte una razón social en mayúsculas a algo legible. Solo se usa para
+ * países distintos al activo del dashboard, donde `bankName()` no aplica.
+ */
 function cleanName(raw) {
   const s = String(raw || '').trim();
   if (!s || s !== s.toUpperCase()) return s;
@@ -71,6 +81,8 @@ function cleanName(raw) {
     .split(/\s+/)
     .map((tok, i) => {
       if (i > 0 && NAME_PARTICLES.has(tok)) return tok;
+      const bare = tok.replace(/[.,]/g, '');
+      if (NAME_ACRONYMS.has(bare)) return tok.toUpperCase();
       if (/^s\.?a\.?[a-z]*\.?$/.test(tok)) return tok.toUpperCase();
       return tok.charAt(0).toUpperCase() + tok.slice(1);
     })
