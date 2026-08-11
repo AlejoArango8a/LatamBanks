@@ -4,6 +4,12 @@
 -- Sustituye a data/bank_ratings.json como fuente de verdad: el archivo del
 -- repositorio queda solo como respaldo y como semilla inicial.
 --
+-- NO hace falta correr este archivo a mano: el backend crea estas tablas al
+-- arrancar y las siembra con el JSON del repositorio la primera vez, igual que
+-- hace con visit_counter y btg_franchise_snapshot_cache. Queda versionado como
+-- documentación del esquema y para poder crearlo desde la consola si algún día
+-- conviene hacerlo antes de desplegar.
+--
 -- Guarda únicamente el estado vigente. No hay historial por decisión de
 -- producto: interesa la calificación actual de cada banco, no su evolución.
 --
@@ -24,16 +30,16 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS bank_ratings (
-  country     STRING      NOT NULL,
+  country     TEXT        NOT NULL,
   ins_cod     INT         NOT NULL,
-  agency      STRING      NOT NULL,
-  agency_name STRING,
-  rating      STRING,
-  outlook     STRING,
-  as_of       STRING,
-  status      STRING      NOT NULL DEFAULT 'unverified',
-  source      STRING,
-  note        STRING,
+  agency      TEXT        NOT NULL,
+  agency_name TEXT,
+  rating      TEXT,
+  outlook     TEXT,
+  as_of       TEXT,
+  status      TEXT        NOT NULL DEFAULT 'unverified',
+  source      TEXT,
+  note        TEXT,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (country, ins_cod, agency),
   CONSTRAINT bank_ratings_status_check
@@ -44,9 +50,9 @@ CREATE TABLE IF NOT EXISTS bank_ratings (
 -- quedó pendiente de contrastar. Va en su propia tabla porque no pertenece a
 -- ninguna calificadora en particular.
 CREATE TABLE IF NOT EXISTS bank_rating_notes (
-  country     STRING      NOT NULL,
+  country     TEXT        NOT NULL,
   ins_cod     INT         NOT NULL,
-  note        STRING      NOT NULL,
+  note        TEXT        NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (country, ins_cod)
 );

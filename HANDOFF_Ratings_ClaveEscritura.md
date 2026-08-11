@@ -10,50 +10,31 @@ latambanks.co ve exactamente eso**. Nadie más puede modificarlas.
 
 ---
 
-## Qué es una "variable de entorno" de Vercel
+## Lo único que tenés que hacer: definir tu clave en Vercel
 
-Es simplemente un dato secreto que le das a Vercel para que el servidor lo use,
-sin que quede escrito en el código ni en GitHub.
+Todo lo demás pasa solo al desplegar. La base de datos se prepara sola: el
+backend crea sus tablas la primera vez que arranca y las llena con las
+calificaciones que ya estaban en el repositorio, igual que hace con el contador
+de visitas y con la caché de BTG. No hay que correr nada a mano.
 
-Pensalo como la contraseña de tu casa: no la escribís en la puerta (el
-repositorio, que es público para quien tenga acceso), la tenés vos y se la das
-solo a quien necesita entrar (el servidor). Vercel la guarda cifrada y se la pasa
-al backend cada vez que arranca. Nadie que lea el código puede verla.
+Lo único que no se puede automatizar es la clave, y hay una razón de fondo: es lo
+que distingue tus publicaciones de las de cualquier otro. Si la clave estuviera
+en el código o la generara alguien más, dejaría de ser tuya.
+
+### Qué es una "variable de entorno"
+
+Es un dato secreto que le das a Vercel para que lo use el servidor, sin que quede
+escrito en el código ni en GitHub.
+
+Pensalo como la llave de tu casa: no la dejás pegada en la puerta (el
+repositorio), la tenés vos y se la das solo a quien necesita entrar (el
+servidor). Vercel la guarda cifrada y se la pasa al backend cada vez que
+arranca. Nadie que lea el código puede verla.
 
 La contraseña de la base de datos (`COCKROACH_URL`) ya funciona así. Vamos a
-agregar una segunda, `RATINGS_WRITE_KEY`, que es la que habilita publicar
-calificaciones.
+agregar una segunda, `RATINGS_WRITE_KEY`, que es la que habilita publicar.
 
----
-
-## Los tres pasos que tenés que hacer
-
-### Paso 1 — Crear las tablas en la base de datos
-
-Una sola vez. Entrá a la consola de CockroachDB
-(`latambanks-25604...cockroachlabs.cloud`), abrí **SQL Shell** y pegá el
-contenido completo del archivo `migrations/010_bank_ratings.sql`.
-
-No borra ni toca nada de lo que ya existe: solo crea dos tablas nuevas
-(`bank_ratings` y `bank_rating_notes`). Si la corrés dos veces por error, no pasa
-nada.
-
-### Paso 2 — Cargar las calificaciones que ya tenías
-
-También una sola vez. Las 49 calificaciones que ya están en el repositorio
-(Chile y Colombia) hay que pasarlas a la base. Desde tu equipo, en la carpeta del
-proyecto:
-
-```bash
-python tools/seed_bank_ratings_db.py
-```
-
-Toma la `COCKROACH_URL` de tu archivo `.env`. Si querés ver qué haría antes de
-escribir, corré `python tools/seed_bank_ratings_db.py --dry-run`.
-
-Se puede repetir sin duplicar nada.
-
-### Paso 3 — Definir tu clave en Vercel
+### Los pasos
 
 1. Entrá a [vercel.com](https://vercel.com) y abrí el proyecto de la plataforma.
 2. Arriba, andá a la pestaña **Settings**.
@@ -71,6 +52,11 @@ Se puede repetir sin duplicar nada.
 
 Listo. A partir de ahí, en Config › Credit ratings vas a ver un botón verde
 **Publish** cada vez que edites algo.
+
+Mientras no la definas, la plataforma funciona igual que siempre: el mantenedor
+abre, las calificaciones se ven, los borradores se guardan en tu navegador y el
+botón Publish avisa que falta configurar la clave en vez de fallar sin
+explicación.
 
 ---
 
@@ -101,6 +87,10 @@ hay riesgo de vaciar un país sin querer.
 **Si algo falla a mitad de camino, no queda nada a medias.** La escritura es una
 transacción: o entran todos los cambios del envío, o ninguno.
 
+**Lo que publicás no se pisa nunca.** El sembrado automático desde el archivo del
+repositorio ocurre una única vez, cuando la tabla está vacía. Un redespliegue o
+un reinicio no revierte nada.
+
 **Los cambios tardan hasta un minuto en verse en otros equipos**, porque la
 respuesta se cachea 60 segundos para no golpear la base en cada visita. En tu
 propia pantalla se ven al instante.
@@ -110,9 +100,9 @@ vigente de cada banco, no su evolución. Sí queda registrado *cuándo* se actua
 cada celda (`updated_at`).
 
 **El archivo `data/bank_ratings.json` sigue existiendo como respaldo.** El
-servidor lo usa solo si la base todavía no tiene las tablas, si nunca se corrió
-el seed, o si la base no responde. Una vez hecho el paso 2, la fuente de verdad
-es la base de datos. Si querés saber de dónde salió una respuesta, el endpoint
+servidor lo usa si la base todavía no tiene las tablas, si nunca se sembró, o si
+la base no responde: preferimos servir la copia del repositorio antes que
+mostrarte un error. Si querés saber de dónde salió una respuesta, el endpoint
 `/api/ratings` lo dice en el campo `source` (`db` o `seed`).
 
 **Si perdés la clave**, no se recupera: entrás a Vercel, la reemplazás por una
@@ -123,11 +113,27 @@ repositorio, exportás y reemplazás `data/bank_ratings.json`.
 
 ---
 
+## Herramientas opcionales
+
+No hacen falta para el uso normal, pero están por si algún día conviene.
+
+`migrations/010_bank_ratings.sql` es el esquema de las dos tablas. El backend lo
+crea solo, así que este archivo sirve como documentación y para poder crearlas
+desde la consola de CockroachDB antes de desplegar.
+
+`tools/seed_bank_ratings_db.py` carga `data/bank_ratings.json` en la base. El
+backend ya lo hace la primera vez; el script sirve si querés reimportar el
+archivo a mano después de corregirlo. Es idempotente y no borra nada: lo que esté
+en la base y no en el archivo se queda como está. Necesita `COCKROACH_URL` en el
+entorno, y con `--dry-run` informa sin escribir.
+
+---
+
 ## Si algo no funciona
 
 | Mensaje | Qué significa |
 |---|---|
-| `RATINGS_WRITE_KEY no está configurada en el servidor` | Falta el paso 3, o falta redesplegar después de guardarla. |
+| `RATINGS_WRITE_KEY no está configurada en el servidor` | Falta definirla en Vercel, o falta redesplegar después de guardarla. |
 | `clave de escritura inválida` | La clave no coincide con la de Vercel. |
-| `falta aplicar la migración migrations/010_bank_ratings.sql` | Falta el paso 1. |
+| `las tablas de calificaciones no existen y no se pudieron crear` | El usuario de la base no tiene permiso para crear tablas. Aplicá `migrations/010_bank_ratings.sql` desde la consola. |
 | El mantenedor abre pero no muestra lo que publicaste | Esperá un minuto (caché) y recargá. Si sigue, mirá `/api/ratings?country=CL` y revisá el campo `source`. |

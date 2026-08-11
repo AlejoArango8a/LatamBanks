@@ -1505,6 +1505,120 @@ function shapeRatingRows(cellRows, noteRows) {
   return banks;
 }
 
+const CREATE_RATINGS_TABLES = `
+  CREATE TABLE IF NOT EXISTS bank_ratings (
+    country     TEXT        NOT NULL,
+    ins_cod     INT         NOT NULL,
+    agency      TEXT        NOT NULL,
+    agency_name TEXT,
+    rating      TEXT,
+    outlook     TEXT,
+    as_of       TEXT,
+    status      TEXT        NOT NULL DEFAULT 'unverified',
+    source      TEXT,
+    note        TEXT,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (country, ins_cod, agency),
+    CONSTRAINT bank_ratings_status_check
+      CHECK (status IN ('verified', 'unverified', 'not_rated'))
+  )`;
+
+const CREATE_RATING_NOTES_TABLE = `
+  CREATE TABLE IF NOT EXISTS bank_rating_notes (
+    country     TEXT        NOT NULL,
+    ins_cod     INT         NOT NULL,
+    note        TEXT        NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (country, ins_cod)
+  )`;
+
+const UPSERT_RATING = `
+  INSERT INTO bank_ratings
+    (country, ins_cod, agency, agency_name, rating, outlook, as_of,
+     status, source, note, updated_at)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
+  ON CONFLICT (country, ins_cod, agency) DO UPDATE SET
+    agency_name=excluded.agency_name, rating=excluded.rating,
+    outlook=excluded.outlook, as_of=excluded.as_of,
+    status=excluded.status, source=excluded.source, note=excluded.note,
+    updated_at=now()`;
+
+/** Aplana el JSON del repositorio a los argumentos del upsert. */
+function seedRowsFromJson() {
+  const seed = loadRatingsSeed();
+  const cells = [];
+  const notes = [];
+  for (const [iso, block] of Object.entries(seed.countries ?? {})) {
+    for (const [rawCode, bank] of Object.entries(block.banks ?? {})) {
+      const code = Number(rawCode);
+      for (const [agency, cell] of Object.entries(bank.cells ?? {})) {
+        if (!cell) continue;
+        const status = cell.status ?? 'unverified';
+        if (!RATING_STATUSES.has(status)) continue;
+        // Una celda sin calificación y sin la marca de «no calificado» no aporta:
+        // equivale a no haberla revisado.
+        if (!cell.rating && status !== 'not_rated') continue;
+        cells.push([
+          iso, code, agency, cell.agency ?? null,
+          status === 'not_rated' ? null : String(cell.rating),
+          cell.outlook ?? null, cell.as_of ?? null, status,
+          cell.source ?? null, cell.note ?? null,
+        ]);
+      }
+      const note = String(bank.note ?? '').trim();
+      if (note) notes.push([iso, code, note]);
+    }
+  }
+  return { cells, notes };
+}
+
+/**
+ * Prepara las tablas de calificaciones antes de usarlas: las crea si faltan y,
+ * si están vacías, las llena con data/bank_ratings.json.
+ *
+ * Se hace acá y no solo en migrations/010 por el mismo motivo que visit_counter
+ * y la caché de BTG: que desplegar alcance, sin pasos manuales en la consola de
+ * la base. Y sobre todo porque sembrar es necesario para la corrección, no una
+ * comodidad: en cuanto exista una fila la respuesta deja de caer al archivo del
+ * repositorio, así que si se publicara una celda sobre una tabla vacía el resto
+ * de las calificaciones desaparecería de la pantalla.
+ *
+ * Solo siembra cuando la tabla está completamente vacía, y el upsert la hace
+ * idempotente frente a dos arranques en paralelo.
+ */
+let _ratingsReady = null;
+
+function ensureRatingsTables() {
+  if (!_ratingsReady) {
+    _ratingsReady = (async () => {
+      await pool.query(CREATE_RATINGS_TABLES);
+      await pool.query(CREATE_RATING_NOTES_TABLE);
+
+      const any = await pool.query('SELECT 1 FROM bank_ratings LIMIT 1');
+      if (any.rowCount) return;
+
+      const { cells, notes } = seedRowsFromJson();
+      if (!cells.length && !notes.length) return;
+      for (const args of cells) await pool.query(UPSERT_RATING, args);
+      for (const args of notes) {
+        await pool.query(
+          `INSERT INTO bank_rating_notes (country, ins_cod, note, updated_at)
+           VALUES ($1,$2,$3, now())
+           ON CONFLICT (country, ins_cod) DO UPDATE SET note=excluded.note, updated_at=now()`,
+          args,
+        );
+      }
+      console.log(`bank_ratings: sembrado inicial desde el JSON (${cells.length} calificaciones, ${notes.length} notas)`);
+    })().catch((e) => {
+      // Sin esto una caída puntual de la base quedaría cacheada en la promesa y
+      // el proceso no volvería a intentarlo nunca.
+      _ratingsReady = null;
+      throw e;
+    });
+  }
+  return _ratingsReady;
+}
+
 /**
  * Lee las calificaciones de la BD, o null para indicar «usá el JSON del repo».
  *
@@ -1521,6 +1635,7 @@ async function readRatingsFromDb(iso) {
   const where = iso ? 'WHERE country = $1' : '';
   const args = iso ? [iso] : [];
   try {
+    await ensureRatingsTables();
     const [cells, notes, any] = await Promise.all([
       pool.query(
         `SELECT country, ins_cod, agency, agency_name, rating, outlook, as_of, status, source, note
@@ -1627,6 +1742,10 @@ app.put('/api/ratings', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'falta el bloque "banks"' });
     }
 
+    // Antes de escribir: sin el sembrado inicial, la primera celda publicada
+    // apagaría el respaldo al JSON y esconderría todo lo demás.
+    await ensureRatingsTables();
+
     // Se aplica solo lo que viene: una celda con valor se inserta o actualiza y
     // una celda en null se borra. Nunca se toca lo que el payload no menciona,
     // para que un envío parcial no pueda vaciar el país entero.
@@ -1659,15 +1778,7 @@ app.put('/api/ratings', async (req, res) => {
             throw new BadPayload(`falta la calificación en ${code}/${agency}`);
           }
           await client.query(
-            `INSERT INTO bank_ratings
-               (country, ins_cod, agency, agency_name, rating, outlook, as_of,
-                status, source, note, updated_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
-             ON CONFLICT (country, ins_cod, agency) DO UPDATE SET
-               agency_name=excluded.agency_name, rating=excluded.rating,
-               outlook=excluded.outlook, as_of=excluded.as_of,
-               status=excluded.status, source=excluded.source, note=excluded.note,
-               updated_at=now()`,
+            UPSERT_RATING,
             [
               iso, code, agency,
               cell.agency ?? null,
@@ -1717,7 +1828,8 @@ app.put('/api/ratings', async (req, res) => {
     if (e.code === PG_UNDEFINED_TABLE) {
       return res.status(503).json({
         ok: false,
-        error: 'falta aplicar la migración migrations/010_bank_ratings.sql',
+        error: 'las tablas de calificaciones no existen y no se pudieron crear; '
+          + 'aplicá migrations/010_bank_ratings.sql en la consola de la base',
       });
     }
     res.status(500).json({ ok: false, error: String(e.message) });
