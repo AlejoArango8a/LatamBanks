@@ -1,9 +1,9 @@
 // ============================================================
 // API — network layer and data-access helpers
 // ============================================================
-import { API_BASE } from './config.js?v=bmon94';
-import { ST, datasetIsoCountry } from './state.js?v=bmon94';
-import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.js?v=bmon94';
+import { API_BASE } from './config.js?v=bmon96';
+import { ST, datasetIsoCountry } from './state.js?v=bmon96';
+import { expandGrupoAvalFetchBanks, mergeGrupoAvalApiRows } from './coGrupoAval.js?v=bmon96';
 
 /** Client budget must stay under Vercel `maxDuration` (30s in vercel.json). */
 export const DATOS_TIMEOUT_MS = 28000;

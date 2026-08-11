@@ -166,9 +166,28 @@ def _js_block(js: str, name: str) -> str:
     return m.group(1)
 
 
+# Las fuentes publican la perspectiva en español; la interfaz de la plataforma
+# es en inglés, así que se traduce al construir el seed y no al pintarlo.
+OUTLOOK_EN = {
+    "estable": "Stable",
+    "positiva": "Positive",
+    "negativa": "Negative",
+    "en observación": "Watch",
+    "en observacion": "Watch",
+    "en desarrollo": "Developing",
+}
+
+
+def _outlook(value):
+    if not value:
+        return None
+    return OUTLOOK_EN.get(str(value).strip().lower(), str(value).strip())
+
+
 def _cell(*, rating=None, outlook=None, status="unverified", as_of=None,
           source=None, agency=None, note=None) -> dict:
     cell = {"rating": rating, "status": status}
+    outlook = _outlook(outlook)
     for key, val in (("agency", agency), ("outlook", outlook), ("as_of", as_of),
                      ("source", source), ("note", note)):
         if val:
