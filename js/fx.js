@@ -2,8 +2,8 @@
 // FX — tipo de cambio USD → moneda local (CL/CO/BR/PE/UY/AR/MX; US/PA = 1)
 // Fuentes en cascada; falla cerrada (usdRate = null) si todas fallan.
 // ============================================================
-import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon93';
-import { paisCurrency, paisLocale } from './paises.js?v=bmon93';
+import { ST, reportingLocalCurrencyISO } from './state.js?v=bmon94';
+import { paisCurrency, paisLocale } from './paises.js?v=bmon94';
 
 const FX_TIMEOUT_MS = 8000;
 
@@ -78,7 +78,7 @@ async function fromMindicador() {
 
 /** Chile macros from LatamBanks DB (chile_macros_loader → /api/chile/macros). */
 async function fromChileMacrosApi() {
-  const { fetchChileMacros } = await import('./chileMacros.js?v=bmon93');
+  const { fetchChileMacros } = await import('./chileMacros.js?v=bmon94');
   const data = await fetchChileMacros();
   const usd = Number(data?.macros?.usd);
   if (!(usd > 0)) throw new Error('chile/macros: sin USD');

@@ -1450,6 +1450,54 @@ app.get('/api/chile/ratings', async (req, res) => {
 });
 
 // ============================================================
+// GET /api/ratings — calificaciones de riesgo por banco y calificadora
+// Query: ?country=CL|CO|… (omitido = todos los países)
+// Dataset curado en data/bank_ratings.json; las columnas de cada país las
+// define RATING_AGENCIES en js/ratings.js. Cambia solo con un deploy, así que
+// se sirve con la caché larga de los seeds estáticos.
+// ============================================================
+const ALL_ISOS = new Set(Object.values(REGISTRY.paises).map((p) => p.iso));
+let _ratingsSeed = null;
+
+function loadRatingsSeed() {
+  if (_ratingsSeed) return _ratingsSeed;
+  const fs = require('fs');
+  const path = require('path');
+  const p = path.join(__dirname, '..', 'data', 'bank_ratings.json');
+  _ratingsSeed = fs.existsSync(p)
+    ? JSON.parse(fs.readFileSync(p, 'utf8'))
+    : { version: 1, updated: null, countries: {} };
+  return _ratingsSeed;
+}
+
+app.get('/api/ratings', (req, res) => {
+  try {
+    const seed = loadRatingsSeed();
+    const raw = String(req.query.country ?? '').toUpperCase().trim();
+    cacheable(res, CACHE_STATIC);
+
+    if (!raw) {
+      return res.json({ ok: true, ...seed });
+    }
+    // Un ISO desconocido devolvería las notas de otro país sobre bancos que no
+    // son suyos, así que se rechaza en vez de caer al país por defecto.
+    if (!ALL_ISOS.has(raw)) {
+      return res.status(400).json({ ok: false, error: `unknown country '${raw}'` });
+    }
+    res.json({
+      ok: true,
+      version: seed.version ?? 1,
+      updated: seed.updated ?? null,
+      country: raw,
+      banks: seed.countries?.[raw]?.banks ?? {},
+    });
+  } catch (e) {
+    console.error('/api/ratings error:', e);
+    res.status(500).json({ ok: false, error: String(e.message) });
+  }
+});
+
+// ============================================================
 // GET /api/schema-alerts — alertas de cambio de esquema por país
 // Query: ?country=CL|CO. Lee carga_log.detalle (JSON) donde el loader
 // (schema_guard) registró una anomalía. Orden: más reciente primero.

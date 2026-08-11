@@ -1096,6 +1096,167 @@ body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
 .if-table tbody tr.if-row-active td:first-child { color:var(--white); font-weight:700; }
 .rcbtn.if-export { color:var(--green); }
 
+/* Credit ratings maintainer — Config › Credit ratings */
+.ra-hero { border-left-color:var(--purple); align-items:center; }
+.ra-hero-meta { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.ra-hero-updated {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.6px;
+  text-transform:uppercase; color:var(--text3);
+}
+.ra-draft-badge {
+  padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+  background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.35); color:var(--yellow);
+}
+.ra-country-bar { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
+.ra-kpi-grid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:10px; margin-bottom:16px;
+}
+.ra-kpi-grid .kpi { padding:10px 12px; border-left:3px solid var(--border2); }
+.ra-kpi-grid .kpi-val { font-size:20px; font-variant-numeric:tabular-nums; }
+.kpi.ra-tone-accent { border-left-color:var(--accent); }
+.kpi.ra-tone-ok     { border-left-color:var(--green); }
+.kpi.ra-tone-warn   { border-left-color:var(--yellow); }
+.kpi.ra-tone-muted  { border-left-color:var(--border2); }
+
+.ra-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+/* Los filtros van en un control segmentado para que no se confundan con los
+   botones de publicación, que sí tienen consecuencias. */
+.ra-filter-group {
+  display:flex; gap:2px; padding:2px; margin-right:6px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:20px;
+}
+.ra-filter {
+  padding:4px 11px; border:none; border-radius:20px; cursor:pointer;
+  background:transparent; color:var(--text2);
+  font-family:var(--sans); font-size:11px; font-weight:500; white-space:nowrap;
+}
+.ra-filter:hover { color:var(--accent); }
+.ra-filter.active { background:var(--bg2); color:var(--white); font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,0.25); }
+body.light .ra-filter.active { box-shadow:0 1px 3px rgba(15,23,42,0.12); }
+.rcbtn.ra-export { color:var(--green); }
+.rcbtn.ra-discard { color:var(--yellow); }
+
+.ra-table-wrap { overflow-x:auto; padding:0; }
+.ra-table { min-width:640px; }
+.ra-table th { text-align:center; white-space:nowrap; }
+.ra-table th.ra-group {
+  font-size:9px; letter-spacing:1.2px; color:var(--text3);
+  border-bottom:1px solid var(--border2); background:var(--bg2);
+}
+.ra-table th.ra-col-agency { font-size:10px; color:var(--text2); }
+.ra-table th.ra-col-bank { text-align:left; min-width:210px; }
+.ra-table th.ra-col-cov { width:44px; }
+.ra-table td { vertical-align:middle; padding:8px 10px; }
+.ra-table td.ra-col-bank { text-align:left; }
+.ra-table tbody tr:hover td { background:rgba(255,255,255,0.015); }
+/* Separador entre el bloque de escala local y el internacional */
+.ra-table th.ra-split, .ra-table td.ra-split,
+.ra-table th.ra-group-split { border-left:2px solid var(--border2); }
+
+.ra-table .ra-col-bank { position:sticky; left:0; z-index:2; background:var(--bg2); }
+.ra-table thead .ra-col-bank { background:var(--bg3); }
+.ra-table tbody tr:hover td.ra-col-bank { background:var(--bg3); }
+
+.ra-bank-btn {
+  border:none; background:none; padding:0; cursor:pointer;
+  font-family:var(--sans); font-size:12px; font-weight:600; color:var(--white); text-align:left;
+}
+.ra-bank-btn:hover { color:var(--accent); text-decoration:underline dotted; }
+.ra-bank-code { font-family:var(--mono); font-size:9px; color:var(--text3); margin-left:6px; }
+.ra-bank-note {
+  font-size:10px; color:var(--text3); line-height:1.4; margin-top:3px;
+  max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.ra-cell {
+  text-align:center; cursor:pointer; position:relative;
+  white-space:nowrap; transition:background 0.1s;
+}
+.ra-cell:hover { background:rgba(167,139,250,0.10) !important; box-shadow:inset 0 0 0 1px var(--purple); }
+.ra-dot {
+  display:inline-block; width:5px; height:5px; border-radius:50%;
+  vertical-align:middle; margin-right:6px;
+}
+.ra-st-pending .ra-dot { opacity:0.35; }
+.ra-rating {
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  vertical-align:middle; letter-spacing:0.3px;
+}
+.ra-cell-sub { display:block; font-size:9px; color:var(--text3); margin-top:2px; padding-left:11px; }
+.ra-add { font-size:14px; color:var(--text3); opacity:0.45; vertical-align:middle; }
+.ra-cell:hover .ra-add { opacity:1; color:var(--accent); }
+.ra-na { font-size:10px; color:var(--text3); font-style:italic; vertical-align:middle; }
+.ra-stale { font-size:9px; margin-left:4px; vertical-align:middle; }
+.ra-cell.ra-draft::after {
+  content:''; position:absolute; top:4px; right:4px;
+  width:5px; height:5px; border-radius:50%; background:var(--yellow);
+}
+.ra-col-cov { text-align:center; }
+.ra-table th.ra-col-cov { cursor:help; }
+.ra-pips { display:inline-flex; gap:3px; align-items:center; }
+.ra-pip {
+  width:6px; height:6px; border-radius:50%;
+  border:1px solid var(--border2); background:transparent;
+}
+.ra-pip.on { background:var(--green); border-color:var(--green); }
+
+/* Editor de celda */
+.ra-overlay {
+  display:none; position:fixed; inset:0; z-index:10030;
+  background:rgba(0,0,0,0.55); align-items:center; justify-content:center; padding:16px;
+}
+.ra-dialog {
+  width:min(560px, 100%); max-height:min(88vh, 760px); display:flex; flex-direction:column;
+  background:var(--bg2); border:1px solid var(--border2); border-radius:10px;
+  box-shadow:0 20px 48px rgba(0,0,0,0.45);
+}
+.ra-dialog-head {
+  display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+  padding:14px 16px 12px; border-bottom:1px solid var(--border);
+}
+.ra-dialog-eyebrow {
+  font-family:var(--mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--text3); margin-bottom:5px;
+}
+.ra-dialog-title { font-size:16px; font-weight:700; color:var(--white); }
+.ra-dialog-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+.ra-dialog-body { flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+.ra-dialog-foot {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 16px; border-top:1px solid var(--border);
+}
+.ra-foot-right { display:flex; gap:8px; }
+.ra-field { display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; }
+.ra-field-row { display:flex; gap:12px; flex-wrap:wrap; }
+.ra-field-lbl {
+  font-size:9px; font-weight:700; letter-spacing:0.7px; text-transform:uppercase; color:var(--text2);
+}
+.ra-input {
+  width:100%; box-sizing:border-box; padding:8px 10px;
+  font-family:var(--sans); font-size:13px; color:var(--text);
+  background:var(--bg3); border:1px solid var(--border2); border-radius:6px;
+}
+.ra-input:focus { outline:none; border-color:var(--accent); }
+.ra-input-mono { font-family:var(--mono); font-weight:700; letter-spacing:0.5px; }
+.ra-textarea { resize:vertical; line-height:1.5; }
+.ra-status-seg { display:flex; gap:6px; flex-wrap:wrap; }
+.ra-status-opt {
+  flex:1; min-width:110px; padding:7px 10px; border-radius:6px; cursor:pointer;
+  border:1px solid var(--border2); background:var(--bg3);
+  color:var(--text2); font-family:var(--sans); font-size:11px; font-weight:600;
+}
+.ra-status-opt:hover { border-color:var(--accent); color:var(--accent); }
+.ra-status-opt.active { border-color:#0284c7; background:#0284c7; color:#fff; }
+body.light .ra-dialog { box-shadow:0 16px 40px rgba(15,23,42,0.18); }
+
+@media(max-width:800px) {
+  .ra-hero { flex-direction:column; align-items:flex-start; }
+  .ra-hero-meta { align-items:flex-start; text-align:left; }
+  .ra-table th.ra-col-bank { min-width:150px; }
+  .ra-bank-note { max-width:150px; }
+}
+
 /* PANEL */
 .panel { background:var(--bg2); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
 .panel-head {
@@ -1739,8 +1900,14 @@ body.light .app-error-title { color:#0f172a; }
           <!-- Config sub-tabs -->
           <div class="itabs" style="margin-bottom:14px;">
             <button type="button" class="itab active" id="cfgtab-countries" onclick="showConfigTab('countries')">Country details</button>
+            <button type="button" class="itab"        id="cfgtab-ratings"   onclick="showConfigTab('ratings')">Credit ratings</button>
             <button type="button" class="itab"        id="cfgtab-formats"   onclick="showConfigTab('formats')">Formats</button>
             <button type="button" class="itab"        id="cfgtab-alerts"    onclick="showConfigTab('alerts')">Database alerts</button>
+          </div>
+
+          <!-- ===== CREDIT RATINGS MAINTAINER ===== -->
+          <div id="cfg-ratings" class="cfg-pane" style="display:none;">
+            <div id="ratingsAdminRoot"></div>
           </div>
 
           <!-- ===== FORMATS ===== -->
@@ -1846,8 +2013,8 @@ body.light .app-error-title { color:#0f172a; }
             </div>
           </div>
 
-          <!-- Usage Statistics (always visible) -->
-          <div class="panel" style="margin-top:16px;">
+          <!-- Usage Statistics (visible salvo en el mantenedor de ratings) -->
+          <div class="panel" id="cfgUsageStats" style="margin-top:16px;">
               <div class="panel-head"><div class="panel-title">Usage Statistics</div></div>
               <div class="panel-body" style="display:flex;flex-direction:column;gap:16px;">
                 <div style="display:flex;gap:32px;flex-wrap:wrap;">
@@ -1878,7 +2045,7 @@ body.light .app-error-title { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon93"></script>
+<script type="module" src="js/app.js?v=bmon94"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

@@ -1,0 +1,454 @@
+{
+  "version": 1,
+  "updated": "2026-08-11",
+  "generator": "tools/build_bank_ratings_seed.py",
+  "note": "Calificaciones de riesgo por banco y calificadora. Las columnas de cada país las define RATING_AGENCIES en js/ratings.js. `status` distingue el dato confirmado contra la fuente primaria (verified) del heredado sin contrastar (unverified) y del banco que la calificadora no cubre (not_rated). Una celda ausente está pendiente de revisión.",
+  "countries": {
+    "CL": {
+      "banks": {
+        "1": {
+          "cells": {
+            "humphreys": {
+              "rating": "AAA",
+              "status": "verified",
+              "outlook": "Estable",
+              "as_of": "2026-08",
+              "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
+              "note": "Corto plazo: Nivel 1+."
+            },
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Máxima categoría de solvencia local (AAA) con perspectivas estables."
+            }
+          }
+        },
+        "9": {
+          "cells": {
+            "feller": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "12": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Banco público soberano; solvencia AAA con perspectivas estables."
+            }
+          }
+        },
+        "14": {
+          "cells": {
+            "fitch_cl": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia local AAA(cl) / AAA. Fitch Chile e ICR; respaldo de The Bank of Nova Scotia."
+            }
+          },
+          "note": "Fitch Chile e ICR publican la misma solvencia AAA. La columna Fitch recoge la de Fitch Chile; falta contrastar ICR."
+        },
+        "16": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia AAA (Feller); una de las franquicias privadas de mayor escala en Chile."
+            }
+          }
+        },
+        "28": {
+          "cells": {
+            "feller": {
+              "rating": "AA+",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia AA+ (Feller); en proceso de integración con Banco Security."
+            }
+          }
+        },
+        "31": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "37": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia AAA; filial chilena de Banco Santander S.A."
+            }
+          }
+        },
+        "39": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia AAA; franquicia Itaú en Chile."
+            }
+          }
+        },
+        "41": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "49": {
+          "note": "La solvencia local AA+ heredada la publicó ICR, que no tiene columna propia. No se atribuye a Fitch/Feller/Humphreys sin verificar."
+        },
+        "51": {
+          "cells": {
+            "feller": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "53": {
+          "cells": {
+            "humphreys": {
+              "rating": "AA-",
+              "status": "verified",
+              "outlook": "Estable",
+              "as_of": "2026-08",
+              "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
+              "note": "Corto plazo: Nivel 1+."
+            },
+            "fitch_cl": {
+              "rating": "AA-",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Banco Ripley Chile en AA- (distinto de Ripley Corp / Ripley Chile retail)."
+            }
+          },
+          "note": "Humphreys, Fitch e ICR coinciden en AA-. Falta contrastar ICR."
+        },
+        "55": {
+          "cells": {
+            "feller": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "59": {
+          "cells": {
+            "feller": {
+              "rating": "AA",
+              "status": "unverified",
+              "outlook": "Estable",
+              "note": "Solvencia AA; banco chileno del grupo BTG Pactual."
+            }
+          }
+        },
+        "60": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "61": {
+          "cells": {
+            "feller": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "62": {
+          "cells": {
+            "humphreys": {
+              "rating": "AA-",
+              "status": "verified",
+              "outlook": "En Observación",
+              "as_of": "2026-08",
+              "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
+              "note": "Corto plazo: Nivel 1+."
+            }
+          },
+          "note": "Humphreys e ICR coinciden en AA-. Falta contrastar ICR."
+        }
+      }
+    },
+    "CO": {
+      "banks": {
+        "1": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "2": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "6": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "7": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "9": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "12": {
+          "cells": {
+            "local": {
+              "rating": "AA+",
+              "status": "unverified"
+            }
+          }
+        },
+        "13": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "23": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "30": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified",
+              "agency": "BRC Ratings",
+              "outlook": "Estable",
+              "note": "Por 15 años consecutivos ha mantenido la máxima nota local, destacando su resiliencia y fuerte enfoque en el sector de ahorro popular."
+            }
+          }
+        },
+        "39": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified",
+              "agency": "Fitch / BRC",
+              "outlook": "Estable",
+              "note": "AAA(col) nacional con perspectiva estable (Fitch). El IDR internacional mantiene outlook negativo por el soberano; la nota local sigue en la máxima categoría."
+            }
+          }
+        },
+        "42": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified",
+              "agency": "Fitch / BRC",
+              "outlook": "Estable",
+              "note": "Ratificado en la categoría más alta gracias al soporte estratégico de su casa matriz (The Bank of Nova Scotia) y su robusta capacidad de pago."
+            }
+          }
+        },
+        "43": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "49": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "51": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "52": {
+          "cells": {
+            "local": {
+              "rating": "AA-",
+              "status": "unverified",
+              "agency": "BRC Ratings",
+              "outlook": "Estable",
+              "note": "Subió su calificación a inicios de 2026. Es un grado de inversión muy alto, reflejando una excelente gestión en el nicho de microfinanzas."
+            }
+          }
+        },
+        "53": {
+          "cells": {
+            "local": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "54": {
+          "cells": {
+            "local": {
+              "rating": "AA-",
+              "status": "unverified"
+            }
+          }
+        },
+        "55": {
+          "cells": {
+            "local": {
+              "rating": "AA+",
+              "status": "unverified"
+            }
+          }
+        },
+        "56": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "57": {
+          "cells": {
+            "local": {
+              "rating": "A-",
+              "status": "unverified"
+            }
+          }
+        },
+        "58": {
+          "cells": {
+            "local": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "59": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified",
+              "agency": "Fitch Ratings",
+              "outlook": "Estable",
+              "note": "Fitch afirmó su nota en marzo de 2026. El banco ha mejorado su perfil financiero y calidad de cartera (mora de 3,2%)."
+            }
+          }
+        },
+        "60": {
+          "cells": {
+            "local": {
+              "rating": "AA+",
+              "status": "unverified"
+            }
+          }
+        },
+        "62": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified",
+              "agency": "Fitch Ratings",
+              "outlook": "Estable",
+              "note": "En abril de 2026 recibió su sexta calificación AAA consecutiva. Es considerado de importancia estratégica para el Grupo Credicorp."
+            }
+          }
+        },
+        "63": {
+          "cells": {
+            "local": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "64": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "65": {
+          "cells": {
+            "local": {
+              "rating": "A+",
+              "status": "unverified"
+            }
+          }
+        },
+        "66": {
+          "cells": {
+            "local": {
+              "rating": "AAA",
+              "status": "unverified"
+            }
+          }
+        },
+        "67": {
+          "cells": {
+            "local": {
+              "rating": "AA",
+              "status": "unverified"
+            }
+          }
+        },
+        "68": {
+          "cells": {
+            "local": {
+              "rating": "A+",
+              "status": "unverified"
+            }
+          }
+        }
+      }
+    }
+  }
+}
