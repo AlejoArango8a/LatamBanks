@@ -16,7 +16,7 @@ import { liveCountries } from '../paises.js?v=bmon96';
 import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon96';
 import { fetchWithTimeout } from '../api.js?v=bmon96';
 import {
-  agenciesFor, SCOPE_LABEL, RATING_SCALES, OUTLOOKS, RATING_STATUS,
+  agenciesFor, SCOPE_LABEL, RATING_SCALES, OUTLOOKS, RATING_STATUS, normalizeOutlook,
   loadPublishedRatings, mergedBanks, setDraftCell, setDraftBankNote,
   clearDraft, replaceDraft, draftCount, isDraftCell, exportPayload,
   cellStatus, ratingTone, isStale, coverage,
@@ -35,10 +35,10 @@ const AGENCY_SUGGESTIONS = [
 ];
 
 const FILTERS = [
-  { key: 'all',        label: 'Todos' },
-  { key: 'incomplete', label: 'Sin cobertura mínima' },
-  { key: 'unverified', label: 'Por verificar' },
-  { key: 'pending',    label: 'Sin revisar' },
+  { key: 'all',        label: 'All' },
+  { key: 'incomplete', label: 'Below minimum coverage' },
+  { key: 'unverified', label: 'To verify' },
+  { key: 'pending',    label: 'Not reviewed' },
 ];
 
 /**
@@ -175,9 +175,9 @@ function render() {
     ${countryBarHtml()}
     ${bodyHtml()}
     <ul class="fa-notes">
-      <li><strong>Cobertura mínima</strong>: cada banco debería tener al menos una calificación local y una internacional. El porcentaje se calcula sobre todas las instituciones del país, no solo sobre las visibles.</li>
-      <li><strong>Verificada</strong> significa contrastada contra la publicación de la propia calificadora; <strong>sin verificar</strong> es un dato heredado que todavía no se confirma. <strong>No calificado</strong> deja constancia de que la calificadora no cubre a ese banco, que es distinto de no haberlo revisado.</li>
-      <li>Las ediciones quedan en un borrador de este navegador. Se publican exportando el JSON a <span style="font-family:var(--mono);">data/bank_ratings.json</span>, de modo que cada cambio quede revisable en el repositorio.</li>
+      <li><strong>Minimum coverage</strong>: every bank should carry at least one local and one international rating. The percentage is measured against all institutions in the country, not just the visible ones.</li>
+      <li><strong>Verified</strong> means checked against the rating agency’s own publication; <strong>unverified</strong> is inherited data still to be confirmed. <strong>Not rated</strong> records that the agency does not cover the bank, which is different from not having reviewed it.</li>
+      <li>Edits stay as a draft in this browser. Publishing means exporting the JSON into <span style="font-family:var(--mono);">data/bank_ratings.json</span>, so every change stays reviewable in the repository.</li>
     </ul>
   `;
 
@@ -192,17 +192,17 @@ function render() {
 
 function heroHtml(drafts) {
   const updated = state.seed?.updated
-    ? `Publicado ${escapeHtml(state.seed.updated)}`
-    : 'Sin publicar';
+    ? `Published ${escapeHtml(state.seed.updated)}`
+    : 'Not published';
   const badge = drafts
-    ? `<span class="ra-draft-badge">${drafts} cambio${drafts === 1 ? '' : 's'} sin publicar</span>`
+    ? `<span class="ra-draft-badge">${drafts} unpublished change${drafts === 1 ? '' : 's'}</span>`
     : '';
   return `
     <div class="fa-hero ra-hero">
       <div>
         <div class="fa-eyebrow">Configuration · Data maintenance</div>
         <div class="fa-title">Credit ratings</div>
-        <div class="fa-sub">Mantenedor de calificaciones de riesgo por banco y calificadora. Registra la nota, la perspectiva, la fecha, la fuente y — sobre todo — si el dato está confirmado o todavía hay que contrastarlo.</div>
+        <div class="fa-sub">Credit rating maintainer, by bank and rating agency. It records the rating, the outlook, the date, the source and — above all — whether the figure is confirmed or still has to be checked.</div>
       </div>
       <div class="ra-hero-meta">
         <div class="ra-hero-updated">${updated}</div>
@@ -224,14 +224,14 @@ function bodyHtml() {
   if (state.error) {
     return `<div class="panel"><div class="panel-body">
       <div class="fa-empty">
-        <div class="fa-empty-title">No pude cargar los bancos</div>
+        <div class="fa-empty-title">Could not load the banks</div>
         <div class="fa-empty-sub">${escapeHtml(state.error)}</div>
-        <button type="button" class="rcbtn" onclick="ratingsAdmin.reload()">Reintentar</button>
+        <button type="button" class="rcbtn" onclick="ratingsAdmin.reload()">Retry</button>
       </div></div></div>`;
   }
   if (state.loading || !state.seed) {
     return `<div class="panel"><div class="panel-body">
-      <div class="fa-empty"><div class="fa-empty-sub">Cargando calificaciones…</div></div>
+      <div class="fa-empty"><div class="fa-empty-sub">Loading ratings…</div></div>
     </div></div>`;
   }
 
@@ -244,8 +244,8 @@ function bodyHtml() {
   if (!banks.length) {
     return `<div class="panel"><div class="panel-body">
       <div class="fa-empty">
-        <div class="fa-empty-title">Sin instituciones cargadas</div>
-        <div class="fa-empty-sub">Este país todavía no tiene bancos en la base de datos.</div>
+        <div class="fa-empty-title">No institutions loaded</div>
+        <div class="fa-empty-sub">This country has no banks in the database yet.</div>
       </div></div></div>`;
   }
 
@@ -257,34 +257,34 @@ function bodyHtml() {
   const shown = capped ? matched.slice(0, VISIBLE_CAP) : matched;
 
   const scope = q
-    ? `${matched.length} de ${banks.length} bancos coinciden con «${escapeHtml(state.search.trim())}»`
+    ? `${matched.length} of ${banks.length} banks match “${escapeHtml(state.search.trim())}”`
     : capped
-      ? `Mostrando los ${VISIBLE_CAP} mayores por patrimonio de ${banks.length} bancos`
-      : `${banks.length} bancos ordenados por patrimonio`;
+      ? `Showing the ${VISIBLE_CAP} largest by equity of ${banks.length} banks`
+      : `${banks.length} banks sorted by equity`;
 
   return `
     ${kpisHtml(cov)}
     <div class="panel">
       <div class="panel-head">
         <div>
-          <div class="panel-title">${escapeHtml(paisNameFor(iso))} · ${agencies.length} calificadoras</div>
-          <div class="panel-sub">${scope} · clic en una celda para editarla</div>
+          <div class="panel-title">${escapeHtml(paisNameFor(iso))} · ${agencies.length} rating agencies</div>
+          <div class="panel-sub">${scope} · click a cell to edit it</div>
         </div>
         <div class="ra-actions">
-          <input id="raSearch" class="ra-search" type="search" placeholder="Buscar banco…"
+          <input id="raSearch" class="ra-search" type="search" placeholder="Search bank…"
             value="${escapeAttr(state.search)}" oninput="ratingsAdmin.setSearch(this.value)">
-          <div class="ra-filter-group" role="group" aria-label="Filtrar bancos">
+          <div class="ra-filter-group" role="group" aria-label="Filter banks">
             ${FILTERS.map((f) => `<button type="button" class="ra-filter ${state.filter === f.key ? 'active' : ''}"
               onclick="ratingsAdmin.setFilter('${f.key}')">${f.label}</button>`).join('')}
           </div>
-          <button type="button" class="rcbtn ra-export" onclick="ratingsAdmin.exportJson()">Exportar JSON</button>
-          <button type="button" class="rcbtn" onclick="ratingsAdmin.importJson()">Importar</button>
-          ${draftCount(iso) ? `<button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.discard()">Descartar borrador</button>` : ''}
+          <button type="button" class="rcbtn ra-export" onclick="ratingsAdmin.exportJson()">Export JSON</button>
+          <button type="button" class="rcbtn" onclick="ratingsAdmin.importJson()">Import</button>
+          ${draftCount(iso) ? `<button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.discard()">Discard draft</button>` : ''}
         </div>
       </div>
       <div class="panel-body ra-table-wrap">${tableHtml(iso, agencies, shown, data)}</div>
       ${capped ? `<div class="ra-more">
-        <button type="button" class="rcbtn" onclick="ratingsAdmin.showAll()">Ver los ${banks.length} bancos</button>
+        <button type="button" class="rcbtn" onclick="ratingsAdmin.showAll()">Show all ${banks.length} banks</button>
       </div>` : ''}
     </div>`;
 }
@@ -297,12 +297,12 @@ function paisNameFor(iso) {
 function kpisHtml(cov) {
   const pct = cov.banks ? Math.round((cov.complete / cov.banks) * 100) : 0;
   const tiles = [
-    { label: 'Bancos', value: cov.banks, sub: 'en el mantenedor', tone: '' },
-    { label: 'Cobertura mínima', value: `${pct}%`, sub: `${cov.complete} con local + internacional`, tone: 'ra-tone-accent' },
-    { label: 'Verificadas', value: cov.verified, sub: 'contrastadas con la fuente', tone: 'ra-tone-ok' },
-    { label: 'Por verificar', value: cov.unverified, sub: 'cargadas sin contrastar', tone: 'ra-tone-warn' },
-    { label: 'Sin revisar', value: cov.pending, sub: `de ${cov.cells} celdas`, tone: 'ra-tone-muted' },
-    { label: 'No calificados', value: cov.not_rated, sub: 'confirmado sin cobertura', tone: 'ra-tone-muted' },
+    { label: 'Banks', value: cov.banks, sub: 'in the maintainer', tone: '' },
+    { label: 'Minimum coverage', value: `${pct}%`, sub: `${cov.complete} with local + international`, tone: 'ra-tone-accent' },
+    { label: 'Verified', value: cov.verified, sub: 'checked against the source', tone: 'ra-tone-ok' },
+    { label: 'To verify', value: cov.unverified, sub: 'loaded but not checked', tone: 'ra-tone-warn' },
+    { label: 'Not reviewed', value: cov.pending, sub: `of ${cov.cells} cells`, tone: 'ra-tone-muted' },
+    { label: 'Not rated', value: cov.not_rated, sub: 'confirmed as not covered', tone: 'ra-tone-muted' },
   ];
   return `<div class="ra-kpi-grid">${tiles.map((t) => `
     <div class="kpi ${t.tone}">
@@ -331,11 +331,11 @@ function tableHtml(iso, agencies, banks, data) {
   const head = `
     <thead>
       <tr>
-        <th rowspan="2" class="ra-col-bank">Banco</th>
+        <th rowspan="2" class="ra-col-bank">Bank</th>
         <th colspan="${locals.length}" class="ra-group">${SCOPE_LABEL.local}</th>
         <th colspan="${globals.length}" class="ra-group ra-group-split">${SCOPE_LABEL.global}</th>
         <th rowspan="2" class="ra-col-cov"
-          title="Cobertura mínima: el primer punto marca si el banco tiene calificación local y el segundo si tiene internacional">Mín.</th>
+          title="Minimum coverage: the first dot marks a local rating, the second an international one">Min.</th>
       </tr>
       <tr>
         ${agencies.map((a) => `<th class="ra-col-agency ${a.key === firstGlobal ? 'ra-split' : ''}"
@@ -351,8 +351,8 @@ function tableHtml(iso, agencies, banks, data) {
     const hasLocal = locals.some((a) => ['verified', 'unverified'].includes(cellStatus(cells[a.key])));
     const hasGlobal = globals.some((a) => ['verified', 'unverified'].includes(cellStatus(cells[a.key])));
     const covTip = hasLocal && hasGlobal
-      ? 'Cumple la cobertura mínima: tiene calificación local e internacional'
-      : `Falta la calificación ${!hasLocal && !hasGlobal ? 'local y la internacional' : !hasLocal ? 'local' : 'internacional'}`;
+      ? 'Meets minimum coverage: has both a local and an international rating'
+      : `Missing the ${!hasLocal && !hasGlobal ? 'local and international ratings' : !hasLocal ? 'local rating' : 'international rating'}`;
     const covMark = `<span class="ra-pips" title="${escapeAttr(covTip)}">
       <span class="ra-pip ${hasLocal ? 'on' : ''}"></span>
       <span class="ra-pip ${hasGlobal ? 'on' : ''}"></span>
@@ -365,7 +365,7 @@ function tableHtml(iso, agencies, banks, data) {
     return `<tr>
       <td class="ra-col-bank">
         <button type="button" class="ra-bank-btn" onclick="ratingsAdmin.editNote(${b.code})"
-          title="Editar la nota de este banco">${escapeHtml(b.name)}</button>
+          title="Edit this bank’s note">${escapeHtml(b.name)}</button>
         <span class="ra-bank-code">${b.code}</span>
         ${note}
       </td>
@@ -377,8 +377,8 @@ function tableHtml(iso, agencies, banks, data) {
   const visible = rows.trim();
   if (!visible) {
     return `<div class="fa-empty">
-      <div class="fa-empty-title">Nada que revisar</div>
-      <div class="fa-empty-sub">Ningún banco cumple el filtro «${FILTERS.find((f) => f.key === state.filter).label}».</div>
+      <div class="fa-empty-title">Nothing to review</div>
+      <div class="fa-empty-sub">No bank matches the “${FILTERS.find((f) => f.key === state.filter).label}” filter.</div>
     </div>`;
   }
   return `<table class="fa-table ra-table">${head}<tbody>${rows}</tbody></table>`;
@@ -396,7 +396,7 @@ function cellHtml(iso, code, agency, cell, split) {
   if (st === 'pending') {
     inner = `<span class="ra-add">+</span>`;
   } else if (st === 'not_rated') {
-    inner = `<span class="ra-dot" style="background:${meta.color};"></span><span class="ra-na">no califica</span>`;
+    inner = `<span class="ra-dot" style="background:${meta.color};"></span><span class="ra-na">not rated</span>`;
   } else {
     const sub = agency.open && cell.agency ? escapeHtml(cell.agency) : escapeHtml(cell.outlook || '');
     inner = `
@@ -407,11 +407,11 @@ function cellHtml(iso, code, agency, cell, split) {
 
   const tip = [
     agency.label,
-    cell?.agency && agency.open ? `Calificadora: ${cell.agency}` : '',
-    cell?.rating ? `Nota: ${cell.rating}` : '',
-    cell?.outlook ? `Perspectiva: ${cell.outlook}` : '',
-    cell?.as_of ? `Fecha: ${cell.as_of}` : '',
-    `Estado: ${meta.label} — ${meta.hint}`,
+    cell?.agency && agency.open ? `Agency: ${cell.agency}` : '',
+    cell?.rating ? `Rating: ${cell.rating}` : '',
+    cell?.outlook ? `Outlook: ${normalizeOutlook(cell.outlook)}` : '',
+    cell?.as_of ? `Date: ${cell.as_of}` : '',
+    `Status: ${meta.label} — ${meta.hint}`,
     cell?.note || '',
   ].filter(Boolean).join('\n');
 
@@ -419,7 +419,7 @@ function cellHtml(iso, code, agency, cell, split) {
     title="${escapeAttr(tip)}"
     onclick="ratingsAdmin.openCell(${code}, '${agency.key}')">
     ${inner}
-    ${stale ? '<span class="ra-stale" title="Más de 18 meses sin revisión">⏳</span>' : ''}
+    ${stale ? '<span class="ra-stale" title="More than 18 months without review">⏳</span>' : ''}
   </td>`;
 }
 
@@ -452,6 +452,7 @@ function openCell(code, agencyKey) {
 
   const scale = RATING_SCALES[agency.scale] || RATING_SCALES.local;
   const status = cellStatus(cell) === 'pending' ? 'unverified' : cellStatus(cell);
+  const outlook = normalizeOutlook(cell.outlook);
 
   const el = dialogEl();
   el.innerHTML = `
@@ -460,7 +461,7 @@ function openCell(code, agencyKey) {
         <div>
           <div class="ra-dialog-eyebrow">${escapeHtml(SCOPE_LABEL[agency.scope === 'local' ? 'local' : 'global'])}</div>
           <div class="ra-dialog-title">${escapeHtml(bank?.name || `Bank ${code}`)}</div>
-          <div class="ra-dialog-sub">${escapeHtml(agency.label)}${agency.open ? ' · indica qué calificadora emitió la nota' : ''}</div>
+          <div class="ra-dialog-sub">${escapeHtml(agency.label)}${agency.open ? ' · state which agency issued the rating' : ''}</div>
         </div>
         <button type="button" class="custom-kpi-close" onclick="ratingsAdmin.close()">×</button>
       </div>
@@ -468,34 +469,34 @@ function openCell(code, agencyKey) {
       <div class="ra-dialog-body">
         ${agency.open ? `
         <label class="ra-field">
-          <span class="ra-field-lbl">Calificadora</span>
+          <span class="ra-field-lbl">Rating agency</span>
           <input id="raAgency" list="raAgencyList" class="ra-input" autocomplete="off"
-            placeholder="p. ej. Fitch Ratings" value="${escapeAttr(cell.agency || '')}">
+            placeholder="e.g. Fitch Ratings" value="${escapeAttr(cell.agency || '')}">
           <datalist id="raAgencyList">${AGENCY_SUGGESTIONS.map((a) => `<option value="${escapeAttr(a)}">`).join('')}</datalist>
         </label>` : ''}
 
         <div class="ra-field-row">
           <label class="ra-field">
-            <span class="ra-field-lbl">Calificación</span>
+            <span class="ra-field-lbl">Rating</span>
             <input id="raRating" list="raScale" class="ra-input ra-input-mono" autocomplete="off"
               placeholder="—" value="${escapeAttr(cell.rating || '')}">
             <datalist id="raScale">${scale.map((r) => `<option value="${r}">`).join('')}</datalist>
           </label>
           <label class="ra-field">
-            <span class="ra-field-lbl">Perspectiva</span>
+            <span class="ra-field-lbl">Outlook</span>
             <select id="raOutlook" class="ra-input">
               <option value="">—</option>
-              ${OUTLOOKS.map((o) => `<option value="${o}" ${o === cell.outlook ? 'selected' : ''}>${o}</option>`).join('')}
+              ${OUTLOOKS.map((o) => `<option value="${o}" ${o === outlook ? 'selected' : ''}>${o}</option>`).join('')}
             </select>
           </label>
           <label class="ra-field">
-            <span class="ra-field-lbl">Fecha de la nota</span>
+            <span class="ra-field-lbl">Rating date</span>
             <input id="raAsOf" type="month" class="ra-input" value="${escapeAttr(String(cell.as_of || '').slice(0, 7))}">
           </label>
         </div>
 
         <div class="ra-field">
-          <span class="ra-field-lbl">Confiabilidad del dato</span>
+          <span class="ra-field-lbl">Reliability</span>
           <div class="ra-status-seg" id="raStatus" data-value="${status}">
             ${['verified', 'unverified', 'not_rated'].map((k) => `
               <button type="button" class="ra-status-opt ${k === status ? 'active' : ''}" data-k="${k}"
@@ -505,23 +506,23 @@ function openCell(code, agencyKey) {
         </div>
 
         <label class="ra-field">
-          <span class="ra-field-lbl">Fuente</span>
-          <input id="raSource" class="ra-input" placeholder="URL del comunicado de la calificadora"
+          <span class="ra-field-lbl">Source</span>
+          <input id="raSource" class="ra-input" placeholder="URL of the agency’s release"
             value="${escapeAttr(cell.source || '')}">
         </label>
 
         <label class="ra-field">
-          <span class="ra-field-lbl">Nota interna</span>
+          <span class="ra-field-lbl">Internal note</span>
           <textarea id="raNote" class="ra-input ra-textarea" rows="3"
-            placeholder="Qué se revisó, qué falta contrastar…">${escapeHtml(cell.note || '')}</textarea>
+            placeholder="What was reviewed, what is still to be checked…">${escapeHtml(cell.note || '')}</textarea>
         </label>
       </div>
 
       <div class="ra-dialog-foot">
-        <button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.clearCell()">Limpiar celda</button>
+        <button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.clearCell()">Clear cell</button>
         <div class="ra-foot-right">
-          <button type="button" class="rcbtn" onclick="ratingsAdmin.close()">Cancelar</button>
-          <button type="button" class="rcbtn active" onclick="ratingsAdmin.saveCell()">Guardar</button>
+          <button type="button" class="rcbtn" onclick="ratingsAdmin.close()">Cancel</button>
+          <button type="button" class="rcbtn active" onclick="ratingsAdmin.saveCell()">Save</button>
         </div>
       </div>
     </div>`;
@@ -576,7 +577,7 @@ function editNote(code) {
   const bank = (state.banksByIso[iso] || []).find((b) => b.code === code);
   const current = mergedBanks(state.seed, iso)[code]?.note || '';
   const next = window.prompt(
-    `Nota de ${bank?.name || `Bank ${code}`}\n\nContexto sobre la cobertura de calificadoras de este banco.`,
+    `Note for ${bank?.name || `Bank ${code}`}\n\nContext on this bank’s rating agency coverage.`,
     current,
   );
   if (next === null) return;
@@ -616,7 +617,7 @@ function importJson() {
     try {
       const data = JSON.parse(await file.text());
       if (!data || typeof data !== 'object' || !data.countries) {
-        throw new Error('el archivo no tiene un bloque "countries"');
+        throw new Error('the file has no "countries" block');
       }
       // Entra como borrador: lo publicado sigue siendo el archivo del repo.
       const draft = {};
@@ -626,14 +627,14 @@ function importJson() {
       replaceDraft(draft);
       render();
     } catch (e) {
-      window.alert(`No pude leer el archivo: ${e.message}`);
+      window.alert(`Could not read the file: ${e.message}`);
     }
   };
   input.click();
 }
 
 function discard() {
-  if (!window.confirm(`Se descartan los cambios sin publicar de ${paisNameFor(state.iso)}. ¿Continuar?`)) return;
+  if (!window.confirm(`This discards the unpublished changes for ${paisNameFor(state.iso)}. Continue?`)) return;
   clearDraft(state.iso);
   render();
 }

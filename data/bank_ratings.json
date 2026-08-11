@@ -11,7 +11,7 @@
             "humphreys": {
               "rating": "AAA",
               "status": "verified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "as_of": "2026-08",
               "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
               "note": "Corto plazo: Nivel 1+."
@@ -19,7 +19,7 @@
             "feller": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Máxima categoría de solvencia local (AAA) con perspectivas estables."
             }
           }
@@ -37,7 +37,7 @@
             "feller": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Banco público soberano; solvencia AAA con perspectivas estables."
             }
           }
@@ -47,7 +47,7 @@
             "fitch_cl": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia local AAA(cl) / AAA. Fitch Chile e ICR; respaldo de The Bank of Nova Scotia."
             }
           },
@@ -58,7 +58,7 @@
             "feller": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia AAA (Feller); una de las franquicias privadas de mayor escala en Chile."
             }
           }
@@ -68,7 +68,7 @@
             "feller": {
               "rating": "AA+",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia AA+ (Feller); en proceso de integración con Banco Security."
             }
           }
@@ -86,7 +86,7 @@
             "feller": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia AAA; filial chilena de Banco Santander S.A."
             }
           }
@@ -96,7 +96,7 @@
             "feller": {
               "rating": "AAA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia AAA; franquicia Itaú en Chile."
             }
           }
@@ -125,7 +125,7 @@
             "humphreys": {
               "rating": "AA-",
               "status": "verified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "as_of": "2026-08",
               "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
               "note": "Corto plazo: Nivel 1+."
@@ -133,7 +133,7 @@
             "fitch_cl": {
               "rating": "AA-",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Banco Ripley Chile en AA- (distinto de Ripley Corp / Ripley Chile retail)."
             }
           },
@@ -152,7 +152,7 @@
             "feller": {
               "rating": "AA",
               "status": "unverified",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Solvencia AA; banco chileno del grupo BTG Pactual."
             }
           }
@@ -178,7 +178,7 @@
             "humphreys": {
               "rating": "AA-",
               "status": "verified",
-              "outlook": "En Observación",
+              "outlook": "Watch",
               "as_of": "2026-08",
               "source": "https://www.humphreys.cl/clasificaciones/instituciones-financieras/",
               "note": "Corto plazo: Nivel 1+."
@@ -260,7 +260,7 @@
               "rating": "AAA",
               "status": "unverified",
               "agency": "BRC Ratings",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Por 15 años consecutivos ha mantenido la máxima nota local, destacando su resiliencia y fuerte enfoque en el sector de ahorro popular."
             }
           }
@@ -271,7 +271,7 @@
               "rating": "AAA",
               "status": "unverified",
               "agency": "Fitch / BRC",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "AAA(col) nacional con perspectiva estable (Fitch). El IDR internacional mantiene outlook negativo por el soberano; la nota local sigue en la máxima categoría."
             }
           }
@@ -282,7 +282,7 @@
               "rating": "AAA",
               "status": "unverified",
               "agency": "Fitch / BRC",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Ratificado en la categoría más alta gracias al soporte estratégico de su casa matriz (The Bank of Nova Scotia) y su robusta capacidad de pago."
             }
           }
@@ -317,7 +317,7 @@
               "rating": "AA-",
               "status": "unverified",
               "agency": "BRC Ratings",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Subió su calificación a inicios de 2026. Es un grado de inversión muy alto, reflejando una excelente gestión en el nicho de microfinanzas."
             }
           }
@@ -376,7 +376,7 @@
               "rating": "AAA",
               "status": "unverified",
               "agency": "Fitch Ratings",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "Fitch afirmó su nota en marzo de 2026. El banco ha mejorado su perfil financiero y calidad de cartera (mora de 3,2%)."
             }
           }
@@ -395,7 +395,7 @@
               "rating": "AAA",
               "status": "unverified",
               "agency": "Fitch Ratings",
-              "outlook": "Estable",
+              "outlook": "Stable",
               "note": "En abril de 2026 recibió su sexta calificación AAA consecutiva. Es considerado de importancia estratégica para el Grupo Credicorp."
             }
           }

@@ -33,8 +33,8 @@ export const RATING_AGENCIES = Object.freeze({
 });
 
 export const RATING_AGENCIES_DEFAULT = Object.freeze([
-  { key: 'local',         label: 'Calificadora local',         short: 'Local',         scope: 'local',  scale: 'local',  open: true },
-  { key: 'international', label: 'Calificadora internacional', short: 'Internacional', scope: 'global', scale: 'global', open: true },
+  { key: 'local',         label: 'Local rating agency',         short: 'Local',         scope: 'local',  scale: 'local',  open: true },
+  { key: 'international', label: 'International rating agency', short: 'International', scope: 'global', scale: 'global', open: true },
 ]);
 
 /** Columnas del país, en orden: primero las locales, después las internacionales. */
@@ -43,8 +43,8 @@ export function agenciesFor(iso) {
 }
 
 export const SCOPE_LABEL = Object.freeze({
-  local: 'Escala local',
-  global: 'Escala internacional',
+  local: 'Local scale',
+  global: 'International scale',
 });
 
 /** Sugerencias del editor. El campo acepta texto libre para notas con sufijos. */
@@ -58,14 +58,37 @@ export const RATING_SCALES = Object.freeze({
 });
 
 export const OUTLOOKS = Object.freeze([
-  'Estable', 'Positiva', 'Negativa', 'En Observación', 'En Desarrollo',
+  'Stable', 'Positive', 'Negative', 'Watch', 'Developing',
 ]);
 
+/**
+ * El mantenedor nació con las perspectivas en español y esos valores quedaron
+ * en el JSON publicado y en los borradores del navegador. Sin esta traducción
+ * un valor viejo no coincidiría con ninguna opción del selector: aparecería
+ * vacío y al guardar se perdería el dato.
+ */
+const OUTLOOK_ALIASES = Object.freeze({
+  estable: 'Stable',
+  positiva: 'Positive',
+  negativa: 'Negative',
+  'en observación': 'Watch',
+  'en observacion': 'Watch',
+  'en desarrollo': 'Developing',
+});
+
+export function normalizeOutlook(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const alias = OUTLOOK_ALIASES[raw.toLowerCase()];
+  if (alias) return alias;
+  return OUTLOOKS.find((o) => o.toLowerCase() === raw.toLowerCase()) || raw;
+}
+
 export const RATING_STATUS = Object.freeze({
-  verified:   { label: 'Verificada',    short: 'Verificada',  color: 'var(--green)',  hint: 'Contrastada contra la fuente primaria.' },
-  unverified: { label: 'Sin verificar', short: 'Sin verif.',  color: 'var(--yellow)', hint: 'Cargada pero sin contrastar con la calificadora.' },
-  not_rated:  { label: 'No calificado', short: 'No califica', color: 'var(--text3)',  hint: 'Confirmado: la calificadora no cubre a este banco.' },
-  pending:    { label: 'Pendiente',     short: 'Pendiente',   color: 'var(--text3)',  hint: 'Todavía no se revisa.' },
+  verified:   { label: 'Verified',   short: 'Verified',   color: 'var(--green)',  hint: 'Checked against the rating agency’s own publication.' },
+  unverified: { label: 'Unverified', short: 'Unverified', color: 'var(--yellow)', hint: 'Loaded but not yet checked against the agency.' },
+  not_rated:  { label: 'Not rated',  short: 'Not rated',  color: 'var(--text3)',  hint: 'Confirmed: this agency does not cover the bank.' },
+  pending:    { label: 'Pending',    short: 'Pending',    color: 'var(--text3)',  hint: 'Not reviewed yet.' },
 });
 
 export const STATUS_ORDER = ['verified', 'unverified', 'not_rated', 'pending'];

@@ -1162,8 +1162,14 @@ body.light .ra-filter.active { box-shadow:0 1px 3px rgba(15,23,42,0.12); }
   border-bottom:1px solid var(--border2); background:var(--bg2);
 }
 .ra-table th.ra-col-agency { font-size:10px; color:var(--text2); }
-.ra-table th.ra-col-bank { text-align:left; min-width:210px; }
-.ra-table th.ra-col-cov { width:44px; }
+/* Encabezado de la columna principal: ocupa las dos filas de la cabecera, así
+   que se centra en ambos ejes para no quedar descolgado arriba a la izquierda
+   frente a los grupos de calificadoras, que sí van centrados. */
+.ra-table th.ra-col-bank {
+  text-align:center; vertical-align:middle; min-width:230px;
+  font-size:13px; font-weight:700; letter-spacing:0.1em; color:var(--text);
+}
+.ra-table th.ra-col-cov { width:44px; vertical-align:middle; }
 .ra-table td { vertical-align:middle; padding:8px 10px; }
 .ra-table td.ra-col-bank { text-align:left; }
 .ra-table tbody tr:hover td { background:rgba(255,255,255,0.015); }
