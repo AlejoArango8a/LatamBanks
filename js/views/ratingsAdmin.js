@@ -60,13 +60,21 @@ function countryList() {
   return liveCountries().map((p) => ({ iso: p.iso, key: p.key, name: p.name }));
 }
 
+/** Partículas que no se capitalizan dentro de una razón social. */
+const NAME_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'do', 'da', 'dos', 'das', 'en', 'el']);
+
 /** Convierte una razón social en mayúsculas a algo legible. */
 function cleanName(raw) {
   const s = String(raw || '').trim();
   if (!s || s !== s.toUpperCase()) return s;
   return s.toLowerCase()
-    .replace(/\b([a-záéíóúüñ])/g, (c) => c.toUpperCase())
-    .replace(/\bS\.?a\.?\b/g, 'S.A.');
+    .split(/\s+/)
+    .map((tok, i) => {
+      if (i > 0 && NAME_PARTICLES.has(tok)) return tok;
+      if (/^s\.?a\.?[a-z]*\.?$/.test(tok)) return tok.toUpperCase();
+      return tok.charAt(0).toUpperCase() + tok.slice(1);
+    })
+    .join(' ');
 }
 
 /**
@@ -222,9 +230,10 @@ function bodyHtml() {
           <div class="panel-sub">${banks.length} bancos ordenados por patrimonio · clic en una celda para editarla</div>
         </div>
         <div class="ra-actions">
-          ${FILTERS.map((f) => `<button type="button" class="rcbtn ra-filter ${state.filter === f.key ? 'active' : ''}"
-            onclick="ratingsAdmin.setFilter('${f.key}')">${f.label}</button>`).join('')}
-          <span class="ra-sep"></span>
+          <div class="ra-filter-group" role="group" aria-label="Filtrar bancos">
+            ${FILTERS.map((f) => `<button type="button" class="ra-filter ${state.filter === f.key ? 'active' : ''}"
+              onclick="ratingsAdmin.setFilter('${f.key}')">${f.label}</button>`).join('')}
+          </div>
           <button type="button" class="rcbtn ra-export" onclick="ratingsAdmin.exportJson()">Exportar JSON</button>
           <button type="button" class="rcbtn" onclick="ratingsAdmin.importJson()">Importar</button>
           ${draftCount(iso) ? `<button type="button" class="rcbtn ra-discard" onclick="ratingsAdmin.discard()">Descartar borrador</button>` : ''}
@@ -279,7 +288,8 @@ function tableHtml(iso, agencies, banks, data) {
         <th rowspan="2" class="ra-col-bank">Banco</th>
         <th colspan="${locals.length}" class="ra-group">${SCOPE_LABEL.local}</th>
         <th colspan="${globals.length}" class="ra-group ra-group-split">${SCOPE_LABEL.global}</th>
-        <th rowspan="2" class="ra-col-cov">Mín.</th>
+        <th rowspan="2" class="ra-col-cov"
+          title="Cobertura mínima: el primer punto marca si el banco tiene calificación local y el segundo si tiene internacional">Mín.</th>
       </tr>
       <tr>
         ${agencies.map((a) => `<th class="ra-col-agency ${a.key === firstGlobal ? 'ra-split' : ''}"
@@ -294,9 +304,13 @@ function tableHtml(iso, agencies, banks, data) {
 
     const hasLocal = locals.some((a) => ['verified', 'unverified'].includes(cellStatus(cells[a.key])));
     const hasGlobal = globals.some((a) => ['verified', 'unverified'].includes(cellStatus(cells[a.key])));
-    const covMark = hasLocal && hasGlobal
-      ? `<span class="ra-cov ra-cov-ok" title="Tiene calificación local e internacional">✓</span>`
-      : `<span class="ra-cov ra-cov-miss" title="Falta ${!hasLocal ? 'la local' : ''}${!hasLocal && !hasGlobal ? ' y ' : ''}${!hasGlobal ? 'la internacional' : ''}">!</span>`;
+    const covTip = hasLocal && hasGlobal
+      ? 'Cumple la cobertura mínima: tiene calificación local e internacional'
+      : `Falta la calificación ${!hasLocal && !hasGlobal ? 'local y la internacional' : !hasLocal ? 'local' : 'internacional'}`;
+    const covMark = `<span class="ra-pips" title="${escapeAttr(covTip)}">
+      <span class="ra-pip ${hasLocal ? 'on' : ''}"></span>
+      <span class="ra-pip ${hasGlobal ? 'on' : ''}"></span>
+    </span>`;
 
     const note = bank.note
       ? `<div class="ra-bank-note" title="${escapeAttr(bank.note)}">${escapeHtml(bank.note)}</div>`
@@ -330,14 +344,17 @@ function cellHtml(iso, code, agency, cell, split) {
   const draft = isDraftCell(iso, code, agency.key);
   const stale = cell && isStale(cell.as_of);
 
+  // Una celda pendiente no lleva punto de estado: sumaría ruido en una tabla
+  // que arranca mayormente vacía. Solo queda el "+" que invita a completarla.
   let inner;
   if (st === 'pending') {
     inner = `<span class="ra-add">+</span>`;
   } else if (st === 'not_rated') {
-    inner = `<span class="ra-na">no califica</span>`;
+    inner = `<span class="ra-dot" style="background:${meta.color};"></span><span class="ra-na">no califica</span>`;
   } else {
     const sub = agency.open && cell.agency ? escapeHtml(cell.agency) : escapeHtml(cell.outlook || '');
     inner = `
+      <span class="ra-dot" style="background:${meta.color};"></span>
       <span class="ra-rating" style="color:${ratingTone(cell.rating)};">${escapeHtml(cell.rating)}</span>
       ${sub ? `<span class="ra-cell-sub">${sub}</span>` : ''}`;
   }
@@ -355,7 +372,6 @@ function cellHtml(iso, code, agency, cell, split) {
   return `<td class="ra-cell ra-st-${st} ${split ? 'ra-split' : ''} ${draft ? 'ra-draft' : ''}"
     title="${escapeAttr(tip)}"
     onclick="ratingsAdmin.openCell(${code}, '${agency.key}')">
-    <span class="ra-dot" style="background:${meta.color};"></span>
     ${inner}
     ${stale ? '<span class="ra-stale" title="Más de 18 meses sin revisión">⏳</span>' : ''}
   </td>`;

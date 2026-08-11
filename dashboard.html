@@ -1119,9 +1119,21 @@ body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
 .kpi.ra-tone-warn   { border-left-color:var(--yellow); }
 .kpi.ra-tone-muted  { border-left-color:var(--border2); }
 
-.ra-actions { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
-.ra-actions .rcbtn.ra-filter { padding:4px 10px; font-size:11px; }
-.ra-sep { width:1px; height:18px; background:var(--border2); margin:0 4px; }
+.ra-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+/* Los filtros van en un control segmentado para que no se confundan con los
+   botones de publicación, que sí tienen consecuencias. */
+.ra-filter-group {
+  display:flex; gap:2px; padding:2px; margin-right:6px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:20px;
+}
+.ra-filter {
+  padding:4px 11px; border:none; border-radius:20px; cursor:pointer;
+  background:transparent; color:var(--text2);
+  font-family:var(--sans); font-size:11px; font-weight:500; white-space:nowrap;
+}
+.ra-filter:hover { color:var(--accent); }
+.ra-filter.active { background:var(--bg2); color:var(--white); font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,0.25); }
+body.light .ra-filter.active { box-shadow:0 1px 3px rgba(15,23,42,0.12); }
 .rcbtn.ra-export { color:var(--green); }
 .rcbtn.ra-discard { color:var(--yellow); }
 
@@ -1181,9 +1193,13 @@ body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
   width:5px; height:5px; border-radius:50%; background:var(--yellow);
 }
 .ra-col-cov { text-align:center; }
-.ra-cov { font-family:var(--mono); font-size:12px; font-weight:700; }
-.ra-cov-ok { color:var(--green); }
-.ra-cov-miss { color:var(--yellow); }
+.ra-table th.ra-col-cov { cursor:help; }
+.ra-pips { display:inline-flex; gap:3px; align-items:center; }
+.ra-pip {
+  width:6px; height:6px; border-radius:50%;
+  border:1px solid var(--border2); background:transparent;
+}
+.ra-pip.on { background:var(--green); border-color:var(--green); }
 
 /* Editor de celda */
 .ra-overlay {
