@@ -10,17 +10,17 @@
 // data/bank_ratings.json — el mismo circuito curado y revisable en git que ya
 // usa el resto de los datos de referencia de la plataforma.
 // ============================================================
-import { datasetIsoCountry } from '../state.js?v=bmon97';
-import { API_BASE, btgCodeForCountry } from '../config.js?v=bmon97';
-import { liveCountries } from '../paises.js?v=bmon97';
-import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon97';
-import { fetchWithTimeout } from '../api.js?v=bmon97';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon98';
+import { API_BASE, btgCodeForCountry } from '../config.js?v=bmon98';
+import { liveCountries } from '../paises.js?v=bmon98';
+import { bankName, escapeHtml, escapeAttr } from '../format.js?v=bmon98';
+import { fetchWithTimeout } from '../api.js?v=bmon98';
 import {
   agenciesFor, SCOPE_LABEL, RATING_SCALES, OUTLOOKS, RATING_STATUS, normalizeOutlook,
   loadPublishedRatings, mergedBanks, setDraftCell, setDraftBankNote,
   clearDraft, replaceDraft, draftCount, isDraftCell, exportPayload,
   cellStatus, ratingTone, isStale, coverage,
-} from '../ratings.js?v=bmon97';
+} from '../ratings.js?v=bmon98';
 
 const FLAG = {
   CL: '🇨🇱', CO: '🇨🇴', BR: '🇧🇷', PE: '🇵🇪', UY: '🇺🇾',
