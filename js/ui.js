@@ -2,14 +2,14 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon95';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor, btgCodeForCountry } from './config.js?v=bmon95';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon95';
-import { setStatus, showErr } from './utils.js?v=bmon95';
-import { sumRows } from './api.js?v=bmon95';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon95';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon95';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon95';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon96';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor, btgCodeForCountry } from './config.js?v=bmon96';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon96';
+import { setStatus, showErr } from './utils.js?v=bmon96';
+import { sumRows } from './api.js?v=bmon96';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon96';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon96';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon96';
 export { fetchUSDRate };
 
 // ---- Run & period ----
