@@ -774,11 +774,32 @@ export async function toggleCurrency() {
 }
 
 // ---- Font ----
+const FONT_KEY = 'dashboardFont';
+
+/** Las mismas opciones que ofrece Config › Formats, para poder restaurarlas. */
+const FONT_OPTIONS = [
+  { id: 'fontOpt1', value: "'Plus Jakarta Sans', sans-serif" },
+  { id: 'fontOpt2', value: "'Inter', sans-serif" },
+  { id: 'fontOpt3', value: "'DM Sans', sans-serif" },
+  { id: 'fontOpt4', value: "Calibri, 'Gill Sans', sans-serif" },
+];
+
+/** Reaplica la fuente elegida en una visita anterior. Sin elección, no toca nada. */
+export function restoreFont() {
+  let saved = null;
+  try { saved = localStorage.getItem(FONT_KEY); } catch { /* storage bloqueado */ }
+  const opt = FONT_OPTIONS.find((o) => o.value === saved);
+  if (opt) setFont(opt.value, opt.id);
+}
+
 export function setFont(fontValue, activeId) {
   document.documentElement.style.setProperty('--sans', fontValue);
   document.body.style.fontFamily = fontValue;
   const isCalibri = fontValue.includes('Calibri');
   const basePx    = isCalibri ? 17 : 14;
+  // El tamaño base viaja con la fuente, así que hay que dejar ST en el mismo
+  // valor o el control de tamaño mostraría uno distinto al que se está usando.
+  ST.fontSize = basePx;
   document.documentElement.style.fontSize = basePx + 'px';
   document.body.style.fontSize            = basePx + 'px';
   document.querySelectorAll('.kpi-val').forEach(el => { el.style.fontSize  = isCalibri ? '22px' : ''; });
@@ -799,6 +820,11 @@ export function setFont(fontValue, activeId) {
       el.querySelector('span').style.color = 'var(--text)';
     }
   });
+  try { localStorage.setItem(FONT_KEY, fontValue); } catch { /* storage bloqueado */ }
+  const label = document.getElementById('fontSizeLabel');
+  const track = document.getElementById('fontSizeTrack');
+  if (label) label.textContent  = basePx + 'px';
+  if (track) track.style.width  = ((basePx - 11) / (18 - 11) * 100) + '%';
   if (ST._lastResChart) window.showResChart(ST._lastResChart);
 }
 

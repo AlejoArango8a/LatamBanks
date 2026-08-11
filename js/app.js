@@ -34,7 +34,7 @@ import {
   syncCountryFlagsVisual,
   syncBrandLogoByTheme, toggleTheme, toggleBarLabels, refreshBarLabelsToggleButtons,
   fetchUSDRate, convertAmt, toggleCurrency, syncCurrencyToggleUI, refreshMoneyDenominatedUI,
-  setFont, changeFontSize, resetFontSize, applyFontSize,
+  setFont, restoreFont, changeFontSize, resetFontSize, applyFontSize,
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
@@ -404,6 +404,7 @@ if (_darkBtn && _lightBtn) {
   _lightBtn.style.color      = '#fff';
 }
 syncBrandLogoByTheme();
+restoreFont();
 
 if (document.getElementById('switchCLP') && document.getElementById('switchUSD')) syncCurrencyToggleUI();
 
