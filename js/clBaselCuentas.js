@@ -2,7 +2,7 @@
 // Chile Basilea III — CMF Adecuación de Capital maps
 // Ratios live in tipo='q1' (percent ×100); stocks in tipo='x1' (pesos).
 // ============================================================
-import { aqRatioFromQ1, aqPct } from './aqCuentas.js?v=bmon93';
+import { aqRatioFromQ1, aqPct } from './aqCuentas.js?v=bmon94';
 
 export const CL_B3 = {
   peApr: 'CL_B3_PE_APR',

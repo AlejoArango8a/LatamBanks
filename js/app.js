@@ -1,29 +1,30 @@
 // ============================================================
 // APP — entry point: init(), boot, window.* global exposure
 // ============================================================
-import { API_BASE } from './config.js?v=bmon93';
-import { ST, datasetIsoCountry } from './state.js?v=bmon93';
-import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon93';
-import { fetchWithTimeout } from './api.js?v=bmon93';
-import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon93';
+import { API_BASE } from './config.js?v=bmon94';
+import { ST, datasetIsoCountry } from './state.js?v=bmon94';
+import { setStatus, showErr, setLsMsg, showDataErrorDialog } from './utils.js?v=bmon94';
+import { fetchWithTimeout } from './api.js?v=bmon94';
+import { loadPaises, resolveCountryKey, pais } from './paises.js?v=bmon94';
 
 // Views
-import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon93';
+import { run, refreshKPIs, showResChart, showROEChart, setNiMode, toggleDeltaMode } from './views/resumen.js?v=bmon94';
 import {
   showBalTab, selectBalBank, renderResTable, selectResBank, renderCalidad, renderComparativo,
   syncFinStatementPanelLabels,
-} from './views/balance.js?v=bmon93';
-import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon93';
-import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon93';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon93';
-import { renderBankDetail } from './views/bankDetail.js?v=bmon93';
-import { renderBtgBanks } from './views/btgBanks.js?v=bmon93';
-import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon93';
-import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon93';
-import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon93';
-import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon93';
-import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon93';
-import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon93';
+} from './views/balance.js?v=bmon94';
+import { initAccountView, avClearAccount, avSelectGroup, avSuggest, avTreeToggle, avSelectAccount, runAccountView } from './views/accountview.js?v=bmon94';
+import { renderChileanBanks, sortCBBy, renderCBTable, renderRatingsEditor, updateRating, ensureClRatingsLoaded } from './views/ranking.js?v=bmon94';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon94';
+import { renderBankDetail } from './views/bankDetail.js?v=bmon94';
+import { renderBtgBanks } from './views/btgBanks.js?v=bmon94';
+import { renderFundingAnalytics, refreshFundingAnalytics } from './views/fundingAnalytics.js?v=bmon94';
+import { renderAssetQuality, refreshAssetQuality } from './views/assetQuality.js?v=bmon94';
+import { renderBaselAnalytics, refreshBaselAnalytics } from './views/baselAnalytics.js?v=bmon94';
+import { renderInstitutionalFunding, refreshInstitutionalFunding } from './views/institutionalFunding.js?v=bmon94';
+import { populateConfig, trackVisit, loadVisitStats } from './views/config_tab.js?v=bmon94';
+import { paintRatingsAdmin, ratingsAdmin } from './views/ratingsAdmin.js?v=bmon94';
+import { openCustomKpiPicker } from './views/customKpiPicker.js?v=bmon94';
 
 // UI
 import {
@@ -37,11 +38,11 @@ import {
   initTopbarTabsOverflow,
   syncResumenMoraChartButton,
   syncCountryChartButtons, syncCountryDisabledTabs,
-} from './ui.js?v=bmon93';
+} from './ui.js?v=bmon94';
 
 // Export helpers
-import { exportTableById, exportChartTable } from './export.js?v=bmon93';
-import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon93';
+import { exportTableById, exportChartTable } from './export.js?v=bmon94';
+import { patchColombiaGrupoAvalBootstrap } from './coGrupoAval.js?v=bmon94';
 
 function applyBootstrapPayload(j) {
   ST.periodos = j.periodos || [];
@@ -347,14 +348,19 @@ window.populateConfig   = populateConfig;
 window.loadVisitStats   = loadVisitStats;
 window.openCustomKpiPicker = openCustomKpiPicker;
 
-// Config sub-tabs: Formats / Country details / Database alerts
+// Config sub-tabs: Country details / Credit ratings / Formats / Database alerts
+window.ratingsAdmin = ratingsAdmin;
 window.showConfigTab = function (name) {
-  ['formats', 'countries', 'alerts'].forEach(k => {
+  ['formats', 'countries', 'alerts', 'ratings'].forEach(k => {
     const pane = document.getElementById('cfg-' + k);
     if (pane) pane.style.display = (k === name) ? 'block' : 'none';
     const btn = document.getElementById('cfgtab-' + k);
     if (btn) btn.classList.toggle('active', k === name);
   });
+  // El mantenedor ocupa la pantalla completa; las visitas sobran ahí.
+  const usage = document.getElementById('cfgUsageStats');
+  if (usage) usage.style.display = (name === 'ratings') ? 'none' : '';
+  if (name === 'ratings') paintRatingsAdmin();
 };
 
 // UI
