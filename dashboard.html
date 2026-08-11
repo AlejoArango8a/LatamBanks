@@ -238,7 +238,9 @@ body.light .tabs-scroll-chevron {
 .tab.active { color:var(--white); border-bottom-color:var(--accent); }
 .tab.tab-disabled { opacity:0.35; cursor:not-allowed; pointer-events:none; }
 .tab.primary {
-  font-size:13px; font-weight:700;
+  /* Sin negrita: el tamaño y el color ya distinguen las pestañas principales,
+     y en 700 el texto se lee demasiado pesado en la barra superior. */
+  font-size:13px; font-weight:500;
   color:var(--text);
   letter-spacing:0.2px;
   padding:0 18px;
