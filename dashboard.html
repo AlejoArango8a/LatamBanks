@@ -131,33 +131,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); font-si
   /* Theme (light/dark) control — hide on narrow viewports */
   .dashboard-theme-toggle { display: none !important; }
 
-  /* Banking System: solo Bank, Rating, Equity, Loans (orden lectura móvil) */
+  /* Banking System: solo Bank, los dos ratings, Equity y Loans (orden lectura móvil) */
   #cbTable .cb-col-rank,
   #cbTable .cb-col-assets,
   #cbTable .cb-col-ni,
   #cbTable .cb-col-loanseq { display: none !important; }
 
-  /* Anchos equilibrados: Rating alinea con Bank / Equity / Loans en pantalla angosta */
+  /* Las notas son cadenas de cuatro o cinco caracteres, así que sus columnas
+     pueden ser las más angostas y dejarle el ancho a las cifras. */
   #cbTable .tbl-banking-system {
     table-layout: fixed !important;
   }
   #cbTable .tbl-banking-system th.cb-col-bank,
   #cbTable .tbl-banking-system td.cb-col-bank {
-    width: 30% !important;
+    width: 26% !important;
   }
   #cbTable .tbl-banking-system th.cb-col-rating,
   #cbTable .tbl-banking-system td.cb-col-rating {
-    width: 23.333% !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    width: 15% !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  /* Dos palabras no entran de una línea en pantalla angosta. */
+  #cbTable .tbl-banking-system th.cb-col-rating {
+    white-space: normal !important;
+    line-height: 1.25;
   }
   #cbTable .tbl-banking-system th.cb-col-equity,
   #cbTable .tbl-banking-system td.cb-col-equity {
-    width: 23.333% !important;
+    width: 22% !important;
   }
   #cbTable .tbl-banking-system th.cb-col-loans,
   #cbTable .tbl-banking-system td.cb-col-loans {
-    width: 23.333% !important;
+    width: 22% !important;
   }
 }
 @media (max-width: 480px) {
@@ -2085,7 +2091,7 @@ body.light .app-error-title { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon99"></script>
+<script type="module" src="js/app.js?v=bmon100"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

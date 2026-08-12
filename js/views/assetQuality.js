@@ -41,12 +41,12 @@ import {
   US_AQ_COLORS,
   usAqAccountsForRun,
   usAqSnapshot,
-} from '../aqCuentas.js?v=bmon99';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon99';
-import { fetchData } from '../api.js?v=bmon99';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon99';
-import { btgBlue, bankColor } from '../config.js?v=bmon99';
-import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon99';
+} from '../aqCuentas.js?v=bmon100';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon100';
+import { fetchData } from '../api.js?v=bmon100';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon100';
+import { btgBlue, bankColor } from '../config.js?v=bmon100';
+import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon100';
 
 const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY', 'US']);
 const MAX_COMPARE_ENTITIES = 5;
