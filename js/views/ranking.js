@@ -56,7 +56,7 @@ export async function ensureClRatingsLoaded() {
 }
 import {
   loadPublishedRatings, scopeSummary, ratingTone, normalizeOutlook,
-  RATING_STATUS, SCOPE_LABEL,
+  letterScaleRating, RATING_STATUS, SCOPE_LABEL,
 } from '../ratings.js?v=bmon100';
 import { CO_CUIF } from '../coCuentas.js?v=bmon100';
 import { BR_KPI } from '../brCuentas.js?v=bmon100';
@@ -149,7 +149,10 @@ function cbScopeTooltip(summary, scopeLabel) {
   if (!summary.entries.length) return '';
   const lines = summary.entries.map((e) => {
     if (e.status === 'not_rated') return `${e.name}: does not cover this bank`;
-    const bits = [e.rating];
+    // Moody's publica en su propio alfabeto y la columna muestra el equivalente,
+    // así que acá van los dos: el dato oficial y con qué se lo comparó.
+    const letter = letterScaleRating(e.rating);
+    const bits = [letter === e.rating ? e.rating : `${e.rating} (${letter})`];
     if (e.cell?.outlook) bits.push(normalizeOutlook(e.cell.outlook));
     if (e.cell?.as_of) bits.push(asOfLabel(e.cell.as_of));
     bits.push(RATING_STATUS[e.status]?.label || e.status);
@@ -166,7 +169,9 @@ function cbRatingCell(cls, code, scope, scopeLabel) {
   const tip = cbScopeTooltip(summary, scopeLabel);
   // Sin nota pero con calificadoras que declararon no cubrirlo, el guion sigue
   // mereciendo tooltip: explica por qué está vacío.
-  const value = summary.worst?.rating || '—';
+  // Toda la columna en la escala de letras de Fitch y S&P: si una fila dijera
+  // 'Ba2' y la de al lado 'BBB+', la comparación de un vistazo no se puede hacer.
+  const value = summary.worst ? letterScaleRating(summary.worst.rating) : '—';
   const color = summary.worst ? ratingTone(summary.worst.rating) : 'var(--text3)';
   return `<td class="${cls}" style="text-align:center;">
     <span${tip ? ` title="${escapeAttr(tip)}"` : ''}
@@ -340,7 +345,7 @@ export function renderCBTable() {
         title="Lowest local-scale rating published in Config › Credit ratings"
         onclick="sortCBBy('ratingLocal')">Local Rating${arrow('ratingLocal')}</th>
       <th class="cb-col-rating cb-col-rating-intl" style="${thStyle}width:8%;text-align:center;"
-        title="Lowest international-scale rating published in Config › Credit ratings"
+        title="Lowest international-scale rating published in Config › Credit ratings, on the Fitch / S&P letter scale (Moody's notation converted)"
         onclick="sortCBBy('ratingIntl')">Intl Rating${arrow('ratingIntl')}</th>
       <th class="cb-col-assets r" style="${thStyle}width:11%;" onclick="sortCBBy('assets')">Total Assets${arrow('assets')}</th>
       <th class="cb-col-equity r" style="${thStyle}width:10%;" onclick="sortCBBy('equity')">Equity${arrow('equity')}</th>

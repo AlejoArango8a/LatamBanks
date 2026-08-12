@@ -126,6 +126,22 @@ export function ratingNotch(value) {
   return i === -1 ? null : i;
 }
 
+/**
+ * La misma nota expresada en la escala de letras de Fitch y S&P.
+ *
+ * Sirve para poner en una tabla comparativa notas de calificadoras que no
+ * hablan el mismo idioma: 'Ba2' de Moody's sale como 'BB'. Donde interesa qué
+ * publicó cada calificadora —el mantenedor, el tooltip— se sigue mostrando la
+ * notación original, que es el dato oficial.
+ *
+ * Si el valor no se reconoce en la escala se devuelve tal cual: es mejor
+ * mostrar algo inesperado que esconderlo.
+ */
+export function letterScaleRating(value) {
+  const n = ratingNotch(value);
+  return n === null ? String(value ?? '').trim() : NOTCHES[n];
+}
+
 /** Color por banda de riesgo, consistente con el resto de la plataforma. */
 export function ratingTone(value) {
   const n = ratingNotch(value);
