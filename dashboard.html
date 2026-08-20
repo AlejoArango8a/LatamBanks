@@ -1089,6 +1089,56 @@ body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
 .aq-honest code { font-family:var(--mono); font-size:10px; }
 .fa-table tr.aq-row-foreign td { background:rgba(124,58,237,0.06); }
 
+/* Solvency — la foto del sistema entero, con la misma mecánica de Banking
+   System: se ordena por columna y cada fila lleva a su banco. */
+.b3-sys-table td { vertical-align:middle; }
+.b3-sys-table th.b3-sys-sort { cursor:pointer; user-select:none; white-space:nowrap; }
+.b3-sys-table th.b3-sys-sort:hover { color:var(--white); }
+.b3-sys-table .b3-sys-rank {
+  text-align:center; font-family:var(--mono); font-size:11px; color:var(--text3);
+}
+.b3-sys-table .b3-sys-name {
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  color:var(--text); font-weight:500;
+}
+.b3-sys-table .b3-sys-num { font-family:var(--mono); font-size:11px; }
+.b3-sys-table tbody tr.b3-sys-row { cursor:pointer; border-left:3px solid transparent; }
+.b3-sys-table tbody tr.b3-sys-row:hover { background:rgba(56,189,248,0.06); }
+.b3-sys-table tbody tr.b3-sys-btg:hover { background:rgba(37,99,235,0.14); }
+.b3-sys-table tbody tr.b3-sys-total td {
+  background:var(--bg4); border-top:2px solid var(--border2);
+  font-weight:700; color:var(--white);
+}
+/* Un punto del color de la serie: dice cuáles de estos bancos están dibujados
+   en el gráfico de arriba. Los demás llevan un hueco del mismo ancho para que
+   los nombres queden alineados. */
+.b3-sys-dot {
+  display:inline-block; width:7px; height:7px; border-radius:50%;
+  margin-right:8px; vertical-align:middle;
+}
+.b3-sys-dot-off { background:transparent; }
+
+@media (max-width: 768px) {
+  /* Se van el ranking y las dos medidas más finas: quedan CET1, capital total
+     y el tamaño, que es con lo que se ubica a un banco entre sus pares. */
+  .b3-sys-table th.b3-sys-rank,
+  .b3-sys-table td.b3-sys-rank,
+  .b3-sys-table th[data-b3-sort="t1Apr"],
+  .b3-sys-table th[data-b3-sort="lev"],
+  .b3-sys-table th[data-b3-sort="density"] { display:none; }
+  .b3-sys-table td.b3-sys-col-t1Apr,
+  .b3-sys-table td.b3-sys-col-lev,
+  .b3-sys-table td.b3-sys-col-density { display:none; }
+  .b3-sys-table th, .b3-sys-table td { padding:8px 8px; }
+  .b3-sys-table th.b3-sys-sort { white-space:normal; line-height:1.25; }
+  /* Los anchos del escritorio suman menos de 100% al esconder columnas, así que
+     acá se reparte de nuevo entre las cuatro que quedan. */
+  .b3-sys-table th[data-b3-sort="name"] { width:34% !important; }
+  .b3-sys-table th[data-b3-sort="cet1Apr"] { width:20% !important; }
+  .b3-sys-table th[data-b3-sort="peApr"] { width:22% !important; }
+  .b3-sys-table th[data-b3-sort="apr"] { width:24% !important; }
+}
+
 /* Institutional Funding — reuses the .fa-* shell with a wholesale-funding accent */
 #institutionalFundingRoot .kpi-col { gap:8px; }
 #institutionalFundingRoot .kpi { padding:10px 12px; border-left:3px solid var(--border2); }
@@ -2091,7 +2141,7 @@ body.light .app-error-title { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon100"></script>
+<script type="module" src="js/app.js?v=bmon101"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;

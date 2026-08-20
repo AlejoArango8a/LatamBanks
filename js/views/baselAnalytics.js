@@ -10,12 +10,12 @@ import {
   clB3Snapshot,
   clB3RatioSeries,
   clB3StockSeries,
-} from '../clBaselCuentas.js?v=bmon100';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon100';
-import { fetchData } from '../api.js?v=bmon100';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon100';
-import { bankColor } from '../config.js?v=bmon100';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon100';
+} from '../clBaselCuentas.js?v=bmon101';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon101';
+import { apiDatos, fetchData } from '../api.js?v=bmon101';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon101';
+import { bankColor, btgBlue, btgRgba, btgCodeForCountry } from '../config.js?v=bmon101';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon101';
 
 const BASEL_COUNTRIES = new Set(['CL']);
 const MAX_COMPARE_ENTITIES = 5;
@@ -38,6 +38,25 @@ const state = {
   metric: 'ratios', // ratios | rwa | capital
   chartStyle: 'lines',
   waitTimer: null,
+};
+
+// ---- Foto del sistema -----------------------------------------------------
+//
+// Los gráficos de arriba viven de la selección del sidebar y del rango de
+// fechas. Esta tabla es otra cosa: el sistema entero en un solo mes, para poder
+// ubicar a un banco entre sus pares sin tener que elegirlos de a cinco. Por eso
+// tiene su propia carga, que pide un único período y sale barata aunque traiga
+// todos los bancos.
+const systemTable = {
+  key: '',
+  loading: false,
+  error: null,
+  rows: [],
+  periodo: null,
+  // Por tamaño del balance ponderado, no por ratio: ordenar por CET1 dejaría
+  // arriba a las agencias de bancos extranjeros, que tienen ratios enormes
+  // sobre carteras diminutas y no dicen nada del sistema.
+  sort: { col: 'apr', dir: -1 },
 };
 
 function esc(s) {
@@ -211,6 +230,8 @@ async function loadBaselData() {
       state.lastBank = banks[0];
       state.lastEntityId = String(banks[0]);
       state.loaded = true;
+      // El último mes con filas de Basilea, que es el que retrata el sistema.
+      await loadSystemTable(state.periodos[state.periodos.length - 1]);
     }
   } catch (e) {
     console.error('[baselAnalytics]', e);
@@ -321,47 +342,230 @@ function paintCharts() {
   });
 }
 
-function peerTableHtml(entities, periodo) {
-  const rows = entities.map((e) => {
-    const snap = clB3Snapshot(
-      rowsForBank(state.q1, e.codes[0]),
-      rowsForBank(state.x1, e.codes[0]),
-      periodo,
-    );
-    return `<tr>
-      <td>${esc(e.label)}</td>
-      <td class="r">${fmtPct(snap.cet1Apr)}</td>
-      <td class="r">${fmtPct(snap.t1Apr)}</td>
-      <td class="r">${fmtPct(snap.peApr)}</td>
-      <td class="r">${fmtPct(snap.lev)}</td>
-      <td class="r">${esc(snap.classLabel)}</td>
-      <td class="r">${snap.apr != null ? esc(fmtKPI(snap.apr)) : '—'}</td>
-    </tr>`;
-  });
-  // Sistema row
-  const sys = clB3Snapshot(
-    rowsForBank(state.q1, SISTEMA),
-    rowsForBank(state.x1, SISTEMA),
-    periodo,
-  );
-  if (sys.cet1Apr != null) {
-    rows.push(`<tr style="opacity:0.75">
-      <td>Sistema Bancario</td>
-      <td class="r">${fmtPct(sys.cet1Apr)}</td>
-      <td class="r">${fmtPct(sys.t1Apr)}</td>
-      <td class="r">${fmtPct(sys.peApr)}</td>
-      <td class="r">${fmtPct(sys.lev)}</td>
-      <td class="r">—</td>
-      <td class="r">${sys.apr != null ? esc(fmtKPI(sys.apr)) : '—'}</td>
-    </tr>`);
+/** Al cambiar de país la foto ya no aplica; el orden elegido sí se conserva. */
+function resetSystemTable() {
+  systemTable.key = '';
+  systemTable.rows = [];
+  systemTable.periodo = null;
+  systemTable.error = null;
+}
+
+/** Trae los ratios y los stocks de todos los bancos para un solo mes. */
+async function loadSystemTable(periodo) {
+  const key = `${datasetIsoCountry()}|${periodo}`;
+  if (!periodo || systemTable.key === key || systemTable.loading) return;
+  const codes = Object.keys(ST.bancos).map(Number).filter((c) => Number.isFinite(c));
+  if (!codes.length) return;
+
+  systemTable.loading = true;
+  systemTable.error = null;
+  try {
+    systemTable.rows = await apiDatos({
+      tipos: ['q1', 'x1'],
+      cuentas: [...CL_B3_Q1_ACCOUNTS, ...CL_B3_X1_ACCOUNTS],
+      periodos: [periodo],
+      bancos: codes,
+      select: 'ins_cod,periodo,cuenta,monto_total',
+    });
+    systemTable.periodo = periodo;
+    systemTable.key = key;
+  } catch (e) {
+    // Que falle la foto no puede tumbar los gráficos: la tabla avisa por su
+    // cuenta y el resto de la página queda en pie.
+    console.error('[baselAnalytics] system snapshot', e);
+    systemTable.error = e?.message || String(e);
+    systemTable.rows = [];
+    systemTable.periodo = null;
+    systemTable.key = '';
+  } finally {
+    systemTable.loading = false;
   }
-  return `<table class="fa-table">
-    <thead><tr>
-      <th>Bank</th><th class="r">CET1/APR</th><th class="r">T1/APR</th><th class="r">PE/APR</th>
-      <th class="r">Leverage</th><th class="r">Class</th><th class="r">APR</th>
-    </tr></thead>
-    <tbody>${rows.join('')}</tbody>
-  </table>`;
+}
+
+/** Una fila por entidad con datos de Basilea publicados ese mes. */
+function systemRowModels() {
+  const periodo = systemTable.periodo;
+  if (!periodo) return [];
+  const byBank = new Map();
+  for (const r of systemTable.rows) {
+    const code = Number(r.ins_cod);
+    if (!Number.isFinite(code)) continue;
+    if (!byBank.has(code)) byBank.set(code, []);
+    byBank.get(code).push(r);
+  }
+
+  const out = [];
+  for (const [code, rows] of byBank) {
+    // Los ratios (q1) y los stocks (x1) no comparten nombres de cuenta, así que
+    // el mismo arreglo sirve de fuente para los dos.
+    const snap = clB3Snapshot(rows, rows, periodo);
+    if (snap.cet1Apr == null && snap.apr == null) continue;
+    out.push({
+      code,
+      name: code === SISTEMA ? 'System Total' : bankDisplayName(code),
+      snap,
+      // Cuánto pondera el regulador el balance. Sale de los dos stocks que ya
+      // vinieron, así que compara consolidado contra consolidado.
+      density: snap.apr != null && snap.atr ? (snap.apr / snap.atr) * 100 : null,
+    });
+  }
+  return out;
+}
+
+const SYSTEM_COLUMNS = [
+  {
+    key: 'cet1Apr', label: 'CET1 / RWA', width: '11%',
+    value: (r) => r.snap.cet1Apr,
+    tip: 'Common Equity Tier 1 over risk-weighted assets. CMF: Capital Básico (CET1) / APR.',
+  },
+  {
+    key: 't1Apr', label: 'Tier 1 / RWA', width: '11%',
+    value: (r) => r.snap.t1Apr,
+    tip: 'CET1 plus additional Tier 1 instruments, over risk-weighted assets. CMF: Capital Nivel 1 / APR.',
+  },
+  {
+    key: 'peApr', label: 'Total Capital / RWA', width: '13%',
+    value: (r) => r.snap.peApr,
+    tip: 'Every layer of regulatory capital, Tier 2 included, over risk-weighted assets. CMF: Patrimonio Efectivo / APR.',
+  },
+  {
+    key: 'lev', label: 'Leverage', width: '10%',
+    value: (r) => r.snap.lev,
+    tip: 'CET1 over total regulatory assets, with no risk weighting applied. CMF: Capital Básico / Activos Totales Regulatorios.',
+  },
+  {
+    key: 'density', label: 'RWA Density', width: '10%',
+    value: (r) => r.density,
+    tip: 'Risk-weighted assets over total regulatory assets. A low density means a book the regulator weights lightly, which is not the same as a strong capital position.',
+  },
+  {
+    key: 'apr', label: 'RWA', width: '14%',
+    value: (r) => r.snap.apr,
+    fmt: (v) => (v != null ? fmtKPI(v) : '—'),
+    tip: 'Risk-weighted assets: credit, market and operational added together. CMF: APR.',
+  },
+];
+
+const SYSTEM_COLUMN_BY_KEY = new Map(SYSTEM_COLUMNS.map((c) => [c.key, c]));
+
+function sortedSystemRows() {
+  const rows = systemRowModels();
+  // El Sistema no compite en el ranking: es la suma de los demás y va al pie.
+  const system = rows.find((r) => r.code === SISTEMA) || null;
+  const banks = rows.filter((r) => r.code !== SISTEMA);
+
+  const { col, dir } = systemTable.sort;
+  if (col === 'name') {
+    banks.sort((a, b) => dir * a.name.localeCompare(b.name));
+    return { banks, system };
+  }
+  const value = (SYSTEM_COLUMN_BY_KEY.get(col) || SYSTEM_COLUMN_BY_KEY.get('apr')).value;
+  banks.sort((a, b) => {
+    const av = value(a);
+    const bv = value(b);
+    // Sin dato no hay dónde ubicarlo en la escala, así que queda al final en
+    // los dos sentidos: intercalarlo entre cifras reales confundiría.
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return dir * (av - bv);
+  });
+  return { banks, system };
+}
+
+function sortSystemBy(col) {
+  const s = systemTable.sort;
+  if (s.col === col) s.dir *= -1;
+  else { s.col = col; s.dir = col === 'name' ? 1 : -1; }
+  paintShell();
+  requestAnimationFrame(() => paintCharts());
+}
+
+/** Bancos que están dibujados en el gráfico, para poder reconocerlos en la tabla. */
+function plottedColors() {
+  const map = new Map();
+  resolveEntities().forEach((e, i) => {
+    map.set(Number(e.codes[0]), bankColor(e.codes[0], i, e.label) || CL_B3_COLORS.system);
+  });
+  return map;
+}
+
+function systemCellHtml(col, row) {
+  const v = col.value(row);
+  const text = col.fmt ? col.fmt(v) : fmtPct(v);
+  // La clase por columna es lo que deja al CSS esconder celdas sueltas en móvil.
+  return `<td class="r b3-sys-num b3-sys-col-${col.key}">${esc(text)}</td>`;
+}
+
+function systemTableHtml() {
+  if (systemTable.error) {
+    return `<div class="fa-empty"><div class="fa-empty-sub" style="color:var(--red);">
+      Could not load the system snapshot: ${esc(systemTable.error)}
+    </div></div>`;
+  }
+  const { banks, system } = sortedSystemRows();
+  if (!banks.length && !system) {
+    return `<div class="fa-empty"><div class="fa-empty-sub">No published solvency figures for this month.</div></div>`;
+  }
+
+  const { col, dir } = systemTable.sort;
+  const arrow = (c) => (col === c ? (dir === 1 ? ' ↑' : ' ↓') : ' ↕');
+  const head = SYSTEM_COLUMNS.map((c) => `<th class="r b3-sys-sort" style="width:${c.width};"
+    data-b3-sort="${c.key}" title="${esc(c.tip)}">${esc(c.label)}${arrow(c.key)}</th>`).join('');
+
+  const btgCode = btgCodeForCountry();
+  const colors = plottedColors();
+
+  const bodyRows = banks.map((r, i) => {
+    const isBtg = btgCode != null && r.code === btgCode;
+    const plotted = colors.get(r.code);
+    const dot = plotted
+      ? `<span class="b3-sys-dot" style="background:${esc(plotted)}" title="Plotted in the chart above"></span>`
+      : '<span class="b3-sys-dot b3-sys-dot-off"></span>';
+    return `<tr class="b3-sys-row${isBtg ? ' b3-sys-btg' : ''}"
+      data-b3-focus="${r.code}"
+      title="Click to plot ${esc(r.name)} in the chart above"
+      ${isBtg ? `style="background:${btgRgba(0.08)};border-left:3px solid ${btgBlue()};"` : ''}>
+      <td class="b3-sys-rank">${i + 1}</td>
+      <td class="b3-sys-name"${isBtg ? ` style="color:${btgBlue()};font-weight:700;"` : ''}>${dot}${isBtg ? '★ ' : ''}${esc(r.name)}</td>
+      ${SYSTEM_COLUMNS.map((c) => systemCellHtml(c, r)).join('')}
+    </tr>`;
+  }).join('');
+
+  const systemRow = system ? `<tr class="b3-sys-total">
+    <td class="b3-sys-rank"></td>
+    <td class="b3-sys-name">${esc(system.name)}</td>
+    ${SYSTEM_COLUMNS.map((c) => systemCellHtml(c, system)).join('')}
+  </tr>` : '';
+
+  return `<div style="overflow-x:auto;">
+    <table class="data fa-table b3-sys-table" style="table-layout:fixed;width:100%;">
+      <thead><tr>
+        <th class="b3-sys-rank" style="width:5%;">#</th>
+        <th class="b3-sys-sort" style="width:26%;" data-b3-sort="name">Bank${arrow('name')}</th>
+        ${head}
+      </tr></thead>
+      <tbody>${bodyRows}${systemRow}</tbody>
+    </table>
+  </div>`;
+}
+
+function bindSystemTable() {
+  document.querySelectorAll('[data-b3-sort]').forEach((th) => {
+    th.addEventListener('click', () => sortSystemBy(th.getAttribute('data-b3-sort')));
+  });
+  document.querySelectorAll('[data-b3-focus]').forEach((tr) => {
+    tr.addEventListener('click', () => {
+      const code = Number(tr.getAttribute('data-b3-focus'));
+      // El sidebar es el dueño de la selección; al cambiarla, él mismo dispara
+      // el refresco de esta pestaña.
+      if (Number.isFinite(code)) window.toggleBank?.(code, true);
+    });
+  });
+  const btn = document.getElementById('b3SysExport');
+  if (btn && typeof window.exportTableById === 'function') {
+    btn.onclick = () => window.exportTableById('b3SystemTable', 'Chilean_Banking_Solvency');
+  }
 }
 
 function renderLoaded() {
@@ -380,6 +584,15 @@ function renderLoaded() {
     rowsForBank(state.x1, active.codes[0]),
     periodo,
   );
+
+  const systemBanksCount = sortedSystemRows().banks.length;
+  // La CMF publica el capital un mes después del balance. Si no se dice, la
+  // fecha de esta tabla parece un error frente al resto de la plataforma.
+  const lastBalance = ST.periodos?.[ST.periodos.length - 1];
+  const shownPeriod = systemTable.periodo || periodo;
+  const systemLagNote = lastBalance && shownPeriod && lastBalance > shownPeriod
+    ? ` · the CMF publishes capital a month behind the balance sheet, already at ${esc(periodLabel(lastBalance))}`
+    : '';
 
   const bankTabs = entities.map((e) =>
     `<button type="button" class="rcbtn ${e.id === active.id ? 'active' : ''}" data-b3-bank="${esc(e.id)}">${esc(e.label)}</button>`
@@ -440,11 +653,18 @@ function renderLoaded() {
     </div>
 
     <div class="panel" style="margin-top:18px;">
-      <div class="panel-head">
-        <div class="panel-title">Peer solvency · ${esc(periodLabel(periodo))}</div>
-        <div class="panel-sub">CMF published ratios · Sistema Bancario as reference</div>
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div>
+          <div class="panel-title">System solvency · ${esc(periodLabel(systemTable.periodo || periodo))}</div>
+          <div class="panel-sub">${systemBanksCount} banks with published Basilea III figures${systemLagNote} · click a row to plot it above</div>
+        </div>
+        <button type="button" class="rcbtn" id="b3SysExport">Export</button>
       </div>
-      ${peerTableHtml(entities, periodo)}
+      <div class="panel-body" id="b3SystemTable" style="padding:0;">
+        ${systemTable.loading
+          ? '<div class="fa-empty"><div class="fa-empty-sub">Loading the system snapshot…</div></div>'
+          : systemTableHtml()}
+      </div>
     </div>
 
     <div class="panel" style="margin-top:18px;">
@@ -522,6 +742,7 @@ function paintShell() {
 
   root.innerHTML = renderLoaded();
   bindPeerToolbar();
+  bindSystemTable();
   document.querySelectorAll('[data-b3-bank]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.lastEntityId = btn.getAttribute('data-b3-bank');
@@ -558,6 +779,7 @@ export function renderBaselAnalytics() {
     state.iso = null;
     state.selectionKey = '';
     state.error = null;
+    resetSystemTable();
     paintShell();
     return;
   }
@@ -566,6 +788,7 @@ export function renderBaselAnalytics() {
     state.loaded = false;
     state.selectionKey = '';
     state.error = null;
+    resetSystemTable();
   }
   if (state.loaded && state.selectionKey !== selectionKey()) {
     state.loaded = false;
