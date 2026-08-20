@@ -1131,11 +1131,16 @@ body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
   .b3-sys-table td.b3-sys-col-density { display:none; }
   .b3-sys-table th, .b3-sys-table td { padding:8px 8px; }
   .b3-sys-table th.b3-sys-sort { white-space:normal; line-height:1.25; }
+  /* En una columna angosta, cortar el nombre deja "Banco Inter…", que no
+     identifica a nadie: mejor que ocupe dos líneas. */
+  .b3-sys-table td.b3-sys-name {
+    white-space:normal; overflow:visible; text-overflow:clip; line-height:1.3;
+  }
   /* Los anchos del escritorio suman menos de 100% al esconder columnas, así que
      acá se reparte de nuevo entre las cuatro que quedan. */
-  .b3-sys-table th[data-b3-sort="name"] { width:34% !important; }
-  .b3-sys-table th[data-b3-sort="cet1Apr"] { width:20% !important; }
-  .b3-sys-table th[data-b3-sort="peApr"] { width:22% !important; }
+  .b3-sys-table th[data-b3-sort="name"] { width:36% !important; }
+  .b3-sys-table th[data-b3-sort="cet1Apr"] { width:19% !important; }
+  .b3-sys-table th[data-b3-sort="peApr"] { width:21% !important; }
   .b3-sys-table th[data-b3-sort="apr"] { width:24% !important; }
 }
 
