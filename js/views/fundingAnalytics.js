@@ -13,7 +13,7 @@ import {
   brSeries,
   brSum,
   brResultReset,
-} from '../brCuentas.js?v=bmon100';
+} from '../brCuentas.js?v=bmon101';
 import {
   CL_FUNDING_INSTRUMENTS,
   CL_FUNDING_COLORS,
@@ -25,7 +25,7 @@ import {
   clSeries,
   clSum,
   clExpenseMonth,
-} from '../clCuentas.js?v=bmon100';
+} from '../clCuentas.js?v=bmon101';
 import {
   UY_FUNDING_INSTRUMENTS,
   UY_FUNDING_COLORS,
@@ -39,12 +39,12 @@ import {
   uySeries,
   uySum,
   uyExpenseMonth,
-} from '../uyCuentas.js?v=bmon100';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon100';
-import { fetchData } from '../api.js?v=bmon100';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon100';
-import { btgBlue, bankColor } from '../config.js?v=bmon100';
-import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon100';
+} from '../uyCuentas.js?v=bmon101';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon101';
+import { fetchData } from '../api.js?v=bmon101';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon101';
+import { btgBlue, bankColor } from '../config.js?v=bmon101';
+import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon101';
 
 const FUNDING_COUNTRIES = new Set(['BR', 'CL', 'UY']);
 const MAX_COMPARE_ENTITIES = 5;
