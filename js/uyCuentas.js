@@ -11,7 +11,7 @@
 //   Uruguay has NO UF/UI column (indexed instruments live inside M/N), so
 //   monto_uf / monto_tc stay 0 — unlike Chile we only have local (UYU) vs FX.
 // ============================================================
-import { clExpenseMonth } from './clCuentas.js?v=bmon100';
+import { clExpenseMonth } from './clCuentas.js?v=bmon102';
 
 export const UY_KPI = {
   activos: '1',

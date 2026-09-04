@@ -14,7 +14,7 @@
 //   not_rated  → confirmado que la calificadora no cubre al banco
 //   (ausente)  → pendiente de revisar
 // ============================================================
-import { API_BASE } from './config.js?v=bmon100';
+import { API_BASE } from './config.js?v=bmon102';
 
 /**
  * Columnas por país. Chile trabaja con calificadoras nombradas (tres locales y
