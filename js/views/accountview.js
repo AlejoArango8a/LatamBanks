@@ -1,63 +1,201 @@
 // ============================================================
 // ACCOUNT VIEW — cross-bank account comparison
 // ============================================================
-import { ST, datasetIsoCountry } from '../state.js?v=bmon100';
-import { accountViewLevel } from '../coCuentas.js?v=bmon100';
-import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon100';
-import { apiDatos } from '../api.js?v=bmon100';
-import { btgBlue, btgRgba } from '../config.js?v=bmon100';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon102';
+import { accountViewLevel } from '../coCuentas.js?v=bmon102';
+import { bankName, fmtKPIDecimal, toSentenceCase, getTipo, periodLabel } from '../format.js?v=bmon102';
+import { apiDatos } from '../api.js?v=bmon102';
+import { btgBlue, btgRgba } from '../config.js?v=bmon102';
 
 const _isoCt = () => (datasetIsoCountry() === 'CO' ? 'CO' : 'CL');
 
-// ---- Hierarchy level helper (Chile 9-digit CMF vs Colombia 6-digit CUIF) ----
-// Brazil IF.data Conta codes are opaque sequential IDs → flat list.
+// ---- Forma del código de cuenta en cada país ------------------------------
+//
+// Es lo que decide si el explorador puede armar un árbol o tiene que listar en
+// plano, y hay cuatro formas distintas:
+//
+//   'cl'    numérico de la CMF, la jerarquía vive en los ceros finales
+//           (105000000 → 105000100 → 105000101)
+//   'co'    CUIF de seis dígitos, misma idea con otro largo
+//   'dots'  códigos del BCU separados por puntos (1 → 1.1 → 1.1.1)
+//   'flat'  sin jerarquía: slugs del regulador (ASSET, CAPITAL_SOCIAL) o
+//           identificadores opacos como los Conta de IF.data
+//
+// Antes solo se distinguía Brasil, y todo lo demás se medía con la regla
+// chilena. En Uruguay eso daba cero cuentas de primer nivel, así que el
+// desplegable salía vacío hasta que uno escribía algo y caía en la búsqueda
+// por texto, que no mira niveles. Lo mismo pasaba en Perú, Estados Unidos,
+// Argentina, México y Panamá.
+const CODE_SHAPE = Object.freeze({
+  CL: 'cl',
+  CO: 'co',
+  UY: 'dots',
+  BR: 'flat',
+  PE: 'flat',
+  US: 'flat',
+  AR: 'flat',
+  MX: 'flat',
+  PA: 'flat',
+});
+
+/** Ante un país desconocido, plano: peor una lista sin jerarquía que vacía. */
+function codeShape() {
+  return CODE_SHAPE[datasetIsoCountry()] || 'flat';
+}
+
+const DOT_MAX_LEVEL = 3;
+
 export function avGetLevel(c) {
-  if (datasetIsoCountry() === 'BR') return 1;
+  const shape = codeShape();
+  if (shape === 'flat') return 1;
+  if (shape === 'dots') {
+    // Un segmento por nivel. Los códigos sin punto (A1_…, S_…) quedan en 1, o
+    // sea raíces sueltas de la lista, que es lo que son.
+    return Math.min(String(c).split('.').length, DOT_MAX_LEVEL);
+  }
   return accountViewLevel(String(c), _isoCt());
+}
+
+/** ¿`cand` cuelga de `parent`? El nivel ya se filtró afuera. */
+export function avIsChildOf(parent, cand) {
+  const shape = codeShape();
+  // Sin jerarquía nadie cuelga de nadie: comparar prefijos haría que
+  // 'DEPOSITOS' pasara por hijo de 'DEP'.
+  if (shape === 'flat') return false;
+  if (shape === 'dots') {
+    // Por ruta y no por prefijo: si no, '19.1' se colgaría de '1'.
+    return cand.startsWith(`${parent}.`);
+  }
+  if (shape === 'co') {
+    const pp = parent.replace(/0+$/, '');
+    const cp = cand.replace(/0+$/, '');
+    return cp.startsWith(pp) && cp.length > pp.length;
+  }
+  const trailingZeros = parent.match(/0+$/)?.[0].length || 0;
+  return cand.startsWith(parent.slice(0, parent.length - trailingZeros));
+}
+
+// ---- Grupos por país ------------------------------------------------------
+//
+// Un grupo es el primer carácter del código, así que solo sirve donde ese
+// carácter significa algo. Los países con slugs no tienen grupos y van a lista
+// única.
+const DEFAULT_GROUPS = Object.freeze([
+  ['1', 'Assets'], ['2', 'Liabilities'], ['3', 'Equity'],
+  ['4', 'Income Statement'], ['5', 'IS Summary'],
+  ['6', 'Off-balance'], ['8', 'Supplementary'],
+]);
+
+const ACCOUNT_GROUPS = Object.freeze({
+  CL: DEFAULT_GROUPS,
+  CO: DEFAULT_GROUPS,
+  BR: Object.freeze([
+    ['1', 'Cosif new (≥2025)'], ['7', 'Cosif legacy (≤2024)'], ['8', 'Other'],
+  ]),
+  // El BCU numera activo, pasivo y patrimonio; el estado de resultados va
+  // repartido entre el 4 y el 25, así que no se puede resumir en un botón y
+  // queda dentro de "All accounts".
+  UY: Object.freeze([['1', 'Assets'], ['2', 'Liabilities'], ['3', 'Equity']]),
+});
+
+function accountGroups() {
+  return ACCOUNT_GROUPS[datasetIsoCountry()] || [];
+}
+
+/** Con qué grupo abre la pestaña: el primero, o todo si el país no tiene. */
+function defaultGroup() {
+  return accountGroups().length ? accountGroups()[0][0] : '';
+}
+
+/** ¿La cuenta cae en el grupo `digit`? Sin grupo entran todas. */
+export function avInGroup(code, digit) {
+  if (!digit) return true;
+  // En los códigos por puntos el grupo es el primer segmento completo. Mirando
+  // solo el primer carácter, el grupo 1 de Uruguay (activo) se llenaba con las
+  // líneas 10 a 19 del estado de resultados.
+  if (codeShape() === 'dots') return String(code).split('.')[0] === digit;
+  return String(code)[0] === digit;
+}
+
+/**
+ * Orden de la lista. Los códigos por puntos se comparan segmento a segmento y
+ * de forma numérica: por texto, 1.10 se colaba entre 1.1 y 1.2. Los demás países
+ * mantienen el orden alfabético, que en códigos de largo fijo es el correcto.
+ */
+export function avCompareCodes(a, b) {
+  if (codeShape() !== 'dots') return a < b ? -1 : a > b ? 1 : 0;
+  const sa = String(a).split('.');
+  const sb = String(b).split('.');
+  for (let i = 0; i < Math.max(sa.length, sb.length); i += 1) {
+    if (sa[i] === undefined) return -1;
+    if (sb[i] === undefined) return 1;
+    const na = Number(sa[i]);
+    const nb = Number(sb[i]);
+    // Los anexos (A1_…, S_…) no son números y se comparan como texto.
+    if (Number.isInteger(na) && Number.isInteger(nb)) {
+      if (na !== nb) return na - nb;
+    } else if (sa[i] !== sb[i]) {
+      return sa[i] < sb[i] ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
+/** Todas las cuentas del grupo activo, ya ordenadas. */
+function accountsInGroup(digit) {
+  return Object.keys(ST.planCuentas)
+    .filter((c) => avInGroup(c, digit) && avGetLevel(c) > 0)
+    .sort(avCompareCodes);
 }
 
 export function initAccountView() {
   const desde = document.getElementById('avDesde');
   const hasta  = document.getElementById('avHasta');
   if (!desde || !hasta || !ST.periodos.length) return;
-  if (desde.options.length === 0) {
-    ST.periodos.forEach(p => {
-      desde.innerHTML += `<option value="${p}">${periodLabel(p)}</option>`;
-      hasta.innerHTML  += `<option value="${p}">${periodLabel(p)}</option>`;
-    });
+  // Se rellenan cuando están vacíos y cuando el rango no es el del país activo:
+  // antes solo se miraba que estuvieran vacíos, así que al cambiar de país las
+  // fechas seguían siendo las del anterior. Pasando de Uruguay a Chile quedaban
+  // ofreciendo meses que Chile no tiene.
+  if ([...desde.options].map((o) => o.value).join() !== ST.periodos.join()) {
+    const opts = ST.periodos
+      .map((p) => `<option value="${p}">${periodLabel(p)}</option>`).join('');
+    desde.innerHTML = opts;
+    hasta.innerHTML  = opts;
     const n = ST.periodos.length;
     desde.selectedIndex = Math.max(0, n - 13);
     hasta.selectedIndex  = n - 1;
   }
   syncAvGroupButtonsForCountry();
-  if (!ST._avGroup) avSelectGroup('1');
+  if (!ST._avGroup) avSelectGroup(defaultGroup());
 }
 
-/** Relabel Account View group buttons for Brazil Conta prefixes. */
+const AVGRP_STYLE = `padding:8px 16px;border-radius:5px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);
+  font-size:13px;transition:all 0.15s;`;
+const AVGRP_ALL_STYLE = AVGRP_STYLE.replace('color:var(--text)', 'color:var(--text2)')
+  .replace('font-size:13px', 'font-size:12px');
+
+/** Dibuja la barra de grupos del país activo. */
 function syncAvGroupButtonsForCountry() {
   const wrap = document.getElementById('avGroupBtns');
   if (!wrap) return;
-  if (datasetIsoCountry() !== 'BR') {
-    if (wrap.dataset.brMode === '1') {
-      wrap.innerHTML = `
-        <button class="avgrp" onclick="avSelectGroup('1')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">1 — Assets</button>
-        <button class="avgrp" onclick="avSelectGroup('2')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">2 — Liabilities</button>
-        <button class="avgrp" onclick="avSelectGroup('3')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">3 — Equity</button>
-        <button class="avgrp" onclick="avSelectGroup('4')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">4 — Income Statement</button>
-        <button class="avgrp" onclick="avSelectGroup('5')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">5 — IS Summary</button>
-        <button class="avgrp" onclick="avSelectGroup('6')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">6 — Off-balance</button>
-        <button class="avgrp" onclick="avSelectGroup('8')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">8 — Supplementary</button>
-        <button class="avgrp" onclick="avSelectGroup('')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:12px;transition:all 0.15s;">All groups</button>`;
-      delete wrap.dataset.brMode;
-    }
-    return;
-  }
-  wrap.dataset.brMode = '1';
-  wrap.innerHTML = `
-    <button class="avgrp" onclick="avSelectGroup('1')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">1… — Cosif new (≥2025)</button>
-    <button class="avgrp" onclick="avSelectGroup('7')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">7… — Cosif legacy (≤2024)</button>
-    <button class="avgrp" onclick="avSelectGroup('8')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:var(--sans);font-size:13px;transition:all 0.15s;">8… — Other</button>
-    <button class="avgrp" onclick="avSelectGroup('')" style="padding:8px 16px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:12px;transition:all 0.15s;">All accounts</button>`;
+  const iso = datasetIsoCountry();
+  // Repintar en cada visita haría perder el resaltado del grupo elegido.
+  if (wrap.dataset.groupIso === iso) return;
+  wrap.dataset.groupIso = iso;
+
+  const groups = accountGroups();
+  const btn = (digit, label, style) =>
+    `<button class="avgrp" onclick="avSelectGroup('${digit}')" style="${style}">${label}</button>`;
+  // Brasil numera por plan de cuentas, no por rubro, y sus códigos son
+  // identificadores opacos: ahí el botón dice "todas las cuentas".
+  const allLabel = iso === 'CL' || iso === 'CO' ? 'All groups' : 'All accounts';
+  const suffix = iso === 'BR' ? '…' : '';
+
+  wrap.innerHTML = [
+    ...groups.map(([d, label]) => btn(d, `${d}${suffix} — ${label}`, AVGRP_STYLE)),
+    btn('', allLabel, AVGRP_ALL_STYLE),
+  ].join('');
 }
 
 export function avClearAccount() {
@@ -114,39 +252,44 @@ export function avSuggest(query) {
     return;
   }
 
-  if (!ST._avGroup && !q) { box.style.display = 'none'; return; }
+  // Sin nada escrito se muestran las cuentas del grupo activo, y todas cuando
+  // el país no tiene grupos: la lista disponible tiene que estar a la vista sin
+  // que haya que adivinar una letra para que aparezca.
   const digit      = ST._avGroup;
-  const allInGroup = Object.keys(ST.planCuentas)
-    .filter(c => (!digit || c[0] === digit) && avGetLevel(c) > 0)
-    .sort();
+  const allInGroup = accountsInGroup(digit);
   const l1 = allInGroup.filter(c => avGetLevel(c) === 1);
+  if (!allInGroup.length) {
+    box.style.display = 'block';
+    box.innerHTML = `<div onclick="event.stopPropagation()"
+      style="padding:10px 14px;font-size:11px;color:var(--text3);">
+      No accounts in this group for ${datasetIsoCountry()}.</div>`;
+    return;
+  }
+  // Con una sola raíz la lista sería una única línea plegada, que no muestra
+  // nada útil: el activo de Uruguay es un ejemplo. Se abre de entrada, y si el
+  // usuario la cierra queda cerrada, porque ahí el valor pasa a ser false.
+  if (l1.length === 1 && ST._avTreeExpanded[l1[0]] === undefined) {
+    ST._avTreeExpanded[l1[0]] = true;
+  }
   box.style.display = 'block';
   avRenderTree(box, digit, l1, allInGroup);
 }
 
 export function avRenderTree(box, digit, l1, allInGroup) {
   const total = allInGroup.length;
+  const hasTree = codeShape() !== 'flat';
   let html = `<div style="padding:5px 14px;font-size:10px;color:var(--text3);
     font-family:var(--mono);border-bottom:1px solid var(--border);">
-    ${total} ACCOUNTS IN GROUP ${digit} — click ▸ to expand</div>`;
+    ${total} ACCOUNTS${digit ? ` IN GROUP ${digit}` : ''}${hasTree ? ' — click ▸ to expand' : ''}</div>`;
 
   const renderNode = (c, indent) => {
     const level        = avGetLevel(c);
     const label        = toSentenceCase(ST.planCuentas[c] || c);
     const isExpanded   = ST._avTreeExpanded[c];
-    const trailingZeros = c.match(/0+$/)?.[0].length || 0;
-    const sigPart      = c.slice(0, c.length - trailingZeros);
     const children     = level < 3
-      ? allInGroup.filter(ch => {
-          if (ch === c) return false;
-          if (avGetLevel(ch) !== level + 1) return false;
-          if (_isoCt() === 'CO') {
-            const pp = c.replace(/0+$/, '');
-            const cp = ch.replace(/0+$/, '');
-            return cp.startsWith(pp) && cp.length > pp.length;
-          }
-          return ch.startsWith(sigPart);
-        })
+      ? allInGroup.filter(ch => ch !== c
+          && avGetLevel(ch) === level + 1
+          && avIsChildOf(c, ch))
       : [];
     const hasKids = children.length > 0;
     let row = avRowHtml(c, label, indent, hasKids, isExpanded);
@@ -192,9 +335,7 @@ export function avRowHtml(c, label, indent, hasKids, isExpanded) {
 export function avTreeToggle(code) {
   ST._avTreeExpanded[code] = !ST._avTreeExpanded[code];
   const digit      = ST._avGroup;
-  const allInGroup = Object.keys(ST.planCuentas)
-    .filter(c => (!digit || c[0] === digit) && avGetLevel(c) > 0)
-    .sort();
+  const allInGroup = accountsInGroup(digit);
   const l1  = allInGroup.filter(c => avGetLevel(c) === 1);
   const box = document.getElementById('avSuggestions');
   if (box) avRenderTree(box, digit, l1, allInGroup);
@@ -208,13 +349,12 @@ export function avSelectAccount(code) {
   if (input) input.value = `${code} — ${label}`;
   const level = avGetLevel(code);
   if (level < 3) ST._avTreeExpanded[code] = true;
-  const digit = ST._avGroup;
-  if (digit) {
-    const allInGroup = Object.keys(ST.planCuentas)
-      .filter(c => c[0] === digit && avGetLevel(c) > 0).sort();
-    const l1  = allInGroup.filter(c => avGetLevel(c) === 1);
-    const box = document.getElementById('avSuggestions');
-    if (box && box.style.display !== 'none') avRenderTree(box, digit, l1, allInGroup);
+  const box = document.getElementById('avSuggestions');
+  if (box && box.style.display !== 'none') {
+    const digit      = ST._avGroup;
+    const allInGroup = accountsInGroup(digit);
+    const l1 = allInGroup.filter(c => avGetLevel(c) === 1);
+    avRenderTree(box, digit, l1, allInGroup);
   }
 }
 
