@@ -31,7 +31,8 @@ const CACHE_BUST = fs.readFileSync(path.join(ROOT, 'js/views/accountview.js'), '
   .match(/\.\.\/state\.js\?(v=bmon\d+)/)[1];
 
 const { ST } = await import(`${ROOT}/js/state.js?${CACHE_BUST}`);
-const { avGetLevel, avIsChildOf } = await import(`${ROOT}/js/views/accountview.js`);
+const { avGetLevel, avIsChildOf, avInGroup, avCompareCodes } =
+  await import(`${ROOT}/js/views/accountview.js`);
 
 const PLANES = JSON.parse(
   fs.readFileSync(path.join(ROOT, 'tests/fixtures/account_view_plan_cuentas.json'), 'utf8'),
@@ -50,7 +51,7 @@ function useCountry(iso) {
 /** Lo que termina dibujando avRenderTree partiendo de las raíces. */
 function treeReach(iso) {
   useCountry(iso);
-  const all = Object.keys(ST.planCuentas).filter((c) => avGetLevel(c) > 0).sort();
+  const all = Object.keys(ST.planCuentas).filter((c) => avGetLevel(c) > 0).sort(avCompareCodes);
   const roots = all.filter((c) => avGetLevel(c) === 1);
   const seen = new Set();
   const walk = (c) => {
@@ -122,6 +123,51 @@ test('los códigos planos son todos raíz y no se cuelgan entre sí', () => {
     // Sin jerarquía, un slug nunca es hijo de otro aunque comparta prefijo.
     assert.equal(codes.filter((c) => codes.some((p) => p !== c && avIsChildOf(p, c))).length, 0);
   }
+});
+
+test('Uruguay: el grupo es el primer segmento, no el primer carácter', () => {
+  useCountry('UY');
+  // '1' es el activo; '10' a '19' son líneas del estado de resultados que solo
+  // comparten el primer dígito y no tienen nada que hacer en ese grupo.
+  assert.equal(avInGroup('1', '1'), true);
+  assert.equal(avInGroup('1.1', '1'), true);
+  assert.equal(avInGroup('1.1.1', '1'), true);
+  assert.equal(avInGroup('10', '1'), false);
+  assert.equal(avInGroup('19', '1'), false);
+  assert.equal(avInGroup('2.1', '2'), true);
+  assert.equal(avInGroup('20', '2'), false);
+  // Sin grupo ("All accounts") entran todas, anexos incluidos.
+  assert.equal(avInGroup('A1_BCU_VISTA', ''), true);
+
+  const grupo1 = Object.keys(ST.planCuentas).filter((c) => avInGroup(c, '1'));
+  assert.ok(grupo1.every((c) => c === '1' || c.startsWith('1.')),
+    `el grupo 1 arrastra cuentas ajenas: ${grupo1.filter((c) => c !== '1' && !c.startsWith('1.')).join(', ')}`);
+});
+
+test('Uruguay: la lista se ordena por número de segmento, no como texto', () => {
+  useCountry('UY');
+  const hijos = ['1.1', '1.10', '1.16', '1.2', '1.9'].sort(avCompareCodes);
+  assert.deepEqual(hijos, ['1.1', '1.2', '1.9', '1.10', '1.16']);
+  // Las raíces numéricas van antes de los anexos, y en orden.
+  assert.deepEqual(['10', '2', 'A1_BCU_VISTA', '1', '25'].sort(avCompareCodes),
+    ['1', '2', '10', '25', 'A1_BCU_VISTA']);
+});
+
+test('Chile y Colombia conservan el orden alfabético de sus códigos', () => {
+  useCountry('CL');
+  assert.deepEqual(['105000100', '105000000', '1100000'].sort(avCompareCodes),
+    ['105000000', '105000100', '1100000']);
+  useCountry('CO');
+  assert.deepEqual(['110505', '110000', '110500'].sort(avCompareCodes),
+    ['110000', '110500', '110505']);
+});
+
+test('Chile mantiene el grupo por primer dígito', () => {
+  useCountry('CL');
+  assert.equal(avInGroup('105000000', '1'), true);
+  assert.equal(avInGroup('1100000', '1'), true);
+  assert.equal(avInGroup('218000000', '1'), false);
+  assert.equal(avInGroup('218000000', '2'), true);
 });
 
 test('Chile y Colombia conservan la jerarquía por ceros finales', () => {

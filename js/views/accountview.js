@@ -107,22 +107,60 @@ function defaultGroup() {
   return accountGroups().length ? accountGroups()[0][0] : '';
 }
 
+/** ¿La cuenta cae en el grupo `digit`? Sin grupo entran todas. */
+export function avInGroup(code, digit) {
+  if (!digit) return true;
+  // En los códigos por puntos el grupo es el primer segmento completo. Mirando
+  // solo el primer carácter, el grupo 1 de Uruguay (activo) se llenaba con las
+  // líneas 10 a 19 del estado de resultados.
+  if (codeShape() === 'dots') return String(code).split('.')[0] === digit;
+  return String(code)[0] === digit;
+}
+
+/**
+ * Orden de la lista. Los códigos por puntos se comparan segmento a segmento y
+ * de forma numérica: por texto, 1.10 se colaba entre 1.1 y 1.2. Los demás países
+ * mantienen el orden alfabético, que en códigos de largo fijo es el correcto.
+ */
+export function avCompareCodes(a, b) {
+  if (codeShape() !== 'dots') return a < b ? -1 : a > b ? 1 : 0;
+  const sa = String(a).split('.');
+  const sb = String(b).split('.');
+  for (let i = 0; i < Math.max(sa.length, sb.length); i += 1) {
+    if (sa[i] === undefined) return -1;
+    if (sb[i] === undefined) return 1;
+    const na = Number(sa[i]);
+    const nb = Number(sb[i]);
+    // Los anexos (A1_…, S_…) no son números y se comparan como texto.
+    if (Number.isInteger(na) && Number.isInteger(nb)) {
+      if (na !== nb) return na - nb;
+    } else if (sa[i] !== sb[i]) {
+      return sa[i] < sb[i] ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
 /** Todas las cuentas del grupo activo, ya ordenadas. */
 function accountsInGroup(digit) {
   return Object.keys(ST.planCuentas)
-    .filter((c) => (!digit || c[0] === digit) && avGetLevel(c) > 0)
-    .sort();
+    .filter((c) => avInGroup(c, digit) && avGetLevel(c) > 0)
+    .sort(avCompareCodes);
 }
 
 export function initAccountView() {
   const desde = document.getElementById('avDesde');
   const hasta  = document.getElementById('avHasta');
   if (!desde || !hasta || !ST.periodos.length) return;
-  if (desde.options.length === 0) {
-    ST.periodos.forEach(p => {
-      desde.innerHTML += `<option value="${p}">${periodLabel(p)}</option>`;
-      hasta.innerHTML  += `<option value="${p}">${periodLabel(p)}</option>`;
-    });
+  // Se rellenan cuando están vacíos y cuando el rango no es el del país activo:
+  // antes solo se miraba que estuvieran vacíos, así que al cambiar de país las
+  // fechas seguían siendo las del anterior. Pasando de Uruguay a Chile quedaban
+  // ofreciendo meses que Chile no tiene.
+  if ([...desde.options].map((o) => o.value).join() !== ST.periodos.join()) {
+    const opts = ST.periodos
+      .map((p) => `<option value="${p}">${periodLabel(p)}</option>`).join('');
+    desde.innerHTML = opts;
+    hasta.innerHTML  = opts;
     const n = ST.periodos.length;
     desde.selectedIndex = Math.max(0, n - 13);
     hasta.selectedIndex  = n - 1;
@@ -226,6 +264,12 @@ export function avSuggest(query) {
       style="padding:10px 14px;font-size:11px;color:var(--text3);">
       No accounts in this group for ${datasetIsoCountry()}.</div>`;
     return;
+  }
+  // Con una sola raíz la lista sería una única línea plegada, que no muestra
+  // nada útil: el activo de Uruguay es un ejemplo. Se abre de entrada, y si el
+  // usuario la cierra queda cerrada, porque ahí el valor pasa a ser false.
+  if (l1.length === 1 && ST._avTreeExpanded[l1[0]] === undefined) {
+    ST._avTreeExpanded[l1[0]] = true;
   }
   box.style.display = 'block';
   avRenderTree(box, digit, l1, allInGroup);
@@ -358,10 +402,7 @@ export async function runAccountView() {
   const usdFactor = (ST.currency === 'USD' && ST.usdRate) ? (1 / ST.usdRate) : 1;
 
   try {
-    // q1 y x1 van incluidos porque ahí viven las cuentas de ratio y de capital
-    // regulatorio: el Anexo 4 del BCU y la Basilea III de la CMF. Sin ellos, esas
-    // cuentas se podían elegir en la lista y siempre respondían "sin datos".
-    const rows = await apiDatos({ tipos: ['b1','r1','c1','q1','x1'], cuentas: [code], periodos: [desde, hasta], bancos: allBanks, select: 'ins_cod,periodo,monto_total' });
+    const rows = await apiDatos({ tipos: ['b1','r1','c1'], cuentas: [code], periodos: [desde, hasta], bancos: allBanks, select: 'ins_cod,periodo,monto_total' });
 
     const getVal = (bank, periodo) =>
       rows.filter(r => r.ins_cod === bank && r.periodo === periodo)
