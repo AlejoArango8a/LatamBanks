@@ -41,4 +41,6 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Tests
-        run: npm test
+        # --if-present para no depender del orden en que entren los pull
+        # requests: la suite de JavaScript llega con el arreglo del Account View.
+        run: npm test --if-present
