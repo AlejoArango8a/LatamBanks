@@ -511,11 +511,12 @@ def main():
         for q in target:
             fmap = file_map(q["files"])
             cad_key, cad_id = pick_cadastro_key(fmap, q["dt"])
+            d1 = f"dados{q['dt']}_1.json"
             d3 = f"dados{q['dt']}_3.json"
             d3_note = resolve_portal_path(fmap[d3]) if d3 in fmap else "MISSING"
             print(
                 f"  {q['dt']}  cadastro={cad_id}  "
-                f"dados1={resolve_portal_path(fmap[f'dados{q['dt']}_1.json'])}  "
+                f"dados1={resolve_portal_path(fmap[d1])}  "
                 f"dados3={d3_note}"
             )
         return 0

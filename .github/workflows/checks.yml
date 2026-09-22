@@ -1,0 +1,46 @@
+# Verificación en cada cambio.
+#
+# Existe por el loader de Brasil: tenía un error de sintaxis de Python y nadie
+# lo supo hasta que el cron falló un mes después, con un trimestre de datos de
+# retraso. Compilar los archivos habría bastado para verlo en el pull request.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # La misma que usan los workflows de los loaders.
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - name: Compile every Python file
+        run: python -m compileall -q . -x 'node_modules'
+      - name: Tests
+        run: python -m pytest tests/ -q
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        # --if-present para no depender del orden en que entren los pull
+        # requests: la suite de JavaScript llega con el arreglo del Account View.
+        run: npm test --if-present
