@@ -2,8 +2,16 @@ name: USA FDIC top-300 (quarterly)
 
 on:
   schedule:
-    # Día 25 del mes siguiente al cierre de trimestre (aprox. publicación Call Reports)
-    - cron: '0 16 25 1,4,7,10 *'
+    # Mensual, aunque el dato sea trimestral. Antes corría solo el 25 de enero,
+    # abril, julio y octubre, asumiendo que la FDIC publica los Call Reports el
+    # mes siguiente al cierre; en la práctica tarda entre 55 y 60 días, así que
+    # la ventana no coincidía. Al crearse este workflow el 2 de agosto de 2026
+    # ya se había pasado el 25 de julio, y el siguiente turno era el 25 de
+    # octubre: el segundo trimestre de 2026 se saltaba entero.
+    # El modo incremental revisa los últimos cuatro trimestres y no escribe nada
+    # cuando no hay novedad, así que correrlo todos los meses no cuesta y toma
+    # cada trimestre dentro del mes siguiente a su publicación.
+    - cron: '0 16 25 * *'
   workflow_dispatch:
     inputs:
       mode:
