@@ -1,10 +1,19 @@
-name: Chile CMF Balance Bancos (monthly)
+# El archivo se sigue llamando "monthly" para no perder el historial de
+# corridas, que va atado a la ruta del archivo.
+name: Chile CMF Balance Bancos (2 veces al mes)
 
 on:
   schedule:
-    # Day 25 — CMF usually publishes prior month with ~3–4 weeks lag.
+    # Dos veces al mes: el día 2 y el último día del mes. La CMF publica el mes
+    # anterior con un rezago de entre tres y cuatro semanas, y con una sola
+    # corrida mensual lo que se publicaba justo después del turno se quedaba
+    # esperando hasta cuatro semanas.
+    #
+    # cron no sabe de "último día del mes", así que se programa del 28 al 31 y
+    # el job `gate` descarta los días de esa ventana que no son el último.
     # Discovery: listing 32901 (ZIP) + hub 28910 (cluster).
-    - cron: '0 14 25 * *'
+    - cron: '0 14 2 * *'
+    - cron: '0 14 28-31 * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -33,7 +42,36 @@ on:
         default: 'false'
 
 jobs:
+  # Filtra solo la ventana del 28 al 31: de esos cuatro disparos, el único que
+  # interesa es el último día del mes. Cualquier otro día pasa sin preguntar,
+  # para que un retraso de GitHub que corra el día 2 pasada la medianoche no
+  # termine saltándose la corrida.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          TZ: UTC
+          EVENTO: ${{ github.event_name }}
+        run: |
+          dia=$(date -u +%-d)
+          manana=$(date -u -d '+1 day' +%-d)
+          if [ "$EVENTO" != 'schedule' ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Disparo manual — se corre sin mirar la fecha."
+          elif [ "$dia" -ge 28 ] && [ "$manana" -ne 1 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) no es el último día del mes — se omite."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) — corresponde correr."
+          fi
+
   load:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
