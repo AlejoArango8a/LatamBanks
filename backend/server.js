@@ -127,6 +127,12 @@ const CACHE_STATIC = 6 * 60 * 60;
 /** Serve stale instantly and refresh in the background for a full day. */
 const CACHE_SWR = 24 * 60 * 60;
 
+/** Aggregate row the supervisors publish alongside the individual banks. */
+const SYSTEM_TOTAL_CODE = 999;
+/** Months the dashboard charts by default, and the window that decides which
+ *  institutions are still worth offering in the bank selector. */
+const BOOTSTRAP_ACTIVITY_PERIODS = 13;
+
 function cacheable(res, sMaxAge, swr = CACHE_SWR) {
   res.set(
     'Cache-Control',
@@ -219,12 +225,37 @@ app.get('/api/bootstrap', async (req, res) => {
     let patrimonioRows = [];
     try {
       if (country === 'CL') {
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000' AND periodo = $2
-           GROUP BY ins_cod`,
-          [country, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
+        // El catálogo de la CMF es histórico: guarda entidades que dejaron de
+        // existir y que aparecían en el selector de bancos sin cifras, leídas
+        // como bancos de otro país. Banco do Brasil, Banco de la Nación
+        // Argentina y MUFG cerraron su sucursal en Chile, y BBVA se vendió a
+        // Scotiabank en 2018; ninguno reporta desde entonces.
+        //
+        // Se pide el patrimonio de la ventana que el dashboard grafica por
+        // defecto, no solo del último mes: el último mes alimenta el ranking y
+        // la ventana completa decide quién sigue siendo ofrecible, así nada
+        // seleccionable queda vacío y los bancos absorbidos salen por su cuenta
+        // cuando la ventana avanza.
+        const ventana = await query(
+          `SELECT periodo, ins_cod::int, SUM(monto_total::bigint) AS monto_total
+           FROM datos_financieros
+           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000'
+             AND periodo = ANY($2)
+           GROUP BY periodo, ins_cod`,
+          [country, periodos.slice(-BOOTSTRAP_ACTIVITY_PERIODS)],
+        );
+        patrimonioRows = ventana
+          .filter(r => r.periodo === lastPeriodo)
+          .map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) }));
+        const activos = new Set(ventana.map(r => Number(r.ins_cod)));
+        if (activos.size) {
+          activos.add(SYSTEM_TOTAL_CODE);
+          instituciones.splice(
+            0,
+            instituciones.length,
+            ...instituciones.filter(i => activos.has(i.codigo)),
+          );
+        }
       } else if (country === 'CO') {
         const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '300000').trim();
         patrimonioRows = await query(
