@@ -91,6 +91,16 @@ function entities() {
   }));
 }
 
+/**
+ * drawLineChart's money axis expects values already in billions, and in USD
+ * when that toggle is on. Same convention as Bank Monitor.
+ */
+function chartMoney(v) {
+  if (v == null || !Number.isFinite(Number(v))) return null;
+  const usd = ST.currency === 'USD' && Number(ST.usdRate) > 0 ? 1 / ST.usdRate : 1;
+  return (Number(v) / 1e9) * usd;
+}
+
 function rowsFor(code, tipo) {
   return (state.rowsByTipo[tipo] || []).filter((r) => Number(r.ins_cod) === Number(code));
 }
@@ -326,7 +336,7 @@ function renderCompareTable(ents, periodo) {
 
 function renderMismatchPanel(snap) {
   if (!snap?.hasData) return '';
-  const p = snap.published;
+  const p = snap.published || {};
   const rows = [
     ['FX assets', fmtKPI(snap.byKey.assets.ext), fmtPct(snap.assetsExtPct)],
     ['FX liabilities', fmtKPI(snap.byKey.liabilities.ext), fmtPct(snap.liabilitiesExtPct)],
@@ -360,7 +370,7 @@ function renderMismatchPanel(snap) {
     ${pubRows ? `<div class="panel fa-panel" style="margin-top:18px;">
       <div class="panel-head"><div>
         <div class="panel-title">BCU Anexo 4 · currency indicators</div>
-        <div class="panel-sub">Published ratio against the same idea rebuilt from the M/N — M/E columns</div>
+        <div class="panel-sub">V.1 includes off-balance positions. VII.1 and VII.2 use the BCU's non-financial book; the rebuilt column uses the balance-sheet lines above, so the two are close on purpose rather than identical.</div>
       </div></div>
       <div class="panel-body" style="overflow-x:auto;padding:0;">
         <table class="data fa-table">
@@ -406,14 +416,14 @@ function drawChart(ents) {
       const rows = rowsFor(ents[0].code, 'b1');
       const assets = uyCurrencySeries(rows, 'assets', periodos);
       series = [
-        { label: 'Assets in pesos (M/N)', color: UY_CURRENCY_COLORS.local, data: sparseData(assets.map((l) => l.local)) },
-        { label: 'Assets in FX (M/E)', color: UY_CURRENCY_COLORS.ext, data: sparseData(assets.map((l) => l.ext)) },
+        { label: 'Assets in pesos (M/N)', color: UY_CURRENCY_COLORS.local, data: sparseData(assets.map((l) => chartMoney(l.local))) },
+        { label: 'Assets in FX (M/E)', color: UY_CURRENCY_COLORS.ext, data: sparseData(assets.map((l) => chartMoney(l.ext))) },
       ];
     } else {
       series = ents.map((e) => ({
         label: `${e.label} · FX assets`,
         color: e.color,
-        data: sparseData(uyCurrencySeries(rowsFor(e.code, 'b1'), 'assets', periodos).map((l) => l.ext)),
+        data: sparseData(uyCurrencySeries(rowsFor(e.code, 'b1'), 'assets', periodos).map((l) => chartMoney(l.ext))),
       }));
     }
   } else {
@@ -425,7 +435,7 @@ function drawChart(ents) {
       return {
         label: ents.length === 1 ? 'Net FX position' : e.label,
         color: ents.length === 1 ? UY_CURRENCY_COLORS.net : e.color,
-        data: sparseData(a.map((x, i) => x.ext - l[i].ext)),
+        data: sparseData(a.map((x, i) => chartMoney(x.ext - l[i].ext))),
       };
     });
   }
