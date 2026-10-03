@@ -1457,11 +1457,17 @@ function compositionKpis(view) {
     ? fmtPct(top?.fxPct)
     : fmtPct(third?.pct);
   const thirdSub = view.kind === 'currency'
-    ? (top ? `${fmtPct(top.pct)} of ${view.denomLabel} · foreign-currency share of that line` : '')
-    : (third ? `${fmtKPI(third.value)} · next to the headline line` : '');
+    ? (top ? `${fmtPct(top.pct)} of ${view.denomLabel}` : '')
+    : (third ? fmtKPI(third.value) : '');
   const thirdTitle = view.kind === 'currency'
-    ? (top ? `${top.short || top.label} in foreign currency` : 'Largest line')
-    : (third?.short || third?.label || 'Next line');
+    ? (top ? `${top.short || top.label} in foreign currency` : '')
+    : (third?.short || third?.label || '');
+  const thirdCol = third ? `
+      <div class="kpi-col">
+        <div class="kpi-col-title">${esc(thirdTitle)}</div>
+        <div class="kpi purple"><div class="kpi-val">${thirdVal}</div>
+        <div class="kpi-sub">${esc(thirdSub)}</div></div>
+      </div>` : '';
   return `
     <div class="kpi-grid fa-kpi-grid aq-kpi-grid">
       <div class="kpi-col">
@@ -1474,11 +1480,7 @@ function compositionKpis(view) {
         <div class="kpi blue"><div class="kpi-val">${fmtPct(headlineNow)}</div>
         <div class="kpi-sub">Share at ${esc(periodLabel(view.periodo))}</div></div>
       </div>
-      <div class="kpi-col">
-        <div class="kpi-col-title">${esc(thirdTitle)}</div>
-        <div class="kpi purple"><div class="kpi-val">${third ? thirdVal : '—'}</div>
-        <div class="kpi-sub">${esc(thirdSub)}</div></div>
-      </div>
+      ${thirdCol}
     </div>`;
 }
 
