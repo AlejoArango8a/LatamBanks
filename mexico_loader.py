@@ -99,6 +99,22 @@ BANK_CODE_BY_NORM = {
     "multiva": 132,
     "banca mifel": 42,
     "compartamos": 130,
+    "biafirme": 162,           # banco aparte de Afirme, no una variante suya
+    # La CNBV alterna la razón social del mismo banco entre meses ('Banco
+    # Covalto' hasta 202511, 'Covalto' desde 202512). Sin estas entradas la
+    # variante nueva no encuentra código, se le inventa uno por hash y la serie
+    # del banco queda partida en dos instituciones. El código elegido es el que
+    # el banco está usando hoy, para no cortar la serie viva.
+    "covalto": 1527,
+    "banco covalto": 1527,
+    "finterra": 1527,          # Covalto adquirió Banco Finterra en 2022
+    "uala": 5400,
+    "banco uala": 5400,
+    "kapital": 7402,
+    "kapital bank": 7402,
+    "banfeliz": 3570,
+    "forjadores": 3570,        # Banco Forjadores pasó a llamarse Banfeliz
+    "banco forjadores": 3570,
 }
 
 EXCLUDE_NAME_RE = re.compile(r"^\s*sistema\b|total\s+banca", re.I)
@@ -278,9 +294,12 @@ def bank_code(name: str) -> int:
     n = re.sub(r"\s*\(antes[^)]*\)\s*", " ", n).strip()
     if n in BANK_CODE_BY_NORM:
         return BANK_CODE_BY_NORM[n]
-    for k, v in BANK_CODE_BY_NORM.items():
-        if k in n or n in k:
-            return v
+    # De la razón social más larga a la más corta y pegando en límite de
+    # palabra: así 'banco azteca' le gana a 'azteca' y 'uala' no pega dentro de
+    # otra palabra. Antes el orden lo decidía el diccionario.
+    for k in sorted(BANK_CODE_BY_NORM, key=len, reverse=True):
+        if re.search(rf"\b{re.escape(k)}\b", n) or (len(n) >= 8 and n in k):
+            return BANK_CODE_BY_NORM[k]
     h = int(hashlib.md5(n.encode()).hexdigest()[:6], 16)
     return 1000 + (h % 8000)
 
@@ -395,6 +414,14 @@ def parse_pm2_openpyxl(data: bytes, periodo: str):
             continue
         code = bank_code(ns)
         if code in seen:
+            # Dos bancos distintos con el mismo código: algún alias está
+            # pegando de más. Desplazar en silencio creaba una institución
+            # fantasma, así que queda registrado para corregir el mapa.
+            log.error(
+                "Código %s duplicado en el boletín (%s). Se desplaza a %s: "
+                "revisar BANK_CODE_BY_NORM",
+                code, ns, code + 100,
+            )
             code = code + 100
         seen.add(code)
         inst.append((COUNTRY, code, ns))

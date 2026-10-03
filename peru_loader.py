@@ -87,6 +87,14 @@ BANK_CODE_BY_NORM = {
     "banco bci peru": 17,
     "compartamos banco": 18,
     "santander consumer bank": 19,
+    "banco efectiva": 20,
+    # La SBS alterna la razón social de un mismo banco entre meses. Sin estas
+    # entradas el nombre alterno no encuentra código y se le inventa uno por
+    # hash, partiendo la serie del banco en dos instituciones distintas.
+    "banco de china peru": 16,
+    "banco de comercio": 2,       # BANCOM desde 202308
+    "banco continental": 1,       # BBVA Perú desde 201906
+    "banco financiero": 4,        # Banco Pichincha desde 201812
 }
 
 # Agregados / duplicados a excluir del universo dashboard
@@ -236,11 +244,31 @@ def recent_candidate_periods(n_months: int = 4) -> list[str]:
     return list(reversed(out))
 
 
+def clean_bank_name(name: str) -> str:
+    """Nombre del banco sin las llamadas al pie del Boletín.
+
+    La SBS marca notas con asteriscos y con "1/" y las pone y las quita de un
+    mes a otro ('Santander Consumer Bank*' en 202605, sin asterisco en 202607).
+    El marcador no distingue bancos, así que no puede llegar ni al código ni a
+    la razón social: si llega, el mismo banco termina partido en dos
+    instituciones con la mitad de la serie cada una.
+    """
+    s = re.sub(r"\s+", " ", str(name or "").replace("\n", " ")).strip()
+    s = re.sub(r"[*\u2217\u00b9\u00b2\u00b3]+", "", s)
+    s = re.sub(r"\s+\d+/", "", s)
+    return re.sub(r"\s+", " ", s).strip(" .,;:-")
+
+
 def bank_code(name: str) -> int:
-    n = fold(name).replace("\n", " ")
-    n = re.sub(r"\s+", " ", n).strip()
+    n = fold(clean_bank_name(name))
     if n in BANK_CODE_BY_NORM:
         return BANK_CODE_BY_NORM[n]
+    # Razón social completa antes que alias suelto, y de la más larga a la más
+    # corta: 'santander consumer bank' tiene que ganarle a 'santander', que es
+    # otro banco. El límite de palabra evita que 'bancom' pegue en 'bancomer'.
+    for k in sorted(BANK_CODE_BY_NORM, key=len, reverse=True):
+        if re.search(rf"\b{re.escape(k)}\b", n) or (len(n) >= 8 and n in k):
+            return BANK_CODE_BY_NORM[k]
     # aliases cortos
     aliases = {
         "bbva": 1,
@@ -274,7 +302,7 @@ def detect_banks(sh) -> list[tuple[int, str, int]]:
         name = sh.cell(6, c).value
         if not name:
             continue
-        ns = re.sub(r"\s+", " ", str(name).replace("\n", " ")).strip()
+        ns = clean_bank_name(name)
         if not ns or fold(ns) in ("activo", "pasivo"):
             continue
         if is_excluded_bank(ns):
@@ -284,7 +312,15 @@ def detect_banks(sh) -> list[tuple[int, str, int]]:
         tot_col = c + 2
         code = bank_code(ns)
         if code in seen:
-            # colisión rara: desplazar
+            # Dos bancos distintos con el mismo código: alguno está cayendo en
+            # un alias demasiado amplio. Desplazar en silencio creaba una
+            # institución fantasma, así que queda registrado para corregir el
+            # mapa de códigos.
+            log.error(
+                "Código %s duplicado en la hoja (%s). Se desplaza a %s: "
+                "revisar BANK_CODE_BY_NORM",
+                code, ns, code + 100,
+            )
             code = code + 100
         seen.add(code)
         out.append((code, ns, tot_col))
