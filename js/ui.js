@@ -2,14 +2,14 @@
 // UI — shell controls: sidebar, bank list, period selectors,
 //      tab routing, theme, currency, font, chart-type toggles
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon103';
-import { API_BASE, BTG_LOGO_DARK_SRC, bankColor, btgCodeForCountry } from './config.js?v=bmon103';
-import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon103';
-import { setStatus, showErr } from './utils.js?v=bmon103';
-import { sumRows } from './api.js?v=bmon103';
-import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon103';
-import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon103';
-import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon103';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from './state.js?v=bmon104';
+import { API_BASE, BTG_LOGO_DARK_SRC, bankColor, btgCodeForCountry } from './config.js?v=bmon104';
+import { bankName, fmtKPI, periodLabel } from './format.js?v=bmon104';
+import { setStatus, showErr } from './utils.js?v=bmon104';
+import { sumRows } from './api.js?v=bmon104';
+import { syncFinStatementPanelLabels } from './views/balance.js?v=bmon104';
+import { fetchUSDRate, clearUsdRate, hasUsdRate } from './fx.js?v=bmon104';
+import { refreshChileMacrosStrip } from './chileMacros.js?v=bmon104';
 export { fetchUSDRate };
 
 // ---- Run & period ----
@@ -144,6 +144,10 @@ function scheduleSelectionRefresh() {
     }
     if (active === 'instfunding') {
       window.refreshInstitutionalFunding?.();
+      return;
+    }
+    if (active === 'currency') {
+      window.refreshUyCurrency?.();
       return;
     }
     if (document.getElementById('tab-bankdetail')?.style.display === 'block') {
@@ -317,9 +321,10 @@ export function showTab(tab) {
     ...(ASSET_QUALITY_ENABLED_ISO.includes(isoTab) ? [] : ['assetquality']),
     ...(BASEL_ENABLED_ISO.includes(isoTab) ? [] : ['basel']),
     ...(INST_FUNDING_ENABLED_ISO.includes(isoTab) ? [] : ['instfunding']),
+    ...(CURRENCY_ENABLED_ISO.includes(isoTab) ? [] : ['currency']),
   ])];
   if (blockedEff.includes(tab)) return;
-  ['resumen','bankdetail','chileanbanks','btgbanks','funding','assetquality','basel','instfunding','accountview','balance','resultados','comparativo','config'].forEach(t => {
+  ['resumen','bankdetail','chileanbanks','btgbanks','funding','assetquality','basel','instfunding','currency','accountview','balance','resultados','comparativo','config'].forEach(t => {
     const el = document.getElementById('tab-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
   });
@@ -329,7 +334,7 @@ export function showTab(tab) {
       b.classList.toggle('active', key === tab);
       return;
     }
-    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', assetquality:'Asset Quality', basel:'Solvency', instfunding:'Institutional Funding', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
+    const map = { resumen:'Bank Monitor', bankdetail:'Bank Profile', chileanbanks:'Banking System', btgbanks:'BTG Banks', funding:'Funding Analytics', assetquality:'Asset Quality', basel:'Solvency', instfunding:'Institutional Funding', currency:'Currency Split', accountview:'Account View', balance:'Balance Sheet', resultados:'Income Statement', config:'⚙ Config' };
     b.classList.toggle('active', b.textContent.trim() === map[tab]);
   });
 
@@ -362,6 +367,7 @@ export function showTab(tab) {
   if (tab === 'assetquality') window.renderAssetQuality?.();
   if (tab === 'basel')        window.renderBaselAnalytics?.();
   if (tab === 'instfunding')  window.renderInstitutionalFunding?.();
+  if (tab === 'currency')     window.renderUyCurrency?.();
   if (tab === 'bankdetail')   window.renderBankDetail?.();
   if (tab === 'accountview')  window.initAccountView();
   syncFinStatementPanelLabels();
@@ -501,6 +507,9 @@ const FUNDING_ENABLED_ISO = ['BR', 'CL', 'UY'];
 const ASSET_QUALITY_ENABLED_ISO = ['BR', 'CL', 'CO', 'PE', 'UY', 'US'];
 const BASEL_ENABLED_ISO = ['CL'];
 const INST_FUNDING_ENABLED_ISO = ['CL'];
+// Uruguay is the only regulator here that opens every balance line into
+// local and foreign currency, so the currency sheet only means something for UY.
+const CURRENCY_ENABLED_ISO = ['UY'];
 const NON_FUNDING_COUNTRY_DISABLED = ['funding'];
 
 const DETAIL_TAB_TITLES = {
@@ -511,6 +520,7 @@ const DETAIL_TAB_TITLES = {
   assetquality: 'Asset Quality',
   basel: 'Solvency',
   instfunding: 'Institutional Funding',
+  currency: 'Currency Split',
 };
 
 export function syncCountryDisabledTabs() {
@@ -527,6 +537,7 @@ export function syncCountryDisabledTabs() {
   if (!ASSET_QUALITY_ENABLED_ISO.includes(iso) && !disabled.includes('assetquality')) disabled.push('assetquality');
   if (!BASEL_ENABLED_ISO.includes(iso) && !disabled.includes('basel')) disabled.push('basel');
   if (!INST_FUNDING_ENABLED_ISO.includes(iso) && !disabled.includes('instfunding')) disabled.push('instfunding');
+  if (!CURRENCY_ENABLED_ISO.includes(iso) && !disabled.includes('currency')) disabled.push('currency');
 
   document.querySelectorAll('.tab[data-tab]').forEach((btn) => {
     const key = btn.getAttribute('data-tab');
@@ -543,6 +554,8 @@ export function syncCountryDisabledTabs() {
             ? 'Solvency (Basilea III) is available for Chile'
           : key === 'instfunding'
             ? 'Institutional Funding (FM DAP / bank bonds) is available for Chile'
+          : key === 'currency'
+            ? 'Currency Split is available for Uruguay, the only regulator that reports each line in local and foreign currency'
           : `${DETAIL_TAB_TITLES[key]} not available for this country`;
     } else {
       btn.removeAttribute('title');
