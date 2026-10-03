@@ -215,9 +215,9 @@ function cfg() {
         sub: `Subestándar + incumplimiento ${fmtPct(snap.atRiskPct)}${snap.impairedExt > 0 ? ` · offshore ${fmtPct(snap.impairedExtPct)} of impaired` : ''}`,
       }),
       specialCompareRows: [
-        { label: 'Impaired (811) %', fmt: (s) => fmtPct(s?.impairedPct) },
-        { label: 'Subestándar + incumplimiento %', fmt: (s) => fmtPct(s?.atRiskPct) },
-        { label: 'Offshore impaired %', fmt: (s) => fmtPct(s?.impairedExtPct) },
+        { label: 'Impaired (811) %', get: (s) => s?.impairedPct, unit: 'pct', better: 'low' },
+        { label: 'Subestándar + incumplimiento %', get: (s) => s?.atRiskPct, unit: 'pct', better: 'low' },
+        { label: 'Offshore impaired %', get: (s) => s?.impairedExtPct, unit: 'pct' },
       ],
       instrumentExtraHead: '<th class="r">UF</th><th class="r">FX</th>',
       instrumentExtraCell: (i) => `<td class="r">${fmtKPI(i.uf || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`,
@@ -296,8 +296,8 @@ function cfg() {
           : 'A→E grid not in the loaded accounts',
       }),
       specialCompareRows: [
-        { label: 'C+D+E %', fmt: (s) => fmtPct(s?.nplPct) },
-        { label: 'Deterioro / gross loans', fmt: (s) => fmtPct(s?.allowancePct) },
+        { label: 'C+D+E %', get: (s) => s?.nplPct, unit: 'pct', better: 'low' },
+        { label: 'Deterioro / gross loans', get: (s) => s?.allowancePct, unit: 'pct', better: 'high' },
       ],
       instrumentExtraHead: '<th class="r">C+D+E</th>',
       instrumentExtraCell: (i) => `<td class="r">${fmtPct(i.higherRiskPct)}</td>`,
@@ -372,8 +372,8 @@ function cfg() {
         sub: `Atrasados + refinanciados · judicial ${fmtPct(snap.judicialPct)} of past due`,
       }),
       specialCompareRows: [
-        { label: 'Cartera de alto riesgo %', fmt: (s) => fmtPct(s?.highRiskPct) },
-        { label: 'Judicial / past due', fmt: (s) => fmtPct(s?.judicialPct) },
+        { label: 'Cartera de alto riesgo %', get: (s) => s?.highRiskPct, unit: 'pct', better: 'low' },
+        { label: 'Judicial / past due', get: (s) => s?.judicialPct, unit: 'pct', better: 'low' },
       ],
       instrumentExtraHead: '',
       instrumentExtraCell: () => '',
@@ -459,10 +459,14 @@ function cfg() {
         };
       },
       specialCompareRows: [
-        { label: 'Non-resident % of SNF stock (1.4 ÷ 1.3+1.4+1.5)', fmt: (s) => fmtPct(s?.nonResidentPct, 2) },
-        { label: 'Non-resident stock', fmt: (s) => fmtKPI(s?.nonResident) },
-        { label: 'Non-resident in FX (M/E)', fmt: (s) => fmtPct(s?.nonResidentExtPct) },
-        { label: 'Exposure to foreign FIs', fmt: (s) => fmtKPI(s?.foreignFis) },
+        { label: 'Non-resident % of SNF stock (1.4 ÷ 1.3+1.4+1.5)', get: (s) => s?.nonResidentPct, unit: 'pct', digits: 2 },
+        { label: 'Non-resident stock', get: (s) => s?.nonResident, unit: 'amount' },
+        { label: 'Non-resident in FX (M/E)', get: (s) => s?.nonResidentExtPct, unit: 'pct' },
+        { label: 'Exposure to foreign FIs', get: (s) => s?.foreignFis, unit: 'amount' },
+        { label: 'FX (M/E) share of credit', get: (s) => s?.fxPct, unit: 'pct' },
+        { label: 'BCU IV.1 · morosidad (published)', get: (s) => s?.published?.npl, unit: 'pct', digits: 2, better: 'low' },
+        { label: 'BCU I.2 · deterioro de vencidos (published)', get: (s) => s?.published?.coverage, unit: 'pct', digits: 2, better: 'high' },
+        { label: 'BCU IV.3 · grado de deterioro total (published)', get: (s) => s?.published?.impairment, unit: 'pct', digits: 2, better: 'low' },
       ],
       instrumentExtraHead: '<th class="r">Local</th><th class="r">FX</th>',
       instrumentExtraCell: (i) => `<td class="r">${fmtKPI(i.local || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`,
@@ -568,9 +572,9 @@ function cfg() {
           : 'No overseas book reported for this bank / quarter',
       }),
       specialCompareRows: [
-        { label: 'Exterior % of SCR Total Geral', fmt: (s) => fmtPct(s?.fxPct) },
-        { label: 'Total Exterior', fmt: (s) => fmtKPI(s?.fx) },
-        { label: 'Inadimplência (SCR) %', fmt: (s) => (s?.nplReported ? fmtPct(s?.nplPct) : '—') },
+        { label: 'Exterior % of SCR Total Geral', get: (s) => s?.fxPct, unit: 'pct' },
+        { label: 'Total Exterior', get: (s) => s?.fx, unit: 'amount' },
+        { label: 'Inadimplência (SCR) %', get: (s) => (s?.nplReported ? s?.nplPct : null), unit: 'pct', better: 'low' },
       ],
       instrumentExtraHead: '',
       instrumentExtraCell: () => '',
@@ -644,10 +648,10 @@ function cfg() {
           : `Noncurrent ${fmtPct(snap.nplPct, 2)} of gross loans`,
       }),
       specialCompareRows: [
-        { label: 'Noncurrent % of loans', fmt: (s) => fmtPct(s?.nplPct, 2) },
-        { label: '30–89d past due %', fmt: (s) => fmtPct(aqPct(s?.pd30, s?.loans)) },
-        { label: '90+ accruing %', fmt: (s) => fmtPct(aqPct(s?.pd90, s?.loans)) },
-        { label: 'Coverage (ALLL / NCL)', fmt: (s) => fmtPct(s?.coverage, 0) },
+        { label: 'Noncurrent % of loans', get: (s) => s?.nplPct, unit: 'pct', digits: 2, better: 'low' },
+        { label: '30–89d past due %', get: (s) => aqPct(s?.pd30, s?.loans), unit: 'pct', better: 'low' },
+        { label: '90+ accruing %', get: (s) => aqPct(s?.pd90, s?.loans), unit: 'pct', better: 'low' },
+        { label: 'Coverage (ALLL / NCL)', get: (s) => s?.coverage, unit: 'pct', digits: 0, better: 'high' },
       ],
       instrumentExtraHead: '',
       instrumentExtraCell: () => '',
@@ -815,34 +819,200 @@ function renderHonest(snap, c) {
   return `<ul class="aq-honest">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>`;
 }
 
+/**
+ * The metric sheet behind Compare. Every row knows how to read a number out of
+ * a snapshot, so a two-bank selection can also show the gap and say which side
+ * the gap favours; `better` is left out where "higher" is neither good nor bad.
+ */
+function duelMetrics(c) {
+  return [
+    { label: c.loansLabel, get: (s) => s?.loans, unit: 'amount' },
+    { label: 'NPL ratio', get: (s) => s?.nplPct, unit: 'pct', digits: 2, better: 'low' },
+    { label: 'Coverage', get: (s) => s?.coverage, unit: 'pct', digits: 0, better: 'high' },
+    { label: 'Allowance / loans', get: (s) => s?.allowancePct, unit: 'pct', better: 'high' },
+    ...(c.specialCompareRows || []),
+  ];
+}
+
+function metricValue(metric, snap) {
+  if (typeof metric.get === 'function') {
+    const v = metric.get(snap);
+    return Number.isFinite(Number(v)) ? Number(v) : null;
+  }
+  return null;
+}
+
+function metricText(metric, snap) {
+  if (typeof metric.fmt === 'function') return metric.fmt(snap);
+  const v = metricValue(metric, snap);
+  if (v == null) return '—';
+  return metric.unit === 'amount' ? fmtKPI(v) : fmtPct(v, metric.digits ?? 1);
+}
+
+/** Gap cell for a two-bank duel: first bank minus second, coloured by `better`. */
+function gapCell(metric, a, b) {
+  const va = metricValue(metric, a);
+  const vb = metricValue(metric, b);
+  if (va == null || vb == null) return '<td class="r">—</td>';
+  const diff = va - vb;
+  const text = metric.unit === 'amount'
+    ? `${diff >= 0 ? '+' : '−'}${fmtKPI(Math.abs(diff))}`
+    : `${diff >= 0 ? '+' : '−'}${Math.abs(diff).toFixed(metric.digits ?? 1)} pp`;
+  let cls = '';
+  if (metric.better && Math.abs(diff) > 1e-9) {
+    const firstWins = metric.better === 'low' ? diff < 0 : diff > 0;
+    cls = firstWins ? 'pos' : 'neg';
+  }
+  return `<td class="r ${cls}">${text}</td>`;
+}
+
 function renderCompareKpis(entities, c) {
   const lastP = state.periodos[state.periodos.length - 1];
   const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
+  const duel = snaps.length === 2;
+  const metrics = duelMetrics(c);
+
   const head = snaps.map(({ e }, i) => {
     const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
     return `<th class="r fa-bank-start fa-bank-head ${tone}" style="--fa-bank-line:${esc(e.color)}">
       <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
     </th>`;
   }).join('');
-  const row = (label, fmt) => `<tr><td>${esc(label)}</td>${snaps.map(({ e, snap }, i) => {
-    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
-    return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(e.color)}">${fmt(snap)}</td>`;
-  }).join('')}</tr>`;
+  const gapHead = duel
+    ? `<th class="r">Gap<div class="aq-gap-sub">${esc(snaps[0].e.short)} − ${esc(snaps[1].e.short)}</div></th>`
+    : '';
+
+  const body = metrics.map((m) => {
+    const cells = snaps.map(({ e, snap }, i) => {
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(e.color)}">${metricText(m, snap)}</td>`;
+    }).join('');
+    return `<tr><td>${esc(m.label)}</td>${cells}${duel ? gapCell(m, snaps[0].snap, snaps[1].snap) : ''}</tr>`;
+  }).join('');
+
   return `<div class="panel fa-panel" style="margin-bottom:18px;">
     <div class="panel-head"><div>
-      <div class="panel-title">Peer snapshot · ${esc(periodLabel(lastP))}</div>
-      <div class="panel-sub">One column per bank · local reporting units</div>
+      <div class="panel-title">${duel ? 'Head to head' : 'Peer snapshot'} · ${esc(periodLabel(lastP))}</div>
+      <div class="panel-sub">${duel
+        ? 'Gap is the first bank minus the second. Green means the first bank reads better on that line; grey means the metric has no better side.'
+        : 'One column per bank · local reporting units'}</div>
     </div></div>
     <div class="panel-body" style="overflow-x:auto;padding:0;">
       <table class="data fa-table fa-table-peers">
-        <thead><tr><th>Metric</th>${head}</tr></thead>
-        <tbody>
-          ${row(c.loansLabel, (s) => fmtKPI(s?.loans))}
-          ${row('NPL ratio', (s) => fmtPct(s?.nplPct, 2))}
-          ${row('Coverage', (s) => fmtPct(s?.coverage, 0))}
-          ${row('Allowance / loans', (s) => fmtPct(s?.allowancePct))}
-          ${c.specialCompareRows.map((r) => row(r.label, r.fmt)).join('')}
-        </tbody>
+        <thead><tr><th>Metric</th>${head}${gapHead}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/**
+ * Side-by-side version of the per-bank breakdown panels (residency lens, credit
+ * quality ladder). Compare used to drop them, which is exactly the detail you
+ * want when you put two banks next to each other.
+ */
+function renderCompareBreakdown(entities, c, pick, title, sub) {
+  const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
+  const duel = snaps.length === 2;
+
+  const order = [];
+  const seen = new Set();
+  snaps.forEach(({ snap }) => {
+    (pick(snap) || []).forEach((r) => {
+      if (r.value == null || r.value === 0 || seen.has(r.key || r.label)) return;
+      seen.add(r.key || r.label);
+      order.push(r);
+    });
+  });
+  if (!order.length) return '';
+
+  const head = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-head ${tone}" colspan="2" style="--fa-bank-line:${esc(e.color)}">
+      <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
+    </th>`;
+  }).join('');
+  const sub2 = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}" style="--fa-bank-line:${esc(e.color)}">Amount</th>
+      <th class="r fa-bank-sub ${tone}">%</th>`;
+  }).join('');
+
+  const body = order.map((ref) => {
+    const found = snaps.map(({ snap }) => (pick(snap) || []).find((r) => (r.key || r.label) === (ref.key || ref.label)));
+    const cells = found.map((r, i) => {
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      const color = snaps[i].e.color;
+      return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(color)}">${fmtKPI(r?.value || 0)}</td>
+        <td class="r ${tone}">${fmtPct(r?.pct, 2)}</td>`;
+    }).join('');
+    const gap = duel && found[0]?.pct != null && found[1]?.pct != null
+      ? `<td class="r">${found[0].pct - found[1].pct >= 0 ? '+' : '−'}${Math.abs(found[0].pct - found[1].pct).toFixed(2)} pp</td>`
+      : duel ? '<td class="r">—</td>' : '';
+    return `<tr><td>${esc(ref.label)}</td>${cells}${gap}</tr>`;
+  }).join('');
+
+  return `<div class="panel fa-panel" style="margin-top:18px;">
+    <div class="panel-head"><div>
+      <div class="panel-title">${esc(title)}</div>
+      <div class="panel-sub">${esc(sub)}</div>
+    </div></div>
+    <div class="panel-body" style="overflow-x:auto;padding:0;">
+      <table class="data fa-table fa-table-peers">
+        <thead>
+          <tr><th rowspan="2">Line</th>${head}${duel ? '<th rowspan="2" class="r">Gap (pp)</th>' : ''}</tr>
+          <tr>${sub2}</tr>
+        </thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/** Uruguay in Compare: each bank's published Anexo 4 ratio next to our rebuild. */
+function renderComparePublished(entities, c) {
+  if (!c.publishedRows) return '';
+  const snaps = entities.map((e) => ({ e, snap: latestSnapshotFor(e.codes) }));
+  if (!snaps.some(({ snap }) => snap?.hasPublished)) return '';
+
+  const labels = [];
+  snaps.forEach(({ snap }) => {
+    (c.publishedRows(snap) || []).forEach((r) => {
+      if (!labels.includes(r.label)) labels.push(r.label);
+    });
+  });
+
+  const head = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-head ${tone}" colspan="2" style="--fa-bank-line:${esc(e.color)}">
+      <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
+    </th>`;
+  }).join('');
+  const sub = snaps.map(({ e }, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}" style="--fa-bank-line:${esc(e.color)}">BCU</th>
+      <th class="r fa-bank-sub ${tone}">Rebuilt</th>`;
+  }).join('');
+
+  const body = labels.map((label) => {
+    const cells = snaps.map(({ e, snap }, i) => {
+      const r = (c.publishedRows(snap) || []).find((x) => x.label === label);
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}" style="--fa-bank-line:${esc(e.color)}">${fmtPct(r?.pub, 2)}</td>
+        <td class="r ${tone}">${fmtPct(r?.own, 2)}</td>`;
+    }).join('');
+    return `<tr><td>${esc(label)}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<div class="panel fa-panel" style="margin-top:18px;">
+    <div class="panel-head"><div>
+      <div class="panel-title">BCU Anexo 4 · published vs rebuilt</div>
+      <div class="panel-sub">Each bank's regulator ratio against the same ratio recomputed from Anexo 2 stocks</div>
+    </div></div>
+    <div class="panel-body" style="overflow-x:auto;padding:0;">
+      <table class="data fa-table fa-table-peers">
+        <thead><tr><th rowspan="2">Indicator</th>${head}</tr><tr>${sub}</tr></thead>
+        <tbody>${body}</tbody>
       </table>
     </div>
   </div>`;
@@ -1230,9 +1400,11 @@ function renderPeerToolbar() {
       <button type="button" class="rcbtn ${state.compare ? 'active' : ''}" data-aq-compare="1">Compare</button>
     </div>`;
   const n = Math.min(selectedBanks().length, MAX_COMPARE_ENTITIES);
-  const hint = n
-    ? `<div class="fa-peer-hint">${n} bank${n === 1 ? '' : 's'} from the sidebar${ST.compareMode || n === 1 ? '' : ' — turn on <strong>Bank Comparison</strong> to pick up to 5'}.</div>`
-    : '<div class="fa-peer-hint">Select banks in the left sidebar. Turn on <strong>Bank Comparison</strong> to graph/table up to 5 at once.</div>';
+  const hint = n === 2 && state.compare
+    ? '<div class="fa-peer-hint"><strong>Head to head.</strong> Two banks selected, so every table also carries the gap between them and marks which side it favours.</div>'
+    : n
+      ? `<div class="fa-peer-hint">${n} bank${n === 1 ? '' : 's'} from the sidebar${ST.compareMode || n === 1 ? '' : ' — turn on <strong>Bank Comparison</strong> to pick up to 5'}.${n === 2 ? ' Switch to Compare for the head-to-head gap columns.' : ''}</div>`
+      : '<div class="fa-peer-hint">Select banks in the left sidebar. Turn on <strong>Bank Comparison</strong> to graph/table up to 5 at once.</div>';
   return `
     <div class="fa-peer-bar">
       <div class="fa-peer-row">
@@ -1373,7 +1545,7 @@ function render() {
     </div>
 
     ${comparing ? renderCompareKpis(entities, c) : renderKpis(snap, c)}
-    ${comparing ? '' : renderHonest(snap, c)}
+    ${renderHonest(comparing ? latestSnapshotFor(entities[0].codes) : snap, c)}
 
     <div class="panel fa-panel" style="margin-top:22px;">
       <div class="panel-head fa-chart-head">
@@ -1405,9 +1577,13 @@ function render() {
       </div>
     </div>
 
-    ${comparing ? '' : renderSpecialPanel(snap, c)}
-    ${comparing ? '' : renderPublishedPanel(snap, c)}
-    ${comparing ? '' : renderQualityPanel(snap, c)}
+    ${comparing
+      ? renderCompareBreakdown(entities, c, (s) => s?.specialRows, `${c.specialPanelTitle} · peer compare`, c.specialPanelSub)
+      : renderSpecialPanel(snap, c)}
+    ${comparing ? renderComparePublished(entities, c) : renderPublishedPanel(snap, c)}
+    ${comparing
+      ? renderCompareBreakdown(entities, c, (s) => s?.quality, 'Credit quality detail · peer compare', `Regulator lines as reported · local units · % of ${c.loansLabel.toLowerCase()}`)
+      : renderQualityPanel(snap, c)}
 
     <ul class="fa-notes">${c.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   `;
