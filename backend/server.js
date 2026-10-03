@@ -133,6 +133,27 @@ const SYSTEM_TOTAL_CODE = 999;
  *  institutions are still worth offering in the bank selector. */
 const BOOTSTRAP_ACTIVITY_PERIODS = 13;
 
+/**
+ * Cuenta de patrimonio con la que se arma el ranking del selector de bancos.
+ *
+ * Solo los países que reportan por mes, que son aquellos para los que la
+ * ventana de BOOTSTRAP_ACTIVITY_PERIODS equivale a un año largo. US y BR
+ * reportan por trimestre y traen su propio recorte más abajo.
+ */
+function equityAccount(country) {
+  const env = (name, fallback) => String(process.env[name] || fallback).trim();
+  switch (country) {
+    case 'CL': return { tipo: 'b1', cuenta: '300000000' };
+    case 'CO': return { tipo: 'b1', cuenta: env('CO_EQUITY_CUENTA', '300000') };
+    case 'UY': return { tipo: 'b1', cuenta: env('UY_EQUITY_CUENTA', '3') };
+    case 'PE': return { tipo: 'b1', cuenta: env('PE_EQUITY_CUENTA', 'PATRIMONIO') };
+    case 'AR': return { tipo: 'b1', cuenta: env('AR_EQUITY_CUENTA', 'PATRIMONIO_NETO') };
+    case 'MX': return { tipo: 'b1', cuenta: env('MX_EQUITY_CUENTA', 'CAPITAL_CONTABLE') };
+    case 'PA': return { tipo: 'b1', cuenta: env('PA_EQUITY_CUENTA', 'PATRIMONIO') };
+    default: return null;
+  }
+}
+
 function cacheable(res, sMaxAge, swr = CACHE_SWR) {
   res.set(
     'Cache-Control',
@@ -224,29 +245,34 @@ app.get('/api/bootstrap', async (req, res) => {
     const lastPeriodo = periodos[periodos.length - 1];
     let patrimonioRows = [];
     try {
-      if (country === 'CL') {
-        // El catálogo de la CMF es histórico: guarda entidades que dejaron de
-        // existir y que aparecían en el selector de bancos sin cifras, leídas
-        // como bancos de otro país. Banco do Brasil, Banco de la Nación
-        // Argentina y MUFG cerraron su sucursal en Chile, y BBVA se vendió a
-        // Scotiabank en 2018; ninguno reporta desde entonces.
+      const equity = equityAccount(country);
+      if (equity) {
+        // Los catálogos de los supervisores son históricos: guardan entidades
+        // que dejaron de existir y que aparecían en el selector sin cifras. En
+        // Chile se leían como bancos de otro país (Banco do Brasil, Banco de
+        // la Nación Argentina y MUFG cerraron su sucursal; BBVA se vendió a
+        // Scotiabank en 2018). Panamá arrastra ocho, México cuatro, Argentina
+        // dos y Colombia una.
         //
         // Se pide el patrimonio de la ventana que el dashboard grafica por
         // defecto, no solo del último mes: el último mes alimenta el ranking y
         // la ventana completa decide quién sigue siendo ofrecible, así nada
-        // seleccionable queda vacío y los bancos absorbidos salen por su cuenta
-        // cuando la ventana avanza.
+        // seleccionable queda vacío, un banco que se atrase un mes no
+        // desaparece, y los absorbidos salen por su cuenta cuando la ventana
+        // avanza.
         const ventana = await query(
           `SELECT periodo, ins_cod::int, SUM(monto_total::bigint) AS monto_total
            FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = '300000000'
-             AND periodo = ANY($2)
+           WHERE country = $1 AND tipo = $2 AND cuenta = $3
+             AND periodo = ANY($4)
            GROUP BY periodo, ins_cod`,
-          [country, periodos.slice(-BOOTSTRAP_ACTIVITY_PERIODS)],
+          [country, equity.tipo, equity.cuenta, periodos.slice(-BOOTSTRAP_ACTIVITY_PERIODS)],
         );
         patrimonioRows = ventana
           .filter(r => r.periodo === lastPeriodo)
           .map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) }));
+        // Sin resultados no se recorta nada: es más probable que falte la
+        // cuenta de patrimonio a que no quede ningún banco vivo.
         const activos = new Set(ventana.map(r => Number(r.ins_cod)));
         if (activos.size) {
           activos.add(SYSTEM_TOTAL_CODE);
@@ -256,30 +282,6 @@ app.get('/api/bootstrap', async (req, res) => {
             ...instituciones.filter(i => activos.has(i.codigo)),
           );
         }
-      } else if (country === 'CO') {
-        const eqCuenta = String(process.env.CO_EQUITY_CUENTA || '300000').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
-      } else if (country === 'UY') {
-        const eqCuenta = String(process.env.UY_EQUITY_CUENTA || '3').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
-      } else if (country === 'PE') {
-        const eqCuenta = String(process.env.PE_EQUITY_CUENTA || 'PATRIMONIO').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'US') {
         const eqCuenta = String(process.env.US_EQUITY_CUENTA || 'EQTOT').trim();
         patrimonioRows = await query(
@@ -300,30 +302,6 @@ app.get('/api/bootstrap', async (req, res) => {
             ...instituciones.filter(i => allowedCodes.has(i.codigo)),
           );
         }
-      } else if (country === 'AR') {
-        const eqCuenta = String(process.env.AR_EQUITY_CUENTA || 'PATRIMONIO_NETO').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
-      } else if (country === 'MX') {
-        const eqCuenta = String(process.env.MX_EQUITY_CUENTA || 'CAPITAL_CONTABLE').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
-      } else if (country === 'PA') {
-        const eqCuenta = String(process.env.PA_EQUITY_CUENTA || 'PATRIMONIO').trim();
-        patrimonioRows = await query(
-          `SELECT ins_cod::int, SUM(monto_total::bigint) AS monto_total FROM datos_financieros
-           WHERE country = $1 AND tipo = 'b1' AND cuenta = $2 AND periodo = $3
-           GROUP BY ins_cod`,
-          [country, eqCuenta, lastPeriodo],
-        ).then(rows => rows.map(r => ({ ins_cod: Number(r.ins_cod), monto_total: Number(r.monto_total) })));
       } else if (country === 'BR') {
         // Patrimônio Líquido. El rebuild IF.data guarda todo con tipo='p' y
         // usa el código nuevo Cosif 140246 (se mantiene 78186 por compat. con
