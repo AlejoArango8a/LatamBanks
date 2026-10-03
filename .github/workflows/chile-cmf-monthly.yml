@@ -1,19 +1,19 @@
 # El archivo se sigue llamando "monthly" para no perder el historial de
 # corridas, que va atado a la ruta del archivo.
-name: Chile CMF Balance Bancos (2 veces al mes)
+name: Chile CMF Balance Bancos (chequeo diario)
 
 on:
   schedule:
-    # Dos veces al mes: el día 2 y el último día del mes. La CMF publica el mes
-    # anterior con un rezago de entre tres y cuatro semanas, y con una sola
-    # corrida mensual lo que se publicaba justo después del turno se quedaba
-    # esperando hasta cuatro semanas.
+    # La CMF publica el mes anterior con un rezago de entre tres y cuatro
+    # semanas, en un día que no se puede anticipar. Cualquier agenda de turnos
+    # fijos deja el mes nuevo esperando hasta el siguiente turno: agosto se
+    # publicó entre el 25 y el 30 de septiembre y quedó fuera de la plataforma.
     #
-    # cron no sabe de "último día del mes", así que se programa del 28 al 31 y
-    # el job `gate` descarta los días de esa ventana que no son el último.
+    # Se revisa entonces todos los días. Cuando no hay mes nuevo el balance
+    # cuesta dos páginas HTML y una lectura de carga_log, que tiene un centenar
+    # de filas; los pasos caros siguen atados al día 2 y al último del mes.
     # Discovery: listing 32901 (ZIP) + hub 28910 (cluster).
-    - cron: '0 14 2 * *'
-    - cron: '0 14 28-31 * *'
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -42,36 +42,44 @@ on:
         default: 'false'
 
 jobs:
-  # Filtra solo la ventana del 28 al 31: de esos cuatro disparos, el único que
-  # interesa es el último día del mes. Cualquier otro día pasa sin preguntar,
-  # para que un retraso de GitHub que corra el día 2 pasada la medianoche no
-  # termine saltándose la corrida.
-  gate:
+  # El balance se revisa todos los días. Los otros tres loaders son caros —
+  # Basilea recorre las filas chilenas para saber qué meses tiene e
+  # institutional funding reescribe unas 900 filas por corrida — así que solo
+  # corren en la corrida completa: el día 2, el último del mes, o cualquier día
+  # en que el balance haya traído un mes nuevo.
+  cadencia:
     runs-on: ubuntu-latest
     outputs:
-      run: ${{ steps.check.outputs.run }}
+      completa: ${{ steps.check.outputs.completa }}
     steps:
       - id: check
         env:
           TZ: UTC
           EVENTO: ${{ github.event_name }}
+          MODO: ${{ github.event.inputs.mode }}
         run: |
           dia=$(date -u +%-d)
           manana=$(date -u -d '+1 day' +%-d)
           if [ "$EVENTO" != 'schedule' ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "Disparo manual — se corre sin mirar la fecha."
-          elif [ "$dia" -ge 28 ] && [ "$manana" -ne 1 ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "$(date -u +%F) no es el último día del mes — se omite."
+            # Los disparos manuales de article/zip-url/range cargan un mes
+            # puntual y no tocan los otros loaders, como hasta ahora.
+            if [ -z "$MODO" ] || [ "$MODO" = 'incremental' ]; then
+              echo "completa=true" >> "$GITHUB_OUTPUT"
+              echo "Disparo manual en modo incremental — corrida completa."
+            else
+              echo "completa=false" >> "$GITHUB_OUTPUT"
+              echo "Disparo manual en modo $MODO — solo el balance."
+            fi
+          elif [ "$dia" -eq 2 ] || [ "$manana" -eq 1 ]; then
+            echo "completa=true" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) es día 2 o último del mes — corrida completa."
           else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "$(date -u +%F) — corresponde correr."
+            echo "completa=false" >> "$GITHUB_OUTPUT"
+            echo "$(date -u +%F) — solo se revisa si la CMF publicó un mes nuevo."
           fi
 
   load:
-    needs: gate
-    if: needs.gate.outputs.run == 'true'
+    needs: cadencia
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -84,6 +92,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Load Chile CMF
+        id: balance
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
         run: |
@@ -93,17 +102,23 @@ jobs:
             FORCE_FLAG="--force"
           fi
           if [ "$MODE" = "article" ]; then
-            python chile_loader.py --article-id "${{ github.event.inputs.article_id }}" $FORCE_FLAG
+            python chile_loader.py --article-id "${{ github.event.inputs.article_id }}" $FORCE_FLAG 2>&1 | tee "$RUNNER_TEMP/salida.log"
           elif [ "$MODE" = "zip-url" ]; then
-            python chile_loader.py --zip-url "${{ github.event.inputs.zip_url }}" $FORCE_FLAG
+            python chile_loader.py --zip-url "${{ github.event.inputs.zip_url }}" $FORCE_FLAG 2>&1 | tee "$RUNNER_TEMP/salida.log"
           elif [ "$MODE" = "range" ]; then
-            python chile_loader.py --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" $FORCE_FLAG
+            python chile_loader.py --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}" $FORCE_FLAG 2>&1 | tee "$RUNNER_TEMP/salida.log"
           else
-            python chile_loader.py $FORCE_FLAG
+            python chile_loader.py $FORCE_FLAG 2>&1 | tee "$RUNNER_TEMP/salida.log"
           fi
+          # El loader cierra con "periods loaded this run: N". Sirve para que
+          # los loaders caros corran el mismo día en que llega un mes nuevo,
+          # sin esperar al turno siguiente.
+          nuevos=$(sed -n 's/.*periods loaded this run: \([0-9][0-9]*\).*/\1/p' "$RUNNER_TEMP/salida.log" | tail -1)
+          echo "nuevos=${nuevos:-0}" >> "$GITHUB_OUTPUT"
+          echo "Meses nuevos en esta corrida: ${nuevos:-0}"
 
       - name: Load Chile Basilea III (CMF xlsx)
-        if: ${{ github.event.inputs.mode == 'incremental' || github.event.inputs.mode == '' || github.event_name == 'schedule' }}
+        if: ${{ needs.cadencia.outputs.completa == 'true' || steps.balance.outputs.nuevos != '0' }}
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
         run: |
@@ -116,7 +131,7 @@ jobs:
           python chile_basilea_loader.py $FORCE_FLAG
 
       - name: Load Institutional Funding (FM DAP / BB)
-        if: ${{ github.event.inputs.mode == 'incremental' || github.event.inputs.mode == '' || github.event_name == 'schedule' }}
+        if: ${{ needs.cadencia.outputs.completa == 'true' || steps.balance.outputs.nuevos != '0' }}
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
         run: |
@@ -128,7 +143,7 @@ jobs:
           python chile_institutional_funding_loader.py --refresh-registry $FORCE_FLAG
 
       - name: Refresh Chile macros (UF/USD/IPC)
-        if: ${{ github.event.inputs.mode == 'incremental' || github.event.inputs.mode == '' || github.event_name == 'schedule' }}
+        if: ${{ needs.cadencia.outputs.completa == 'true' || steps.balance.outputs.nuevos != '0' }}
         env:
           COCKROACH_URL: ${{ secrets.COCKROACH_URL }}
           CMF_API_KEY: ${{ secrets.CMF_API_KEY }}
