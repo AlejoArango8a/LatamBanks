@@ -10,12 +10,12 @@ import {
   clB3Snapshot,
   clB3RatioSeries,
   clB3StockSeries,
-} from '../clBaselCuentas.js?v=bmon104';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon104';
-import { apiDatos, fetchData } from '../api.js?v=bmon104';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon104';
-import { bankColor, btgBlue, btgRgba, btgCodeForCountry } from '../config.js?v=bmon104';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon104';
+} from '../clBaselCuentas.js?v=bmon105';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon105';
+import { apiDatos, fetchData } from '../api.js?v=bmon105';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon105';
+import { bankColor, btgBlue, btgRgba, btgCodeForCountry } from '../config.js?v=bmon105';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon105';
 
 const BASEL_COUNTRIES = new Set(['CL']);
 const MAX_COMPARE_ENTITIES = 5;

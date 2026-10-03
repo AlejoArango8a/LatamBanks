@@ -15,12 +15,12 @@ import {
   uyCurrencySnapshot,
   uyCurrencySeries,
   uySum,
-} from '../uyCuentas.js?v=bmon104';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon104';
-import { fetchData } from '../api.js?v=bmon104';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon104';
-import { bankColor } from '../config.js?v=bmon104';
-import { drawLineChart, sparseData } from '../charts.js?v=bmon104';
+} from '../uyCuentas.js?v=bmon105';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon105';
+import { fetchData } from '../api.js?v=bmon105';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon105';
+import { bankColor } from '../config.js?v=bmon105';
+import { drawLineChart, sparseData } from '../charts.js?v=bmon105';
 
 const CURRENCY_COUNTRIES = new Set(['UY']);
 const MAX_BANKS = 5;
