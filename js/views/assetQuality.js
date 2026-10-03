@@ -41,12 +41,13 @@ import {
   US_AQ_COLORS,
   usAqAccountsForRun,
   usAqSnapshot,
-} from '../aqCuentas.js?v=bmon104';
-import { ST, datasetIsoCountry } from '../state.js?v=bmon104';
-import { fetchData } from '../api.js?v=bmon104';
-import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon104';
-import { btgBlue, bankColor } from '../config.js?v=bmon104';
-import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon104';
+} from '../aqCuentas.js?v=bmon105';
+import { ASSET_LENSES, buildComposition, lensAccountsFor, lensSpec } from '../assetLenses.js?v=bmon105';
+import { ST, datasetIsoCountry } from '../state.js?v=bmon105';
+import { fetchData } from '../api.js?v=bmon105';
+import { bankName, fmtKPI, periodLabel } from '../format.js?v=bmon105';
+import { btgBlue, bankColor } from '../config.js?v=bmon105';
+import { drawLineChart, sparseData, drawChartLegend } from '../charts.js?v=bmon105';
 
 const ASSET_QUALITY_COUNTRIES = new Set(['BR', 'CL', 'CO', 'PE', 'UY', 'US']);
 const MAX_COMPARE_ENTITIES = 5;
@@ -58,6 +59,7 @@ const state = {
   loaded: false,
   error: null,
   metric: 'mix', // mix | special | npl
+  lens: 'business', // business | currency | residency | credit | quality
   banks: [],
   periodos: [],
   rowsByTipo: {},
@@ -743,8 +745,9 @@ async function loadAssetQualityData() {
   render();
 
   try {
-    const accounts = c.accounts();
-    const tipos = c.tipos.filter((t) => (accounts[t] || []).length);
+    const accounts = mergedAccounts(c);
+    const tipos = [...new Set([...c.tipos, ...Object.keys(accounts)])]
+      .filter((t) => (accounts[t] || []).length);
     const results = await Promise.all(
       tipos.map((t) => fetchData(t, accounts[t], periodos, banks)),
     );
@@ -765,6 +768,16 @@ async function loadAssetQualityData() {
     state.loading = false;
     render();
   }
+}
+
+function mergedAccounts(c) {
+  const base = c.accounts();
+  const extra = lensAccountsFor(c.iso);
+  const out = {};
+  new Set([...Object.keys(base), ...Object.keys(extra)]).forEach((t) => {
+    out[t] = [...new Set([...(base[t] || []), ...(extra[t] || [])].map(String))];
+  });
+  return out;
 }
 
 function peerEmptyMessage() {
@@ -1178,7 +1191,9 @@ function drawStackedChart(canvasId, series, title) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 720;
-  const cssH = 300;
+  const legendRows = Math.max(1, Math.ceil((series?.length || 1) / 4));
+  const cssH = 268 + legendRows * 16;
+  canvas.style.height = `${cssH}px`;
   canvas.width = Math.floor(cssW * dpr);
   canvas.height = Math.floor(cssH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1187,8 +1202,7 @@ function drawStackedChart(canvasId, series, title) {
   const periodos = state.periodos;
   const totals = periodos.map((_, i) => series.reduce((s, g) => s + Math.max(0, g.values[i] || 0), 0));
   const maxV = Math.max(1, ...totals);
-  // Extra bottom pad for period labels + color legend (same pattern as Funding).
-  const pad = { t: 28, r: 16, b: 92, l: 64 };
+  const pad = { t: 28, r: 16, b: 44 + legendRows * 16, l: 72 };
   const plotW = cssW - pad.l - pad.r;
   const plotH = cssH - pad.t - pad.b;
   const n = Math.max(1, periodos.length);
@@ -1393,6 +1407,413 @@ function setChartStyle(style) {
   render();
 }
 
+function lensKeyNow() {
+  return ASSET_LENSES.some((l) => l.key === state.lens) ? state.lens : 'business';
+}
+
+function lensBarHtml(iso) {
+  const key = lensKeyNow();
+  const buttons = ASSET_LENSES.map((l) => (
+    `<button type="button" class="rcbtn ${key === l.key ? 'active' : ''}" data-aq-lens="${l.key}" role="tab" aria-selected="${key === l.key ? 'true' : 'false'}">${esc(l.label)}</button>`
+  )).join('');
+  const spec = key === 'quality'
+    ? lensSpec(iso, 'quality')
+    : lensSpec(iso, key);
+  return `
+    <div class="aq-lens-bar" role="tablist" aria-label="How to see the asset">
+      ${buttons}
+    </div>
+    <div class="aq-lens-scope">${esc(spec?.scope || '')}</div>`;
+}
+
+function bindLensBar() {
+  document.querySelectorAll('[data-aq-lens]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.getAttribute('data-aq-lens');
+      if (!ASSET_LENSES.some((l) => l.key === next)) return;
+      state.lens = next;
+      render();
+    });
+  });
+}
+
+function fmtPp(a, b) {
+  if (a == null || b == null || !Number.isFinite(Number(a)) || !Number.isFinite(Number(b))) return '—';
+  const d = Number(a) - Number(b);
+  if (Math.abs(d) < 0.05) return '0.0 pp';
+  return `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} pp`;
+}
+
+function compositionKpis(view) {
+  if (!view?.available) return '';
+  const headlineNow = view.headline?.values?.length
+    ? view.headline.values[view.headline.values.length - 1]
+    : null;
+  const top = (view.lines || []).find((ln) => ln.key !== 'residual') || view.lines?.[0];
+  const third = view.kind === 'currency'
+    ? top
+    : (view.lines || []).find((ln) => ln.key !== view.headline?.key && ln.key !== 'residual');
+  const thirdVal = view.kind === 'currency'
+    ? fmtPct(top?.fxPct)
+    : fmtPct(third?.pct);
+  const thirdSub = view.kind === 'currency'
+    ? (top ? `${fmtPct(top.pct)} of ${view.denomLabel} · foreign-currency share of that line` : '')
+    : (third ? `${fmtKPI(third.value)} · next to the headline line` : '');
+  const thirdTitle = view.kind === 'currency'
+    ? (top ? `${top.short || top.label} in foreign currency` : 'Largest line')
+    : (third?.short || third?.label || 'Next line');
+  return `
+    <div class="kpi-grid fa-kpi-grid aq-kpi-grid">
+      <div class="kpi-col">
+        <div class="kpi-col-title">Total ${esc(view.denomLabel)}</div>
+        <div class="kpi blue"><div class="kpi-val">${fmtKPI(view.total)}</div>
+        <div class="kpi-sub">${esc(periodLabel(view.periodo))} · published total</div></div>
+      </div>
+      <div class="kpi-col">
+        <div class="kpi-col-title">${esc(view.headline?.label || 'Headline')}</div>
+        <div class="kpi blue"><div class="kpi-val">${fmtPct(headlineNow)}</div>
+        <div class="kpi-sub">Share at ${esc(periodLabel(view.periodo))}</div></div>
+      </div>
+      <div class="kpi-col">
+        <div class="kpi-col-title">${esc(thirdTitle)}</div>
+        <div class="kpi purple"><div class="kpi-val">${third ? thirdVal : '—'}</div>
+        <div class="kpi-sub">${esc(thirdSub)}</div></div>
+      </div>
+    </div>`;
+}
+
+function swatchLabel(ln) {
+  const color = ln.color || '#64748b';
+  return `<span class="fa-swatch" style="background:${color}"></span>${esc(ln.label)}`;
+}
+
+function renderPartitionTable(view) {
+  const body = (view.lines || []).map((ln) => `<tr class="${ln.foreign ? 'aq-row-foreign' : ''}">
+      <td>${swatchLabel(ln)}</td>
+      <td class="r">${fmtKPI(ln.value)}</td>
+      <td class="r">${fmtPct(ln.pct)}</td>
+    </tr>`).join('');
+  const covered = (view.lines || []).reduce((s, ln) => s + (Number(ln.pct) || 0), 0);
+  return `<table class="data fa-table">
+    <thead><tr><th>Line</th><th class="r">Stock</th><th class="r">% of ${esc(view.denomLabel)}</th></tr></thead>
+    <tbody>
+      ${body || '<tr><td colspan="3">No balances for this period.</td></tr>'}
+      <tr>
+        <td style="font-weight:600">Total</td>
+        <td class="r" style="font-weight:600">${fmtKPI(view.total)}</td>
+        <td class="r">${view.lines?.length ? fmtPct(covered) : '—'}</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function currencyCells(entry, fields) {
+  if (!entry?.parts?.length) {
+    const blanks = fields.map(() => '<td class="r">—</td>').join('');
+    return `${blanks}<td class="r">${fmtKPI(entry?.value)}</td><td class="r">—</td><td class="r">${fmtPct(entry?.pct)}</td>`;
+  }
+  const byKey = Object.fromEntries(entry.parts.map((p) => [p.key, p]));
+  const cols = fields.map((f) => `<td class="r">${fmtKPI(byKey[f.key]?.value || 0)}</td>`).join('');
+  const total = entry.total != null ? entry.total : entry.value;
+  return `${cols}<td class="r">${fmtKPI(total)}</td><td class="r">${fmtPct(entry.fxPct)}</td><td class="r">${fmtPct(entry.pct)}</td>`;
+}
+
+function renderCurrencyTable(view) {
+  const fields = view.fields || [];
+  const head = fields.map((f) => `<th class="r">${esc(f.short)}</th>`).join('');
+  const totalRow = view.currencyTotal
+    ? `<tr><td style="font-weight:600">${esc(view.currencyTotal.label || 'Total assets')}</td>${currencyCells({ ...view.currencyTotal, pct: 100 }, fields)}</tr>`
+    : '';
+  const body = (view.lines || []).map((ln) => `<tr class="${ln.foreign ? 'aq-row-foreign' : ''}">
+      <td>${swatchLabel(ln)}</td>${currencyCells(ln, fields)}
+    </tr>`).join('');
+  return `<table class="data fa-table">
+    <thead><tr><th>Line</th>${head}<th class="r">Total</th><th class="r">FX %</th><th class="r">% of ${esc(view.denomLabel)}</th></tr></thead>
+    <tbody>${totalRow}${body || '<tr><td colspan="6">No balances for this period.</td></tr>'}</tbody>
+  </table>`;
+}
+
+function peerGroupHead(entities, span) {
+  return entities.map((e, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-head ${tone}" colspan="${span}" style="--fa-bank-line:${esc(e.color)}">
+      <span class="fa-swatch" style="background:${esc(e.color)}"></span>${esc(e.short)}
+    </th>`;
+  }).join('');
+}
+
+function renderComparePartition(built) {
+  const duel = built.length === 2;
+  const order = [];
+  const seen = new Set();
+  built.forEach(({ view }) => {
+    (view.lines || []).forEach((ln) => {
+      if (!seen.has(ln.key)) {
+        seen.add(ln.key);
+        order.push(ln);
+      }
+    });
+  });
+  const first = built[0]?.view;
+  order.sort((a, b) => {
+    const va = Math.abs(first?.lines?.find((x) => x.key === a.key)?.value || 0);
+    const vb = Math.abs(first?.lines?.find((x) => x.key === b.key)?.value || 0);
+    return vb - va;
+  });
+  const sub = built.map((row, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}">Stock</th><th class="r fa-bank-sub ${tone}">%</th>`;
+  }).join('');
+  const gapHead = duel ? '<th class="r" rowspan="2">Gap</th>' : '';
+  const body = order.map((ln) => {
+    const cells = built.map(({ view }, i) => {
+      const row = view.lines?.find((x) => x.key === ln.key);
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}">${fmtKPI(row?.value || 0)}</td><td class="r ${tone}">${fmtPct(row?.pct)}</td>`;
+    }).join('');
+    const gap = duel
+      ? `<td class="r">${fmtPp(built[0].view.lines?.find((x) => x.key === ln.key)?.pct, built[1].view.lines?.find((x) => x.key === ln.key)?.pct)}</td>`
+      : '';
+    return `<tr class="${ln.foreign ? 'aq-row-foreign' : ''}"><td>${swatchLabel(ln)}</td>${cells}${gap}</tr>`;
+  }).join('');
+  return `<table class="data fa-table fa-table-peers">
+    <thead>
+      <tr><th rowspan="2">Line</th>${peerGroupHead(built.map((b) => b.e), 2)}${gapHead}</tr>
+      <tr>${sub}</tr>
+    </thead>
+    <tbody>${body || '<tr><td>No balances for these banks.</td></tr>'}</tbody>
+  </table>`;
+}
+
+function renderCompareCurrency(built) {
+  const fields = built[0]?.view?.fields || [];
+  const duel = built.length === 2;
+  const head = peerGroupHead(built.map((b) => b.e), 2);
+  const sub = built.map((row, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}">Stock</th><th class="r fa-bank-sub ${tone}">%</th>`;
+  }).join('');
+  const gapHead = duel ? '<th class="r" rowspan="2">Gap</th>' : '';
+  const mixRows = fields.map((f) => {
+    const cells = built.map(({ view }, i) => {
+      const part = view.currencyTotal?.parts?.find((p) => p.key === f.key);
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}">${fmtKPI(part?.value || 0)}</td><td class="r ${tone}">${fmtPct(part?.pct)}</td>`;
+    }).join('');
+    const gap = duel
+      ? `<td class="r">${fmtPp(
+        built[0].view.currencyTotal?.parts?.find((p) => p.key === f.key)?.pct,
+        built[1].view.currencyTotal?.parts?.find((p) => p.key === f.key)?.pct,
+      )}</td>`
+      : '';
+    return `<tr><td><span class="fa-swatch" style="background:${f.color}"></span>${esc(f.label)}</td>${cells}${gap}</tr>`;
+  }).join('');
+  const mix = `<table class="data fa-table fa-table-peers">
+    <thead>
+      <tr><th rowspan="2">Currency of total assets</th>${head}${gapHead}</tr>
+      <tr>${sub}</tr>
+    </thead>
+    <tbody>${mixRows}</tbody>
+  </table>`;
+
+  const order = [];
+  const seen = new Set();
+  built.forEach(({ view }) => {
+    (view.lines || []).forEach((ln) => {
+      if (ln.key !== 'residual' && !seen.has(ln.key)) {
+        seen.add(ln.key);
+        order.push(ln);
+      }
+    });
+  });
+  const first = built[0]?.view;
+  order.sort((a, b) => {
+    const va = Math.abs(first?.lines?.find((x) => x.key === a.key)?.value || 0);
+    const vb = Math.abs(first?.lines?.find((x) => x.key === b.key)?.value || 0);
+    return vb - va;
+  });
+  const lineSub = built.map((row, i) => {
+    const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+    return `<th class="r fa-bank-start fa-bank-sub ${tone}">% of assets</th><th class="r fa-bank-sub ${tone}">FX %</th>`;
+  }).join('');
+  const lineRows = order.map((ln) => {
+    const cells = built.map(({ view }, i) => {
+      const row = view.lines?.find((x) => x.key === ln.key);
+      const tone = i % 2 === 0 ? 'fa-bank-tone-a' : '';
+      return `<td class="r fa-bank-start ${tone}">${fmtPct(row?.pct)}</td><td class="r ${tone}">${fmtPct(row?.fxPct)}</td>`;
+    }).join('');
+    const gap = duel
+      ? `<td class="r">${fmtPp(built[0].view.lines?.find((x) => x.key === ln.key)?.fxPct, built[1].view.lines?.find((x) => x.key === ln.key)?.fxPct)}</td>`
+      : '';
+    return `<tr><td>${swatchLabel(ln)}</td>${cells}${gap}</tr>`;
+  }).join('');
+  const lines = `<table class="data fa-table fa-table-peers" style="margin-top:14px">
+    <thead>
+      <tr><th rowspan="2">Where it sits</th>${peerGroupHead(built.map((b) => b.e), 2)}${duel ? '<th class="r" rowspan="2">FX gap</th>' : ''}</tr>
+      <tr>${lineSub}</tr>
+    </thead>
+    <tbody>${lineRows || '<tr><td>No business lines for these banks.</td></tr>'}</tbody>
+  </table>`;
+  return mix + lines;
+}
+
+function renderUnavailable(view) {
+  const instead = ASSET_LENSES.find((l) => l.key === view.instead);
+  return `
+    <div class="panel fa-panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">${esc(view.label)} is not in this country&rsquo;s filings</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="aq-lens-reason">${view.reason || ''}</div>
+        ${instead ? `<button type="button" class="rcbtn active" data-aq-lens="${instead.key}" style="margin-top:14px;">Open ${esc(instead.label)}</button>` : ''}
+      </div>
+    </div>
+    ${(view.notes || []).length ? `<ul class="fa-notes">${view.notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}`;
+}
+
+function renderCompositionPage({ root, c, iso, entities, comparing, active }) {
+  const lensKey = lensKeyNow();
+  const built = entities.map((e) => ({
+    e,
+    view: buildComposition(rowsForCodes(e.codes).b1 || [], iso, lensKey, state.periodos),
+  }));
+  const activeView = built.find((b) => b.e.id === active.id)?.view || built[0]?.view;
+  const entityTabs = entities.map((e) => {
+    const on = !comparing && e.id === active.id;
+    return `<button type="button" class="rcbtn ${on ? 'active' : ''}" data-aq-entity="${esc(e.id)}" ${comparing ? 'disabled title="Switch to Single to focus one peer"' : ''}>
+      <span class="fa-swatch" style="background:${e.color}"></span>${esc(e.short)}
+    </button>`;
+  }).join('');
+  const focusLabel = comparing ? entities.map((e) => e.short).join(' · ') : active.label;
+  const range = `${periodLabel(state.periodos[0])} — ${periodLabel(state.periodos[state.periodos.length - 1])}`;
+  const unavailable = !activeView?.available;
+  const styleBtns = [
+    { key: 'bars', label: 'Bars' },
+    { key: 'lines', label: 'Lines' },
+    { key: 'area', label: 'Area' },
+  ].map((s) => `<button type="button" class="rcbtn ${state.chartStyle === s.key ? 'active' : ''}" data-aq-style="${s.key}">${s.label}</button>`).join('');
+  const stacked = !comparing && state.chartStyle === 'bars';
+  const panelTitle = unavailable
+    ? ''
+    : comparing
+      ? (activeView.headline?.label || activeView.label)
+      : stacked
+        ? 'How the stock is split'
+        : `Share of ${activeView.denomLabel}`;
+  const chartId = stacked ? 'aqStackChart' : 'aqCompareChart';
+  const table = unavailable
+    ? renderUnavailable(activeView)
+    : comparing
+      ? (activeView.kind === 'currency'
+        ? renderCompareCurrency(built)
+        : renderComparePartition(built))
+      : (activeView.kind === 'currency' ? renderCurrencyTable(activeView) : renderPartitionTable(activeView));
+  const tableTitle = unavailable
+    ? ''
+    : comparing
+      ? `${activeView.label} · ${periodLabel(state.periodos[state.periodos.length - 1])}`
+      : `${activeView.label} · ${periodLabel(activeView.periodo)}`;
+  const tableSub = unavailable
+    ? ''
+    : comparing
+      ? (activeView.kind === 'currency'
+        ? 'Currency mix of total assets, then foreign-currency share of each business line'
+        : `Share of ${activeView.denomLabel} · gap is the first bank minus the second, in percentage points`)
+      : `Share of ${activeView.denomLabel} · local reporting units`;
+
+  root.innerHTML = `
+    <div class="fa-hero aq-hero">
+      <div>
+        <div class="fa-eyebrow">${esc(c.eyebrow)}</div>
+        <div class="fa-title">Asset composition</div>
+        <div class="fa-sub">Where the money sits. Each country only shows the cuts its regulator publishes — the rest stay selectable and say what is missing.</div>
+      </div>
+      <button type="button" class="rcbtn" id="aqReload">Refresh</button>
+    </div>
+    ${renderPeerToolbar()}
+    ${lensBarHtml(iso)}
+    <div class="fa-toolbar">
+      <div class="fa-bank-tabs">${entityTabs}</div>
+    </div>
+    ${unavailable || comparing ? '' : compositionKpis(activeView)}
+    ${unavailable ? table : `
+    <div class="panel fa-panel" style="margin-top:22px;">
+      <div class="panel-head fa-chart-head">
+        <div>
+          <div class="panel-title">${esc(panelTitle)}</div>
+          <div class="panel-sub">${esc(focusLabel)} · ${esc(range)}</div>
+        </div>
+        <div class="fa-chart-styles" role="group" aria-label="Chart style">
+          ${labelsToggleHtml('aqBtnLabels')}
+          ${styleBtns}
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap" style="position:relative;min-height:280px;">
+          <canvas id="${chartId}" height="300" style="width:100%;height:300px;"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="panel fa-panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">${esc(tableTitle)}</div>
+          <div class="panel-sub">${esc(tableSub)}</div>
+        </div>
+      </div>
+      <div class="panel-body" style="overflow-x:auto;padding:0;">
+        ${table}
+      </div>
+    </div>
+    ${(activeView.notes || []).length ? `<ul class="fa-notes">${activeView.notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}`}
+  `;
+
+  document.getElementById('aqReload')?.addEventListener('click', () => loadAssetQualityData());
+  bindPeerToolbar();
+  bindLensBar();
+  document.querySelectorAll('[data-aq-entity]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      setEntity(btn.getAttribute('data-aq-entity'));
+    });
+  });
+  document.querySelectorAll('[data-aq-style]').forEach((btn) => {
+    btn.addEventListener('click', () => setChartStyle(btn.getAttribute('data-aq-style')));
+  });
+
+  if (unavailable) return;
+  requestAnimationFrame(() => {
+    if (stacked) {
+      const title = activeView.kind === 'currency'
+        ? 'Total assets by currency'
+        : `Composition of ${activeView.denomLabel}`;
+      drawStackedChart('aqStackChart', activeView.series || [], title);
+      return;
+    }
+    const series = comparing
+      ? built.map(({ e, view }) => ({
+        label: e.short,
+        color: e.color,
+        data: sparseData((view.headline?.values || []).map((v) => (v == null ? null : v))),
+      }))
+      : (activeView.pctSeries || []).map((s) => ({
+        label: s.short || s.label,
+        color: s.color,
+        data: sparseData((s.values || []).map((v) => (v == null ? null : v))),
+      }));
+    drawLineChart('aqCompareChart', state.periodos, series, {
+      valueScale: 'percent',
+      emptyMessage: 'No series for this cut in the selected range.',
+      height: 300,
+      style: state.chartStyle || 'bars',
+      showLegend: true,
+    });
+  });
+}
+
 function renderPeerToolbar() {
   const compareBtns = `
     <div class="fa-compare-toggle" role="group" aria-label="View mode">
@@ -1430,14 +1851,14 @@ function render() {
   if (!ASSET_QUALITY_COUNTRIES.has(iso) || !c) {
     root.innerHTML = `<div class="fa-empty">
       <div class="fa-empty-title">Asset Quality</div>
-      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong>, <strong>Uruguay</strong> and the <strong>United States</strong>. Switch country to explore credit quality, coverage and the country lens.</div>
+      <div class="fa-empty-sub">Available for <strong>Brazil</strong>, <strong>Chile</strong>, <strong>Colombia</strong>, <strong>Peru</strong>, <strong>Uruguay</strong> and the <strong>United States</strong>. Open a bank to see how its assets are split, then the credit-quality sheet.</div>
     </div>`;
     return;
   }
 
   if (state.loading) {
     root.innerHTML = `<div class="fa-empty"><div class="ls-bars" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
-      <div class="fa-empty-sub" style="margin-top:16px;">Loading ${esc(c.loadingLabel)} credit quality…</div></div>`;
+      <div class="fa-empty-sub" style="margin-top:16px;">Loading ${esc(c.loadingLabel)}…</div></div>`;
     return;
   }
 
@@ -1466,7 +1887,7 @@ function render() {
       <div class="fa-empty">
         <div class="fa-empty-title">${esc(c.title)}</div>
         <div class="fa-empty-sub">${esc(c.sub)}</div>
-        <button type="button" class="rcbtn active" id="aqLoad" style="margin-top:14px;">Load credit quality</button>
+        <button type="button" class="rcbtn active" id="aqLoad" style="margin-top:14px;">Load Asset Quality</button>
       </div>`;
     bindPeerToolbar();
     document.getElementById('aqLoad')?.addEventListener('click', () => loadAssetQualityData());
@@ -1489,6 +1910,10 @@ function render() {
   state.lastEntityId = active.id;
 
   const comparing = state.compare && entities.length >= 2;
+  if (lensKeyNow() !== 'quality') {
+    renderCompositionPage({ root, c, iso, entities, comparing, active });
+    return;
+  }
   const entityTabs = entities.map((e) => {
     const on = !comparing && e.id === active.id;
     return `<button type="button" class="rcbtn ${on ? 'active' : ''}" data-aq-entity="${esc(e.id)}" ${comparing ? 'disabled title="Switch to Single to focus one peer"' : ''}>
@@ -1538,6 +1963,7 @@ function render() {
     </div>
 
     ${renderPeerToolbar()}
+    ${lensBarHtml(iso)}
 
     <div class="fa-toolbar">
       <div class="fa-bank-tabs">${entityTabs}</div>
@@ -1590,6 +2016,7 @@ function render() {
 
   document.getElementById('aqReload')?.addEventListener('click', () => loadAssetQualityData());
   bindPeerToolbar();
+  bindLensBar();
   document.querySelectorAll('[data-aq-entity]').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (btn.disabled) return;

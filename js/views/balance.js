@@ -1,18 +1,18 @@
 // ============================================================
 // BALANCE, RESULTADOS, CALIDAD, COMPARATIVO
 // ============================================================
-import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon104';
-import { bankColor } from '../config.js?v=bmon104';
-import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon104';
-import { sumRows } from '../api.js?v=bmon104';
-import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon104';
-import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon104';
-import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon104';
-import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon104';
-import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon104';
-import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon104';
-import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon104';
-import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon104';
+import { ST, datasetIsoCountry, reportingLocalCurrencyISO } from '../state.js?v=bmon105';
+import { bankColor } from '../config.js?v=bmon105';
+import { bankName, fmtKPI, fmtKPIDecimal, fmtM, fmtP, fmtB, fmtChartPct, nplPctFromRaw, coIncomeStatementConceptHtml, escapeHtml, rawForExport } from '../format.js?v=bmon105';
+import { sumRows } from '../api.js?v=bmon105';
+import { BAL_CO_SECTIONS, coPlStatementRows, coSumB1BalanceRow, coSumR1PlRow } from '../coCuentas.js?v=bmon105';
+import { BAL_BR_SECTIONS, R1_BR_ROWS, brRowCodes } from '../brCuentas.js?v=bmon105';
+import { BAL_UY_SECTIONS, R1_UY_ROWS } from '../uyCuentas.js?v=bmon105';
+import { BAL_PE_SECTIONS, R1_PE_ROWS } from '../peCuentas.js?v=bmon105';
+import { BAL_US_SECTIONS, R1_US_ROWS } from '../usCuentas.js?v=bmon105';
+import { BAL_AR_SECTIONS, R1_AR_ROWS } from '../arCuentas.js?v=bmon105';
+import { BAL_MX_SECTIONS, R1_MX_ROWS } from '../mxCuentas.js?v=bmon105';
+import { BAL_PA_SECTIONS, R1_PA_ROWS } from '../paCuentas.js?v=bmon105';
 
 /** Balance / Income Statement panel subtitles + column wording (COP vs CLP vs USD). */
 export function syncFinStatementPanelLabels() {
