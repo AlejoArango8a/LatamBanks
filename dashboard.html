@@ -999,6 +999,14 @@ body.light .btg-banks-elim-text { color:#0f172a; }
 }
 body.light .fa-table-peers thead th.fa-bank-head { color: #0f172a; }
 
+/* Head-to-head gap column: who is ahead, not just by how much. */
+.aq-gap-sub {
+  font-weight: 500; font-size: 9.5px; letter-spacing: 0;
+  text-transform: none; color: var(--text3); margin-top: 2px;
+}
+.fa-table td.pos { color: var(--green); font-weight: 600; }
+.fa-table td.neg { color: var(--red); font-weight: 600; }
+
 .fa-swatch {
   display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:8px; vertical-align:middle;
 }
@@ -1554,6 +1562,7 @@ body.light .app-error-title { color:#0f172a; }
         <button type="button" class="tab secondary" data-tab="balance" onclick="showTab('balance')">Balance Sheet</button>
         <button type="button" class="tab secondary" data-tab="resultados" onclick="showTab('resultados')">Income Statement</button>
         <button type="button" class="tab secondary" data-tab="instfunding" onclick="showTab('instfunding')">Institutional Funding</button>
+        <button type="button" class="tab secondary" data-tab="currency" onclick="showTab('currency')">Currency Split</button>
         <button type="button" class="tab" data-tab="config" onclick="showTab('config')" style="margin-left:auto;">⚙ Config</button>
       </div>
       <div id="tabsFade" style="position:absolute;right:0;top:0;bottom:0;width:28px;
@@ -1806,6 +1815,11 @@ body.light .app-error-title { color:#0f172a; }
         <!-- INSTITUTIONAL FUNDING (Chile · FM DAP / bank bonds by AGF) -->
         <div id="tab-instfunding" style="display:none;">
           <div id="institutionalFundingRoot"></div>
+        </div>
+
+        <!-- CURRENCY SPLIT (Uruguay BCU: M/N vs M/E) -->
+        <div id="tab-currency" style="display:none;">
+          <div id="uyCurrencyRoot"></div>
         </div>
 
         <!-- BANK PROFILE -->
@@ -2146,7 +2160,7 @@ body.light .app-error-title { color:#0f172a; }
 </div>
 <div id="chartTooltip" class="chart-tooltip"></div>
 
-<script type="module" src="js/app.js?v=bmon103"></script>
+<script type="module" src="js/app.js?v=bmon104"></script>
 <!-- Coming soon overlay (unused — all LatAm flags live) -->
 <div id="countryOverlay" onclick="selectCountry('chile')" style="display:none;position:fixed;inset:0;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
