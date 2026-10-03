@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -87,6 +88,13 @@ def razon_social(cur, country: str, code: int) -> str | None:
     return row[0] if row else None
 
 
+def sin_llamadas(nombre: str) -> str:
+    """Mismo aseo que hacen los loaders: fuera asteriscos y notas '1/'."""
+    s = re.sub(r"[*\u2217]+", "", str(nombre or ""))
+    s = re.sub(r"\s+\d+/", "", s)
+    return re.sub(r"\s+", " ", s).strip(" .,;:-")
+
+
 def merge_one(cur, country: str, origen: int, destino: int, motivo: str, apply: bool) -> bool:
     nombre_o = razon_social(cur, country, origen)
     per_o = periodos_de(cur, country, origen)
@@ -109,8 +117,23 @@ def merge_one(cur, country: str, origen: int, destino: int, motivo: str, apply: 
         country, origen, destino, motivo, len(per_o),
         f" {min(per_o)}–{max(per_o)}" if per_o else "",
     )
+    # El código destino puede no existir todavía como institución: pasa cuando
+    # el nombre bueno nunca se cargó porque el regulador siempre lo publicó con
+    # llamada al pie. Sin esto, las cifras quedarían bajo un código sin nombre
+    # hasta la próxima corrida del loader.
+    nombre_d = razon_social(cur, country, destino)
+    if not nombre_d:
+        log.info("     %s no existe como institución; se crea como '%s'",
+                 destino, sin_llamadas(nombre_o))
+
     if not apply:
         return False
+
+    if not nombre_d:
+        cur.execute(
+            "INSERT INTO instituciones (country, codigo, razon_social) VALUES (%s,%s,%s)",
+            (country, destino, sin_llamadas(nombre_o)),
+        )
 
     # La PK es (country, periodo, tipo, ins_cod, cuenta): mover ins_cod es un
     # borrado + alta. Ya está verificado que no hay período compartido, así que
