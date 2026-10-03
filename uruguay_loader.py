@@ -12,7 +12,11 @@ Valores: miles de pesos → se guardan en pesos enteros (×1000).
   Situación / Resultados: M/N → monto_clp, M/E → monto_ext, Total → monto_total.
   Anexo 1 (plazos contractuales): cuentas sintéticas A1_{SECTION}_{TERM}.
   Anexo 2 (créditos/deterioro/residencia): A2_* en b1.
-  Anexo 4 (indicadores): A4_* en tipo=q1 (percent×100).
+  Anexo 3 (estructura de depósitos por tramo): A3_* en b1; A3_CLI_* son
+    cantidades de clientes, no pesos.
+  Anexo 4 (indicadores): A4_* en tipo=q1 (percent×100). Se toma el anexo completo.
+  Anexo 5 (responsabilidad patrimonial neta): A5_* en b1, solo monto_total.
+  ERI (estado de resultados integral): ERI_* en r1, solo monto_total.
 
 Modos:
   (sin flags)     Incremental: meses del catálogo aún no en carga_log
@@ -30,6 +34,7 @@ import os
 import re
 import ssl
 import time
+import unicodedata
 from pathlib import Path
 from typing import Iterable
 from urllib.error import HTTPError, URLError
@@ -185,6 +190,15 @@ def recent_candidate_periods(n_months: int = 4) -> list[str]:
     return list(reversed(out))
 
 
+def _fold(s: str) -> str:
+    """Minúsculas sin tildes ni puntuación suelta, para comparar etiquetas del boletín."""
+    txt = unicodedata.normalize("NFKD", str(s or ""))
+    txt = "".join(ch for ch in txt if not unicodedata.combining(ch))
+    txt = txt.lower().replace("\xa0", " ")
+    txt = re.sub(r"[^a-z0-9 ]+", " ", txt)
+    return re.sub(r"\s+", " ", txt).strip()
+
+
 def parse_cuenta(label: str) -> tuple[str, str] | None:
     """Devuelve (cuenta, descripcion) o None si la fila no es dato."""
     lab = re.sub(r"\s+", " ", str(label or "").strip())
@@ -225,6 +239,17 @@ def _cell_num(sh, r: int, c: int) -> int:
         return int(round(float(v) * SCALE))
     except (TypeError, ValueError):
         return 0
+
+
+def _cell_raw(sh, r: int, c: int) -> float:
+    """Valor sin escalar (el Anexo 3 también trae cantidades de clientes)."""
+    try:
+        v = sh.cell_value(r, c)
+        if v in ("", None):
+            return 0.0
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _mn_me_total(sh, r: int) -> tuple[int, int, int]:
@@ -366,19 +391,152 @@ def parse_anexo2(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
     return rows, plan
 
 
-# Anexo 4 — indicadores (ratios). Stored as tipo='q1'; value in monto_total.
-_A4_KEYS = {
-    "iv.1": "A4_IV_1",       # Morosidad
-    "iv.2": "A4_IV_2",
-    "iv.3": "A4_IV_3",       # Grado de deterioro total
-    "vii.1": "A4_VII_1",     # Dolarización créditos SNF
-    "vii.2": "A4_VII_2",     # Dolarización depósitos SNF
-    "vii.3": "A4_VII_3",
-    "vii.4": "A4_VII_4",
-    "vii.5": "A4_VII_5",     # Créditos a no residentes / créditos brutos SNF
-    "vii.6": "A4_VII_6",     # Depósitos de no residentes
-    "i.2": "A4_I_2",         # Cobertura deterioro vencidos
+# Anexo 3 — estructura de depósitos por tramo de saldo. Cuentas sintéticas A3_*.
+#
+# La grilla del boletín cruza tramo (columnas) con plazo × moneda × residencia
+# (filas). Como la tabla guarda M/N y M/E en columnas propias, la moneda se
+# colapsa en monto_clp / monto_ext y solo quedan plazo y residencia en el código:
+#   A3_{PLAZO}_{RESIDENCIA}_{TRAMO}   montos
+#   A3_CLI_{RESIDENCIA}_{TRAMO}       cantidad de clientes (NO son pesos)
+# La apertura por residencia solo se emite para el plazo agregado (ALL): el cruce
+# plazo × residencia × tramo son 60 filas más por banco y mes sin uso analítico
+# que lo justifique.
+_A3_TERMS = {
+    "total": "ALL",
+    "vista y menores de 30 dias": "V30",
+    "menores de 1 ano": "L1Y",
+    "1 ano y mayores": "G1Y",
 }
+_A3_TERM_LABELS = {
+    "ALL": "todos los plazos",
+    "V30": "vista y <30 días",
+    "L1Y": "<1 año",
+    "G1Y": "≥1 año",
+}
+_A3_CURRENCIES = {"moneda nacional": "mn", "moneda extranjera": "me"}
+_A3_RESIDENCE = {"residentes": "R", "no residentes": "NR"}
+_A3_RES_LABELS = {"T": "total", "R": "residentes", "NR": "no residentes"}
+
+
+def _a3_tranche_keys(sh) -> dict[int, tuple[str, str]]:
+    """Columna → (clave de tramo, etiqueta), leídos del encabezado del Anexo 3."""
+    header = next(
+        (r for r in range(sh.nrows) if _fold(sh.cell_value(r, 0)) == "descripcion"),
+        None,
+    )
+    if header is None:
+        return {}
+    out: dict[int, tuple[str, str]] = {}
+    for c in range(1, sh.ncols):
+        label = re.sub(r"\s+", " ", str(sh.cell_value(header, c) or "")).strip()
+        low = _fold(label)
+        if not low:
+            continue
+        if low == "total":
+            out[c] = ("TOT", label)
+            continue
+        # El monto va sobre la etiqueta cruda: _fold borra los puntos de millar
+        # y "U$S 250.000" quedaría en 250.
+        m = re.search(r"u\$?s\s*([\d.,]+)", label, flags=re.I)
+        if not m:
+            continue
+        miles = int(re.sub(r"\D", "", m.group(1))) // 1000
+        out[c] = (f"{'GT' if low.startswith('superiores') else 'LE'}{miles}K", label)
+    return out
+
+
+def parse_anexo3(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea Anexo 3 (estructura de depósitos) → filas b1 con A3_*."""
+    tramos = _a3_tranche_keys(sh)
+    if not tramos:
+        return [], {}
+
+    clientes: dict[tuple[str, int], float] = {}
+    montos: dict[tuple[str, str, int], float] = {}
+    block = None
+    term = None
+    currency = None
+
+    for r in range(sh.nrows):
+        low = _fold(sh.cell_value(r, 0))
+        if not low:
+            continue
+        if low == "cantidad de clientes":
+            block, term, currency = "cli", None, None
+            continue
+        if low == "monto operativo":
+            block, term, currency = "montos", "ALL", None
+            continue
+        if block == "cli":
+            res = _A3_RESIDENCE.get(low.replace("total clientes", "").strip() or "total")
+            key = res or "T"
+            for c in tramos:
+                clientes[(key, c)] = _cell_raw(sh, r, c)
+            continue
+        if block != "montos":
+            continue
+
+        if low in _A3_TERMS:
+            term, currency = _A3_TERMS[low], None
+            for c in tramos:
+                montos[(term, "total", c)] = _cell_raw(sh, r, c)
+            continue
+        if low in _A3_CURRENCIES:
+            currency = _A3_CURRENCIES[low]
+            for c in tramos:
+                montos[(term, currency, c)] = _cell_raw(sh, r, c)
+            continue
+        res = _A3_RESIDENCE.get(low)
+        if res and term == "ALL" and currency:
+            for c in tramos:
+                montos[(term, f"{currency}_{res}", c)] = _cell_raw(sh, r, c)
+
+    rows = []
+    plan: dict[str, str] = {}
+
+    for col, (tramo, label) in tramos.items():
+        for term_key in _A3_TERMS.values():
+            mn = montos.get((term_key, "mn", col), 0.0)
+            me = montos.get((term_key, "me", col), 0.0)
+            tot = montos.get((term_key, "total", col), 0.0)
+            if (mn, me, tot) == (0.0, 0.0, 0.0):
+                continue
+            cuenta = f"A3_{term_key}_T_{tramo}"
+            rows.append((
+                COUNTRY, periodo, "b1", ins_cod, cuenta,
+                int(round(mn * SCALE)), 0, 0, int(round(me * SCALE)), int(round(tot * SCALE)),
+            ))
+            plan[cuenta] = f"Anexo3 depósitos {_A3_TERM_LABELS[term_key]} · {label}"[:120]
+
+        for res in ("R", "NR"):
+            mn = montos.get(("ALL", f"mn_{res}", col), 0.0)
+            me = montos.get(("ALL", f"me_{res}", col), 0.0)
+            if (mn, me) == (0.0, 0.0):
+                continue
+            cuenta = f"A3_ALL_{res}_{tramo}"
+            rows.append((
+                COUNTRY, periodo, "b1", ins_cod, cuenta,
+                int(round(mn * SCALE)), 0, 0,
+                int(round(me * SCALE)), int(round((mn + me) * SCALE)),
+            ))
+            plan[cuenta] = f"Anexo3 depósitos {_A3_RES_LABELS[res]} · {label}"[:120]
+
+        for res in ("T", "R", "NR"):
+            n = clientes.get((res, col), 0.0)
+            if not n:
+                continue
+            cuenta = f"A3_CLI_{res}_{tramo}"
+            rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, 0, 0, 0, 0, int(round(n))))
+            plan[cuenta] = f"Anexo3 clientes {_A3_RES_LABELS[res]} · {label} (cantidad)"[:120]
+
+    return rows, plan
+
+
+# Anexo 4 — indicadores (ratios). Stored as tipo='q1'; value in monto_total.
+# Se ingiere el anexo completo: el código es A4_{ROMANO}_{N} tal como lo numera
+# el BCU, así que los que ya existían (A4_IV_1, A4_VII_*, A4_I_2) no se mueven.
+# Ojo: I.1, I.3 y I.6 son "número de veces", no porcentajes; el ×100 se aplica
+# igual y el frontend decide cómo rotularlos.
 
 
 def parse_anexo4(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
@@ -389,25 +547,137 @@ def parse_anexo4(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
     rows = []
     plan: dict[str, str] = {}
     for r in range(sh.nrows):
-        lab = str(sh.cell_value(r, 0) or "").strip()
+        lab = re.sub(r"\s+", " ", str(sh.cell_value(r, 0) or "")).strip()
         if not lab:
             continue
+        # Abajo de los indicadores viene el bloque DEFINICIONES, que repite la
+        # misma numeración ("I.1 - (Pasivo - Pasivos subordinados) / …").
+        if _fold(lab) == "definiciones":
+            break
         m = re.match(r"^([IVX]+)\.(\d+)\s*[-–]\s*(.+)$", lab, flags=re.I)
         if not m:
             continue
-        key = f"{m.group(1).lower()}.{m.group(2)}"
-        cuenta = _A4_KEYS.get(key)
-        if not cuenta:
-            continue
+        cuenta = f"A4_{m.group(1).upper()}_{m.group(2)}"
         try:
             raw = sh.cell_value(r, 1 if sh.ncols > 1 else 0)
             val = float(raw)
         except (TypeError, ValueError):
-            continue
+            continue  # "N/C - No corresponde" y celdas vacías
         # Store as percent ×100 (2.19% → 219) — matches aqRatioFromQ1 in aqCuentas.js
         scaled = int(round(val * 100))
         rows.append((COUNTRY, periodo, "q1", ins_cod, cuenta, 0, 0, 0, 0, scaled))
         plan[cuenta] = m.group(3).strip()[:120]
+    return rows, plan
+
+
+# Anexo 5 — Responsabilidad Patrimonial Neta (capital regulatorio).
+# Una sola columna de importe, sin apertura por moneda.
+_A5_SECTIONS = {
+    "responsabilidad patrimonial neta": ("A5_RPN", None),
+    "patrimonio neto esencial": ("A5_PNE", None),
+    "capital comun": ("A5_CC", "CC"),
+    "capital adicional": ("A5_CA", "CA"),
+    "patrimonio neto complementario": ("A5_PNC", "PNC"),
+}
+# "Primas de emisión" y "Deducciones 100%" aparecen bajo capital común y bajo
+# capital adicional, así que el sufijo se cuelga de la sección vigente.
+# Varias líneas cambiaron de redacción con los años (valoración→valorización,
+# previsiones→provisiones, singular→plural); los alias apuntan al mismo código
+# para no partir la serie en dos.
+_A5_ITEMS = {
+    "capital integrado": "CAPINT",
+    "aportes a capitalizar": "APORTES",
+    "primas de emision": "PRIMAS",
+    "otros instrumentos de capital": "OTROSINST",
+    "reservas": "RESERVAS",
+    "resultados acumulados": "RESACUM",
+    "resultados del ejercicio": "RESEJ",
+    "resultado del ejercicio": "RESEJ",
+    "ajustes por valorizacion": "AJVAL",
+    "ajustes por valoracion": "AJVAL",
+    "deducciones 100": "DED100",
+    "deducciones 10": "DED10",
+    "acciones preferidas": "PREF",
+    "acciones cooperativas ley 17 613": "COOP",
+    "acciones coop con interes ley no 17 613": "COOP",
+    "participaciones subordinadas y participaciones con interes": "PARTSUB",
+    "instrumentos subordinados convertibles en acciones": "CONV",
+    "otros instrumentos financieros emitidos": "OTROSIF",
+    "obligaciones subordinadas": "SUBORD",
+    "provisiones generales": "PROVGEN",
+    "previsiones generales": "PROVGEN",
+}
+
+
+def parse_anexo5(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea Anexo 5 (RPN y sus componentes) → filas b1 con A5_*, solo total."""
+    rows = []
+    plan: dict[str, str] = {}
+    section = None
+    for r in range(sh.nrows):
+        raw = re.sub(r"\s+", " ", str(sh.cell_value(r, 0) or "")).strip()
+        low = _fold(raw)
+        if not low or low.startswith("resultados acumulados y resultado del ejercicio"):
+            continue
+        if low in _A5_SECTIONS:
+            cuenta, section = _A5_SECTIONS[low]
+        else:
+            suffix = _A5_ITEMS.get(low)
+            if not suffix or not section:
+                continue
+            cuenta = f"A5_{section}_{suffix}"
+        tot = _cell_num(sh, r, 1 if sh.ncols > 1 else 0)
+        rows.append((COUNTRY, periodo, "b1", ins_cod, cuenta, 0, 0, 0, 0, tot))
+        plan[cuenta] = f"Anexo5 {raw}"[:120]
+    return rows, plan
+
+
+# ERI — Estado de Resultados Integral (resultado del ejercicio + ORI).
+_ERI_BLOCKS = {
+    "a resultado del ejercicio": ("ERI_A", None),
+    "b otro resultado integral": ("ERI_B", None),
+    "partidas que no se reclasificaran al resultado del periodo": ("ERI_B1", "B1"),
+    "partidas que pueden reclasificarse posteriormente al resultado del periodo": ("ERI_B2", "B2"),
+    "c resultado integral total del ano": ("ERI_C", None),
+}
+# "Impuesto a las ganancias relacionado con partidas que…" se repite en ambos
+# bloques, por eso el sufijo se cuelga del bloque vigente igual que en Anexo 5.
+_ERI_ITEMS = {
+    "superavit por revaluacion": "REVAL",
+    "nuevas mediciones del pasivo o activo por beneficios definidos": "BENEF",
+    "entidades valoradas por el metodo de la participacion": "PARTIC",
+    "instrumentos de patrimonio con cambios en otro resultado integral": "IPORI",
+    "diferencia de cambio por negocios en el extranjero": "FXNEG",
+    "diferencia de cotizacion de instrumentos financieros": "FXINST",
+    "coberturas de inversiones netas en negocios en el extranjero": "HEDGENET",
+    "coberturas de los flujos de efectivo": "HEDGECF",
+}
+
+
+def parse_eri(sh, ins_cod: int, periodo: str) -> tuple[list, dict]:
+    """Parsea el Estado de Resultados Integral → filas r1 con ERI_*."""
+    rows = []
+    plan: dict[str, str] = {}
+    block = None
+    for r in range(sh.nrows):
+        raw = re.sub(r"\s+", " ", str(sh.cell_value(r, 0) or "")).strip()
+        low = _fold(raw)
+        if not low:
+            continue
+        if low in _ERI_BLOCKS:
+            cuenta, block = _ERI_BLOCKS[low]
+        elif low.startswith("impuesto a las ganancias"):
+            if not block:
+                continue
+            cuenta = f"ERI_{block}_TAX"
+        else:
+            suffix = _ERI_ITEMS.get(low)
+            if not suffix or not block:
+                continue
+            cuenta = f"ERI_{block}_{suffix}"
+        tot = _cell_num(sh, r, 1 if sh.ncols > 1 else 0)
+        rows.append((COUNTRY, periodo, "r1", ins_cod, cuenta, 0, 0, 0, 0, tot))
+        plan[cuenta] = f"ERI {raw}"[:120]
     return rows, plan
 
 
@@ -420,14 +690,18 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
 
     rows = []
     plan = {}
+    # La razón social encabeza cada hoja; sin esto se cuela al plan de cuentas
+    # como un S_* distinto por banco.
+    es_titulo = {_fold(nombre)} if nombre else set()
 
     if "Situación" in book.sheet_names():
         sh = book.sheet_by_name("Situación")
         if not nombre:
             nombre = str(sh.cell_value(3, 0) or "").strip()
+            es_titulo = {_fold(nombre)}
         for r in range(sh.nrows):
             parsed = parse_cuenta(sh.cell_value(r, 0))
-            if not parsed:
+            if not parsed or _fold(parsed[1]) in es_titulo:
                 continue
             cuenta, desc = parsed
             mn, me, tot = _mn_me_total(sh, r)
@@ -438,9 +712,10 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
         sh = book.sheet_by_name("Resultados")
         if not nombre:
             nombre = str(sh.cell_value(3, 0) or "").strip()
+            es_titulo = {_fold(nombre)}
         for r in range(sh.nrows):
             parsed = parse_cuenta(sh.cell_value(r, 0))
-            if not parsed:
+            if not parsed or _fold(parsed[1]) in es_titulo:
                 continue
             cuenta, desc = parsed
             # Preferir código estable para el KPI de utilidad
@@ -465,12 +740,33 @@ def parse_institution_xls(data: bytes, ins_cod: int, periodo: str):
         rows.extend(a2_rows)
         plan.update(a2_plan)
 
+    # Anexo 3 — estructura de depósitos por tramo de saldo
+    anexo3 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 3")), None)
+    if anexo3:
+        a3_rows, a3_plan = parse_anexo3(book.sheet_by_name(anexo3), ins_cod, periodo)
+        rows.extend(a3_rows)
+        plan.update(a3_plan)
+
     # Anexo 4 — indicadores (tipo q1)
     anexo4 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 4")), None)
     if anexo4:
         a4_rows, a4_plan = parse_anexo4(book.sheet_by_name(anexo4), ins_cod, periodo)
         rows.extend(a4_rows)
         plan.update(a4_plan)
+
+    # Anexo 5 — responsabilidad patrimonial neta (capital regulatorio)
+    anexo5 = next((n for n in book.sheet_names() if n.strip().lower().startswith("anexo 5")), None)
+    if anexo5:
+        a5_rows, a5_plan = parse_anexo5(book.sheet_by_name(anexo5), ins_cod, periodo)
+        rows.extend(a5_rows)
+        plan.update(a5_plan)
+
+    # ERI — estado de resultados integral
+    eri = next((n for n in book.sheet_names() if n.strip().lower() == "eri"), None)
+    if eri:
+        eri_rows, eri_plan = parse_eri(book.sheet_by_name(eri), ins_cod, periodo)
+        rows.extend(eri_rows)
+        plan.update(eri_plan)
 
     if not nombre:
         nombre = f"Institución {ins_cod}"
