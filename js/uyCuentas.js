@@ -406,6 +406,105 @@ export function uyCurrencySnapshot(rowsB1, rowsQ1, periodo) {
   };
 }
 
+// ------------------------------------------------------------
+// Anexo 3 — deposit structure by ticket size.
+//
+// The boletín crosses nine balance brackets with term, currency and residency,
+// and adds the client count behind each one. Loader codes:
+//   A3_{TERM}_{T|R|NR}_{TRANCHE}  amounts (M/N in monto_clp, M/E in monto_ext)
+//   A3_CLI_{T|R|NR}_{TRANCHE}     client counts, stored raw in monto_total
+// The sheet states "cada tramo excluye a los anteriores", so each bracket is a
+// band, not a cumulative total — the labels below say so.
+// ------------------------------------------------------------
+export const UY_A3_TRANCHES = [
+  { key: 'LE5K', label: 'Up to US$ 5k', short: '≤5k', band: 'retail' },
+  { key: 'LE10K', label: 'US$ 5k – 10k', short: '5–10k', band: 'retail' },
+  { key: 'LE15K', label: 'US$ 10k – 15k', short: '10–15k', band: 'retail' },
+  { key: 'LE20K', label: 'US$ 15k – 20k', short: '15–20k', band: 'retail' },
+  { key: 'LE25K', label: 'US$ 20k – 25k', short: '20–25k', band: 'retail' },
+  { key: 'LE50K', label: 'US$ 25k – 50k', short: '25–50k', band: 'affluent' },
+  { key: 'LE100K', label: 'US$ 50k – 100k', short: '50–100k', band: 'affluent' },
+  { key: 'LE250K', label: 'US$ 100k – 250k', short: '100–250k', band: 'affluent' },
+  { key: 'GT250K', label: 'Over US$ 250k', short: '>250k', band: 'wholesale' },
+];
+
+export const UY_A3_BANDS = [
+  { key: 'retail', label: 'Retail (up to US$ 25k)' },
+  { key: 'affluent', label: 'Affluent (US$ 25k – 250k)' },
+  { key: 'wholesale', label: 'Wholesale (over US$ 250k)' },
+];
+
+export function uyDepositStructureAccountsForRun() {
+  const keys = [...UY_A3_TRANCHES.map((t) => t.key), 'TOT'];
+  return keys.flatMap((k) => [
+    `A3_ALL_T_${k}`, `A3_ALL_NR_${k}`, `A3_V30_T_${k}`, `A3_G1Y_T_${k}`, `A3_CLI_T_${k}`,
+  ]);
+}
+
+/**
+ * Deposit granularity: how much of the funding sits in a handful of large
+ * tickets versus spread across many small ones. The wholesale band is the one
+ * that runs first in a stress, so it gets its own headline.
+ */
+export function uyDepositStructure(rowsSameBank, periodo) {
+  const read = (prefix, key, field = 'monto_total') =>
+    uySum(rowsSameBank, [`${prefix}_${key}`], periodo, field);
+
+  const total = read('A3_ALL_T', 'TOT');
+  const totalClients = read('A3_CLI_T', 'TOT');
+
+  const tranches = UY_A3_TRANCHES.map((t) => {
+    const amount = read('A3_ALL_T', t.key);
+    const clients = read('A3_CLI_T', t.key);
+    const demand = read('A3_V30_T', t.key);
+    return {
+      ...t,
+      amount,
+      local: read('A3_ALL_T', t.key, 'monto_clp'),
+      ext: read('A3_ALL_T', t.key, 'monto_ext'),
+      clients,
+      nonResident: read('A3_ALL_NR', t.key),
+      demand,
+      longTerm: read('A3_G1Y_T', t.key),
+      pct: pct(amount, total),
+      clientPct: pct(clients, totalClients),
+      avgTicket: clients > 0 ? amount / clients : null,
+      demandPct: pct(demand, amount),
+      extPct: pct(read('A3_ALL_T', t.key, 'monto_ext'), amount),
+      nonResidentPct: pct(read('A3_ALL_NR', t.key), amount),
+    };
+  });
+
+  const bands = UY_A3_BANDS.map((b) => {
+    const list = tranches.filter((t) => t.band === b.key);
+    const amount = list.reduce((s, t) => s + t.amount, 0);
+    const clients = list.reduce((s, t) => s + t.clients, 0);
+    return {
+      ...b,
+      amount,
+      clients,
+      pct: pct(amount, total),
+      clientPct: pct(clients, totalClients),
+      avgTicket: clients > 0 ? amount / clients : null,
+    };
+  });
+
+  const wholesale = bands.find((b) => b.key === 'wholesale');
+  return {
+    periodo,
+    hasData: total > 0,
+    total,
+    totalClients,
+    tranches,
+    bands,
+    avgTicket: totalClients > 0 ? total / totalClients : null,
+    wholesalePct: wholesale?.pct ?? null,
+    /** Share held by non-residents across all brackets. */
+    nonResidentPct: pct(read('A3_ALL_NR', 'TOT'), total),
+    demandPct: pct(read('A3_V30_T', 'TOT'), total),
+  };
+}
+
 /** Per-period series for one aggregate of the condensed balance. */
 export function uyCurrencySeries(rowsB1, key, periodos) {
   const def = UY_CURRENCY_SUMMARY.find((r) => r.key === key)

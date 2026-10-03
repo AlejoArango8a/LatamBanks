@@ -32,6 +32,9 @@ import {
   UY_KPI,
   UY_FUNDING_EXPENSES,
   UY_TERM_INSTRUMENTS,
+  UY_A3_TRANCHES,
+  uyDepositStructure,
+  uyDepositStructureAccountsForRun,
   uyFundingAccountsForRun,
   uyFundingExpenseAccountsForRun,
   uyFundingSnapshot,
@@ -326,9 +329,11 @@ function cfg() {
         '<strong>FX ≈ USD, not exactly:</strong> BCU reports Actividad en M/E (all foreign currency, predominantly USD). We label it FX (≈USD).',
         '<strong>Local vs FX:</strong> <code>monto_clp</code> is Actividad en M/N (UYU); <code>monto_ext</code> is Actividad en M/E. There is no UF/UI column — indexed instruments sit inside M/N.',
         '<strong>Term structure</strong> (vista / plazo) comes from Anexo 1 contractual maturities — shown when the loader has ingested those synthetic accounts.',
+        '<strong>Deposit granularity</strong> comes from Anexo 3. Each bracket excludes the ones below it, so they are bands, not cumulative cuts. Brackets are set in US dollars even for the peso balances inside them.',
+        '<strong>Anexo 3 covers non-financial-sector deposits</strong>, so its total runs a few points below the <code>2.1.2 + 2.1.3 + 2.1.4</code> funding line, which also carries financial-sector deposits.',
         '<strong>Cost proxy</strong> uses monthly BCU interest-expense (account 5) deltas / average stock, annualized — accounting cost, not contractual coupon.',
       ],
-      b1Accounts: uyFundingAccountsForRun,
+      b1Accounts: () => [...new Set([...uyFundingAccountsForRun(), ...uyDepositStructureAccountsForRun()])],
       r1Accounts: uyFundingExpenseAccountsForRun,
       snapshot: uyFundingSnapshot,
       series: (rows, codes, periodos) => uySeries(rows, codes, periodos),
@@ -384,6 +389,7 @@ function cfg() {
       instrumentExtraCell: (i) => `<td class="r">${fmtKPI(i.local || 0)}</td><td class="r">${fmtKPI(i.ext || 0)}</td>`,
       termBreakdown: (rows, periodo) => uyTermBreakdown(rows, periodo),
       termInstruments: UY_TERM_INSTRUMENTS,
+      depositStructure: (rows, periodo) => uyDepositStructure(rows, periodo),
     };
   }
   return null;
@@ -579,6 +585,65 @@ function renderTermPanel(codes, c) {
       <table class="data fa-table">
         <thead><tr><th>Bucket</th><th class="r">Stock</th><th class="r">% deposits</th><th class="r">FX %</th></tr></thead>
         <tbody>${body}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/**
+ * Uruguay only: how granular the deposit base is. A bank funded by a few very
+ * large tickets and one funded by hundreds of thousands of small ones can show
+ * the same deposit total and behave nothing alike under stress, and Anexo 3 is
+ * the only place in the set where a regulator publishes that difference.
+ */
+function renderGranularityPanel(codes, c) {
+  if (!c.depositStructure) return '';
+  const lastP = state.periodos[state.periodos.length - 1];
+  const ds = c.depositStructure(rowsForCodes(codes), lastP);
+  if (!ds || !ds.hasData) return '';
+
+  const bandBody = ds.bands.map((b) => `<tr>
+      <td class="hl">${esc(b.label)}</td>
+      <td class="r hl">${fmtKPI(b.amount)}</td>
+      <td class="r hl">${fmtPct(b.pct)}</td>
+      <td class="r">${b.clients ? b.clients.toLocaleString('en-US') : '—'}</td>
+      <td class="r">${fmtPct(b.clientPct, 2)}</td>
+      <td class="r">${b.avgTicket ? fmtKPI(b.avgTicket) : '—'}</td>
+    </tr>`).join('');
+
+  const trancheBody = ds.tranches.filter((t) => t.amount !== 0).map((t) => `<tr>
+      <td class="i1">${esc(t.label)}</td>
+      <td class="r">${fmtKPI(t.amount)}</td>
+      <td class="r">${fmtPct(t.pct)}</td>
+      <td class="r">${t.clients ? t.clients.toLocaleString('en-US') : '—'}</td>
+      <td class="r">${t.avgTicket ? fmtKPI(t.avgTicket) : '—'}</td>
+      <td class="r">${fmtPct(t.extPct)}</td>
+      <td class="r">${fmtPct(t.demandPct)}</td>
+      <td class="r">${fmtPct(t.nonResidentPct)}</td>
+    </tr>`).join('');
+
+  return `<div class="panel fa-panel" style="margin-top:18px;">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Deposit granularity · ${esc(periodLabel(lastP))}</div>
+        <div class="panel-sub">Anexo 3 · ${ds.totalClients.toLocaleString('en-US')} clients · average ticket ${fmtKPI(ds.avgTicket)} · ${fmtPct(ds.wholesalePct)} of deposits sits in tickets over US$ 250k</div>
+      </div>
+    </div>
+    <div class="panel-body" style="overflow-x:auto;padding:0;">
+      <table class="data fa-table">
+        <thead><tr>
+          <th>Band</th><th class="r">Stock</th><th class="r">% deposits</th>
+          <th class="r">Clients</th><th class="r">% clients</th><th class="r">Avg. ticket</th>
+        </tr></thead>
+        <tbody>${bandBody}</tbody>
+      </table>
+      <table class="data fa-table" style="margin-top:4px;">
+        <thead><tr>
+          <th>Bracket</th><th class="r">Stock</th><th class="r">% deposits</th>
+          <th class="r">Clients</th><th class="r">Avg. ticket</th>
+          <th class="r">FX %</th><th class="r">Demand %</th><th class="r">Non-res. %</th>
+        </tr></thead>
+        <tbody>${trancheBody}</tbody>
       </table>
     </div>
   </div>`;
@@ -1151,6 +1216,7 @@ function render() {
     </div>
 
     ${!comparing ? renderTermPanel(active.codes, c) : ''}
+    ${!comparing ? renderGranularityPanel(active.codes, c) : ''}
 
     <ul class="fa-notes">${c.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   `;
